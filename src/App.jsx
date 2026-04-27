@@ -70,15 +70,10 @@ const ADMIN_CHILD    = {
 };
 const ADMIN_USER = { id:"admin", email: ADMIN_EMAIL };
 
-// ── DB Debug Log ────────────────────────────────────────────────────
-const DB_LOG = [];
+// DB logging — console only in production
 function dbLog(level, msg, detail="") {
-  const entry = { t: new Date().toLocaleTimeString(), level, msg, detail: String(detail).slice(0,200) };
-  DB_LOG.unshift(entry);
-  if (DB_LOG.length > 30) DB_LOG.pop();
   if (level === "error") console.error("[DB]", msg, detail);
   else console.log("[DB]", msg, detail);
-  if (window.__dbLogCb) window.__dbLogCb([...DB_LOG]);
 }
 
 // ── Direct Supabase REST client (works in any real browser) ─────────
@@ -355,84 +350,7 @@ const db = {
 // ─────────────────────────────────────────────────────────────────────
 const AVATARS = ["🧑‍🚀","👩‍🚀","🐸","🦊","🐼","🦁","🐉","🤖","🧜‍♀️","🦸","🧚","🦋"];
 
-function DbDebugPanel() {
-  const [logs, setLogs] = React.useState([...DB_LOG]);
-  const [open, setOpen] = React.useState(false);
-  React.useEffect(() => { window.__dbLogCb = setLogs; return () => { window.__dbLogCb = null; }; }, []);
-  if (!open) return (
-    <div onClick={()=>setOpen(true)} style={{ position:"fixed", bottom:60, left:8, zIndex:9999,
-      background:"#1a1a2e", border:"1px solid #444", borderRadius:8, padding:"4px 8px",
-      fontSize:10, color:"#aaa", cursor:"pointer", fontFamily:"monospace" }}>
-      🗄 DB {logs.length > 0 && logs[0].level==="error" ? "❌" : "✅"}
-    </div>
-  );
-  return (
-    <div style={{ position:"fixed", bottom:0, left:0, right:0, zIndex:9999, maxHeight:"50vh",
-      background:"#0d0d1a", border:"1px solid #333", overflowY:"auto", fontFamily:"monospace", fontSize:11 }}>
-      <div style={{ display:"flex", justifyContent:"space-between", padding:"6px 10px",
-        background:"#1a1a2e", borderBottom:"1px solid #333" }}>
-        <span style={{color:"#7ef"}}>🗄 DB Debug Log</span>
-        <span onClick={()=>setOpen(false)} style={{color:"#f77",cursor:"pointer"}}>✕ close</span>
-      </div>
-      {logs.length === 0 && <div style={{color:"#666",padding:8}}>No DB activity yet</div>}
-      {logs.map((l,i) => (
-        <div key={i} style={{ padding:"3px 10px", borderBottom:"1px solid #111",
-          color: l.level==="error" ? "#f77" : l.level==="ok" ? "#7f7" : "#aaa" }}>
-          <span style={{color:"#555"}}>[{l.t}]</span> {l.msg}
-          {l.detail && <span style={{color:"#888"}}> — {l.detail}</span>}
-        </div>
-      ))}
-    </div>
-  );
-}
 
-const WORLDS = [
-  {id:1,name:"Class 1",world:"Moon Base",    planet:"🌕",color:"#f97316",glow:"#f9731644",free:true },
-  {id:2,name:"Class 2",world:"Mars Colony",  planet:"🔴",color:"#ec4899",glow:"#ec489944",free:true },
-  {id:3,name:"Class 3",world:"Asteroid Belt",planet:"🪨",color:"#a855f7",glow:"#a855f744",free:false},
-  {id:4,name:"Class 4",world:"Saturn Rings", planet:"🪐",color:"#0ea5e9",glow:"#0ea5e944",free:false},
-  {id:5,name:"Class 5",world:"Black Hole",   planet:"🌌",color:"#00f5ff",glow:"#00f5ff44",free:false},
-];
-
-const LESSONS = {
-  1:[
-    {id:"c1-l1",title:"Number Launch", emoji:"🚀",sub:"Count 1–20 · Number names",     xp:50,boss:"👾",mode:"quiz"},
-    {id:"c1-l2",title:"Orbit Numbers", emoji:"🪐",sub:"Numbers 21–100 · Compare",      xp:60,boss:"🛸",mode:"bubble"},
-    {id:"c1-l3",title:"Meteor Add",    emoji:"☄️",sub:"Single digit addition",         xp:70,boss:"💥",mode:"quiz"},
-    {id:"c1-l4",title:"Black Hole Sub",emoji:"🌑",sub:"Subtraction · Take away",       xp:70,boss:"🌀",mode:"bubble"},
-    {id:"c1-l5",title:"Galaxy Shapes", emoji:"💫",sub:"Circles · Squares · Triangles", xp:50,boss:"🔮",mode:"quiz"},
-    {id:"c1-l6",title:"Star Coins",    emoji:"⭐",sub:"Money · Time · Days",           xp:60,boss:"🌟",mode:"boss"},
-  ],
-  2:[
-    {id:"c2-l1",title:"Thousand Stars", emoji:"🌟",sub:"Numbers to 1000",              xp:80, boss:"🌠",mode:"quiz"},
-    {id:"c2-l2",title:"Nebula Adder",   emoji:"💥",sub:"3-digit addition",             xp:90, boss:"🔴",mode:"bubble"},
-    {id:"c2-l3",title:"Warp Multiply",  emoji:"⚡",sub:"Tables 1–5 · Skip count",      xp:100,boss:"⚡",mode:"quiz"},
-    {id:"c2-l4",title:"Comet Fractions",emoji:"🌠",sub:"Half · Quarter · Shapes",      xp:80, boss:"🌙",mode:"boss"},
-  ],
-  3:[
-    {id:"c3-l1",title:"Mega Numbers",  emoji:"🔢",sub:"Numbers up to 9999",            xp:100,boss:"👹",mode:"quiz"},
-    {id:"c3-l2",title:"Power Add",     emoji:"💪",sub:"4-digit addition",              xp:110,boss:"🤖",mode:"bubble"},
-    {id:"c3-l3",title:"Times Warp",    emoji:"🌀",sub:"Tables 6–10",                   xp:120,boss:"🐲",mode:"quiz"},
-    {id:"c3-l4",title:"Division Quest",emoji:"➗",sub:"Division basics",               xp:110,boss:"🧟",mode:"boss"},
-  ],
-  4:[
-    {id:"c4-l1",title:"Galaxy Multiply",emoji:"⚡",sub:"Large multiplication",         xp:130,boss:"🤖",mode:"quiz"},
-    {id:"c4-l2",title:"Supernova Sub",  emoji:"💥",sub:"4-digit subtraction",          xp:120,boss:"👾",mode:"bubble"},
-    {id:"c4-l3",title:"Quantum Fractions",emoji:"🔮",sub:"Fractions & mixed numbers",  xp:140,boss:"🐉",mode:"quiz"},
-    {id:"c4-l4",title:"Cosmic Geometry",emoji:"📐",sub:"Area, perimeter, shapes",      xp:130,boss:"🧟",mode:"boss"},
-  ],
-  5:[
-    {id:"c5-l1",title:"Warp Decimals",  emoji:"🌊",sub:"Decimals & operations",        xp:150,boss:"👹",mode:"quiz"},
-    {id:"c5-l2",title:"Nebula Percent", emoji:"💫",sub:"Percentages & discount",       xp:150,boss:"🌌",mode:"bubble"},
-    {id:"c5-l3",title:"Black Hole Algebra",emoji:"🕳️",sub:"Simple equations",          xp:160,boss:"🤖",mode:"quiz"},
-    {id:"c5-l4",title:"Supermassive Data",emoji:"📊",sub:"Mean, median, mode",         xp:150,boss:"🐲",mode:"boss"},
-  ],
-};
-
-// ─────────────────────────────────────────────────────────────────────
-// QUESTION FETCHER — loads questions from Supabase at runtime
-// ─────────────────────────────────────────────────────────────────────
-// Fisher-Yates shuffle
 function shuffle(arr) {
   const a = [...arr];
   for (let i = a.length-1; i > 0; i--) {
@@ -4565,16 +4483,16 @@ export default function App() {
 
   if (screen === "splash")   return <><GlobalStyles/><Splash   onDone={() => setScreen("welcome")}/></>;
   if (screen === "welcome")  return <><GlobalStyles/><Welcome  onRegister={() => setScreen("register")} onLogin={() => setScreen("login")}/></>;
-  if (screen === "register") return <><GlobalStyles/><DbDebugPanel/><Register onBack={() => setScreen("welcome")} onDone={({ user: u, child: c }) => { setUser(u); setChild(c); setScreen("home"); }}/></>;
-  if (screen === "login")    return <><GlobalStyles/><DbDebugPanel/><Login    onBack={() => setScreen("welcome")} onDone={({ user: u, child: c }) => { setUser(u); setChild(c); setScreen("home"); }}/></>;
-  if (screen === "home")     return <><GlobalStyles/><DbDebugPanel/><Home     child={child} onWorld={goWorld} onAbacus={() => setScreen("abacus")} onGames={() => setScreen("games")} onOlympiad={() => setScreen("olympiad")} onParent={() => setScreen("parent")} onLogout={logout} onFeedback={goFeedback}/><FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
+  if (screen === "register") return <><GlobalStyles/><Register onBack={() => setScreen("welcome")} onDone={({ user: u, child: c }) => { setUser(u); setChild(c); setScreen("home"); }}/></>;
+  if (screen === "login")    return <><GlobalStyles/><Login    onBack={() => setScreen("welcome")} onDone={({ user: u, child: c }) => { setUser(u); setChild(c); setScreen("home"); }}/></>;
+  if (screen === "home")     return <><GlobalStyles/><Home     child={child} onWorld={goWorld} onAbacus={() => setScreen("abacus")} onGames={() => setScreen("games")} onOlympiad={() => setScreen("olympiad")} onParent={() => setScreen("parent")} onLogout={logout} onFeedback={goFeedback}/><FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
   if (screen === "paywall")  return <><GlobalStyles/><Paywall  world={world} child={child} onBack={() => setScreen("home")} onUnlock={handleUnlock}/></>;
-  if (screen === "lessons")  return <><GlobalStyles/><DbDebugPanel/><LessonMap world={world} child={child} onBack={() => setScreen("home")} onLesson={l => { setLesson(l); setScreen("game"); }}/></>;
-  if (screen === "game")     return <><GlobalStyles/><DbDebugPanel/><Game     lesson={lesson} world={world} child={child} setChild={setChild} onBack={() => setScreen("lessons")} onDone={() => setScreen("lessons")} onNextSet={(si) => setLesson(l => ({...l, setIndex:si}))}/>{ showSOS && <SOSButton onClick={() => goFeedback("bug")}/>}<FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
+  if (screen === "lessons")  return <><GlobalStyles/><LessonMap world={world} child={child} onBack={() => setScreen("home")} onLesson={l => { setLesson(l); setScreen("game"); }}/></>;
+  if (screen === "game")     return <><GlobalStyles/><Game     lesson={lesson} world={world} child={child} setChild={setChild} onBack={() => setScreen("lessons")} onDone={() => setScreen("lessons")} onNextSet={(si) => setLesson(l => ({...l, setIndex:si}))}/>{ showSOS && <SOSButton onClick={() => goFeedback("bug")}/>}<FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
   if (screen === "abacus")   return <><GlobalStyles/><Abacus   onBack={() => setScreen("home")} child={child}/>{ showSOS && <SOSButton onClick={() => goFeedback("bug")}/>}<FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
   if (screen === "olympiad") return <><GlobalStyles/><Olympiad child={child} setChild={setChild} onBack={() => setScreen("home")}/>{ showSOS && <SOSButton onClick={() => goFeedback("bug")}/>}<FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
   if (screen === "parent")   return <><GlobalStyles/><ParentDash child={child} onBack={() => setScreen("home")}/></>;
   if (screen === "feedback") return <><GlobalStyles/><FeedbackScreen child={child} currentScreen={prevScreen} prefillCategory={feedbackPrefill} onBack={() => setScreen(prevScreen)}/></>;
-  if (screen === "games")    return <><GlobalStyles/><DbDebugPanel/><GamesHub child={child} onBack={() => setScreen("home")}/></>;
-  return <><GlobalStyles/><DbDebugPanel/></>;
+  if (screen === "games")    return <><GlobalStyles/><GamesHub child={child} onBack={() => setScreen("home")}/></>;
+  return <><GlobalStyles/></>;
 }
