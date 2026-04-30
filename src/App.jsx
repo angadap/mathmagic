@@ -76,6 +76,75 @@ function dbLog(level, msg, detail="") {
   else console.log("[DB]", msg, detail);
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// WORLDS — one per class
+// ─────────────────────────────────────────────────────────────────────────────
+const WORLDS = [
+  { id:1, name:"Class 1", world:"Orion Nebula",   planet:"🌍", color:"#22c55e", glow:"#22c55e44", free:true  },
+  { id:2, name:"Class 2", world:"Andromeda",      planet:"🪐", color:"#3b82f6", glow:"#3b82f644", free:true  },
+  { id:3, name:"Class 3", world:"Milky Way Core", planet:"⭐", color:"#a855f7", glow:"#a855f744", free:false },
+  { id:4, name:"Class 4", world:"Cygnus Rift",    planet:"🔴", color:"#f97316", glow:"#f9731644", free:false },
+  { id:5, name:"Class 5", world:"Event Horizon",  planet:"🌌", color:"#ec4899", glow:"#ec489944", free:false },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LESSONS — per class, references lesson IDs that match questions table
+// ─────────────────────────────────────────────────────────────────────────────
+const LESSONS = {
+  1: [
+    { id:"c1-l1", title:"Shapes & Space",           icon:"🔷", sets:20, xp:100 },
+    { id:"c1-l2", title:"Numbers 1–9",              icon:"🔢", sets:20, xp:100 },
+    { id:"c1-l3", title:"Numbers 10–20",            icon:"🔟", sets:20, xp:100 },
+    { id:"c1-l4", title:"Numbers 21–100",           icon:"💯", sets:20, xp:150 },
+    { id:"c1-l5", title:"Addition",                 icon:"➕", sets:20, xp:150 },
+    { id:"c1-l6", title:"Subtraction",              icon:"➖", sets:20, xp:150 },
+    { id:"c1-l7", title:"Measurement",              icon:"📏", sets:20, xp:150 },
+    { id:"c1-l8", title:"Time & Money",             icon:"⏰", sets:20, xp:150 },
+    { id:"c1-l9", title:"Patterns & Fractions",     icon:"🔁", sets:20, xp:200 },
+  ],
+  2: [
+    { id:"c2-l1", title:"Numbers up to 1000",       icon:"🔢", sets:20, xp:150 },
+    { id:"c2-l2", title:"Addition & Subtraction",   icon:"➕", sets:20, xp:150 },
+    { id:"c2-l3", title:"Multiplication & Division",icon:"✖️", sets:20, xp:200 },
+    { id:"c2-l4", title:"Shapes & Geometry",        icon:"🔷", sets:20, xp:150 },
+    { id:"c2-l5", title:"Measurement",              icon:"📏", sets:20, xp:150 },
+    { id:"c2-l6", title:"Time & Calendar",          icon:"📅", sets:20, xp:150 },
+    { id:"c2-l7", title:"Money",                    icon:"💰", sets:20, xp:150 },
+    { id:"c2-l8", title:"Data Handling",            icon:"📊", sets:20, xp:150 },
+  ],
+  3: [
+    { id:"c3-l1", title:"Numbers & Place Value",    icon:"🔢", sets:20, xp:200 },
+    { id:"c3-l2", title:"Addition & Subtraction",   icon:"➕", sets:20, xp:200 },
+    { id:"c3-l3", title:"Multiplication & Division",icon:"✖️", sets:20, xp:200 },
+    { id:"c3-l4", title:"Fractions",                icon:"½",  sets:20, xp:200 },
+    { id:"c3-l5", title:"Measurement & Time",       icon:"📏", sets:20, xp:200 },
+    { id:"c3-l6", title:"Geometry",                 icon:"📐", sets:20, xp:200 },
+    { id:"c3-l7", title:"Money",                    icon:"💰", sets:20, xp:200 },
+    { id:"c3-l8", title:"Data & Patterns",          icon:"📊", sets:20, xp:200 },
+  ],
+  4: [
+    { id:"c4-l1", title:"Large Numbers & Numerals", icon:"🔢", sets:20, xp:250 },
+    { id:"c4-l2", title:"Large Operations",         icon:"➕", sets:20, xp:250 },
+    { id:"c4-l3", title:"Factors & Multiples",      icon:"🔗", sets:20, xp:250 },
+    { id:"c4-l4", title:"Fractions & Decimals",     icon:"½",  sets:20, xp:250 },
+    { id:"c4-l5", title:"Geometry & Angles",        icon:"📐", sets:20, xp:250 },
+    { id:"c4-l6", title:"Perimeter & Area",         icon:"📏", sets:20, xp:250 },
+    { id:"c4-l7", title:"Time, Temp & Money",       icon:"⏰", sets:20, xp:250 },
+    { id:"c4-l8", title:"Measurement",              icon:"⚖️", sets:20, xp:250 },
+    { id:"c4-l9", title:"Patterns & Data",          icon:"📊", sets:20, xp:250 },
+  ],
+  5: [
+    { id:"c5-l1", title:"Large Numbers & Operations",icon:"🔢", sets:20, xp:300 },
+    { id:"c5-l2", title:"Factors, LCM & HCF",       icon:"🔗", sets:20, xp:300 },
+    { id:"c5-l3", title:"Fractions & Decimals",      icon:"½",  sets:20, xp:300 },
+    { id:"c5-l4", title:"Percentage",                icon:"%",  sets:20, xp:300 },
+    { id:"c5-l5", title:"Geometry & Symmetry",       icon:"📐", sets:20, xp:300 },
+    { id:"c5-l6", title:"Area, Volume & Measurement",icon:"📏", sets:20, xp:300 },
+    { id:"c5-l7", title:"Data Handling & Probability",icon:"📊", sets:20, xp:300 },
+    { id:"c5-l8", title:"Mapping & Patterns",        icon:"🗺️", sets:20, xp:300 },
+  ],
+};
+
 // ── Direct Supabase REST client (works in any real browser) ─────────
 const sbRest = {
   _token: null,
