@@ -237,6 +237,8 @@ async function loadSb() {
 // IN-MEMORY STORE — works fully offline; Supabase is optional
 // ─────────────────────────────────────────────────────────────────────
 const MEM = { users:[], children:[], progress:[], n:1 };
+// Session ID for analytics
+if (!window.__sessionId) window.__sessionId = "s_" + Date.now() + "_" + Math.random().toString(36).slice(2,7);
 
 const db = {
   _sb: undefined,
@@ -292,6 +294,88 @@ const db = {
 
   async signOut() {
     return { error: null };
+  },
+
+  // ── Daily Challenge ──────────────────────────────────────────
+  async getDailyChallenge(classNum) {
+    const today = new Date().toISOString().slice(0,10);
+    const r = await this.select("daily_challenges", { date: today, class_num: classNum });
+    return r.data?.[0] || null;
+  },
+
+  async completeDailyChallenge(childId, challengeId, correct) {
+    const today = new Date().toISOString().slice(0,10);
+    const sb = await this.getSb();
+    if (sb) {
+      await sb.insert("daily_completions", {
+        child_id: childId, challenge_id: challengeId,
+        date: today, correct, completed_at: new Date().toISOString()
+      });
+    }
+  },
+
+  async getDailyCompletion(childId) {
+    const today = new Date().toISOString().slice(0,10);
+    const r = await this.select("daily_completions", { child_id: childId, date: today });
+    return r.data?.[0] || null;
+  },
+
+  // ── Daily Puzzle ─────────────────────────────────────────────
+  async getDailyPuzzle() {
+    const today = new Date().toISOString().slice(0,10);
+    const r = await this.select("daily_puzzles", { date: today });
+    return r.data?.[0] || null;
+  },
+
+  async completePuzzle(childId, puzzleId, answerGiven, correct) {
+    const today = new Date().toISOString().slice(0,10);
+    const sb = await this.getSb();
+    if (sb) {
+      await sb.insert("puzzle_completions", {
+        child_id: childId, puzzle_id: puzzleId,
+        date: today, answer_given: answerGiven, correct,
+        completed_at: new Date().toISOString()
+      });
+    }
+  },
+
+  async getPuzzleCompletion(childId) {
+    const today = new Date().toISOString().slice(0,10);
+    const r = await this.select("puzzle_completions", { child_id: childId, date: today });
+    return r.data?.[0] || null;
+  },
+
+  // ── Analytics ────────────────────────────────────────────────
+  async track(eventType, childId, parentId, data={}) {
+    const sb = await this.getSb();
+    if (!sb) return;
+    // Fire-and-forget — never block UI
+    sb.insert("analytics", {
+      child_id: childId || null,
+      parent_id: parentId || null,
+      event_type: eventType,
+      event_data: data,
+      app_version: "1.0.0",
+      platform: "web",
+      session_id: window.__sessionId || null,
+      created_at: new Date().toISOString()
+    }).catch(()=>{});
+  },
+
+  // ── App Ratings ──────────────────────────────────────────────
+  async saveRating(childId, parentId, rating, review) {
+    const sb = await this.getSb();
+    if (sb) {
+      await sb.insert("app_ratings", {
+        child_id: childId || null,
+        parent_id: parentId || null,
+        rating, review: review || "",
+        app_version: "1.0.0",
+        platform: "web",
+        created_at: new Date().toISOString()
+      });
+    }
+    localStorage.setItem("mm_rated", "1");
   },
 
   async getChildren(pid) {
@@ -2282,7 +2366,7 @@ function Splash({ onDone }) {
   );
 }
 
-function Welcome({ onRegister, onLogin }) {
+function Welcome({ onRegister, onLogin, onPrivacy }) {
   return (
     <div style={{ minHeight:"100vh", background:C.bg, position:"relative", overflow:"hidden", fontFamily:"'Nunito',sans-serif" }}>
       <Starfield/>
@@ -2307,7 +2391,10 @@ function Welcome({ onRegister, onLogin }) {
           <Btn color={C.cyan} onClick={onRegister}>🚀  REGISTER NEW ACCOUNT</Btn>
           <Btn color={C.purple} onClick={onLogin}>🌌  LOGIN TO MY ACCOUNT</Btn>
         </div>
-        <div style={{ marginTop:18, color:"#1a2a4a", fontSize:11, fontWeight:600 }}>No ads for kids · Safe & secure</div>
+        <div style={{ marginTop:14, display:"flex", gap:16, alignItems:"center", justifyContent:"center" }}>
+          <div style={{ color:"#1a2a4a", fontSize:11, fontWeight:600 }}>No ads for kids · Safe &amp; secure</div>
+          {onPrivacy && <button onClick={onPrivacy} style={{background:"none",border:"none",color:C.dim,fontSize:11,cursor:"pointer",textDecoration:"underline",fontFamily:"'Nunito',sans-serif",padding:0}}>Privacy Policy</button>}
+        </div>
       </div>
     </div>
   );
@@ -2676,9 +2763,21 @@ function Paywall({ world, child, onBack, onUnlock }) {
 }
 
 // ── Home ──────────────────────────────────────────────────────────────
-function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogout, onFeedback }) {
+function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogout, onFeedback, onRate }) {
   const [progress, setProgress] = useState([]);
+  const [showDQ,     setShowDQ]     = useState(false);
+  const [showPuzzle, setShowPuzzle] = useState(false);
+  const [showRating, setShowRating] = useState(false);
   const w = WORLDS[(child.class_num||1) - 1];
+
+  // Show rating prompt after 3rd session
+  useEffect(() => {
+    if (localStorage.getItem("mm_rated")) return;
+    const sessions = parseInt(localStorage.getItem("mm_sessions")||"0") + 1;
+    localStorage.setItem("mm_sessions", String(sessions));
+    if (sessions === 3) setTimeout(() => setShowRating(true), 5000);
+    db.track("app_open", child.id, null, { session: sessions, class_num: child.class_num });
+  }, [child.id, child.class_num]);
   useEffect(() => {
     db.getProgress(child.id).then(({ data }) => setProgress(data || []));
     // Prefetch Set 1 of all unlocked lessons silently
@@ -2731,8 +2830,12 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
           </div>
         ))}
       </div>
-      {/* Daily mission */}
-      <div style={{ position:"relative", zIndex:2, margin:"0 18px 14px" }}>
+      {/* Modals */}
+      {showDQ     && <DailyQuiz   child={child} onClose={() => setShowDQ(false)}/>}
+      {showPuzzle && <DailyPuzzle child={child} onClose={() => setShowPuzzle(false)}/>}
+      {showRating && <RatingPrompt child={child} onClose={() => setShowRating(false)}/>}
+      <div style={{ position:"relative", zIndex:2, margin:"0 18px 14px", display:"flex", flexDirection:"column", gap:9 }}>
+        {/* Daily set mission */}
         <div style={{ background:`linear-gradient(135deg,${C.purple}28,${C.cyan}14)`, border:`1px solid ${C.cyan}33`, borderRadius:15, padding:"12px 14px", display:"flex", alignItems:"center", gap:12, animation:"pulseG 3s ease-in-out infinite" }}>
           <div style={{ fontSize:28 }}>🎯</div>
           <div style={{ flex:1 }}>
@@ -2744,6 +2847,34 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
           </div>
           <div style={{ color:C.yellow, fontFamily:"'Orbitron',sans-serif", fontSize:11, textAlign:"center" }}><div>+150</div><div style={{ fontSize:8 }}>XP</div></div>
         </div>
+        {/* Daily Challenge + Daily Puzzle cards */}
+        {(()=>{
+          const todayKey = new Date().toISOString().slice(0,10);
+          const dqKey = `dq_${child.id}_${todayKey}`;
+          const dpKey = `dp_${child.id}_${todayKey}`;
+          const dqDone = !!localStorage.getItem(dqKey);
+          const dpDone = !!localStorage.getItem(dpKey);
+          return (<>
+            <button onClick={()=>setShowDQ(true)} style={{background:`linear-gradient(135deg,${C.yellow}18,${C.orange}0c)`,border:`1.5px solid ${dqDone?C.green+"66":C.yellow+"55"}`,borderRadius:15,padding:"12px 14px",display:"flex",alignItems:"center",gap:12,cursor:"pointer",textAlign:"left",width:"100%",animation:dqDone?"none":"pulseG 3s ease-in-out infinite"}}>
+              <div style={{fontSize:28}}>{dqDone?"✅":"🌟"}</div>
+              <div style={{flex:1}}>
+                <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:10,color:dqDone?C.green:C.yellow,letterSpacing:1}}>DAILY CHALLENGE</div>
+                <div style={{color:"white",fontSize:13,fontWeight:700,marginTop:2}}>{dqDone?"Completed today! 🎉":"1 Word Problem · Tap to solve!"}</div>
+                <div style={{fontSize:10,color:C.dim,marginTop:3}}>Resets at midnight · +50 XP</div>
+              </div>
+              <div style={{color:dqDone?C.green:C.yellow,fontFamily:"'Orbitron',sans-serif",fontSize:11,textAlign:"center"}}><div>{dqDone?"✓":"+50"}</div><div style={{fontSize:8}}>XP</div></div>
+            </button>
+            <button onClick={()=>setShowPuzzle(true)} style={{background:`linear-gradient(135deg,${C.purple}18,${C.cyan}0c)`,border:`1.5px solid ${dpDone?C.green+"66":C.purple+"55"}`,borderRadius:15,padding:"12px 14px",display:"flex",alignItems:"center",gap:12,cursor:"pointer",textAlign:"left",width:"100%",animation:dpDone?"none":"pulseG 3s ease-in-out infinite"}}>
+              <div style={{fontSize:28}}>{dpDone?"🏆":"🧩"}</div>
+              <div style={{flex:1}}>
+                <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:10,color:dpDone?C.green:C.purple,letterSpacing:1}}>DAILY PUZZLE</div>
+                <div style={{color:"white",fontSize:13,fontWeight:700,marginTop:2}}>{dpDone?"Solved today! 🎉":"Brain teaser · New puzzle daily!"}</div>
+                <div style={{fontSize:10,color:C.dim,marginTop:3}}>Resets midnight · +75 XP</div>
+              </div>
+              <div style={{color:dpDone?C.green:C.purple,fontFamily:"'Orbitron',sans-serif",fontSize:11,textAlign:"center"}}><div>{dpDone?"✓":"+75"}</div><div style={{fontSize:8}}>XP</div></div>
+            </button>
+          </>);
+        })()}
       </div>
       {/* Quick actions */}
       <div style={{ position:"relative", zIndex:2, display:"flex", gap:10, padding:"0 18px 14px" }}>
@@ -2813,11 +2944,11 @@ function LessonMap({ world, child, onBack, onLesson }) {
 
   const isSetDone   = (lid, si) => progress.some(p => p.lesson_id === lid + "_s" + si && (p.stars_earned||0) >= 1);
   const isSetUnlocked = (lid, si) => si === 0 || isSetDone(lid, si - 1);
-  const lessonDone  = (lid) => isSetDone(lid, 9); // all 10 sets done
+  const lessonDone  = (lid) => isSetDone(lid, 19); // all 20 sets done
   const lessonStarted = (lid) => isSetDone(lid, 0);
-  const completedSets = (lid) => Array.from({length:10},(_,i)=>i).filter(i=>isSetDone(lid,i)).length;
+  const completedSets = (lid) => Array.from({length:20},(_,i)=>i).filter(i=>isSetDone(lid,i)).length;
   const worldProg = lessons.filter(l => lessonStarted(l.id)).length;
-  const totalSets = lessons.length * 10;
+  const totalSets = lessons.length * 20;
   const doneSets  = lessons.reduce((s,l)=>s+completedSets(l.id),0);
 
   return (
@@ -2855,14 +2986,14 @@ function LessonMap({ world, child, onBack, onLesson }) {
                   <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
                     <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:12, color: lessonUnlocked ? "white" : "#181828" }}>{lesson.title}</div>
                     <div style={{ display:"flex", gap:5, alignItems:"center" }}>
-                      <span style={{ fontSize:9, color:C.dim, fontFamily:"'Orbitron',sans-serif" }}>{cSets}/10 sets</span>
+                      <span style={{ fontSize:9, color:C.dim, fontFamily:"'Orbitron',sans-serif" }}>{cSets}/20 sets</span>
                       <span style={{ fontSize:13, color: lessonUnlocked ? world.color : "#181828" }}>{isExp ? "▲" : "▼"}</span>
                     </div>
                   </div>
                   <div style={{ fontSize:11, color:C.dim, marginTop:2 }}>{lesson.sub}</div>
                   {lessonUnlocked && (
                     <div style={{ marginTop:5, background:"rgba(255,255,255,0.05)", borderRadius:5, height:4, overflow:"hidden" }}>
-                      <div style={{ width:`${cSets*10}%`, height:"100%", background:`linear-gradient(90deg,${world.color},${C.cyan})`, borderRadius:5 }}/>
+                      <div style={{ width:`${cSets*5}%`, height:"100%", background:`linear-gradient(90deg,${world.color},${C.cyan})`, borderRadius:5 }}/>
                     </div>
                   )}
                 </button>
@@ -2870,7 +3001,7 @@ function LessonMap({ world, child, onBack, onLesson }) {
               {/* Sets grid — shown when expanded */}
               {isExp && lessonUnlocked && (
                 <div style={{ marginLeft:58, display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:7 }}>
-                  {Array.from({length:10},(_,si) => {
+                  {Array.from({length:20},(_,si) => {
                     const sDone   = isSetDone(lesson.id, si);
                     const sUnlock = isSetUnlocked(lesson.id, si);
                     return (
@@ -4008,11 +4139,18 @@ function StarCatcher({ onBack, child }) {
     return correct;
   };
 
-  const spawnItem = (currentCA) => {
-    const isCorrect = Math.random() > 0.5;
-    const val = isCorrect ? currentCA : String(Math.floor(Math.random()*18)+2);
-    return { id: Date.now()+Math.random(), x: Math.random()*80+10, y: -8, val, correct: val===currentCA, speed: 0.4+Math.random()*0.3 };
+  const spawnWave = (currentCA) => {
+    // Always spawn 1 correct + 2 wrong answers so stars are always visible
+    const wrong1 = (() => { let v; do { v=String(Math.floor(Math.random()*18)+2); } while(v===currentCA); return v; })();
+    const wrong2 = (() => { let v; do { v=String(Math.floor(Math.random()*18)+2); } while(v===currentCA||v===wrong1); return v; })();
+    const positions = [15,50,82].sort(()=>Math.random()-0.5);
+    return [
+      { id: Date.now()+1, x:positions[0], y:-8, val:currentCA, correct:true,  speed:0.35+Math.random()*0.25 },
+      { id: Date.now()+2, x:positions[1], y:-8, val:wrong1,    correct:false, speed:0.35+Math.random()*0.25 },
+      { id: Date.now()+3, x:positions[2], y:-8, val:wrong2,    correct:false, speed:0.35+Math.random()*0.25 },
+    ];
   };
+  const spawnItem = spawnWave; // alias kept for compat
 
   const startGame = () => {
     scoreRef.current = 0; livesRef.current = 3;
@@ -4022,10 +4160,10 @@ function StarCatcher({ onBack, child }) {
     let frame = 0;
     const loop = () => {
       frame++;
-      // Spawn new items
-      if (frame % 60 === 0) {
-        const newItem = spawnItem(qRef.current.ans);
-        itemsRef.current = [...itemsRef.current, newItem];
+      // Spawn new wave every 90 frames (~1.5s at 60fps) only when field is clear
+      if (frame % 90 === 0 || (frame > 30 && itemsRef.current.length === 0)) {
+        const wave = spawnWave(qRef.current.ans);
+        itemsRef.current = [...itemsRef.current.filter(i=>i.y<100), ...wave];
       }
       // Move items down
       itemsRef.current = itemsRef.current
@@ -4102,19 +4240,43 @@ function StarCatcher({ onBack, child }) {
         <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:20,color:"white"}}>{q}</div>
       </div>
       {/* Play field */}
-      <div style={{position:"relative",height:"65vh",overflow:"hidden"}}
-        onTouchMove={e=>{const rect=e.currentTarget.getBoundingClientRect();const pct=((e.touches[0].clientX-rect.left)/rect.width)*100;setPlayerX(Math.max(10,Math.min(90,pct)));}}
-        onMouseMove={e=>{const rect=e.currentTarget.getBoundingClientRect();const pct=((e.clientX-rect.left)/rect.width)*100;setPlayerX(Math.max(10,Math.min(90,pct)));}}
+      <div style={{position:"relative",height:"65vh",overflow:"hidden",background:"transparent",touchAction:"none"}}
+        onTouchMove={e=>{e.preventDefault();const rect=e.currentTarget.getBoundingClientRect();const pct=((e.touches[0].clientX-rect.left)/rect.width)*100;setPlayerX(Math.max(8,Math.min(92,pct)));}}
+        onMouseMove={e=>{const rect=e.currentTarget.getBoundingClientRect();const pct=((e.clientX-rect.left)/rect.width)*100;setPlayerX(Math.max(8,Math.min(92,pct)));}}
       >
         {items.map(it=>(
-          <div key={it.id} onClick={()=>catchItem(it)} style={{position:"absolute",left:`${it.x}%`,top:`${it.y}%`,transform:"translate(-50%,-50%)",fontSize:28,cursor:"pointer",filter:it.correct?"drop-shadow(0 0 8px gold)":"none",transition:"top 0.05s linear"}}>
-            <div style={{background:it.correct?`${C.yellow}22`:`${C.red}22`,border:`2px solid ${it.correct?C.yellow:C.red}`,borderRadius:12,padding:"5px 10px",fontFamily:"'Orbitron',sans-serif",fontSize:13,color:it.correct?C.yellow:C.red}}>
-              {it.correct?"⭐":""}{it.val}
+          <div key={it.id}
+            onClick={()=>catchItem(it)}
+            style={{
+              position:"absolute",
+              left:`${it.x}%`,
+              top:`${it.y}%`,
+              transform:"translate(-50%,-50%)",
+              cursor:"pointer",
+              zIndex:5,
+              userSelect:"none",
+            }}
+          >
+            <div style={{
+              background: it.correct ? `linear-gradient(135deg,${C.yellow}44,${C.orange}22)` : `${C.red}22`,
+              border:`2px solid ${it.correct ? C.yellow : C.red}`,
+              borderRadius:14,
+              padding:"6px 12px",
+              fontFamily:"'Orbitron',sans-serif",
+              fontSize:14,
+              fontWeight:700,
+              color: it.correct ? C.yellow : C.red,
+              boxShadow: it.correct ? `0 0 12px ${C.yellow}66` : "none",
+              minWidth:44,
+              textAlign:"center",
+              whiteSpace:"nowrap",
+            }}>
+              {it.correct ? "⭐ " : ""}{it.val}
             </div>
           </div>
         ))}
-        {/* Player catcher */}
-        <div style={{position:"absolute",bottom:10,left:`${playerX}%`,transform:"translateX(-50%)",fontSize:32,zIndex:5}}>🛸</div>
+        {/* Catcher ship */}
+        <div style={{position:"absolute",bottom:10,left:`${playerX}%`,transform:"translateX(-50%)",fontSize:34,zIndex:5,filter:"drop-shadow(0 0 8px #00f5ff)"}}>🛸</div>
       </div>
     </div>
   );
@@ -4444,6 +4606,389 @@ function NumberMemory({ onBack, child }) {
   );
 }
 
+// ── Daily Quiz ────────────────────────────────────────────────────────
+// One word problem per day — seeded by date so all children get the same Q
+// Encourages daily visits; resets at midnight
+function DailyQuiz({ child, onClose }) {
+  const [challenge, setChallenge] = useState(null);   // from Supabase
+  const [loading,   setLoading]   = useState(true);
+  const [done,      setDone]      = useState(false);
+  const [chosen,    setChosen]    = useState(null);   // 'A','B','C','D'
+  const [shake,     setShake]     = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([
+      db.getDailyChallenge(child.class_num || 1),
+      db.getDailyCompletion(child.id)
+    ]).then(([ch, comp]) => {
+      setChallenge(ch);
+      if (comp) setDone(true);
+      setLoading(false);
+    });
+    db.track("daily_challenge_open", child.id, null, { class_num: child.class_num });
+  }, [child.id, child.class_num]);
+
+  const opts = challenge ? [
+    { key:"A", val: challenge.option_a },
+    { key:"B", val: challenge.option_b },
+    { key:"C", val: challenge.option_c },
+    { key:"D", val: challenge.option_d },
+  ] : [];
+
+  const handleAnswer = async (key) => {
+    if (done || chosen) return;
+    setChosen(key);
+    const correct = key === challenge.correct;
+    if (!correct) { setShake(true); setTimeout(()=>setShake(false),500); }
+    else {
+      await db.completeDailyChallenge(child.id, challenge.id, true);
+      await db.addXP(child.id, challenge.xp_reward||50, challenge.coin_reward||10);
+      db.track("daily_challenge_complete", child.id, null, { correct:true });
+      const todayKey2 = new Date().toISOString().slice(0,10);
+      localStorage.setItem(`dq_${child.id}_${todayKey2}`, "1");
+      setDone(true);
+    }
+    if (!correct) {
+      await db.completeDailyChallenge(child.id, challenge.id, false);
+      db.track("daily_challenge_complete", child.id, null, { correct:false });
+    }
+  };
+
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(4,4,15,0.96)",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",padding:20,fontFamily:"'Nunito',sans-serif"}}>
+      <div style={{background:C.card,borderRadius:22,padding:24,maxWidth:430,width:"100%",border:`2px solid ${C.yellow}44`,boxShadow:`0 0 40px ${C.yellow}22`,maxHeight:"90vh",overflowY:"auto"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+          <div>
+            <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:11,color:C.yellow,letterSpacing:2}}>🌟 DAILY CHALLENGE</div>
+            <div style={{fontSize:11,color:C.dim,marginTop:2}}>{new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long"})}</div>
+          </div>
+          <button onClick={onClose} style={{background:"none",border:"none",color:C.dim,fontSize:20,cursor:"pointer",padding:"4px 8px"}}>✕</button>
+        </div>
+
+        {loading ? (
+          <div style={{textAlign:"center",padding:30,color:C.dim,fontFamily:"'Orbitron',sans-serif",fontSize:12}}>
+            <div style={{fontSize:32,marginBottom:10,animation:"spin 1s linear infinite"}}>⭐</div>
+            LOADING...
+          </div>
+        ) : !challenge ? (
+          <div style={{textAlign:"center",padding:20}}>
+            <div style={{fontSize:40,marginBottom:10}}>📅</div>
+            <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:12,color:C.dim,lineHeight:1.7}}>No challenge today yet.<br/>Check back later!</div>
+            <div style={{marginTop:16}}><Btn color={C.dim} onClick={onClose}>CLOSE</Btn></div>
+          </div>
+        ) : done && !chosen ? (
+          <div style={{textAlign:"center",padding:"20px 0"}}>
+            <div style={{fontSize:48,marginBottom:10}}>✅</div>
+            <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.green,marginBottom:6}}>ALREADY COMPLETED TODAY!</div>
+            <div style={{color:C.dim,fontSize:12,lineHeight:1.7}}>Great job! Come back tomorrow for a new challenge.</div>
+            <div style={{marginTop:16}}><Btn color={C.dim} onClick={onClose}>CLOSE</Btn></div>
+          </div>
+        ) : (
+          <>
+            <div style={{background:`${C.yellow}10`,border:`1px solid ${C.yellow}22`,borderRadius:14,padding:"14px 16px",marginBottom:18,lineHeight:1.7,fontSize:14,color:"white",fontWeight:600}}>
+              📖 {challenge.question}
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:9,marginBottom:16,animation:shake?"shake 0.4s":"none"}}>
+              {opts.map(({key,val})=>{
+                const isCorrect = key === challenge.correct;
+                const isChosen  = key === chosen;
+                const answered  = chosen !== null;
+                let bg=C.card2, border="#181838", color="white";
+                if (answered) {
+                  if (isCorrect)       { bg=`${C.green}22`; border=C.green; color=C.green; }
+                  else if (isChosen)   { bg=`${C.red}22`;   border=C.red;   color=C.red;   }
+                }
+                return (
+                  <button key={key} onClick={()=>handleAnswer(key)} disabled={!!chosen}
+                    style={{background:bg,border:`2px solid ${border}`,borderRadius:12,padding:"11px 16px",cursor:chosen?"default":"pointer",textAlign:"left",color,fontWeight:700,fontSize:14,transition:"all 0.2s"}}>
+                    <span style={{marginRight:10,opacity:0.6,fontFamily:"'Orbitron',sans-serif",fontSize:11}}>{key}</span>{val}
+                    {answered && isCorrect && <span style={{float:"right"}}>✅</span>}
+                    {answered && isChosen && !isCorrect && <span style={{float:"right"}}>❌</span>}
+                  </button>
+                );
+              })}
+            </div>
+            {chosen && (
+              <div style={{background:`${chosen===challenge.correct?C.green:C.cyan}14`,border:`1px solid ${chosen===challenge.correct?C.green:C.cyan}33`,borderRadius:10,padding:"10px 14px",marginBottom:14,fontSize:12,color:chosen===challenge.correct?C.green:C.cyan}}>
+                {chosen===challenge.correct ? "🎉 Excellent! " : "💡 Hint: "}{challenge.hint}
+              </div>
+            )}
+            {chosen && (
+              <div style={{textAlign:"center"}}>
+                {chosen===challenge.correct && <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:12,color:C.yellow,marginBottom:10}}>+{challenge.xp_reward||50} XP · +{challenge.coin_reward||10} COINS 🎉</div>}
+                <Btn color={chosen===challenge.correct?C.green:C.dim} onClick={onClose}>{chosen===challenge.correct?"🚀 AWESOME!":"CLOSE"}</Btn>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Daily Puzzle ──────────────────────────────────────────────────────
+function DailyPuzzle({ child, onClose }) {
+  const [puzzle,  setPuzzle]  = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [done,    setDone]    = useState(false);
+  const [answer,  setAnswer]  = useState("");
+  const [result,  setResult]  = useState(null); // null|"correct"|"wrong"
+  const [showHint,setShowHint]= useState(false);
+
+  useEffect(() => {
+    Promise.all([
+      db.getDailyPuzzle(),
+      db.getPuzzleCompletion(child.id)
+    ]).then(([p, comp]) => {
+      setPuzzle(p);
+      if (comp) setDone(true);
+      setLoading(false);
+    });
+    db.track("daily_puzzle_open", child.id, null, {});
+  }, [child.id]);
+
+  const handleSubmit = async () => {
+    if (!answer.trim() || !puzzle) return;
+    const correct = answer.trim().toLowerCase() === puzzle.answer.toLowerCase();
+    setResult(correct ? "correct" : "wrong");
+    await db.completePuzzle(child.id, puzzle.id, answer.trim(), correct);
+    if (correct) {
+      await db.addXP(child.id, puzzle.xp_reward||75, puzzle.coin_reward||15);
+      db.track("daily_puzzle_complete", child.id, null, { correct:true });
+      const todayKey = new Date().toISOString().slice(0,10);
+      localStorage.setItem(`dp_${child.id}_${todayKey}`, "1");
+      setDone(true);
+    } else {
+      db.track("daily_puzzle_complete", child.id, null, { correct:false });
+    }
+  };
+
+  const typeColors = { riddle:C.purple, number:C.cyan, logic:C.orange, visual:C.yellow };
+
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(4,4,15,0.96)",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",padding:20,fontFamily:"'Nunito',sans-serif"}}>
+      <div style={{background:C.card,borderRadius:22,padding:24,maxWidth:430,width:"100%",border:`2px solid ${C.purple}44`,boxShadow:`0 0 40px ${C.purple}22`,maxHeight:"90vh",overflowY:"auto"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+          <div>
+            <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:11,color:C.purple,letterSpacing:2}}>🧩 DAILY PUZZLE</div>
+            <div style={{fontSize:11,color:C.dim,marginTop:2}}>{new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long"})}</div>
+          </div>
+          <button onClick={onClose} style={{background:"none",border:"none",color:C.dim,fontSize:20,cursor:"pointer",padding:"4px 8px"}}>✕</button>
+        </div>
+
+        {loading ? (
+          <div style={{textAlign:"center",padding:30,color:C.dim,fontFamily:"'Orbitron',sans-serif",fontSize:12}}>
+            <div style={{fontSize:32,marginBottom:10}}>🧩</div>LOADING...
+          </div>
+        ) : !puzzle ? (
+          <div style={{textAlign:"center",padding:20}}>
+            <div style={{fontSize:40,marginBottom:10}}>📅</div>
+            <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:12,color:C.dim,lineHeight:1.7}}>No puzzle today yet.<br/>Check back later!</div>
+            <div style={{marginTop:16}}><Btn color={C.dim} onClick={onClose}>CLOSE</Btn></div>
+          </div>
+        ) : done && result === null ? (
+          <div style={{textAlign:"center",padding:"20px 0"}}>
+            <div style={{fontSize:48,marginBottom:10}}>🏆</div>
+            <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.green,marginBottom:6}}>PUZZLE SOLVED TODAY!</div>
+            <div style={{color:C.dim,fontSize:12,lineHeight:1.7}}>A new puzzle drops at midnight. Come back tomorrow!</div>
+            <div style={{marginTop:16}}><Btn color={C.dim} onClick={onClose}>CLOSE</Btn></div>
+          </div>
+        ) : (
+          <>
+            <div style={{display:"flex",gap:8,marginBottom:14,alignItems:"center"}}>
+              <div style={{background:`${typeColors[puzzle.puzzle_type]||C.purple}22`,border:`1px solid ${typeColors[puzzle.puzzle_type]||C.purple}44`,borderRadius:8,padding:"3px 10px",fontSize:10,color:typeColors[puzzle.puzzle_type]||C.purple,fontFamily:"'Orbitron',sans-serif",textTransform:"uppercase"}}>{puzzle.puzzle_type}</div>
+              <div style={{fontSize:11,color:C.dim}}>+{puzzle.xp_reward||75} XP on solve</div>
+            </div>
+
+            <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:14,color:"white",marginBottom:10}}>{puzzle.title}</div>
+            <div style={{background:`${C.purple}10`,border:`1px solid ${C.purple}22`,borderRadius:14,padding:"14px 16px",marginBottom:18,lineHeight:1.8,fontSize:14,color:"#ddd"}}>
+              🧩 {puzzle.description}
+            </div>
+
+            {result === null && (
+              <>
+                <div style={{marginBottom:12}}>
+                  <input value={answer} onChange={e=>setAnswer(e.target.value)}
+                    onKeyDown={e=>e.key==="Enter"&&handleSubmit()}
+                    placeholder="Type your answer here..."
+                    style={{width:"100%",background:C.card2,border:`2px solid ${C.purple}44`,borderRadius:12,padding:"12px 16px",color:"white",fontSize:14,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",outline:"none"}}
+                  />
+                </div>
+                <div style={{display:"flex",gap:10,marginBottom:10}}>
+                  <Btn color={C.purple} style={{flex:2}} onClick={handleSubmit}>🚀 SUBMIT</Btn>
+                  <button onClick={()=>setShowHint(!showHint)} style={{flex:1,background:`${C.yellow}18`,border:`1px solid ${C.yellow}44`,borderRadius:12,color:C.yellow,fontSize:12,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",padding:"8px"}}>💡 HINT</button>
+                </div>
+                {showHint && puzzle.hint && (
+                  <div style={{background:`${C.yellow}10`,border:`1px solid ${C.yellow}33`,borderRadius:10,padding:"10px 14px",fontSize:12,color:C.yellow}}>
+                    💡 {puzzle.hint}
+                  </div>
+                )}
+              </>
+            )}
+
+            {result === "correct" && (
+              <div style={{textAlign:"center"}}>
+                <div style={{fontSize:48,marginBottom:8}}>🎉</div>
+                <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.green,marginBottom:4}}>BRILLIANT! CORRECT!</div>
+                <div style={{fontSize:12,color:C.dim,marginBottom:14}}>Answer: {puzzle.answer}</div>
+                <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:12,color:C.yellow,marginBottom:14}}>+{puzzle.xp_reward||75} XP · +{puzzle.coin_reward||15} COINS</div>
+                <Btn color={C.green} onClick={onClose}>🏆 AWESOME!</Btn>
+              </div>
+            )}
+            {result === "wrong" && (
+              <div style={{textAlign:"center"}}>
+                <div style={{fontSize:40,marginBottom:8}}>🤔</div>
+                <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:12,color:C.red,marginBottom:4}}>NOT QUITE!</div>
+                <div style={{fontSize:12,color:C.dim,marginBottom:6}}>Try again or check the hint.</div>
+                <div style={{display:"flex",gap:10}}>
+                  <Btn color={C.dim} style={{flex:1}} onClick={()=>setResult(null)}>↺ TRY AGAIN</Btn>
+                  <Btn color={C.red}  style={{flex:1}} onClick={onClose}>CLOSE</Btn>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── App Rating ────────────────────────────────────────────────────────
+function RatingPrompt({ child, onClose }) {
+  const [rating,  setRating]  = useState(0);
+  const [hover,   setHover]   = useState(0);
+  const [review,  setReview]  = useState("");
+  const [done,    setDone]    = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const submit = async () => {
+    if (rating === 0) return;
+    setLoading(true);
+    await db.saveRating(child?.id, null, rating, review);
+    db.track("app_rated", child?.id, null, { rating });
+    setLoading(false);
+    setDone(true);
+  };
+
+  if (done) return (
+    <div style={{position:"fixed",inset:0,background:"rgba(4,4,15,0.94)",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",padding:20,fontFamily:"'Nunito',sans-serif"}}>
+      <div style={{background:C.card,borderRadius:22,padding:28,maxWidth:360,width:"100%",border:`2px solid ${C.yellow}44`,textAlign:"center"}}>
+        <div style={{fontSize:52,marginBottom:10}}>🙏</div>
+        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:14,color:C.yellow,marginBottom:8}}>THANK YOU!</div>
+        <div style={{color:C.dim,fontSize:13,lineHeight:1.7,marginBottom:18}}>Your feedback helps us make MathMagic better for all space cadets!</div>
+        <Btn color={C.yellow} onClick={onClose}>🚀 CONTINUE</Btn>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(4,4,15,0.94)",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",padding:20,fontFamily:"'Nunito',sans-serif"}}>
+      <div style={{background:C.card,borderRadius:22,padding:24,maxWidth:360,width:"100%",border:`2px solid ${C.yellow}44`,boxShadow:`0 0 40px ${C.yellow}22`}}>
+        <div style={{textAlign:"center",marginBottom:20}}>
+          <div style={{fontSize:44,marginBottom:8}}>🌟</div>
+          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:14,color:C.yellow,marginBottom:6}}>ENJOYING MATHMAGIC?</div>
+          <div style={{color:C.dim,fontSize:13,lineHeight:1.6}}>Rate your experience and help other students discover MathMagic!</div>
+        </div>
+        <div style={{display:"flex",justifyContent:"center",gap:8,marginBottom:20}}>
+          {[1,2,3,4,5].map(i=>(
+            <button key={i} onMouseEnter={()=>setHover(i)} onMouseLeave={()=>setHover(0)} onClick={()=>setRating(i)}
+              style={{background:"none",border:"none",fontSize:38,cursor:"pointer",transition:"transform 0.15s",transform:(hover||rating)>=i?"scale(1.2)":"scale(1)",filter:(hover||rating)>=i?"none":"grayscale(1) opacity(0.4)"}}>
+              ⭐
+            </button>
+          ))}
+        </div>
+        {rating > 0 && (
+          <div style={{marginBottom:14}}>
+            <div style={{color:"white",fontSize:13,fontWeight:700,marginBottom:6,textAlign:"center"}}>
+              {["","😞 Poor","😐 Fair","🙂 Good","😊 Great","🤩 Amazing!"][rating]}
+            </div>
+            <textarea value={review} onChange={e=>setReview(e.target.value)}
+              placeholder="Tell us more (optional)..."
+              rows={2}
+              style={{width:"100%",background:C.card2,border:`1.5px solid ${C.yellow}33`,borderRadius:11,padding:"10px 14px",color:"white",fontSize:13,fontFamily:"'Nunito',sans-serif",resize:"none",boxSizing:"border-box",outline:"none"}}
+            />
+          </div>
+        )}
+        <div style={{display:"flex",gap:10}}>
+          <button onClick={onClose} style={{flex:1,background:"none",border:`1px solid #181838`,borderRadius:12,color:C.dim,padding:"10px",cursor:"pointer",fontSize:12}}>LATER</button>
+          <Btn color={C.yellow} style={{flex:2}} loading={loading} onClick={submit} disabled={rating===0}>⭐ SUBMIT RATING</Btn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Privacy Policy ────────────────────────────────────────────────────
+function PrivacyPolicy({ onBack }) {
+  return (
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",overflowY:"auto"}}>
+      <div style={{position:"sticky",top:0,background:C.bg,zIndex:10,padding:"14px 18px",borderBottom:`1px solid #181838`,display:"flex",alignItems:"center",gap:12}}>
+        <BackBtn onClick={onBack} color={C.cyan}/>
+        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.cyan}}>PRIVACY POLICY</div>
+      </div>
+      <div style={{padding:"20px 20px 40px",maxWidth:600,margin:"0 auto",color:"#ccc",lineHeight:1.8,fontSize:14}}>
+        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:16,color:"white",marginBottom:6}}>MathMagic Space Academy</div>
+        <div style={{color:C.dim,fontSize:12,marginBottom:24}}>Last updated: {new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"})}</div>
+
+        {[
+          {t:"1. Information We Collect", b:"We collect the following information to provide and improve our service:
+• Parent/Guardian email address (for account creation)
+• Child's first name, selected avatar, and class level
+• Learning progress data (lessons completed, scores, stars earned)
+• App usage data (lessons accessed, time spent, features used)
+• Device information (browser type, platform)
+• Feedback and support requests submitted through the app"},
+          {t:"2. How We Use Your Information", b:"We use collected information to:
+• Provide personalised learning experiences for your child
+• Track progress and award XP, coins, and achievements
+• Generate parent dashboard reports
+• Improve app features and content quality
+• Send important account notifications (if opted in)
+• Analyse usage patterns to enhance the learning experience"},
+          {t:"3. Data Storage & Security", b:"All data is stored securely using Supabase (PostgreSQL) with industry-standard encryption. We implement row-level security policies to ensure users can only access their own data. Data is stored on servers compliant with GDPR and Indian IT Act 2000 standards."},
+          {t:"4. Children's Privacy (COPPA/DPDP Compliance)", b:"MathMagic is designed for children aged 5-11. We comply with the Children's Online Privacy Protection Act (COPPA) and India's Digital Personal Data Protection Act (DPDP) 2023:
+• A parent or guardian must create the account
+• We never collect more information than necessary
+• Children's data is never sold to third parties
+• Parents can request deletion of their child's data at any time
+• No behavioural advertising is shown to children"},
+          {t:"5. Data Sharing", b:"We do not sell, trade, or share your personal information with third parties except:
+• Service providers necessary to operate the app (Supabase for database hosting)
+• When required by law or to protect our legal rights
+• With your explicit consent
+
+We never share children's data with advertisers."},
+          {t:"6. Cookies & Local Storage", b:"We use browser localStorage to store:
+• Daily challenge completion status
+• App preferences
+• Session data
+
+No third-party tracking cookies are used."},
+          {t:"7. Data Retention", b:"We retain account data as long as your account is active. You may request deletion of your account and all associated data by contacting us. Progress data is deleted within 30 days of account deletion."},
+          {t:"8. Your Rights", b:"You have the right to:
+• Access your personal data
+• Correct inaccurate data
+• Request deletion of your data
+• Object to processing of your data
+• Data portability
+
+To exercise these rights, contact us at: privacy@mathmagicacademy.in"},
+          {t:"9. Changes to This Policy", b:"We may update this Privacy Policy from time to time. We will notify users of significant changes through the app. Continued use of the app after changes constitutes acceptance of the updated policy."},
+          {t:"10. Contact Us", b:"For privacy-related questions or concerns:
+📧 privacy@mathmagicacademy.in
+📞 Support available through the app's SOS/Feedback feature"},
+        ].map(({t,b},i)=>(
+          <div key={i} style={{marginBottom:20}}>
+            <div style={{fontWeight:800,color:"white",fontSize:15,marginBottom:6}}>{t}</div>
+            <div style={{color:"#bbb",whiteSpace:"pre-line"}}>{b}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── Games Hub ─────────────────────────────────────────────────────────
 const GAME_LIST = [
   {id:"rocket",  icon:"🚀", title:"Number Rocket",  desc:"Answer before fuel runs out!", color:"#f97316", component: NumberRocket},
@@ -4500,6 +5045,7 @@ function GamesHub({ child, onBack }) {
 // ─────────────────────────────────────────────────────────────────────
 export default function App() {
   const [screen,         setScreen]         = useState("splash");
+  const [prevScreen,     setPrevScreen]     = useState("welcome");
   const [user,           setUser]           = useState(null);
   const [child,          setChild]          = useState(null);
   const [world,          setWorld]          = useState(null);
@@ -4536,6 +5082,7 @@ export default function App() {
   const logout = async () => {
     await db.signOut();
     setUser(null); setChild(null); setWorld(null); setLesson(null);
+    db.track("logout", child?.id, user?.id, {});
     setScreen("welcome");
   };
 
@@ -4551,17 +5098,18 @@ export default function App() {
   }, [child]);
 
   if (screen === "splash")   return <><GlobalStyles/><Splash   onDone={() => setScreen("welcome")}/></>;
-  if (screen === "welcome")  return <><GlobalStyles/><Welcome  onRegister={() => setScreen("register")} onLogin={() => setScreen("login")}/></>;
+  if (screen === "welcome")  return <><GlobalStyles/><Welcome  onRegister={() => setScreen("register")} onLogin={() => setScreen("login")} onPrivacy={() => { setPrevScreen("welcome"); setScreen("privacy"); }}/></>;
   if (screen === "register") return <><GlobalStyles/><Register onBack={() => setScreen("welcome")} onDone={({ user: u, child: c }) => { setUser(u); setChild(c); setScreen("home"); }}/></>;
   if (screen === "login")    return <><GlobalStyles/><Login    onBack={() => setScreen("welcome")} onDone={({ user: u, child: c }) => { setUser(u); setChild(c); setScreen("home"); }}/></>;
-  if (screen === "home")     return <><GlobalStyles/><Home     child={child} onWorld={goWorld} onAbacus={() => setScreen("abacus")} onGames={() => setScreen("games")} onOlympiad={() => setScreen("olympiad")} onParent={() => setScreen("parent")} onLogout={logout} onFeedback={goFeedback}/><FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
+  if (screen === "home")     return <><GlobalStyles/><Home     child={child} onWorld={goWorld} onAbacus={() => setScreen("abacus")} onGames={() => setScreen("games")} onOlympiad={() => setScreen("olympiad")} onParent={() => setScreen("parent")} onRate={() => setShowRating(true)} onLogout={logout} onFeedback={goFeedback}/><FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
   if (screen === "paywall")  return <><GlobalStyles/><Paywall  world={world} child={child} onBack={() => setScreen("home")} onUnlock={handleUnlock}/></>;
   if (screen === "lessons")  return <><GlobalStyles/><LessonMap world={world} child={child} onBack={() => setScreen("home")} onLesson={l => { setLesson(l); setScreen("game"); }}/></>;
-  if (screen === "game")     return <><GlobalStyles/><Game     lesson={lesson} world={world} child={child} setChild={setChild} onBack={() => setScreen("lessons")} onDone={() => setScreen("lessons")} onNextSet={(si) => setLesson(l => ({...l, setIndex:si}))}/>{ showSOS && <SOSButton onClick={() => goFeedback("bug")}/>}<FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
+  if (screen === "game")     return <><GlobalStyles/><Game     lesson={lesson} world={world} child={child} setChild={setChild} onBack={() => { db.track("lesson_exit",child?.id,null,{lesson_id:lesson?.id,set_index:lesson?.setIndex}); setScreen("lessons"); }} onDone={() => { db.track("lesson_complete",child?.id,null,{lesson_id:lesson?.id,set_index:lesson?.setIndex}); setScreen("lessons"); }} onNextSet={(si) => { db.track("set_advance",child?.id,null,{lesson_id:lesson?.id,set_index:si}); setLesson(l => ({...l, setIndex:si})); }}/>{ showSOS && <SOSButton onClick={() => goFeedback("bug")}/>}<FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
   if (screen === "abacus")   return <><GlobalStyles/><Abacus   onBack={() => setScreen("home")} child={child}/>{ showSOS && <SOSButton onClick={() => goFeedback("bug")}/>}<FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
   if (screen === "olympiad") return <><GlobalStyles/><Olympiad child={child} setChild={setChild} onBack={() => setScreen("home")}/>{ showSOS && <SOSButton onClick={() => goFeedback("bug")}/>}<FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
   if (screen === "parent")   return <><GlobalStyles/><ParentDash child={child} onBack={() => setScreen("home")}/></>;
   if (screen === "feedback") return <><GlobalStyles/><FeedbackScreen child={child} currentScreen={prevScreen} prefillCategory={feedbackPrefill} onBack={() => setScreen(prevScreen)}/></>;
   if (screen === "games")    return <><GlobalStyles/><GamesHub child={child} onBack={() => setScreen("home")}/></>;
+  if (screen === "privacy")  return <><GlobalStyles/><PrivacyPolicy onBack={() => setScreen(prevScreen||"welcome")}/></>;
   return <><GlobalStyles/></>;
 }
