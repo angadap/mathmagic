@@ -4932,56 +4932,20 @@ function PrivacyPolicy({ onBack }) {
         <div style={{color:C.dim,fontSize:12,marginBottom:24}}>Last updated: {new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"})}</div>
 
         {[
-          {t:"1. Information We Collect", b:"We collect the following information to provide and improve our service:
-• Parent/Guardian email address (for account creation)
-• Child's first name, selected avatar, and class level
-• Learning progress data (lessons completed, scores, stars earned)
-• App usage data (lessons accessed, time spent, features used)
-• Device information (browser type, platform)
-• Feedback and support requests submitted through the app"},
-          {t:"2. How We Use Your Information", b:"We use collected information to:
-• Provide personalised learning experiences for your child
-• Track progress and award XP, coins, and achievements
-• Generate parent dashboard reports
-• Improve app features and content quality
-• Send important account notifications (if opted in)
-• Analyse usage patterns to enhance the learning experience"},
-          {t:"3. Data Storage & Security", b:"All data is stored securely using Supabase (PostgreSQL) with industry-standard encryption. We implement row-level security policies to ensure users can only access their own data. Data is stored on servers compliant with GDPR and Indian IT Act 2000 standards."},
-          {t:"4. Children's Privacy (COPPA/DPDP Compliance)", b:"MathMagic is designed for children aged 5-11. We comply with the Children's Online Privacy Protection Act (COPPA) and India's Digital Personal Data Protection Act (DPDP) 2023:
-• A parent or guardian must create the account
-• We never collect more information than necessary
-• Children's data is never sold to third parties
-• Parents can request deletion of their child's data at any time
-• No behavioural advertising is shown to children"},
-          {t:"5. Data Sharing", b:"We do not sell, trade, or share your personal information with third parties except:
-• Service providers necessary to operate the app (Supabase for database hosting)
-• When required by law or to protect our legal rights
-• With your explicit consent
-
-We never share children's data with advertisers."},
-          {t:"6. Cookies & Local Storage", b:"We use browser localStorage to store:
-• Daily challenge completion status
-• App preferences
-• Session data
-
-No third-party tracking cookies are used."},
-          {t:"7. Data Retention", b:"We retain account data as long as your account is active. You may request deletion of your account and all associated data by contacting us. Progress data is deleted within 30 days of account deletion."},
-          {t:"8. Your Rights", b:"You have the right to:
-• Access your personal data
-• Correct inaccurate data
-• Request deletion of your data
-• Object to processing of your data
-• Data portability
-
-To exercise these rights, contact us at: privacy@mathmagicacademy.in"},
-          {t:"9. Changes to This Policy", b:"We may update this Privacy Policy from time to time. We will notify users of significant changes through the app. Continued use of the app after changes constitutes acceptance of the updated policy."},
-          {t:"10. Contact Us", b:"For privacy-related questions or concerns:
-📧 privacy@mathmagicacademy.in
-📞 Support available through the app's SOS/Feedback feature"},
+          {t:"1. Information We Collect",   b:["We collect information to provide our service:", "• Parent/Guardian email address (for account creation)", "• Child name, avatar, and class level", "• Learning progress data (lessons, scores, stars)", "• App usage data (features used, time spent)", "• Device information (browser, platform)"]},
+          {t:"2. How We Use Your Information", b:["We use collected information to:", "• Provide personalised learning experiences", "• Track progress and award XP, coins, achievements", "• Generate parent dashboard reports", "• Improve app features and content quality", "• Analyse usage patterns to enhance learning"]},
+          {t:"3. Data Storage & Security",  b:["All data is stored securely using Supabase (PostgreSQL) with industry-standard encryption.", "We implement row-level security to ensure users only access their own data.", "Data is stored on servers compliant with GDPR and Indian IT Act 2000."]},
+          {t:"4. Children Privacy (COPPA/DPDP)", b:["MathMagic is designed for children aged 5-11.", "• A parent or guardian must create the account", "• We never collect more information than necessary", "• Children data is never sold to third parties", "• Parents can request deletion of their child data at any time", "• No behavioural advertising is shown to children"]},
+          {t:"5. Data Sharing",             b:["We do not sell, trade, or share your personal information with third parties except:", "• Service providers necessary to operate the app", "• When required by law or to protect our legal rights", "• With your explicit consent", "We never share children data with advertisers."]},
+          {t:"6. Cookies & Local Storage",  b:["We use browser localStorage to store:", "• Daily challenge completion status", "• App preferences and session data", "No third-party tracking cookies are used."]},
+          {t:"7. Data Retention",           b:["We retain account data as long as your account is active.", "You may request deletion of your account and all associated data by contacting us.", "Progress data is deleted within 30 days of account deletion."]},
+          {t:"8. Your Rights",              b:["You have the right to:", "• Access your personal data", "• Correct inaccurate data", "• Request deletion of your data", "• Object to processing of your data", "• Data portability", "Contact us: privacy@mathmagicacademy.in"]},
+          {t:"9. Changes to This Policy",   b:["We may update this Privacy Policy from time to time.", "We will notify users of significant changes through the app.", "Continued use constitutes acceptance of the updated policy."]},
+          {t:"10. Contact Us",              b:["For privacy-related questions:", "Email: privacy@mathmagicacademy.in", "Support: available through the SOS/Feedback feature in the app"]},
         ].map(({t,b},i)=>(
           <div key={i} style={{marginBottom:20}}>
             <div style={{fontWeight:800,color:"white",fontSize:15,marginBottom:6}}>{t}</div>
-            <div style={{color:"#bbb",whiteSpace:"pre-line"}}>{b}</div>
+            <div style={{color:"#bbb"}}>{b.map((line,j)=><div key={j} style={{marginBottom:2}}>{line}</div>)}</div>
           </div>
         ))}
       </div>
@@ -5045,7 +5009,6 @@ function GamesHub({ child, onBack }) {
 // ─────────────────────────────────────────────────────────────────────
 export default function App() {
   const [screen,         setScreen]         = useState("splash");
-  const [prevScreen,     setPrevScreen]     = useState("welcome");
   const [user,           setUser]           = useState(null);
   const [child,          setChild]          = useState(null);
   const [world,          setWorld]          = useState(null);
