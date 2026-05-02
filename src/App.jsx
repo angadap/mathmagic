@@ -1,5 +1,35 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 
+// ── Error Boundary — graceful crash handling ──────────────────────
+export class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { hasError:false, error:null }; }
+  static getDerivedStateFromError(error) { return { hasError:true, error }; }
+  componentDidCatch(error, info) {
+    console.error("[ErrorBoundary]", error, info);
+    try {
+      const sb = window.__mmSb;
+      if (sb) sb.from("analytics").insert({
+        event_type:"app_crash", event_data:{ message:error?.message, stack:error?.stack?.slice(0,300) },
+        created_at:new Date().toISOString()
+      }).catch(()=>{});
+    } catch(e) {}
+  }
+  render() {
+    if (!this.state.hasError) return this.props.children;
+    return (
+      <div style={{minHeight:"100vh",background:"#04040f",display:"flex",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"'Nunito',sans-serif"}}>
+        <div style={{background:"#0d0d2b",border:"1px solid #ef444433",borderRadius:20,padding:28,maxWidth:360,width:"100%",textAlign:"center"}}>
+          <div style={{fontSize:52,marginBottom:12}}>🚀💥</div>
+          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:14,color:"#00f5ff",marginBottom:8}}>HOUSTON, WE HAVE A PROBLEM!</div>
+          <div style={{color:"#6b7db3",fontSize:13,lineHeight:1.7,marginBottom:20}}>The app encountered an unexpected error. Your progress is saved. Please refresh to continue your mission!</div>
+          <button onClick={()=>window.location.reload()} style={{background:"linear-gradient(135deg,#00f5ff,#a855f7)",border:"none",borderRadius:12,padding:"12px 24px",color:"white",fontFamily:"'Orbitron',sans-serif",fontSize:12,cursor:"pointer",fontWeight:700}}>🔄 RELAUNCH APP</button>
+          {process.env.NODE_ENV==="development" && <pre style={{marginTop:14,color:"#f87171",fontSize:9,textAlign:"left",overflow:"auto",maxHeight:100}}>{this.state.error?.message}</pre>}
+        </div>
+      </div>
+    );
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────
 // THEME
 // ─────────────────────────────────────────────────────────────────────
@@ -34,6 +64,17 @@ function GlobalStyles() {
         @keyframes slideUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
         @keyframes popIn{0%{transform:scale(0.7);opacity:0}70%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
         @keyframes shakeX{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+        @keyframes correctFlash{0%{background:transparent}30%{background:#22c55e33}100%{background:transparent}}
+        @keyframes wrongShake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-10px)}40%,80%{transform:translateX(10px)}}
+        @keyframes coinBounce{0%{transform:translateY(0)scale(1)}40%{transform:translateY(-20px)scale(1.3)}100%{transform:translateY(0)scale(1)opacity(0)}}
+        @keyframes starPop{0%{transform:scale(0)rotate(-30deg)}60%{transform:scale(1.3)rotate(5deg)}100%{transform:scale(1)rotate(0deg)}}
+        @keyframes xpRise{0%{transform:translateY(0);opacity:1}100%{transform:translateY(-40px);opacity:0}}
+        @keyframes ripple{0%{transform:scale(0.8);opacity:1}100%{transform:scale(2);opacity:0}}
+        @keyframes glow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.4)}}
+        @keyframes loadBar{from{width:0}to{width:100%}}
+        @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+        .mm-btn-press:active{transform:scale(0.95)!important;transition:transform 0.08s!important}
+        .mm-haptic:active{transform:scale(0.97)}
         @keyframes spinR{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
         @keyframes bFloat{0%,100%{transform:translateY(0)scale(1)}50%{transform:translateY(-10px)scale(1.05)}}
         @keyframes bossW{0%,100%{transform:rotate(0)}25%{transform:rotate(-5deg)}75%{transform:rotate(5deg)}}
@@ -69,6 +110,117 @@ const ADMIN_CHILD    = {
   streak_days:365, is_premium:true, last_active:new Date().toISOString(),
 };
 const ADMIN_USER = { id:"admin", email: ADMIN_EMAIL };
+
+// ─────────────────────────────────────────────────────────────────
+// SOUND ENGINE — Web Audio API (zero bandwidth, works offline)
+// Battery-aware: respects prefers-reduced-motion and low power
+// ─────────────────────────────────────────────────────────────────
+const SFX = (() => {
+  let ctx = null;
+  let muted = localStorage.getItem("mm_muted") === "1";
+
+  const getCtx = () => {
+    if (!ctx) {
+      try { ctx = new (window.AudioContext || window.webkitAudioContext)(); }
+      catch(e) { return null; }
+    }
+    if (ctx.state === "suspended") ctx.resume();
+    return ctx;
+  };
+
+  const play = (freq, type, duration, vol=0.3, decay=0.8) => {
+    if (muted) return;
+    // Skip sounds if battery is low (Battery API)
+    const ac = getCtx();
+    if (!ac) return;
+    try {
+      const osc  = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.connect(gain);
+      gain.connect(ac.destination);
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, ac.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(freq * decay, ac.currentTime + duration);
+      gain.gain.setValueAtTime(vol, ac.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + duration);
+      osc.start(ac.currentTime);
+      osc.stop(ac.currentTime + duration);
+    } catch(e) {}
+  };
+
+  const chord = (freqs, type, dur, vol) => freqs.forEach((f,i) => setTimeout(()=>play(f,type,dur,vol), i*80));
+
+  return {
+    get muted() { return muted; },
+    toggleMute() { muted = !muted; localStorage.setItem("mm_muted", muted?"1":"0"); return muted; },
+
+    // UI interactions
+    tap()        { play(600, "sine",    0.08, 0.15); },
+    back()       { play(300, "sine",    0.12, 0.15); },
+    select()     { play(500, "triangle",0.10, 0.20); },
+
+    // Quiz events
+    correct()    { chord([523,659,784], "sine", 0.3, 0.25); },
+    wrong()      { play(180, "sawtooth", 0.25, 0.20, 0.5); },
+    hint()       { play(440, "sine",    0.15, 0.18); },
+
+    // Game events
+    bossHit()    { play(120, "square",  0.2,  0.30, 0.3); },
+    bossDefeat() { chord([784,988,1047,1319], "sine", 0.6, 0.30); },
+    bubblePop()  { play(800, "sine",    0.08, 0.20, 0.5); },
+    timerTick()  { play(1000,"square",  0.05, 0.10); },
+    timerWarn()  { play(440, "square",  0.10, 0.25); },
+
+    // Progress / rewards
+    levelUp()    { chord([523,659,784,1047], "sine", 0.5, 0.35); },
+    xpGain()     { play(880, "sine",    0.15, 0.20, 1.2); },
+    coinGain()   { chord([1047,1319], "triangle", 0.25, 0.25); },
+    starEarn()   { chord([659,784,988,1319], "sine", 0.7, 0.30); },
+    unlock()     { chord([392,494,587,784], "sine", 0.5, 0.28); },
+
+    // Navigation
+    screenIn()   { play(440, "sine",    0.12, 0.12, 1.1); },
+    splash()     { chord([262,330,392,523], "sine", 0.8, 0.20); },
+
+    // Daily / special
+    dailyDone()  { chord([784,988,1175,1568], "sine", 0.8, 0.30); },
+    puzzleSolve(){ chord([523,784,1047,1319,1568], "sine", 1.0, 0.28); },
+    ratingOpen() { chord([523,659,784], "triangle", 0.4, 0.18); },
+  };
+})();
+
+// Global mute toggle button component
+function MuteBtn() {
+  const [muted, setMuted] = React.useState(SFX.muted);
+  return (
+    <button
+      onClick={() => { setMuted(SFX.toggleMute()); }}
+      title={muted ? "Unmute" : "Mute"}
+      style={{ background:"none", border:"none", cursor:"pointer", fontSize:18,
+               color: muted ? C.dim : C.cyan, padding:"4px 6px", lineHeight:1,
+               transition:"color 0.2s" }}>
+      {muted ? "🔇" : "🔊"}
+    </button>
+  );
+}
+
+// ── Offline Banner ───────────────────────────────────────────────
+function OfflineBanner() {
+  const [offline, setOffline] = useState(!navigator.onLine);
+  useEffect(() => {
+    const on  = () => setOffline(false);
+    const off = () => setOffline(true);
+    document.addEventListener("mm_online",  on);
+    document.addEventListener("mm_offline", off);
+    return () => { document.removeEventListener("mm_online",on); document.removeEventListener("mm_offline",off); };
+  }, []);
+  if (!offline) return null;
+  return (
+    <div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#f97316",color:"white",textAlign:"center",padding:"6px 12px",fontSize:12,fontFamily:"'Orbitron',sans-serif",letterSpacing:1}}>
+      📡 NO CONNECTION — App works offline, progress saves when back online
+    </div>
+  );
+}
 
 // DB logging — console only in production
 function dbLog(level, msg, detail="") {
@@ -239,6 +391,31 @@ async function loadSb() {
 const MEM = { users:[], children:[], progress:[], n:1 };
 // Session ID for analytics
 if (!window.__sessionId) window.__sessionId = "s_" + Date.now() + "_" + Math.random().toString(36).slice(2,7);
+
+// ── Network & Battery awareness ──────────────────────────────────
+window.__isOnline = navigator.onLine;
+window.addEventListener("online",  () => { window.__isOnline = true;  document.dispatchEvent(new Event("mm_online")); });
+window.addEventListener("offline", () => { window.__isOnline = false; document.dispatchEvent(new Event("mm_offline")); });
+
+// Reduce animations on low-end devices / power-save mode
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+if (reduceMotion) {
+  const s = document.createElement("style");
+  s.textContent = "*, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }";
+  document.head.appendChild(s);
+}
+
+// Mute sound on battery saver (Battery Status API where available)
+if ("getBattery" in navigator) {
+  navigator.getBattery().then(bat => {
+    if (bat.level < 0.15 && !bat.charging) {
+      if (!SFX.muted) SFX.toggleMute();
+    }
+    bat.addEventListener("levelchange", () => {
+      if (bat.level < 0.10 && !bat.charging && !SFX.muted) SFX.toggleMute();
+    });
+  }).catch(()=>{});
+}"s_" + Date.now() + "_" + Math.random().toString(36).slice(2,7);
 
 const db = {
   _sb: undefined,
@@ -2093,9 +2270,11 @@ function Starfield({ n = 40 }) {
 
 // Primary button
 function Btn({ children, onClick, color = C.cyan, disabled, loading, style: sx = {} }) {
+  const handleClick = () => { SFX.tap(); if(onClick) onClick(); };
   return (
     <button
-      onClick={!disabled && !loading ? onClick : undefined}
+      onClick={!disabled && !loading ? handleClick : undefined}
+      className="mm-btn-press"
       style={{
         width:"100%", padding:"13px 18px",
         border:`2px solid ${disabled || loading ? "#1a1a35" : color}`,
@@ -2250,7 +2429,7 @@ function PinPad({ pin, setPin, error, shake, onComplete }) {
 // Back button (reusable)
 function BackBtn({ onClick, color = C.purple }) {
   return (
-    <button onClick={onClick} style={{
+    <button onClick={()=>{SFX.back();if(onClick)onClick();}} style={{
       background:`${color}18`, border:`1px solid ${color}44`,
       borderRadius:10, width:36, height:36, color,
       fontSize:18, cursor:"pointer",
@@ -2329,6 +2508,7 @@ function AbacusRod({ count, setCount, color, label }) {
 function Splash({ onDone }) {
   const [s, setS] = useState(0);
   useEffect(() => {
+    setTimeout(() => SFX.splash(), 400);
     // Warm up Supabase connection during splash so first game open is instant
     db.getSb().catch(() => {});
     const t = [
@@ -2775,7 +2955,7 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
     if (localStorage.getItem("mm_rated")) return;
     const sessions = parseInt(localStorage.getItem("mm_sessions")||"0") + 1;
     localStorage.setItem("mm_sessions", String(sessions));
-    if (sessions === 3) setTimeout(() => setShowRating(true), 5000);
+    if (sessions === 3) setTimeout(() => { setShowRating(true); SFX.ratingOpen(); }, 5000);
     db.track("app_open", child.id, null, { session: sessions, class_num: child.class_num });
   }, [child.id, child.class_num]);
   useEffect(() => {
@@ -2815,7 +2995,7 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
               <div style={{ display:"flex", alignItems:"center", gap:3 }}><span style={{ fontSize:14 }}>🔥</span><span style={{ fontFamily:"'Orbitron',sans-serif", fontSize:14, color:C.orange }}>{child.streak_days||0}</span></div>
               <div style={{ fontSize:8, color:C.dim, fontFamily:"'Orbitron',sans-serif" }}>STREAK</div>
             </div>
-            <button onClick={onLogout} style={{ background:`${C.pink}14`, border:`1px solid ${C.pink}44`, borderRadius:10, padding:"5px 9px", color:C.pink, fontSize:10, cursor:"pointer", fontFamily:"'Orbitron',sans-serif" }}>EXIT</button>
+            <MuteBtn/><button onClick={onLogout} style={{ background:`${C.pink}14`, border:`1px solid ${C.pink}44`, borderRadius:10, padding:"5px 9px", color:C.pink, fontSize:10, cursor:"pointer", fontFamily:"'Orbitron',sans-serif" }}>EXIT</button>
           </div>
         </div>
         <XPBar xp={child.xp||0} level={child.level||1}/>
@@ -3005,7 +3185,7 @@ function LessonMap({ world, child, onBack, onLesson }) {
                     const sDone   = isSetDone(lesson.id, si);
                     const sUnlock = isSetUnlocked(lesson.id, si);
                     return (
-                      <button key={si} onClick={() => sUnlock && onLesson({...lesson, setIndex:si})}
+                      <button key={si} onClick={() => { if(sUnlock){ SFX.unlock(); onLesson({...lesson, setIndex:si}); } else SFX.wrong(); }}
                         style={{ background: sDone ? `${world.color}22` : sUnlock ? C.card2 : "#060614", border:`1.5px solid ${sDone ? world.color : sUnlock ? world.color+"33" : "#0c0c20"}`, borderRadius:11, padding:"8px 5px", cursor: sUnlock ? "pointer" : "not-allowed", textAlign:"center", opacity: sUnlock ? 1 : 0.4 }}>
                         <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:9, color: sDone ? world.color : sUnlock ? "#aaa" : "#333" }}>SET {si+1}</div>
                         <div style={{ fontSize:14, marginTop:2 }}>{sDone ? "✅" : sUnlock ? "▶" : "🔒"}</div>
@@ -3093,6 +3273,7 @@ function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
   const finalize = useCallback(() => {
     const fs      = scoreRef.current;
     const fst     = fs >= 16 ? 3 : fs >= 12 ? 2 : fs >= 6 ? 1 : 0;
+    setTimeout(()=>{ if(fst>=3) SFX.starEarn(); else if(fst>0) SFX.xpGain(); }, 500);
     const xpEarned = fs * 20 + (mode === "boss" ? 50 : 0);
     const totalQ  = questions ? questions.length : 20;
 
@@ -3105,6 +3286,7 @@ function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
     // Save to DB in background (non-blocking)
     db.saveProgress(child.id, lesson.id + "_s" + setIndex, { correct:fs, total:totalQ, stars:fst, xpEarned });
     db.addXP(child.id, xpEarned, fst * 10);
+    if(xpEarned>0) setTimeout(()=>SFX.xpGain(), 300);
   }, [child.id, lesson.id, questions, mode, setChild, setIndex]);
   useEffect(() => { finalizeRef.current = finalize; }, [finalize]);
 
@@ -3120,11 +3302,12 @@ function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
     const q = questions[qi % questions.length];
     if (!q) return;
     const ok = ansIdx === q.ans;
+    if (ok) SFX.correct(); else SFX.wrong();
     setChosen(ansIdx);
     if (ok) {
       scoreRef.current += 1; setScore(scoreRef.current);
       setBurst(true); setTimeout(() => setBurst(false), 600);
-      if (mode === "boss") { bossHpRef.current = Math.max(0, bossHpRef.current - 20); setBossHp(bossHpRef.current); }
+      if (mode === "boss") { SFX.bossHit(); bossHpRef.current = Math.max(0, bossHpRef.current - 20); setBossHp(bossHpRef.current); }
     } else {
       livesRef.current = Math.max(0, livesRef.current - 1); setLives(livesRef.current);
     }
@@ -3265,7 +3448,7 @@ function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
             let bg    = `radial-gradient(circle at 30% 30%, ${world.color}88, ${world.color}33)`;
             let brd   = `3px solid ${world.color}88`;
             if (chosen !== null) {
-              if (b.id === q.ans)     { bg = `radial-gradient(circle at 30% 30%, ${C.green}88, ${C.green}33)`; brd = `3px solid ${C.green}`; }
+              if (b.id === q.ans)     { SFX.bubblePop(); bg = `radial-gradient(circle at 30% 30%, ${C.green}88, ${C.green}33)`; brd = `3px solid ${C.green}`; }
               else if (b.id === chosen){ bg = `radial-gradient(circle at 30% 30%, ${C.red}88, ${C.red}33)`;   brd = `3px solid ${C.red}`;   }
             }
             return (
@@ -3510,6 +3693,7 @@ function Olympiad({ child, setChild, onBack }) {
   const handlePick = (idx) => {
     if (chosen !== null) return;
     const ok = idx === question.ans;
+    if (ok) SFX.correct(); else SFX.wrong();
     setChosen(idx);
     setResults(r => [...r, ok]);
     if (ok) { scoreRef.current += 1; setScore(scoreRef.current); }
@@ -3741,20 +3925,62 @@ function ParentDash({ child, onBack }) {
           <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:11, color:C.cyan, marginBottom:10 }}>📚 LESSONS</div>
           {myLessons.map(l => {
             // Count completed sets for this lesson
-            const setsDone = Array.from({length:10},(_,i)=>i).filter(si => progress.some(x => x.lesson_id === l.id + "_s" + si)).length;
+            const setsDone = Array.from({length:20},(_,i)=>i).filter(si => progress.some(x => x.lesson_id === l.id + "_s" + si)).length;
             const bestStars = progress.filter(x => x.lesson_id.startsWith(l.id + "_s")).reduce((max,x) => Math.max(max, x.stars_earned||0), 0);
             return (
               <div key={l.id} style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
                 <span style={{ fontSize:15 }}>{setsDone > 0 ? "✅" : "⬜"}</span>
                 <span style={{ color: setsDone > 0 ? "white" : "#444", fontSize:12, flex:1 }}>{l.title}</span>
-                <span style={{ color:C.dim, fontSize:10, fontFamily:"'Orbitron',sans-serif" }}>{setsDone}/10</span>
+                <span style={{ color:C.dim, fontSize:10, fontFamily:"'Orbitron',sans-serif" }}>{setsDone}/20</span>
                 <div style={{ display:"flex", gap:2 }}>{[1,2,3].map(s => <span key={s} style={{ fontSize:10, filter: s<=bestStars ? "none" : "grayscale(1) opacity(0.2)" }}>⭐</span>)}</div>
               </div>
             );
           })}
         </Card>
+        <AnalyticsCard childId={child.id} />
       </div>
     </div>
+  );
+}
+
+function AnalyticsCard({ childId }) {
+  const [data, setData] = useState(null);
+  useEffect(() => {
+    const sb = window.__mmSb;
+    if (!sb) return;
+    sb.from("analytics").select("event_type,created_at")
+      .eq("child_id", childId).order("created_at",{ascending:false}).limit(200)
+      .then(({data:evts}) => {
+        if (!evts) return;
+        const byType = {};
+        evts.forEach(e => { byType[e.event_type]=(byType[e.event_type]||0)+1; });
+        const today = new Date().toISOString().slice(0,10);
+        setData({ byType, total:evts.length, todayCount:evts.filter(e=>e.created_at?.slice(0,10)===today).length });
+      }).catch(()=>{});
+  }, [childId]);
+  if (!data) return null;
+  return (
+    <Card color={C.purple} style={{ marginBottom:12 }}>
+      <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:11, color:C.purple, marginBottom:10 }}>📊 USAGE ANALYTICS</div>
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+        {[
+          {icon:"📱",label:"App Opens",   val:data.byType["app_open"]||0},
+          {icon:"📅",label:"Today",       val:data.todayCount},
+          {icon:"✅",label:"Sets Done",   val:data.byType["lesson_complete"]||0},
+          {icon:"🌟",label:"Challenges",  val:data.byType["daily_challenge_complete"]||0},
+          {icon:"🧩",label:"Puzzles",     val:data.byType["daily_puzzle_complete"]||0},
+          {icon:"📊",label:"Total Events",val:data.total},
+        ].map(({icon,label,val})=>(
+          <div key={label} style={{background:"rgba(255,255,255,0.04)",borderRadius:10,padding:"8px 10px",display:"flex",gap:8,alignItems:"center"}}>
+            <span style={{fontSize:18}}>{icon}</span>
+            <div>
+              <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:14,color:"white"}}>{val}</div>
+              <div style={{color:C.dim,fontSize:9}}>{label}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </Card>
   );
 }
 
@@ -4311,6 +4537,7 @@ function MathMaze({ onBack, child }) {
     if (chosen !== null) return;
     setChosen(i);
     const ok = i === curQ.ans;
+    if (ok) SFX.correct(); else SFX.wrong();
     if (ok) {
       setScore(s=>s+1);
       setTimeout(() => {
@@ -4418,7 +4645,7 @@ function SpeedMath({ onBack, child }) {
 
   const pick = (i) => {
     const ok = i === ans;
-    if(ok){scoreRef.current++;setScore(scoreRef.current);setFlash("correct");}
+    if(ok){SFX.correct();scoreRef.current++;setScore(scoreRef.current);setFlash("correct");}
     else{wrongRef.current++;setWrong(wrongRef.current);setFlash("wrong");}
     setTimeout(()=>{setFlash(null);nextQ();},300);
   };
@@ -4644,6 +4871,7 @@ function DailyQuiz({ child, onClose }) {
     else {
       await db.completeDailyChallenge(child.id, challenge.id, true);
       await db.addXP(child.id, challenge.xp_reward||50, challenge.coin_reward||10);
+      SFX.dailyDone();
       db.track("daily_challenge_complete", child.id, null, { correct:true });
       const todayKey2 = new Date().toISOString().slice(0,10);
       localStorage.setItem(`dq_${child.id}_${todayKey2}`, "1");
@@ -4752,6 +4980,7 @@ function DailyPuzzle({ child, onClose }) {
     if (!answer.trim() || !puzzle) return;
     const correct = answer.trim().toLowerCase() === puzzle.answer.toLowerCase();
     setResult(correct ? "correct" : "wrong");
+    if (correct) SFX.puzzleSolve();
     await db.completePuzzle(child.id, puzzle.id, answer.trim(), correct);
     if (correct) {
       await db.addXP(child.id, puzzle.xp_reward||75, puzzle.coin_reward||15);
@@ -5074,5 +5303,5 @@ export default function App() {
   if (screen === "feedback") return <><GlobalStyles/><FeedbackScreen child={child} currentScreen={prevScreen} prefillCategory={feedbackPrefill} onBack={() => setScreen(prevScreen)}/></>;
   if (screen === "games")    return <><GlobalStyles/><GamesHub child={child} onBack={() => setScreen("home")}/></>;
   if (screen === "privacy")  return <><GlobalStyles/><PrivacyPolicy onBack={() => setScreen(prevScreen||"welcome")}/></>;
-  return <><GlobalStyles/></>;
+  return <><GlobalStyles/><OfflineBanner/></>;
 }
