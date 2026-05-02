@@ -2,13 +2,45 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MathMagic Space Academy</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>MathMagic Space Academy — Fun Maths for Class 1-5</title>
+    <meta name="description" content="MathMagic Space Academy is a fun, gamified maths learning app for CBSE and ICSE students from Class 1 to 5. Practice maths with space-themed games, quizzes, puzzles and daily challenges." />
+    <meta name="keywords" content="maths app for kids, CBSE maths, ICSE maths, class 1 2 3 4 5 maths, kids learning app India" />
+    <meta name="author" content="MathMagic Space Academy" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://mathmagic-virid.vercel.app/" />
+    <meta property="og:title" content="MathMagic Space Academy" />
+    <meta property="og:description" content="Gamified maths practice for Class 1-5. CBSE and ICSE aligned." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://mathmagic-virid.vercel.app/" />
+    <meta name="theme-color" content="#04040f" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="MathMagic" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <link rel="manifest" href="/manifest.json" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://vsfvvzcvhhibepinphtk.supabase.co" />
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"EducationalApplication","name":"MathMagic Space Academy","description":"Gamified maths learning app for CBSE and ICSE students Class 1-5","applicationCategory":"EducationalApplication","operatingSystem":"Web","offers":{"@type":"Offer","price":"0","priceCurrency":"INR"},"inLanguage":"en-IN"}</script>
+    <style>
+      *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+      body{margin:0;background:#04040f;overscroll-behavior:none;-webkit-overflow-scrolling:touch}
+      #root{min-height:100vh}
+      button{touch-action:manipulation}
+    </style>
   </head>
-  <body style="margin:0;background:#04040f">
+  <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(()=>{});
+        });
+      }
+    </script>
   </body>
 </html>
