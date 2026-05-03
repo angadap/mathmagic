@@ -97,19 +97,18 @@ function GlobalStyles() {
 // Supabase Dashboard → Project Settings → API → "anon public" key (starts with eyJ...)
 // Set DEMO_MODE = false once you have the real key and deployed to production
 // ─────────────────────────────────────────────────────────────────────
-const SB_URL      = "https://vsfvvzcvhhibepinphtk.supabase.co";
-const SB_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZzZnZ2emN2aGhpYmVwaW5waHRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MDU2MDIsImV4cCI6MjA5MjA4MTYwMn0.ay6dcbZfDCGCZs5OalDXrESyr-I5K01ztMi08yjNOWQ";
+// Keys from environment variables — never hardcoded in client
+// VITE_ prefix makes them available to browser (these are public-safe)
+const SB_URL      = import.meta.env.VITE_SUPABASE_URL      || "https://vsfvvzcvhhibepinphtk.supabase.co";
+const SB_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
 const DEMO_MODE   = false;
+// All API calls go through our server-side routes — /api/auth and /api/db
+const API_BASE    = "";  // relative URL — works on any domain
 
 // ── Admin credentials (change before production) ─────────────────────
-const ADMIN_EMAIL    = "admin";
-const ADMIN_PASSWORD = "admin";
-const ADMIN_CHILD    = {
-  id:"admin-001", parent_id:"admin", name:"Admin 🛸", avatar:"🛸",
-  class_num:5, pin_hash:"0000", xp:99999, level:99, coins:99999,
-  streak_days:365, is_premium:true, last_active:new Date().toISOString(),
-};
-const ADMIN_USER = { id:"admin", email: ADMIN_EMAIL };
+// Admin credentials managed server-side only
+const ADMIN_EMAIL = "";
+const ADMIN_PASSWORD = "";
 
 // ─────────────────────────────────────────────────────────────────
 // SOUND ENGINE — Web Audio API (zero bandwidth, works offline)
@@ -297,78 +296,93 @@ const LESSONS = {
   ],
 };
 
-// ── Direct Supabase REST client (works in any real browser) ─────────
+// ── Secure API Client — all auth/DB calls go through /api/* routes ──
+// The Supabase service key NEVER reaches the browser
+// JWT token stored in memory only (not localStorage)
 const sbRest = {
   _token: null,
-  _base: SB_URL + "/rest/v1",
-  _auth: SB_URL + "/auth/v1",
 
-  _h(extra={}) {
-    return { "apikey":SB_ANON_KEY, "Authorization":`Bearer ${this._token||SB_ANON_KEY}`,
-             "Content-Type":"application/json", ...extra };
+  // Call our Vercel serverless functions
+  async _api(route, body) {
+    const headers = { "Content-Type": "application/json" };
+    if (this._token) headers["Authorization"] = `Bearer ${this._token}`;
+    try {
+      const res = await fetch(`/api/${route}`, { method:"POST", headers, body:JSON.stringify(body) });
+      const data = await res.json();
+      if (res.status === 429) {
+        dbLog("error", "Rate limit hit", data.error);
+        return { data:null, error:{ message:data.error } };
+      }
+      if (!res.ok) return { data:null, error:{ message:data.error||"Request failed" } };
+      return { data, error:null };
+    } catch(e) {
+      dbLog("error", "API call failed", e.message);
+      return { data:null, error:{ message:e.message } };
+    }
   },
 
+  // ── Auth (server-side, rate-limited) ──────────────────────────
   async signUp(email, password) {
-    const r = await fetch(`${this._auth}/signup`, { method:"POST", headers:this._h(), body:JSON.stringify({email,password}) });
-    const d = await r.json();
-    if (!r.ok) return { data:null, error:{ message:d.msg||d.error_description||d.message||JSON.stringify(d) } };
-    this._token = d.access_token || d.session?.access_token || null;
-    return { data:{ user:{ id:d.user?.id, email } }, error:null };
+    const { data, error } = await this._api("auth", { action:"signup", email, password });
+    if (error) return { data:null, error };
+    if (data.access_token) this._token = data.access_token;
+    return { data:{ user: data.user }, error:null };
   },
 
   async signIn(email, password) {
-    const r = await fetch(`${this._auth}/token?grant_type=password`, { method:"POST", headers:this._h(), body:JSON.stringify({email,password}) });
-    const d = await r.json();
-    if (!r.ok) return { data:null, error:{ message:d.msg||d.error_description||d.message||"Invalid credentials" } };
-    this._token = d.access_token || null;
-    return { data:{ user:{ id:d.user?.id, email } }, error:null };
+    const { data, error } = await this._api("auth", { action:"signin", email, password });
+    if (error) return { data:null, error };
+    if (data.access_token) this._token = data.access_token;
+    return { data:{ user: data.user }, error:null };
   },
 
+  async signOut() {
+    await this._api("auth", { action:"signout" });
+    this._token = null;
+    return { error:null };
+  },
+
+  // ── DB operations (server-side, authenticated) ─────────────────
   async insert(table, row) {
-    const r = await fetch(`${this._base}/${table}`, { method:"POST", headers:this._h({"Prefer":"return=representation"}), body:JSON.stringify(row) });
-    const txt = await r.text();
-    if (!r.ok) { dbLog("error",`insert ${table}`,`${r.status} ${txt.slice(0,120)}`); return { data:null, error:{ message:txt } }; }
-    const rows = JSON.parse(txt);
-    return { data:Array.isArray(rows)?rows[0]:rows, error:null };
+    const { data, error } = await this._api("db", { action:`add_${table.replace("ren","").replace("ress","ress")}`, ...row });
+    if (error) return { data:null, error };
+    return { data: data?.data || data, error:null };
   },
 
   async upsert(table, row, onConflict) {
-    const r = await fetch(`${this._base}/${table}?on_conflict=${onConflict}`, { method:"POST", headers:this._h({"Prefer":"resolution=merge-duplicates,return=minimal"}), body:JSON.stringify(row) });
-    if (!r.ok) { const t=await r.text(); dbLog("error",`upsert ${table}`,`${r.status} ${t.slice(0,120)}`); return { error:{ message:t } }; }
+    const { data, error } = await this._api("db", { action:`save_${table}`, ...row });
+    if (error) return { error };
     return { error:null };
   },
 
   async update(table, row, col, val) {
-    const r = await fetch(`${this._base}/${table}?${col}=eq.${encodeURIComponent(val)}`, { method:"PATCH", headers:this._h({"Prefer":"return=representation"}), body:JSON.stringify(row) });
-    const txt = await r.text();
-    if (!r.ok) return { data:null, error:{ message:txt } };
-    const rows = JSON.parse(txt);
-    return { data:Array.isArray(rows)?rows[0]:rows, error:null };
+    const { data, error } = await this._api("db", { action:`update_${table}`, ...row, [col]:val });
+    if (error) return { data:null, error };
+    return { data: data?.data || data, error:null };
   },
 
   async select(table, filters={}) {
-    const q = Object.entries(filters).map(([k,v])=>`${k}=eq.${encodeURIComponent(v)}`).join("&");
-    const r = await fetch(`${this._base}/${table}${q?"?"+q:""}`, { headers:this._h({"Accept":"application/json"}) });
-    const txt = await r.text();
-    if (!r.ok) return { data:[], error:{ message:txt } };
-    return { data:JSON.parse(txt), error:null };
+    const action = table === "children" ? "get_children"
+                 : table === "progress" ? "get_progress"
+                 : `select_${table}`;
+    const { data, error } = await this._api("db", { action, ...filters });
+    if (error) return { data:[], error };
+    return { data: data?.data || [], error:null };
   },
 
   async rpc(fn, params) {
-    const r = await fetch(`${this._base}/rpc/${fn}`, { method:"POST", headers:this._h(), body:JSON.stringify(params) });
-    const txt = await r.text();
-    if (!r.ok) { dbLog("error",`rpc ${fn}`,`${r.status} ${txt.slice(0,120)}`); return { data:null, error:{ message:txt } }; }
-    try { return { data:JSON.parse(txt), error:null }; } catch(e) { return { data:txt, error:null }; }
+    const { data, error } = await this._api("db", { action:`rpc_${fn}`, ...params });
+    if (error) return { data:null, error };
+    return { data: data?.data || data, error:null };
   },
 
   async ping() {
     try {
-      const r = await fetch(`${this._base}/children?limit=0`, { headers:this._h() });
-      return r.status < 500;
+      const res = await fetch("/api/db", { method:"POST", headers:{"Content-Type":"application/json"}, body:'{"action":"ping"}' });
+      return res.status < 500;
     } catch(e) { return false; }
-  }
+  },
 };
-
 async function loadSb() {
   if (DEMO_MODE) return null;
   if (window.__mmSbReady !== undefined) return window.__mmSbReady ? sbRest : null;
