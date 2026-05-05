@@ -84,86 +84,6 @@ function GlobalStyles() {
         input::placeholder{color:#2a3a6a}
         ::-webkit-scrollbar{width:3px}
         ::-webkit-scrollbar-thumb{background:#a855f7;border-radius:4px}
-
-        /* ── RESPONSIVE BASE ── */
-        html { font-size: 16px; }
-
-        /* ── MOBILE (≤480px) ── */
-        @media (max-width: 480px) {
-          html { font-size: 14px; }
-          .mm-screen { padding: 14px 12px !important; }
-          .mm-card { padding: 14px 12px !important; border-radius: 14px !important; }
-          .mm-title { font-size: clamp(13px, 4vw, 17px) !important; }
-          .mm-body { font-size: clamp(12px, 3.5vw, 14px) !important; }
-          .mm-btn { padding: 13px 16px !important; font-size: clamp(11px, 3.5vw, 14px) !important; min-height: 44px !important; }
-          .mm-icon-lg { font-size: clamp(36px, 10vw, 52px) !important; }
-          .mm-grid-2 { grid-template-columns: 1fr 1fr !important; }
-        }
-
-        /* ── TABLET PORTRAIT (481px – 768px) ── */
-        @media (min-width: 481px) and (max-width: 768px) {
-          html { font-size: 15px; }
-          .mm-screen { padding: 20px 24px !important; max-width: 560px; margin: 0 auto; }
-          .mm-card { padding: 18px 20px !important; border-radius: 18px !important; }
-          .mm-title { font-size: clamp(15px, 3vw, 20px) !important; }
-          .mm-body { font-size: clamp(13px, 2.5vw, 16px) !important; }
-          .mm-btn { padding: 15px 22px !important; font-size: 14px !important; min-height: 48px !important; }
-          .mm-icon-lg { font-size: clamp(48px, 8vw, 64px) !important; }
-          .mm-grid-2 { grid-template-columns: 1fr 1fr !important; gap: 14px !important; }
-          .mm-grid-3 { grid-template-columns: 1fr 1fr 1fr !important; }
-        }
-
-        /* ── TABLET LANDSCAPE (769px – 1024px) ── */
-        @media (min-width: 769px) and (max-width: 1024px) {
-          html { font-size: 16px; }
-          .mm-screen { padding: 22px 40px !important; max-width: 720px; margin: 0 auto; }
-          .mm-card { padding: 20px 24px !important; border-radius: 20px !important; }
-          .mm-title { font-size: clamp(16px, 2.5vw, 22px) !important; }
-          .mm-body { font-size: clamp(13px, 1.8vw, 16px) !important; }
-          .mm-btn { padding: 16px 28px !important; font-size: 15px !important; min-height: 52px !important; }
-          .mm-icon-lg { font-size: clamp(52px, 7vw, 72px) !important; }
-          .mm-grid-2 { grid-template-columns: 1fr 1fr !important; gap: 16px !important; }
-          .mm-grid-3 { grid-template-columns: 1fr 1fr 1fr !important; gap: 14px !important; }
-          .mm-grid-4 { grid-template-columns: 1fr 1fr 1fr 1fr !important; gap: 12px !important; }
-        }
-
-        /* ── DESKTOP (>1024px) ── */
-        @media (min-width: 1025px) {
-          .mm-screen { max-width: 480px; margin: 0 auto; }
-          .mm-card { padding: 22px 24px !important; }
-        }
-
-        /* ── LANDSCAPE PHONE (short height) ── */
-        @media (max-height: 500px) and (orientation: landscape) {
-          .mm-screen { padding: 8px 20px !important; }
-          .mm-icon-lg { font-size: 32px !important; }
-          .mm-splash-logo { font-size: 28px !important; }
-          .mm-landscape-scroll { overflow-y: auto !important; max-height: 100vh; }
-          .mm-hide-landscape { display: none !important; }
-          .mm-landscape-row { flex-direction: row !important; align-items: flex-start !important; gap: 16px !important; }
-        }
-
-        /* ── LANDSCAPE TABLET ── */
-        @media (min-height: 500px) and (orientation: landscape) and (max-width: 1024px) {
-          .mm-screen { padding: 14px 32px !important; max-width: 900px; margin: 0 auto; }
-          .mm-landscape-2col { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 20px !important; align-items: start; }
-          .mm-game-area { height: 70vh !important; }
-        }
-
-        /* ── TOUCH TARGETS — always 44px min ── */
-        button, [role="button"] { min-height: 44px; min-width: 44px; touch-action: manipulation; }
-
-        /* ── SAFE AREAS (notch/home bar) ── */
-        .mm-safe-top    { padding-top: max(env(safe-area-inset-top), 12px) !important; }
-        .mm-safe-bottom { padding-bottom: max(env(safe-area-inset-bottom), 16px) !important; }
-
-        /* ── FLUID FONT SIZES ── */
-        .mm-fs-xs  { font-size: clamp(10px, 2.5vw, 12px); }
-        .mm-fs-sm  { font-size: clamp(11px, 2.8vw, 13px); }
-        .mm-fs-md  { font-size: clamp(13px, 3.2vw, 15px); }
-        .mm-fs-lg  { font-size: clamp(15px, 4vw,   18px); }
-        .mm-fs-xl  { font-size: clamp(18px, 5vw,   24px); }
-        .mm-fs-2xl { font-size: clamp(22px, 6vw,   32px); }
       `;
       document.head.appendChild(s);
     }
@@ -191,8 +111,8 @@ const ADMIN_EMAIL = "";
 const ADMIN_PASSWORD = "";
 
 // ─────────────────────────────────────────────────────────────────
-// SOUND ENGINE v2 — Catchy, fun & musical for kids!
-// Web Audio API (zero bandwidth, works offline)
+// SOUND ENGINE — Web Audio API (zero bandwidth, works offline)
+// Battery-aware: respects prefers-reduced-motion and low power
 // ─────────────────────────────────────────────────────────────────
 const SFX = (() => {
   let ctx = null;
@@ -207,9 +127,9 @@ const SFX = (() => {
     return ctx;
   };
 
-  // Basic tone with vibrato option
-  const play = (freq, type, duration, vol=0.3, decay=0.8, vibrato=0) => {
+  const play = (freq, type, duration, vol=0.3, decay=0.8) => {
     if (muted) return;
+    // Skip sounds if battery is low (Battery API)
     const ac = getCtx();
     if (!ac) return;
     try {
@@ -219,17 +139,6 @@ const SFX = (() => {
       gain.connect(ac.destination);
       osc.type = type;
       osc.frequency.setValueAtTime(freq, ac.currentTime);
-      if (vibrato > 0) {
-        // Add vibrato using LFO
-        const lfo = ac.createOscillator();
-        const lfoGain = ac.createGain();
-        lfo.frequency.value = vibrato;
-        lfoGain.gain.value = freq * 0.03;
-        lfo.connect(lfoGain);
-        lfoGain.connect(osc.frequency);
-        lfo.start(ac.currentTime);
-        lfo.stop(ac.currentTime + duration);
-      }
       osc.frequency.exponentialRampToValueAtTime(freq * decay, ac.currentTime + duration);
       gain.gain.setValueAtTime(vol, ac.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + duration);
@@ -238,146 +147,44 @@ const SFX = (() => {
     } catch(e) {}
   };
 
-  // Arpeggio — plays notes in quick succession (catchy!)
-  const arp = (freqs, type, noteDur, vol, gap=55) =>
-    freqs.forEach((f,i) => setTimeout(()=>play(f,type,noteDur,vol), i*gap));
-
-  // Strum chord (slight delay between notes like a guitar)
-  const strum = (freqs, type, dur, vol) =>
-    freqs.forEach((f,i) => setTimeout(()=>play(f,type,dur,vol,0.9), i*30));
-
-  // Noise burst (for hits, pops)
-  const noise = (dur, vol=0.15) => {
-    const ac = getCtx();
-    if (!ac || muted) return;
-    try {
-      const bufSize = ac.sampleRate * dur;
-      const buf = ac.createBuffer(1, bufSize, ac.sampleRate);
-      const d = buf.getChannelData(0);
-      for (let i=0; i<bufSize; i++) d[i] = (Math.random()*2-1);
-      const src = ac.createBufferSource();
-      src.buffer = buf;
-      const gain = ac.createGain();
-      src.connect(gain); gain.connect(ac.destination);
-      gain.gain.setValueAtTime(vol, ac.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + dur);
-      src.start(ac.currentTime);
-    } catch(e) {}
-  };
+  const chord = (freqs, type, dur, vol) => freqs.forEach((f,i) => setTimeout(()=>play(f,type,dur,vol), i*80));
 
   return {
     get muted() { return muted; },
     toggleMute() { muted = !muted; localStorage.setItem("mm_muted", muted?"1":"0"); return muted; },
 
-    // UI — springy, cheerful clicks
-    tap()   { play(900, "sine", 0.06, 0.18, 0.6); },
-    back()  { arp([400,300], "sine", 0.08, 0.15, 60); },
-    select(){ arp([500,650], "triangle", 0.09, 0.18, 50); },
+    // UI interactions
+    tap()        { play(600, "sine",    0.08, 0.15); },
+    back()       { play(300, "sine",    0.12, 0.15); },
+    select()     { play(500, "triangle",0.10, 0.20); },
 
-    // ✅ CORRECT — happy 3-note fanfare (do-mi-sol!)
-    correct() {
-      arp([523,659,784,1047], "sine", 0.18, 0.28, 80);
-      setTimeout(()=>play(1047,"sine",0.3,0.18,0.8,6), 300);
-    },
+    // Quiz events
+    correct()    { chord([523,659,784], "sine", 0.3, 0.25); },
+    wrong()      { play(180, "sawtooth", 0.25, 0.20, 0.5); },
+    hint()       { play(440, "sine",    0.15, 0.18); },
 
-    // ❌ WRONG — funny descending "boing"
-    wrong() {
-      arp([400,300,220,160], "sawtooth", 0.12, 0.18, 60);
-      setTimeout(()=>noise(0.08, 0.10), 0);
-    },
+    // Game events
+    bossHit()    { play(120, "square",  0.2,  0.30, 0.3); },
+    bossDefeat() { chord([784,988,1047,1319], "sine", 0.6, 0.30); },
+    bubblePop()  { play(800, "sine",    0.08, 0.20, 0.5); },
+    timerTick()  { play(1000,"square",  0.05, 0.10); },
+    timerWarn()  { play(440, "square",  0.10, 0.25); },
 
-    // 💡 HINT — curious "ding-ding"
-    hint() {
-      play(1200, "sine", 0.1, 0.18);
-      setTimeout(()=>play(900,"sine",0.1,0.14), 120);
-    },
+    // Progress / rewards
+    levelUp()    { chord([523,659,784,1047], "sine", 0.5, 0.35); },
+    xpGain()     { play(880, "sine",    0.15, 0.20, 1.2); },
+    coinGain()   { chord([1047,1319], "triangle", 0.25, 0.25); },
+    starEarn()   { chord([659,784,988,1319], "sine", 0.7, 0.30); },
+    unlock()     { chord([392,494,587,784], "sine", 0.5, 0.28); },
 
-    // 👾 BOSS HIT — punchy thud + distortion
-    bossHit() {
-      noise(0.12, 0.25);
-      play(80, "square", 0.2, 0.35, 0.3);
-    },
+    // Navigation
+    screenIn()   { play(440, "sine",    0.12, 0.12, 1.1); },
+    splash()     { chord([262,330,392,523], "sine", 0.8, 0.20); },
 
-    // 🏆 BOSS DEFEAT — triumphant fanfare!
-    bossDefeat() {
-      const melody = [523,587,659,698,784,880,988,1047];
-      melody.forEach((f,i) => setTimeout(()=>play(f,"sine",0.22,0.28,0.95), i*90));
-      setTimeout(()=>strum([523,659,784,1047],"sine",0.6,0.22), 780);
-    },
-
-    // 🫧 BUBBLE POP — satisfying pop
-    bubblePop() {
-      play(1400,"sine",0.04,0.22,0.2);
-      setTimeout(()=>noise(0.04,0.08), 0);
-    },
-
-    // ⏱ TIMER TICK — subtle wood-block click
-    timerTick() { play(1200,"square",0.04,0.08,0.5); },
-
-    // ⚠️ TIMER WARN — urgent 3-beep
-    timerWarn() { arp([880,880,880],"square",0.07,0.22,150); },
-
-    // 🚀 LEVEL UP — epic ascending arpeggio!
-    levelUp() {
-      arp([262,330,392,523,659,784,1047],"sine",0.2,0.30,70);
-      setTimeout(()=>strum([523,659,784,1047,1319],"triangle",0.5,0.25), 550);
-    },
-
-    // ✨ XP GAIN — sparkle shimmer
-    xpGain() {
-      arp([1047,1319,1568],"sine",0.1,0.18,60);
-    },
-
-    // 🪙 COIN GAIN — bright jingle
-    coinGain() {
-      arp([1319,1568,2093],"triangle",0.12,0.22,50);
-    },
-
-    // ⭐ STAR EARN — magical twinkle cascade
-    starEarn() {
-      [659,784,988,1175,1319,1568].forEach((f,i) =>
-        setTimeout(()=>{ play(f,"sine",0.18,0.25,0.9); play(f*2,"triangle",0.1,0.10); }, i*80)
-      );
-    },
-
-    // 🔓 UNLOCK — excitement burst
-    unlock() {
-      arp([392,494,587,659,784,988,1175],"sine",0.18,0.28,65);
-      setTimeout(()=>noise(0.15,0.12), 100);
-    },
-
-    // 📱 SCREEN IN — swoosh
-    screenIn() {
-      arp([220,330,440,550],"sine",0.09,0.14,40);
-    },
-
-    // 🌟 SPLASH — grand opening jingle
-    splash() {
-      setTimeout(()=>arp([262,330,392,523,659,784,1047],"sine",0.25,0.22,90), 0);
-      setTimeout(()=>strum([262,330,392,523],"triangle",0.5,0.15), 700);
-    },
-
-    // 📅 DAILY DONE — cheerful completion
-    dailyDone() {
-      const m = [523,659,784,659,784,988,1047];
-      m.forEach((f,i) => setTimeout(()=>play(f,"sine",0.2,0.25,0.9), i*100));
-      setTimeout(()=>strum([523,659,784,1047],"sine",0.6,0.20), 750);
-    },
-
-    // 🧩 PUZZLE SOLVE — "ta-daaa!"
-    puzzleSolve() {
-      arp([392,523,659,784,988,1175,1319,1568],"sine",0.2,0.28,70);
-      setTimeout(()=>strum([523,659,784,1047,1319],"triangle",0.7,0.22), 600);
-    },
-
-    // ⭐ RATING — warm welcoming chime
-    ratingOpen() { strum([523,659,784,1047],"sine",0.4,0.20); },
-
-    // 💳 PAYMENT SUCCESS — celebration!
-    paySuccess() {
-      arp([523,659,784,1047,1319,1568,2093],"sine",0.22,0.30,75);
-      setTimeout(()=>{ strum([523,659,784,1047],"sine",0.6,0.25); noise(0.2,0.12); }, 600);
-    },
+    // Daily / special
+    dailyDone()  { chord([784,988,1175,1568], "sine", 0.8, 0.30); },
+    puzzleSolve(){ chord([523,784,1047,1319,1568], "sine", 1.0, 0.28); },
+    ratingOpen() { chord([523,659,784], "triangle", 0.4, 0.18); },
   };
 })();
 
@@ -682,66 +489,58 @@ const db = {
 
   // ── Daily Challenge ──────────────────────────────────────────
   async getDailyChallenge(classNum) {
-    // Get challenge for child's class — rotate through pool by day number
-    // Day 0 = question 1, Day 1 = question 2, etc. Cycles every 250 days
-    const epoch = new Date("2025-01-01");
-    const today = new Date();
+    // Rotate through pool by day number (same question for all children of same class on same day)
+    const epoch  = new Date("2025-01-01");
+    const today  = new Date();
     const dayNum = Math.floor((today - epoch) / (1000 * 60 * 60 * 24)) % 250 + 1;
-
-    const sb = await this.getSb();
-    if (!sb) return null;
     try {
-      // Fetch by seq_num and class — same question for all children of same class on same day
-      const r = await sb.select("daily_challenges",
-        { class_num: classNum, seq_num: dayNum, is_pool: true });
-      if (r.data?.[0]) return r.data[0];
-
-      // Fallback: get any challenge for this class
-      const fb = await sb.select("daily_challenges", { class_num: classNum });
-      if (fb.data?.length) {
-        const idx = dayNum % fb.data.length;
-        return fb.data[idx] || fb.data[0];
-      }
-    } catch(e) { dbLog("error","getDailyChallenge failed",e.message); }
+      // Call /api/db with the correct action that exists in db.js
+      const { data, error } = await sbRest._api("db", {
+        action: "get_daily_challenge",
+        class_num: classNum,
+        seq_num: dayNum,
+        is_pool: true,
+      });
+      if (error) { dbLog("error","getDailyChallenge failed",error.message); return null; }
+      const list = data?.data;
+      if (Array.isArray(list) && list[0]) return list[0];
+      if (list && !Array.isArray(list)) return list;
+      // Fallback: fetch all and pick by day rotation
+      const fb = await sbRest._api("db", { action:"get_daily_challenge", class_num:classNum, is_pool:true });
+      const all = fb.data?.data;
+      if (Array.isArray(all) && all.length) return all[dayNum % all.length] || all[0];
+    } catch(e) { dbLog("error","getDailyChallenge exception",e.message); }
     return null;
   },
 
   async getDailyCompletion(childId) {
     const today = new Date().toISOString().slice(0,10);
     const key = `dq_done_${childId}_${today}`;
-    // Check localStorage first (fast)
     if (localStorage.getItem(key)) return { id: key, completed_at: today };
-    // Then check DB
-    const sb = await this.getSb();
-    if (!sb) return null;
     try {
-      const r = await sb.select("daily_completions", { child_id: childId, date: today });
-      return r.data?.[0] || null;
+      const { data } = await sbRest._api("db", { action:"get_daily_completion", child_id:childId, date:today });
+      return data?.data?.[0] || null;
     } catch(e) { return null; }
   },
 
   async completeDailyChallenge(childId, challengeId, correct) {
     const today = new Date().toISOString().slice(0,10);
-    const sb = await this.getSb();
-    if (sb) {
-      await sb.insert("daily_completions", {
-        child_id: childId, challenge_id: challengeId,
-        date: today, correct, completed_at: new Date().toISOString()
-      });
-    }
+    try {
+      await sbRest._api("db", { action:"complete_daily_challenge", child_id:childId, challenge_id:challengeId, date:today, correct });
+      if (correct) localStorage.setItem(`dq_done_${childId}_${today}`, "1");
+    } catch(e) {}
   },
 
-  async getDailyCompletion(childId) {
-    const today = new Date().toISOString().slice(0,10);
-    const r = await this.select("daily_completions", { child_id: childId, date: today });
-    return r.data?.[0] || null;
-  },
 
   // ── Daily Puzzle ─────────────────────────────────────────────
   async getDailyPuzzle() {
-    const today = new Date().toISOString().slice(0,10);
-    const r = await this.select("daily_puzzles", { date: today });
-    return r.data?.[0] || null;
+    try {
+      const { data, error } = await sbRest._api("db", { action:"get_daily_puzzle" });
+      if (error) { dbLog("error","getDailyPuzzle failed",error.message); return null; }
+      const result = data?.data;
+      if (Array.isArray(result)) return result[0] || null;
+      return result || null;
+    } catch(e) { dbLog("error","getDailyPuzzle exception",e.message); return null; }
   },
 
   async completePuzzle(childId, puzzleId, answerGiven, correct) {
@@ -3121,217 +2920,38 @@ function Login({ onBack, onDone }) {
   return null;
 }
 
-// ── Paywall — Dual Payment Gateway (Razorpay + PhonePe UPI) ──────────
-// Razorpay Key: set VITE_RAZORPAY_KEY_ID in Vercel env vars
-// PhonePe:      set VITE_PHONEPE_MERCHANT_ID in Vercel env vars
-// Both gateways call /api/payment to create orders server-side
-// ─────────────────────────────────────────────────────────────────────
-
-// Load Razorpay script dynamically (only when needed)
-function loadRazorpay() {
-  return new Promise((resolve) => {
-    if (window.Razorpay) { resolve(true); return; }
-    const s = document.createElement("script");
-    s.src = "https://checkout.razorpay.com/v1/checkout.js";
-    s.onload  = () => resolve(true);
-    s.onerror = () => resolve(false);
-    document.head.appendChild(s);
-  });
-}
-
-// UPI deep-link intent builder (works for PhonePe, GPay, Paytm UPI, BHIM)
-function buildUPILink(upiId, name, amount, txnRef, note="MathMagic Premium") {
-  return `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(name)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}&tr=${encodeURIComponent(txnRef)}`;
-}
-
-// QR Code generator using free API (no install needed)
-function UPIQRCode({ upiId, amount, txnRef, size=160 }) {
-  const upiLink = buildUPILink(upiId, "MathMagic", amount, txnRef);
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(upiLink)}&bgcolor=0d0d2b&color=00f5ff&margin=8`;
-  return (
-    <img src={qrUrl} alt="UPI QR Code" width={size} height={size}
-      style={{ borderRadius:12, border:`2px solid ${C.cyan}44`, display:"block", margin:"0 auto" }}
-    />
-  );
-}
-
+// ── Paywall ───────────────────────────────────────────────────────────
 function Paywall({ world, child, onBack, onUnlock }) {
-  const [plan,       setPlan]       = useState("yearly");
-  const [gateway,    setGateway]    = useState("razorpay"); // "razorpay" | "upi"
-  const [loading,    setLoading]    = useState(false);
-  const [upiStep,    setUpiStep]    = useState("options"); // "options" | "qr" | "deeplink" | "verify"
-  const [txnRef,     setTxnRef]     = useState("");
-  const [manualUTR,  setManualUTR]  = useState("");
-  const [payStatus,  setPayStatus]  = useState(""); // "" | "pending" | "success" | "failed"
-  const [error,      setError]      = useState("");
-
+  const [plan,    setPlan]    = useState("yearly");
+  const [loading, setLoading] = useState(false);
   const plans = {
-    monthly: { label:"Monthly", price:"₹199", amount:199, sub:"per month" },
-    yearly:  { label:"Yearly",  price:"₹999", amount:999, sub:"per year · save 58%", badge:"BEST VALUE" },
+    monthly: { label:"Monthly", price:"₹199", sub:"per month" },
+    yearly:  { label:"Yearly",  price:"₹999", sub:"per year · save 58%", badge:"BEST VALUE" },
   };
-
-  const selectedPlan = plans[plan];
-
-  // Merchant UPI ID — set this to your actual UPI ID
-  const MERCHANT_UPI = import.meta.env.VITE_MERCHANT_UPI_ID || "mathmagic@upi";
-  const RZP_KEY      = import.meta.env.VITE_RAZORPAY_KEY_ID || "";
-
-  // Generate unique transaction reference
-  const genTxnRef = () => `MM${Date.now()}${Math.random().toString(36).slice(2,6).toUpperCase()}`;
-
-  // ── RAZORPAY FLOW ──────────────────────────────────────────
-  const handleRazorpay = async () => {
-    setError(""); setLoading(true);
-    const loaded = await loadRazorpay();
-    if (!loaded) { setError("Razorpay failed to load. Check your connection."); setLoading(false); return; }
-    if (!RZP_KEY) { setError("Razorpay key not configured. Contact support."); setLoading(false); return; }
-
-    try {
-      // Create order on server
-      const token = db._token || "";
-      const res = await fetch("/api/payment", {
-        method:"POST",
-        headers:{ "Content-Type":"application/json", "Authorization":`Bearer ${token}` },
-        body: JSON.stringify({ action:"create_razorpay_order", plan, amount: selectedPlan.amount, child_id: child.id }),
-      });
-      const { order_id, error: serverErr } = await res.json();
-      if (serverErr) throw new Error(serverErr);
-
-      const options = {
-        key: RZP_KEY,
-        amount: selectedPlan.amount * 100, // paise
-        currency: "INR",
-        name: "MathMagic Space Academy",
-        description: `Premium ${selectedPlan.label} — ${child.name}`,
-        order_id,
-        prefill: {},
-        theme: { color: "#a855f7" },
-        modal: { ondismiss: () => setLoading(false) },
-        handler: async (response) => {
-          // Verify payment on server
-          const vRes = await fetch("/api/payment", {
-            method:"POST",
-            headers:{ "Content-Type":"application/json", "Authorization":`Bearer ${token}` },
-            body: JSON.stringify({
-              action:"verify_razorpay",
-              razorpay_order_id:    response.razorpay_order_id,
-              razorpay_payment_id:  response.razorpay_payment_id,
-              razorpay_signature:   response.razorpay_signature,
-              child_id: child.id, plan,
-            }),
-          });
-          const { ok, error: vErr } = await vRes.json();
-          if (ok) {
-            SFX.paySuccess();
-            await db.setPremium(child.id);
-            setLoading(false);
-            onUnlock();
-          } else {
-            setError(vErr || "Payment verification failed. Contact support.");
-            setLoading(false);
-          }
-        },
-      };
-
-      const rzp = new window.Razorpay(options);
-      rzp.on("payment.failed", (r) => {
-        setError(`Payment failed: ${r.error.description}`);
-        setLoading(false);
-      });
-      rzp.open();
-    } catch(e) {
-      setError(e.message || "Something went wrong. Please try again.");
-      setLoading(false);
-    }
-  };
-
-  // ── UPI FLOW ───────────────────────────────────────────────
-  const handleUPIStart = () => {
-    const ref = genTxnRef();
-    setTxnRef(ref);
-    setUpiStep("options");
-    setGateway("upi");
-    setError("");
-  };
-
-  const handleUPIDeepLink = () => {
-    const link = buildUPILink(MERCHANT_UPI, "MathMagic", selectedPlan.amount, txnRef);
-    window.location.href = link;
-    setTimeout(() => setUpiStep("verify"), 3000);
-  };
-
-  const handleUPIVerify = async () => {
-    if (!manualUTR.trim()) { setError("Please enter the UTR/transaction ID from your UPI app."); return; }
-    setLoading(true); setError("");
-    try {
-      const token = db._token || "";
-      const res = await fetch("/api/payment", {
-        method:"POST",
-        headers:{ "Content-Type":"application/json", "Authorization":`Bearer ${token}` },
-        body: JSON.stringify({ action:"verify_upi", utr: manualUTR.trim(), txn_ref: txnRef, child_id: child.id, plan, amount: selectedPlan.amount }),
-      });
-      const { ok, error: sErr } = await res.json();
-      if (ok) {
-        setPayStatus("success");
-        SFX.paySuccess();
-        await db.setPremium(child.id);
-        setTimeout(onUnlock, 1800);
-      } else {
-        setPayStatus("failed");
-        setError(sErr || "UTR not verified. If you already paid, contact support with your UTR.");
-      }
-    } catch(e) {
-      setError("Server error. Please try again.");
-    }
-    setLoading(false);
-  };
-
-  // Success screen
-  if (payStatus === "success") return (
-    <div style={{ minHeight:"100vh", background:C.bg, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", fontFamily:"'Nunito',sans-serif", padding:24, position:"relative" }}>
-      <Starfield n={50}/>
-      <div style={{ position:"relative", zIndex:2, textAlign:"center", animation:"popIn 0.5s ease" }}>
-        <div style={{ fontSize:72, marginBottom:16, animation:"floatUp 1.5s ease-in-out infinite" }}>🎉</div>
-        <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:18, color:C.yellow, marginBottom:8 }}>PAYMENT SUCCESSFUL!</div>
-        <div style={{ color:C.dim, fontSize:14 }}>Welcome to MathMagic Premium! 🚀</div>
-      </div>
-    </div>
-  );
-
   return (
-    <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Nunito',sans-serif", position:"relative", overflowY:"auto" }} className="mm-safe-top mm-safe-bottom">
+    <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Nunito',sans-serif", position:"relative", overflowY:"auto" }}>
       <Starfield n={35}/>
-      <div style={{ position:"relative", zIndex:2, padding:"20px 18px", maxWidth:480, margin:"0 auto" }} className="mm-screen">
-
-        {/* Header */}
+      <div style={{ position:"relative", zIndex:2, padding:"20px 18px" }}>
         <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:20 }}>
           <BackBtn onClick={onBack} color={C.yellow}/>
           <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:14, color:C.yellow }}>UNLOCK PREMIUM</div>
         </div>
-
-        {/* Hero */}
-        <div style={{ textAlign:"center", marginBottom:20 }}>
-          <div style={{ fontSize:52, marginBottom:6, animation:"floatUp 2s ease-in-out infinite" }}>{world.planet}</div>
-          <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:16, color:world.color, marginBottom:4 }}>{world.world} is LOCKED 🔒</div>
-          <div style={{ color:C.dim, fontSize:13, fontWeight:600, lineHeight:1.6 }}>Unlock all 5 worlds, Abacus & Olympiad prep!</div>
+        <div style={{ textAlign:"center", marginBottom:22 }}>
+          <div style={{ fontSize:58, marginBottom:8, animation:"floatUp 2s ease-in-out infinite" }}>{world.planet}</div>
+          <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:17, color:world.color, marginBottom:5 }}>{world.world} is LOCKED 🔒</div>
+          <div style={{ color:C.dim, fontSize:13, fontWeight:600, lineHeight:1.6 }}>Unlock all 5 worlds, Abacus program & Olympiad prep!</div>
         </div>
-
-        {/* Features */}
-        <Card color={C.yellow} style={{ marginBottom:14, padding:"12px 14px" }}>
-          <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:10, color:C.yellow, marginBottom:8 }}>✨ PREMIUM INCLUDES</div>
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"6px 10px" }}>
-            {[["🌍","All 5 Worlds"],["🎮","All Games"],["🧮","Abacus 10 Levels"],["🎓","Olympiad Prep"],["📊","Parent Dashboard"],["🚫","Zero Ads"]].map(([e,t],i) => (
-              <div key={i} style={{ display:"flex", gap:7, alignItems:"center" }}>
-                <span style={{ fontSize:15 }}>{e}</span><span style={{ color:"#ccc", fontSize:12 }}>{t}</span>
-              </div>
-            ))}
-          </div>
+        <Card color={C.yellow} style={{ marginBottom:14 }}>
+          <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:11, color:C.yellow, marginBottom:10 }}>✨ PREMIUM INCLUDES</div>
+          {[["🌍","All Class 1–5 worlds"],["🎮","All game modes"],["🧮","Abacus 10 levels"],["🎓","Olympiad prep"],["📊","Parent dashboard"],["🚫","Zero ads"]].map(([e,t],i) => (
+            <div key={i} style={{ display:"flex", gap:10, marginBottom:6, alignItems:"center" }}>
+              <span style={{ fontSize:16 }}>{e}</span><span style={{ color:"#ccc", fontSize:13 }}>{t}</span>
+            </div>
+          ))}
         </Card>
-
-        {/* Plan Selection */}
-        <div style={{ display:"flex", gap:10, marginBottom:16 }}>
+        <div style={{ display:"flex", gap:10, marginBottom:14 }}>
           {Object.entries(plans).map(([key, p]) => (
-            <button key={key} onClick={() => { setPlan(key); SFX.tap(); }} style={{
+            <button key={key} onClick={() => setPlan(key)} style={{
               flex:1, background: plan===key ? `${C.cyan}22` : "#07071a",
               border:`2px solid ${plan===key ? C.cyan : C.purple+"33"}`,
               borderRadius:14, padding:"14px 10px", cursor:"pointer", textAlign:"center",
@@ -3344,194 +2964,18 @@ function Paywall({ world, child, onBack, onUnlock }) {
             </button>
           ))}
         </div>
-
-        {/* Error */}
-        {error && (
-          <div style={{ background:"#2d0a0a", border:`1px solid ${C.red}44`, borderRadius:10, padding:"10px 12px", marginBottom:12, color:C.red, fontSize:12 }}>
-            ⚠️ {error}
-          </div>
-        )}
-
-        {/* ── GATEWAY SELECTION ── */}
-        {gateway === "razorpay" && upiStep === "options" && (
-          <>
-            {/* Razorpay Button */}
-            <Btn color={C.yellow} loading={loading} onClick={handleRazorpay}
-              style={{ marginBottom:10, fontSize:15 }}>
-              💳  Pay with Razorpay — {selectedPlan.price}
-            </Btn>
-            <div style={{ textAlign:"center", color:C.dim, fontSize:11, marginBottom:10 }}>Cards · NetBanking · Wallets · UPI via Razorpay</div>
-
-            {/* Divider */}
-            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
-              <div style={{ flex:1, height:1, background:`${C.purple}33` }}/>
-              <div style={{ color:C.dim, fontSize:11 }}>OR</div>
-              <div style={{ flex:1, height:1, background:`${C.purple}33` }}/>
-            </div>
-
-            {/* PhonePe / UPI Button */}
-            <button onClick={() => { handleUPIStart(); SFX.tap(); }} style={{
-              width:"100%", background:`${C.purple}18`, border:`2px solid ${C.purple}55`,
-              borderRadius:14, padding:"14px 16px", cursor:"pointer", color:"white",
-              fontFamily:"'Nunito',sans-serif", fontWeight:800, fontSize:15,
-              display:"flex", alignItems:"center", justifyContent:"center", gap:10,
-              transition:"all 0.2s", minHeight:52,
-            }}>
-              <span style={{ fontSize:20 }}>📱</span>
-              Pay via UPI — {selectedPlan.price}
-            </button>
-            <div style={{ textAlign:"center", color:C.dim, fontSize:11, marginTop:6 }}>PhonePe · GPay · Paytm · BHIM · Any UPI App</div>
-          </>
-        )}
-
-        {/* ── UPI FLOW ── */}
-        {gateway === "upi" && (
-          <div style={{ background:`${C.purple}10`, border:`1px solid ${C.purple}33`, borderRadius:16, padding:"16px 14px" }}>
-
-            {/* Step: Choose method */}
-            {upiStep === "options" && (
-              <>
-                <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:11, color:C.purple, marginBottom:14, textAlign:"center" }}>
-                  📱 CHOOSE UPI METHOD
-                </div>
-
-                {/* Scan QR */}
-                <button onClick={() => { setUpiStep("qr"); SFX.tap(); }} style={{
-                  width:"100%", background:`${C.cyan}15`, border:`2px solid ${C.cyan}44`,
-                  borderRadius:12, padding:"14px 16px", cursor:"pointer", color:"white",
-                  fontFamily:"'Nunito',sans-serif", fontWeight:800, fontSize:14,
-                  display:"flex", alignItems:"center", gap:12, marginBottom:10, minHeight:52,
-                }}>
-                  <span style={{ fontSize:22 }}>📷</span>
-                  <div style={{ textAlign:"left" }}>
-                    <div>Scan QR Code</div>
-                    <div style={{ fontSize:11, color:C.dim, fontWeight:600 }}>Open any UPI app → Scan & Pay</div>
-                  </div>
-                </button>
-
-                {/* Open UPI App directly */}
-                <button onClick={() => { setUpiStep("deeplink"); SFX.tap(); }} style={{
-                  width:"100%", background:`${C.green}15`, border:`2px solid ${C.green}44`,
-                  borderRadius:12, padding:"14px 16px", cursor:"pointer", color:"white",
-                  fontFamily:"'Nunito',sans-serif", fontWeight:800, fontSize:14,
-                  display:"flex", alignItems:"center", gap:12, marginBottom:10, minHeight:52,
-                }}>
-                  <span style={{ fontSize:22 }}>🚀</span>
-                  <div style={{ textAlign:"left" }}>
-                    <div>Open UPI App</div>
-                    <div style={{ fontSize:11, color:C.dim, fontWeight:600 }}>PhonePe · GPay · Paytm will open automatically</div>
-                  </div>
-                </button>
-
-                {/* Manual UPI ID */}
-                <button onClick={() => { setUpiStep("verify"); SFX.tap(); }} style={{
-                  width:"100%", background:"transparent", border:`1px solid ${C.dim}44`,
-                  borderRadius:12, padding:"14px 16px", cursor:"pointer", color:C.dim,
-                  fontFamily:"'Nunito',sans-serif", fontWeight:700, fontSize:13,
-                  display:"flex", alignItems:"center", gap:12, minHeight:52,
-                }}>
-                  <span style={{ fontSize:20 }}>⌨️</span>
-                  <div style={{ textAlign:"left" }}>
-                    <div>Pay manually & enter UTR</div>
-                    <div style={{ fontSize:11, fontWeight:600 }}>Send to {MERCHANT_UPI} then confirm here</div>
-                  </div>
-                </button>
-
-                <button onClick={() => { setGateway("razorpay"); setError(""); SFX.back(); }} style={{
-                  background:"none", border:"none", color:C.dim, fontSize:12,
-                  cursor:"pointer", marginTop:12, width:"100%", textAlign:"center", fontFamily:"'Nunito',sans-serif",
-                }}>← Back to payment options</button>
-              </>
-            )}
-
-            {/* Step: QR Code */}
-            {upiStep === "qr" && (
-              <div style={{ textAlign:"center" }}>
-                <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:11, color:C.cyan, marginBottom:12 }}>
-                  SCAN WITH ANY UPI APP
-                </div>
-                <UPIQRCode upiId={MERCHANT_UPI} amount={selectedPlan.amount} txnRef={txnRef} size={180}/>
-                <div style={{ marginTop:12, color:"#ccc", fontSize:13, fontWeight:700 }}>Amount: {selectedPlan.price}</div>
-                <div style={{ color:C.dim, fontSize:11, marginTop:4 }}>UPI ID: {MERCHANT_UPI}</div>
-                <div style={{ color:C.dim, fontSize:10, marginTop:2 }}>Ref: {txnRef}</div>
-                <button onClick={() => setUpiStep("verify")} style={{
-                  marginTop:14, background:`${C.green}22`, border:`2px solid ${C.green}44`,
-                  borderRadius:12, padding:"12px 20px", color:C.green, cursor:"pointer",
-                  fontFamily:"'Nunito',sans-serif", fontWeight:800, fontSize:13, width:"100%", minHeight:44,
-                }}>✅ I've Paid — Enter UTR to Confirm</button>
-                <button onClick={() => setUpiStep("options")} style={{ background:"none", border:"none", color:C.dim, fontSize:12, cursor:"pointer", marginTop:8, fontFamily:"'Nunito',sans-serif" }}>← Back</button>
-              </div>
-            )}
-
-            {/* Step: Deep Link */}
-            {upiStep === "deeplink" && (
-              <div style={{ textAlign:"center" }}>
-                <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:11, color:C.green, marginBottom:12 }}>
-                  OPENING UPI APP...
-                </div>
-                <div style={{ fontSize:48, marginBottom:12, animation:"floatUp 1.5s ease-in-out infinite" }}>📱</div>
-                <div style={{ color:"#ccc", fontSize:13, marginBottom:8 }}>Amount: <strong>{selectedPlan.price}</strong></div>
-                <div style={{ color:C.dim, fontSize:12, marginBottom:16, lineHeight:1.6 }}>
-                  Your UPI app should open automatically.<br/>Complete the payment there, then come back here.
-                </div>
-                <button onClick={handleUPIDeepLink} style={{
-                  background:`linear-gradient(135deg, ${C.green}, #16a34a)`,
-                  border:"none", borderRadius:14, padding:"14px 20px",
-                  color:"white", fontFamily:"'Orbitron',sans-serif", fontSize:12,
-                  fontWeight:700, cursor:"pointer", width:"100%", marginBottom:10, minHeight:48,
-                }}>🚀 OPEN UPI APP NOW</button>
-                <button onClick={() => setUpiStep("verify")} style={{
-                  background:`${C.cyan}15`, border:`1px solid ${C.cyan}44`,
-                  borderRadius:12, padding:"12px 16px", color:C.cyan, cursor:"pointer",
-                  fontFamily:"'Nunito',sans-serif", fontWeight:800, fontSize:13, width:"100%", minHeight:44,
-                }}>✅ Already Paid — Enter UTR</button>
-                <button onClick={() => setUpiStep("options")} style={{ background:"none", border:"none", color:C.dim, fontSize:12, cursor:"pointer", marginTop:8, fontFamily:"'Nunito',sans-serif" }}>← Back</button>
-              </div>
-            )}
-
-            {/* Step: Verify UTR */}
-            {upiStep === "verify" && (
-              <div>
-                <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:11, color:C.yellow, marginBottom:12, textAlign:"center" }}>
-                  CONFIRM YOUR PAYMENT
-                </div>
-                <div style={{ color:"#ccc", fontSize:12, marginBottom:8, lineHeight:1.6 }}>
-                  Enter the <strong style={{ color:C.cyan }}>UTR / Transaction ID</strong> from your UPI app receipt.
-                  You'll find it in your payment history.
-                </div>
-                <div style={{ background:"#07071a", border:`1px solid ${C.purple}44`, borderRadius:10, padding:"10px 12px", marginBottom:8, fontSize:11, color:C.dim }}>
-                  💡 Where to find UTR: Open UPI App → Transaction History → Last payment → 12-digit UTR number
-                </div>
-                <input
-                  value={manualUTR}
-                  onChange={e => setManualUTR(e.target.value.replace(/\s/g,""))}
-                  placeholder="Enter UTR / Transaction ID"
-                  maxLength={22}
-                  style={{
-                    width:"100%", background:"#07071a", border:`2px solid ${manualUTR ? C.cyan : C.purple+"44"}`,
-                    borderRadius:12, padding:"12px 14px", color:"white", fontSize:14,
-                    fontFamily:"'Nunito',sans-serif", marginBottom:12, display:"block",
-                  }}
-                />
-                {error && <div style={{ color:C.red, fontSize:11, marginBottom:10 }}>⚠️ {error}</div>}
-                <Btn color={C.green} loading={loading} onClick={handleUPIVerify}>
-                  ✅ VERIFY PAYMENT
-                </Btn>
-                <button onClick={() => { setUpiStep("options"); setError(""); }} style={{ background:"none", border:"none", color:C.dim, fontSize:12, cursor:"pointer", marginTop:10, width:"100%", textAlign:"center", fontFamily:"'Nunito',sans-serif" }}>← Back</button>
-              </div>
-            )}
-          </div>
-        )}
-
-        <div style={{ marginTop:14, textAlign:"center", color:C.dim, fontSize:11, fontWeight:600 }}>🔒 Secure · Cancel anytime · GST inclusive</div>
-
-        {/* Trust badges */}
-        <div style={{ display:"flex", justifyContent:"center", gap:16, marginTop:10, flexWrap:"wrap" }}>
-          {["🏦 Bank-Grade Security","📞 24hr Support","♻️ Cancel Anytime"].map((t,i)=>(
-            <div key={i} style={{ color:C.dim, fontSize:10 }}>{t}</div>
-          ))}
-        </div>
-
+        <Btn color={C.yellow} loading={loading} onClick={async () => {
+          setLoading(true);
+          await new Promise(r => setTimeout(r, 1500));
+          await db.setPremium(child.id);
+          setLoading(false);
+          onUnlock();
+        }}>🚀  UNLOCK — {plans[plan].price}</Btn>
+        <div style={{ marginTop:10, textAlign:"center", color:C.dim, fontSize:11, fontWeight:600 }}>🔒 Secure · Cancel anytime</div>
+        <Card color={C.purple} style={{ marginTop:12, textAlign:"center", padding:"10px 14px" }}>
+          <div style={{ color:C.purple, fontSize:10, fontFamily:"'Orbitron',sans-serif", marginBottom:3 }}>🔒 SECURE PAYMENT</div>
+          <div style={{ color:C.dim, fontSize:11 }}>Razorpay integration — safe & encrypted checkout.</div>
+        </Card>
       </div>
     </div>
   );
@@ -3719,11 +3163,14 @@ function LessonMap({ world, child, onBack, onLesson }) {
     });
   }, [child.id]);
 
-  const isSetDone   = (lid, si) => progress.some(p => p.lesson_id === lid + "_s" + si && (p.stars_earned||0) >= 1);
+  const isSetDone     = (lid, si) => progress.some(p => p.lesson_id === lid + "_s" + si && (p.stars_earned||0) >= 1);
+  // Set unlocked if: it's Set 1 (si===0) OR the previous set is done
   const isSetUnlocked = (lid, si) => si === 0 || isSetDone(lid, si - 1);
-  const lessonDone  = (lid) => isSetDone(lid, 19); // all 20 sets done
+  const lessonDone    = (lid) => isSetDone(lid, 19);
   const lessonStarted = (lid) => isSetDone(lid, 0);
   const completedSets = (lid) => Array.from({length:20},(_,i)=>i).filter(i=>isSetDone(lid,i)).length;
+  // ALL lessons are unlocked from the start — child can access Set 1 of any lesson
+  const lessonUnlocked = (li) => true;
   const worldProg = lessons.filter(l => lessonStarted(l.id)).length;
   const totalSets = lessons.length * 20;
   const doneSets  = lessons.reduce((s,l)=>s+completedSets(l.id),0);
@@ -3750,25 +3197,25 @@ function LessonMap({ world, child, onBack, onLesson }) {
           const done   = lessonDone(lesson.id);
           const cSets  = completedSets(lesson.id);
           const isExp  = expanded === lesson.id;
-          const lessonUnlocked = li === 0 || completedSets(lessons[li-1].id) >= 1;
+          const lUnlocked = lessonUnlocked(li);
           return (
             <div key={lesson.id} style={{ marginBottom:10 }}>
               {/* Lesson header row */}
               <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom: isExp ? 8 : 0 }}>
-                <div style={{ width:48, height:48, borderRadius:14, background: done ? `linear-gradient(135deg,${world.color},${world.color}aa)` : lessonUnlocked ? C.card2 : "#060614", border:`2px solid ${done ? world.color : lessonUnlocked ? world.color+"44" : "#0c0c28"}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, flexShrink:0 }}>
-                  {done ? "✅" : lessonUnlocked ? lesson.emoji : "🔒"}
+                <div style={{ width:48, height:48, borderRadius:14, background: done ? `linear-gradient(135deg,${world.color},${world.color}aa)` : lUnlocked ? C.card2 : "#060614", border:`2px solid ${done ? world.color : lUnlocked ? world.color+"44" : "#0c0c28"}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, flexShrink:0 }}>
+                  {done ? "✅" : lUnlocked ? lesson.emoji : "🔒"}
                 </div>
-                <button onClick={() => lessonUnlocked && setExpanded(isExp ? null : lesson.id)}
-                  style={{ flex:1, background: done ? `${world.color}0e` : lessonUnlocked ? C.card : "#050510", border:`1.5px solid ${done ? world.color+"44" : lessonUnlocked ? world.color+"1a" : "#0c0c28"}`, borderRadius:13, padding:"10px 13px", cursor: lessonUnlocked ? "pointer" : "not-allowed", textAlign:"left" }}>
+                <button onClick={() => lUnlocked && setExpanded(isExp ? null : lesson.id)}
+                  style={{ flex:1, background: done ? `${world.color}0e` : lUnlocked ? C.card : "#050510", border:`1.5px solid ${done ? world.color+"44" : lUnlocked ? world.color+"1a" : "#0c0c28"}`, borderRadius:13, padding:"10px 13px", cursor: lUnlocked ? "pointer" : "not-allowed", textAlign:"left" }}>
                   <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                    <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:12, color: lessonUnlocked ? "white" : "#181828" }}>{lesson.title}</div>
+                    <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:12, color: lUnlocked ? "white" : "#181828" }}>{lesson.title}</div>
                     <div style={{ display:"flex", gap:5, alignItems:"center" }}>
                       <span style={{ fontSize:9, color:C.dim, fontFamily:"'Orbitron',sans-serif" }}>{cSets}/20 sets</span>
-                      <span style={{ fontSize:13, color: lessonUnlocked ? world.color : "#181828" }}>{isExp ? "▲" : "▼"}</span>
+                      <span style={{ fontSize:13, color: lUnlocked ? world.color : "#181828" }}>{isExp ? "▲" : "▼"}</span>
                     </div>
                   </div>
                   <div style={{ fontSize:11, color:C.dim, marginTop:2 }}>{lesson.sub}</div>
-                  {lessonUnlocked && (
+                  {lUnlocked && (
                     <div style={{ marginTop:5, background:"rgba(255,255,255,0.05)", borderRadius:5, height:4, overflow:"hidden" }}>
                       <div style={{ width:`${cSets*5}%`, height:"100%", background:`linear-gradient(90deg,${world.color},${C.cyan})`, borderRadius:5 }}/>
                     </div>
@@ -3776,7 +3223,7 @@ function LessonMap({ world, child, onBack, onLesson }) {
                 </button>
               </div>
               {/* Sets grid — shown when expanded */}
-              {isExp && lessonUnlocked && (
+              {isExp && lUnlocked && (
                 <div style={{ marginLeft:58, display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:7 }}>
                   {Array.from({length:20},(_,si) => {
                     const sDone   = isSetDone(lesson.id, si);
