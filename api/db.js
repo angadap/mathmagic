@@ -93,11 +93,18 @@ export default async function handler(req, res) {
     }
 
     if (action === "get_daily_challenge") {
-      const { class_num } = req.body;
-      const today = new Date().toISOString().slice(0,10);
-      const r = await sbQuery("daily_challenges","GET",null,
-        `?date=eq.${today}&class_num=eq.${class_num||1}&limit=1`);
-      return res.status(200).json({ data: Array.isArray(r.data)?r.data[0]:null });
+      const { class_num, seq_num, is_pool } = req.body;
+      let params;
+      if (seq_num) {
+        // Rotation-based: fetch by seq_num
+        params = `?class_num=eq.${class_num||1}&seq_num=eq.${seq_num}&is_pool=eq.true&limit=1`;
+      } else {
+        // Fallback: fetch all for this class
+        params = `?class_num=eq.${class_num||1}&is_pool=eq.true&order=seq_num&limit=250`;
+      }
+      const r = await sbQuery("daily_challenges","GET",null, params);
+      const data = Array.isArray(r.data) ? r.data : [];
+      return res.status(200).json({ data: seq_num ? (data[0]||null) : data });
     }
 
     if (action === "get_daily_puzzle") {
