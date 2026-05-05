@@ -96,10 +96,8 @@ export default async function handler(req, res) {
       const { class_num, seq_num, is_pool } = req.body;
       let params;
       if (seq_num) {
-        // Rotation-based: fetch by seq_num
         params = `?class_num=eq.${class_num||1}&seq_num=eq.${seq_num}&is_pool=eq.true&limit=1`;
       } else {
-        // Fallback: fetch all for this class
         params = `?class_num=eq.${class_num||1}&is_pool=eq.true&order=seq_num&limit=250`;
       }
       const r = await sbQuery("daily_challenges","GET",null, params);
@@ -111,6 +109,25 @@ export default async function handler(req, res) {
       const today = new Date().toISOString().slice(0,10);
       const r = await sbQuery("daily_puzzles","GET",null,`?date=eq.${today}&limit=1`);
       return res.status(200).json({ data: Array.isArray(r.data)?r.data[0]:null });
+    }
+
+    if (action === "get_daily_completion") {
+      const { child_id, date } = req.body;
+      if (!child_id) return res.status(400).json({ error:"child_id required" });
+      const r = await sbQuery("daily_completions","GET",null,`?child_id=eq.${encodeURIComponent(child_id)}&date=eq.${date}&limit=1`);
+      return res.status(200).json({ data: Array.isArray(r.data) ? r.data : [] });
+    }
+
+    if (action === "complete_daily_challenge") {
+      const { child_id, challenge_id, date, correct } = req.body;
+      if (!child_id) return res.status(400).json({ error:"child_id required" });
+      await sbQuery("daily_completions","POST",{
+        child_id, challenge_id: challenge_id||null,
+        date: date || new Date().toISOString().slice(0,10),
+        correct: correct||false,
+        completed_at: new Date().toISOString()
+      });
+      return res.status(200).json({ ok:true });
     }
 
     // ── AUTHENTICATED OPERATIONS — verify token first ──────────
