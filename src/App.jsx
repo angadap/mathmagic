@@ -489,9 +489,42 @@ const db = {
 
   // ── Daily Challenge ──────────────────────────────────────────
   async getDailyChallenge(classNum) {
+    // Get challenge for child's class — rotate through pool by day number
+    // Day 0 = question 1, Day 1 = question 2, etc. Cycles every 250 days
+    const epoch = new Date("2025-01-01");
+    const today = new Date();
+    const dayNum = Math.floor((today - epoch) / (1000 * 60 * 60 * 24)) % 250 + 1;
+
+    const sb = await this.getSb();
+    if (!sb) return null;
+    try {
+      // Fetch by seq_num and class — same question for all children of same class on same day
+      const r = await sb.select("daily_challenges",
+        { class_num: classNum, seq_num: dayNum, is_pool: true });
+      if (r.data?.[0]) return r.data[0];
+
+      // Fallback: get any challenge for this class
+      const fb = await sb.select("daily_challenges", { class_num: classNum });
+      if (fb.data?.length) {
+        const idx = dayNum % fb.data.length;
+        return fb.data[idx] || fb.data[0];
+      }
+    } catch(e) { dbLog("error","getDailyChallenge failed",e.message); }
+    return null;
+  },
+
+  async getDailyCompletion(childId) {
     const today = new Date().toISOString().slice(0,10);
-    const r = await this.select("daily_challenges", { date: today, class_num: classNum });
-    return r.data?.[0] || null;
+    const key = `dq_done_${childId}_${today}`;
+    // Check localStorage first (fast)
+    if (localStorage.getItem(key)) return { id: key, completed_at: today };
+    // Then check DB
+    const sb = await this.getSb();
+    if (!sb) return null;
+    try {
+      const r = await sb.select("daily_completions", { child_id: childId, date: today });
+      return r.data?.[0] || null;
+    } catch(e) { return null; }
   },
 
   async completeDailyChallenge(childId, challengeId, correct) {
@@ -3084,7 +3117,9 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
         <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:11, color:C.purple, letterSpacing:2, marginBottom:10 }}>🗺️ GALACTIC WORLDS</div>
         <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
           {WORLDS.map(cw => {
-            const canAccess = cw.free || child.is_premium || cw.id === child.class_num || child.id === "admin-001";
+            // Child can ONLY access their registered class
+            // Premium doesn't unlock other classes — class is set at registration
+            const canAccess = cw.id === child.class_num || child.id === "admin-001";
             return (
               <button key={cw.id} onClick={() => onWorld(cw, canAccess)} style={{
                 background: !canAccess ? "#05050e" : `linear-gradient(135deg,${cw.color}16,${cw.color}08)`,
@@ -3099,7 +3134,7 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
                 </div>
                 <div style={{ flex:1, textAlign:"left" }}>
                   <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:13, color: !canAccess ? "#282838" : cw.color }}>{cw.name}</div>
-                  <div style={{ fontSize:11, color:C.dim, marginTop:2 }}>{cw.world}{!canAccess ? " · Tap to unlock 👑" : ""}</div>
+                  <div style={{ fontSize:11, color:C.dim, marginTop:2 }}>{cw.world}{!canAccess ? ` · Not your class (Class ${child.class_num})` : ""}</div>
                   {cw.id === child.class_num && <div style={{ fontSize:10, color:C.dim, marginTop:2 }}>🎯 Your class</div>}
                 </div>
                 <div style={{ color: !canAccess ? C.yellow : cw.color, fontSize: !canAccess ? 18 : 22 }}>{!canAccess ? "⭐" : "›"}</div>
@@ -5175,22 +5210,25 @@ function PrivacyPolicy({ onBack }) {
         <div style={{color:C.dim,fontSize:12,marginBottom:24}}>Last updated: {new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"})}</div>
 
         {[
-          {t:"1. Information We Collect",   b:["We collect information to provide our service:", "• Parent/Guardian email address (for account creation)", "• Child name, avatar, and class level", "• Learning progress data (lessons, scores, stars)", "• App usage data (features used, time spent)", "• Device information (browser, platform)"]},
-          {t:"2. How We Use Your Information", b:["We use collected information to:", "• Provide personalised learning experiences", "• Track progress and award XP, coins, achievements", "• Generate parent dashboard reports", "• Improve app features and content quality", "• Analyse usage patterns to enhance learning"]},
-          {t:"3. Data Storage & Security",  b:["All data is stored securely using Supabase (PostgreSQL) with industry-standard encryption.", "We implement row-level security to ensure users only access their own data.", "Data is stored on servers compliant with GDPR and Indian IT Act 2000."]},
-          {t:"4. Children Privacy (COPPA/DPDP)", b:["MathMagic is designed for children aged 5-11.", "• A parent or guardian must create the account", "• We never collect more information than necessary", "• Children data is never sold to third parties", "• Parents can request deletion of their child data at any time", "• No behavioural advertising is shown to children"]},
-          {t:"5. Data Sharing",             b:["We do not sell, trade, or share your personal information with third parties except:", "• Service providers necessary to operate the app", "• When required by law or to protect our legal rights", "• With your explicit consent", "We never share children data with advertisers."]},
-          {t:"6. Cookies & Local Storage",  b:["We use browser localStorage to store:", "• Daily challenge completion status", "• App preferences and session data", "No third-party tracking cookies are used."]},
-          {t:"7. Data Retention",           b:["We retain account data as long as your account is active.", "You may request deletion of your account and all associated data by contacting us.", "Progress data is deleted within 30 days of account deletion."]},
-          {t:"8. Your Rights",              b:["You have the right to:", "• Access your personal data", "• Correct inaccurate data", "• Request deletion of your data", "• Object to processing of your data", "• Data portability", "Contact us: privacy@mathmagicacademy.in"]},
-          {t:"9. Changes to This Policy",   b:["We may update this Privacy Policy from time to time.", "We will notify users of significant changes through the app.", "Continued use constitutes acceptance of the updated policy."]},
-          {t:"10. Contact Us",              b:["For privacy-related questions:", "Email: privacy@mathmagicacademy.in", "Support: available through the SOS/Feedback feature in the app"]},
+          {t:"1. Data We Collect",b:["Account: Parent/guardian email and password (encrypted)","Child profile: First name, avatar, class level, PIN hash (not plain text)","Learning data: Lessons completed, quiz scores, XP, coins, streaks","Usage analytics: Lessons accessed, games played, daily challenges, session duration","Device info: Browser type, platform (web/Android/iOS), app version","Feedback and support messages submitted via the app"]},
+          {t:"2. How We Use Your Data",b:["Deliver personalised learning content based on your child's class","Track progress and award XP, coins, stars and level-ups","Generate parent dashboard reports and learning insights","Improve app content, fix bugs, and enhance features","Send account-related notifications (no marketing without consent)","Detect and prevent fraud or unauthorised access"]},
+          {t:"3. Data Sharing",b:["We DO NOT sell your data to anyone","We DO NOT share data with advertisers or third-party marketers","Service providers: Supabase (secure database hosting in EU/US) — bound by strict data processing agreements","Legal: We may disclose data if required by Indian law or court order","We NEVER share children's personal data with any third party for commercial purposes"]},
+          {t:"4. Children's Privacy (COPPA & DPDP Compliant)",b:["MathMagic is for children aged 5-11 under parental supervision","A parent or guardian must register the account — children do not register directly","We collect only the minimum data necessary for the app to function","We do not show behavioural advertising to children","We do not use children's data for profiling or automated decision-making","Parents can request access, correction or deletion of their child's data at any time by emailing privacy@mathmagicacademy.in"]},
+          {t:"5. AI-Generated Content Disclosure",b:["MathMagic uses AI assistance (Claude by Anthropic) to generate maths questions, puzzles, hints and learning content","All AI-generated content is reviewed for age-appropriateness and educational accuracy before use","AI is not used to make decisions about your child or generate personal recommendations without review","The app does not use AI to identify, track or profile children","AI-generated content is clearly integrated into the learning experience and is not presented as human-created"]},
+          {t:"6. Play Store Data Safety",b:["Data collected: Name, email, learning progress, usage analytics","Data encrypted in transit: Yes (HTTPS/TLS)","Data encrypted at rest: Yes (Supabase AES-256)","User can request deletion: Yes — email privacy@mathmagicacademy.in","Data shared with third parties: No (except hosting provider)","Precise location: Not collected","Financial info: Not collected","Health info: Not collected","Messages: Not collected"]},
+          {t:"7. Permissions We Request",b:["Internet access: Required to load lessons and save progress","Storage (optional): For offline caching of app shell only","Camera/Microphone: NOT requested","Contacts: NOT requested","Location: NOT requested","We request only the minimum permissions necessary for core functionality"]},
+          {t:"8. Data Security",b:["All data transmitted over HTTPS with TLS encryption","Passwords are hashed and never stored in plain text","PINs are hashed before storage","JWT authentication tokens stored in browser memory only (not localStorage)","Supabase Row-Level Security policies restrict data access","Regular security audits and vulnerability assessments"]},
+          {t:"9. Data Retention & Deletion",b:["Account data retained while account is active","Progress data deleted within 30 days of account deletion","Analytics data retained for 12 months then anonymised","To delete your account and all data: email privacy@mathmagicacademy.in","We will process deletion requests within 30 days as required by DPDP Act 2023"]},
+          {t:"10. Your Rights (DPDP Act 2023)",b:["Right to access: Request a copy of your personal data","Right to correction: Request correction of inaccurate data","Right to erasure: Request deletion of your data","Right to grievance: File a complaint with our Grievance Officer","Right to nominate: Nominate another person to exercise your rights","Grievance Officer: privacy@mathmagicacademy.in | Response within 30 days"]},
+          {t:"11. Content Rating",b:["This app is rated for ages 5+ (Everyone)","Contains: Educational content only","Does not contain: Violence, adult content, gambling, horror","Safe for children: Yes — all content is educational and age-appropriate","IARC/PEGI rating: 3+ | ESRB: Everyone"]},
+          {t:"12. Contact & Updates",b:["Privacy Officer: privacy@mathmagicacademy.in","Support: Available via the SOS/Feedback feature in the app","Policy updates: Users notified via in-app notification","Effective date: "+new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"}),"Governing law: Information Technology Act 2000 and DPDP Act 2023 (India)"]},
         ].map(({t,b},i)=>(
           <div key={i} style={{marginBottom:20}}>
-            <div style={{fontWeight:800,color:"white",fontSize:15,marginBottom:6}}>{t}</div>
-            <div style={{color:"#bbb"}}>{b.map((line,j)=><div key={j} style={{marginBottom:2}}>{line}</div>)}</div>
+            <div style={{fontWeight:800,color:"white",fontSize:14,marginBottom:6,lineHeight:1.4}}>{t}</div>
+            <div style={{color:"#bbb"}}>{b.map((line,j)=><div key={j} style={{marginBottom:3,lineHeight:1.6,fontSize:13}}>{line}</div>)}</div>
           </div>
-        ))}
+        ))
+        }
       </div>
     </div>
   );
@@ -5293,8 +5331,13 @@ export default function App() {
   };
 
   const goWorld = (cw, canAccess) => {
+    if (!canAccess) {
+      // Show a friendly message instead of paywall
+      alert(`This is Class ${cw.id} content. You are registered for Class ${child.class_num}. Please ask your parent to update your class if needed.`);
+      return;
+    }
     setWorld(cw);
-    setScreen(canAccess ? "lessons" : "paywall");
+    setScreen("lessons");
   };
 
   const handleUnlock = useCallback(async () => {
