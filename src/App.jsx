@@ -33,12 +33,15 @@ export class ErrorBoundary extends React.Component {
 // ─────────────────────────────────────────────────────────────────────
 // THEME
 // ─────────────────────────────────────────────────────────────────────
-const C = {
-  bg:"#04040f", card:"#0d0d2b", card2:"#10102e",
-  cyan:"#00f5ff", purple:"#a855f7", pink:"#ec4899",
-  orange:"#f97316", yellow:"#fbbf24", green:"#22c55e",
-  red:"#ef4444", dim:"#6b7db3",
+// ── THEMES ────────────────────────────────────────────────────────────
+const THEMES = {
+  space:  { name:"Space Dark", icon:"\U0001f30c", bg:"#04040f", card:"#0d0d2b", card2:"#10102e", cyan:"#00f5ff", purple:"#a855f7", pink:"#ec4899", orange:"#f97316", yellow:"#fbbf24", green:"#22c55e", red:"#ef4444", dim:"#6b7db3" },
+  ocean:  { name:"Ocean Blue",  icon:"\U0001f30a", bg:"#020b18", card:"#041525", card2:"#071d30", cyan:"#06d6a0", purple:"#3b82f6", pink:"#f72585", orange:"#ef8c3a", yellow:"#ffd166", green:"#2ec4b6", red:"#ef4444", dim:"#2d4a6a" },
+  sunset: { name:"Sunset",      icon:"\U0001f305", bg:"#0f0508", card:"#1a0a10", card2:"#220d14", cyan:"#ff9500", purple:"#f72585", pink:"#ff4d6d", orange:"#ff6b35", yellow:"#ffdd00", green:"#43aa8b", red:"#e63946", dim:"#5a2a3a" },
+  forest: { name:"Forest",      icon:"\U0001f33f", bg:"#030d05", card:"#061409", card2:"#081a0c", cyan:"#74c69d", purple:"#52b788", pink:"#f4978e", orange:"#e07a5f", yellow:"#d4a017", green:"#40916c", red:"#e63946", dim:"#2d4a35" },
 };
+function getThemeColors() { return THEMES[localStorage.getItem("mm_theme")||"space"] || THEMES.space; }
+let C = getThemeColors();
 
 // ─────────────────────────────────────────────────────────────────────
 // GLOBAL CSS injected once inside a component (safe in artifact env)
@@ -489,79 +492,59 @@ const db = {
 
   // ── Daily Challenge ──────────────────────────────────────────
   async getDailyChallenge(classNum) {
-    // Rotate through pool by day number (same question for all children of same class on same day)
     const epoch  = new Date("2025-01-01");
-    const today  = new Date();
-    const dayNum = Math.floor((today - epoch) / (1000 * 60 * 60 * 24)) % 250 + 1;
+    const dayNum = Math.floor((new Date() - epoch) / 86400000) % 250 + 1;
     try {
-      // Call /api/db with the correct action that exists in db.js
-      const { data, error } = await sbRest._api("db", {
-        action: "get_daily_challenge",
-        class_num: classNum,
-        seq_num: dayNum,
-        is_pool: true,
-      });
-      if (error) { dbLog("error","getDailyChallenge failed",error.message); return null; }
-      const list = data?.data;
-      if (Array.isArray(list) && list[0]) return list[0];
-      if (list && !Array.isArray(list)) return list;
-      // Fallback: fetch all and pick by day rotation
-      const fb = await sbRest._api("db", { action:"get_daily_challenge", class_num:classNum, is_pool:true });
-      const all = fb.data?.data;
-      if (Array.isArray(all) && all.length) return all[dayNum % all.length] || all[0];
-    } catch(e) { dbLog("error","getDailyChallenge exception",e.message); }
+      const res = await fetch("/api/db", { method:"POST", headers:{"Content-Type":"application/json","Authorization":`Bearer ${this._token||""}`}, body:JSON.stringify({ action:"get_daily_challenge", class_num:classNum, seq_num:dayNum }) });
+      const json = await res.json();
+      const d = json.data;
+      if (d && !Array.isArray(d)) return d;
+      if (Array.isArray(d) && d[0]) return d[0];
+    } catch(e) { dbLog("error","getDailyChallenge",e.message); }
     return null;
   },
 
   async getDailyCompletion(childId) {
     const today = new Date().toISOString().slice(0,10);
-    const key = `dq_done_${childId}_${today}`;
-    if (localStorage.getItem(key)) return { id: key, completed_at: today };
+    if (localStorage.getItem(`dq_done_${childId}_${today}`)) return { completed_at: today };
     try {
-      const { data } = await sbRest._api("db", { action:"get_daily_completion", child_id:childId, date:today });
-      return data?.data?.[0] || null;
+      const res = await fetch("/api/db", { method:"POST", headers:{"Content-Type":"application/json","Authorization":`Bearer ${this._token||""}`}, body:JSON.stringify({ action:"get_daily_completion", child_id:childId, date:today }) });
+      const json = await res.json();
+      return json.data?.[0] || null;
     } catch(e) { return null; }
   },
 
   async completeDailyChallenge(childId, challengeId, correct) {
     const today = new Date().toISOString().slice(0,10);
-    try {
-      await sbRest._api("db", { action:"complete_daily_challenge", child_id:childId, challenge_id:challengeId, date:today, correct });
-      if (correct) localStorage.setItem(`dq_done_${childId}_${today}`, "1");
-    } catch(e) {}
+    if (correct) localStorage.setItem(`dq_done_${childId}_${today}`,"1");
+    fetch("/api/db", { method:"POST", headers:{"Content-Type":"application/json","Authorization":`Bearer ${this._token||""}`}, body:JSON.stringify({ action:"complete_daily_challenge", child_id:childId, challenge_id:challengeId, date:today, correct }) }).catch(()=>{});
   },
 
-
-  // ── Daily Puzzle ─────────────────────────────────────────────
   async getDailyPuzzle() {
     try {
-      const { data, error } = await sbRest._api("db", { action:"get_daily_puzzle" });
-      if (error) { dbLog("error","getDailyPuzzle failed",error.message); return null; }
-      const result = data?.data;
-      if (Array.isArray(result)) return result[0] || null;
-      return result || null;
-    } catch(e) { dbLog("error","getDailyPuzzle exception",e.message); return null; }
+      const res = await fetch("/api/db", { method:"POST", headers:{"Content-Type":"application/json","Authorization":`Bearer ${this._token||""}`}, body:JSON.stringify({ action:"get_daily_puzzle" }) });
+      const json = await res.json();
+      return json.data || null;
+    } catch(e) { return null; }
   },
 
   async completePuzzle(childId, puzzleId, answerGiven, correct) {
     const today = new Date().toISOString().slice(0,10);
-    const sb = await this.getSb();
-    if (sb) {
-      await sb.insert("puzzle_completions", {
-        child_id: childId, puzzle_id: puzzleId,
-        date: today, answer_given: answerGiven, correct,
-        completed_at: new Date().toISOString()
-      });
-    }
+    if (correct) localStorage.setItem(`dp_done_${childId}_${today}`,"1");
+    fetch("/api/db", { method:"POST", headers:{"Content-Type":"application/json","Authorization":`Bearer ${this._token||""}`}, body:JSON.stringify({ action:"complete_puzzle", child_id:childId, puzzle_id:puzzleId, date:today, answer_given:answerGiven, correct }) }).catch(()=>{});
   },
 
   async getPuzzleCompletion(childId) {
     const today = new Date().toISOString().slice(0,10);
-    const r = await this.select("puzzle_completions", { child_id: childId, date: today });
-    return r.data?.[0] || null;
+    if (localStorage.getItem(`dp_done_${childId}_${today}`)) return { completed_at: today };
+    try {
+      const res = await fetch("/api/db", { method:"POST", headers:{"Content-Type":"application/json","Authorization":`Bearer ${this._token||""}`}, body:JSON.stringify({ action:"get_puzzle_completion", child_id:childId, date:today }) });
+      const json = await res.json();
+      return json.data?.[0] || null;
+    } catch(e) { return null; }
   },
 
-  // ── Analytics ────────────────────────────────────────────────
+    // ── Analytics ────────────────────────────────────────────────
   async track(eventType, childId, parentId, data={}) {
     const sb = await this.getSb();
     if (!sb) return;
@@ -2755,6 +2738,11 @@ function Register({ onBack, onDone }) {
         const { data: child } = await db.addChild(uid, { name, avatar, class_num: cls, pin });
         if (!child) { setErrors({ pin: "Could not create profile. Please try again." }); setLoading(false); return; }
         setLoading(false);
+        // Save session so login screen skips email/pass next time
+        try {
+          const kidsData = [child];
+          sessionStorage.setItem("mm_parent_session", JSON.stringify({ email, pass, pid: uid, kids: kidsData }));
+        } catch(e) {}
         onDone({ user: { id: uid, email }, child });
       } catch (err) {
         console.warn("[doRegister error]", err.message);
@@ -2785,12 +2773,14 @@ function Register({ onBack, onDone }) {
 
 // ── Login ─────────────────────────────────────────────────────────────
 function Login({ onBack, onDone }) {
-  const [step,    setStep]    = useState("email");
-  const [email,   setEmail]   = useState("");
-  const [pass,    setPass]    = useState("");
-  const [kids,    setKids]    = useState([]);
+  // Try to auto-restore session so child only needs name+PIN after registration
+  const savedSession = (() => { try { return JSON.parse(sessionStorage.getItem("mm_parent_session")||"null"); } catch(e){return null;} })();
+  const [step,    setStep]    = useState(savedSession ? "child" : "email");
+  const [email,   setEmail]   = useState(savedSession?.email || "");
+  const [pass,    setPass]    = useState(savedSession?.pass || "");
+  const [kids,    setKids]    = useState(savedSession?.kids || []);
   const [kid,     setKid]     = useState(null);
-  const [pid,     setPid]     = useState(null);
+  const [pid,     setPid]     = useState(savedSession?.pid || null);
   const [pin,     setPin]     = useState("");
   const [error,   setError]   = useState("");
   const [loading, setLoading] = useState(false);
@@ -2829,6 +2819,7 @@ function Login({ onBack, onDone }) {
             setLoading(false);
             if (!children || children.length === 0) { setError("No profiles found. Please register first."); return; }
             setKids(children); setStep("child");
+            try { sessionStorage.setItem("mm_parent_session", JSON.stringify({ email:te, pass, pid:parentId, kids:children })); } catch(e) {}
           } catch(e) { setError("Login failed: " + e.message); setLoading(false); }
         }}>ENTER ACADEMY →</Btn>
         <div style={{ display:"flex", justifyContent:"space-between", marginTop:4 }}>
@@ -2910,6 +2901,8 @@ function Login({ onBack, onDone }) {
               if (sb) await sb.update("children", { streak_days: newStreak, last_active: new Date().toISOString() }, "id", rawChild.id);
               updatedChild = { ...rawChild, streak_days: newStreak, last_active: new Date().toISOString() };
             }
+            // Save session so next login skips email/pass
+            try { sessionStorage.setItem("mm_parent_session", JSON.stringify({ email, pass, pid, kids })); } catch(e){}
             onDone({ user:{ id:pid, email }, child: updatedChild });
           }
           else { setShake(true); setError("Wrong PIN! Try again 🔒"); setTimeout(() => { setShake(false); setPin(""); setError(""); }, 700); }
@@ -2982,7 +2975,46 @@ function Paywall({ world, child, onBack, onUnlock }) {
 }
 
 // ── Home ──────────────────────────────────────────────────────────────
+// ── ThemeSelector ────────────────────────────────────────────────────
+function ThemeSelector({ onClose }) {
+  const [cur, setCur] = useState(localStorage.getItem("mm_theme")||"space");
+  const themes = Object.entries(THEMES);
+  return (
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.7)", zIndex:200, display:"flex", alignItems:"flex-end", justifyContent:"center" }} onClick={onClose}>
+      <div style={{ background:C.card, borderRadius:"20px 20px 0 0", padding:"20px 18px 32px", width:"100%", maxWidth:480, animation:"slideUp 0.25s ease" }} onClick={e=>e.stopPropagation()}>
+        <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:12, color:C.cyan, marginBottom:16, textAlign:"center" }}>🎨 CHOOSE THEME</div>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
+          {themes.map(([key,t]) => (
+            <button key={key} onClick={() => {
+              localStorage.setItem("mm_theme",""); // force
+              localStorage.setItem("mm_theme", key);
+              setCur(key); C = THEMES[key] || THEMES.space;
+              window.location.reload(); // reload to apply theme everywhere
+            }} style={{
+              background: cur===key ? `${t.cyan}22` : t.bg,
+              border:`2px solid ${cur===key ? t.cyan : t.dim+"44"}`,
+              borderRadius:14, padding:"12px 10px", cursor:"pointer", textAlign:"center",
+              boxShadow: cur===key ? `0 0 16px ${t.cyan}44` : "none",
+            }}>
+              <div style={{ fontSize:24, marginBottom:4 }}>{t.icon}</div>
+              <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:10, color: cur===key ? t.cyan : t.dim }}>{t.name}</div>
+              <div style={{ display:"flex", gap:4, justifyContent:"center", marginTop:6 }}>
+                {[t.purple,t.cyan,t.yellow,t.green].map((cl,i)=>(
+                  <div key={i} style={{ width:10, height:10, borderRadius:"50%", background:cl }}/>
+                ))}
+              </div>
+              {cur===key && <div style={{ fontSize:8, color:t.cyan, fontFamily:"'Orbitron',sans-serif", marginTop:4 }}>✓ ACTIVE</div>}
+            </button>
+          ))}
+        </div>
+        <button onClick={onClose} style={{ marginTop:14, width:"100%", background:"none", border:`1px solid ${C.dim}44`, borderRadius:10, padding:"10px", color:C.dim, cursor:"pointer", fontFamily:"'Nunito',sans-serif", fontWeight:700, fontSize:13 }}>CLOSE</button>
+      </div>
+    </div>
+  );
+}
+
 function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogout, onFeedback, onRate }) {
+  const [showTheme, setShowTheme] = useState(false);
   const [progress, setProgress] = useState([]);
   const [showDQ,     setShowDQ]     = useState(false);
   const [showPuzzle, setShowPuzzle] = useState(false);
@@ -3019,6 +3051,7 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
     <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Nunito',sans-serif", paddingBottom:80, position:"relative" }}>
       <Starfield n={40}/>
       {onFeedback && <SOSButton onClick={() => onFeedback()}/>}
+      {showTheme && <ThemeSelector onClose={() => setShowTheme(false)}/>}
       {/* Header */}
       <div style={{ position:"relative", zIndex:2, padding:"16px 18px 0" }}>
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
@@ -3108,36 +3141,28 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
       <div style={{ position:"relative", zIndex:2, padding:"0 18px 10px" }}>
         <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:11, color:C.purple, letterSpacing:2, marginBottom:10 }}>🗺️ GALACTIC WORLDS</div>
         <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-          {WORLDS.map(cw => {
-            // Child can ONLY access their registered class
-            // Premium doesn't unlock other classes — class is set at registration
-            const canAccess = cw.id === child.class_num || child.id === "admin-001";
-            return (
-              <button key={cw.id} onClick={() => onWorld(cw, canAccess)} style={{
-                background: !canAccess ? "#05050e" : `linear-gradient(135deg,${cw.color}16,${cw.color}08)`,
-                border:`2px solid ${!canAccess ? "#0c0c20" : cw.color+"44"}`,
-                borderRadius:17, padding:"13px 15px", cursor:"pointer",
-                display:"flex", alignItems:"center", gap:12,
-                boxShadow: !canAccess ? "none" : `0 0 16px ${cw.glow}`,
-                opacity: !canAccess ? 0.45 : 1, transition:"all 0.2s",
-              }}>
-                <div style={{ width:48, height:48, borderRadius:13, background: !canAccess ? "#0a0a18" : `${cw.color}18`, border:`2px solid ${!canAccess ? "#111" : cw.color+"33"}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, flexShrink:0 }}>
-                  {!canAccess ? "🔒" : cw.planet}
-                </div>
-                <div style={{ flex:1, textAlign:"left" }}>
-                  <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:13, color: !canAccess ? "#282838" : cw.color }}>{cw.name}</div>
-                  <div style={{ fontSize:11, color:C.dim, marginTop:2 }}>{cw.world}{!canAccess ? ` · Not your class (Class ${child.class_num})` : ""}</div>
-                  {cw.id === child.class_num && <div style={{ fontSize:10, color:C.dim, marginTop:2 }}>🎯 Your class</div>}
-                </div>
-                <div style={{ color: !canAccess ? C.yellow : cw.color, fontSize: !canAccess ? 18 : 22 }}>{!canAccess ? "⭐" : "›"}</div>
-              </button>
-            );
-          })}
+          {WORLDS.filter(cw => cw.id === child.class_num || child.id === "admin-001").map(cw => (
+            <button key={cw.id} onClick={() => onWorld(cw, true)} style={{
+              background: `linear-gradient(135deg,${cw.color}16,${cw.color}08)`,
+              border:`2px solid ${cw.color}44`, borderRadius:17, padding:"13px 15px",
+              cursor:"pointer", display:"flex", alignItems:"center", gap:12,
+              boxShadow:`0 0 16px ${cw.glow}`, transition:"all 0.2s",
+            }}>
+              <div style={{ width:48, height:48, borderRadius:13, background:`${cw.color}18`, border:`2px solid ${cw.color}33`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, flexShrink:0 }}>
+                {cw.planet}
+              </div>
+              <div style={{ flex:1, textAlign:"left" }}>
+                <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:13, color:cw.color }}>{cw.name}</div>
+                <div style={{ fontSize:11, color:C.dim, marginTop:2 }}>{cw.world} · 🎯 Your class</div>
+              </div>
+              <div style={{ color:cw.color, fontSize:22 }}>›</div>
+            </button>
+          ))}
         </div>
       </div>
       {/* Bottom nav */}
       <div style={{ position:"fixed", bottom:0, left:0, right:0, zIndex:10, background:"rgba(4,4,15,0.97)", backdropFilter:"blur(20px)", borderTop:`1px solid ${C.purple}33`, padding:"10px 14px", display:"flex", justifyContent:"space-around" }}>
-        {[{icon:"🏠",label:"HOME",act:null,active:true},{icon:"🎮",label:"GAMES",act:onGames},{icon:"🧮",label:"ABACUS",act:onAbacus},{icon:"🎓",label:"EXAMS",act:onOlympiad},{icon:"📣",label:"REPORT",act:onFeedback}].map((n, i) => (
+        {[{icon:"🏠",label:"HOME",act:null,active:true},{icon:"🎮",label:"GAMES",act:onGames},{icon:"🧮",label:"ABACUS",act:onAbacus},{icon:"🎓",label:"EXAMS",act:onOlympiad},{icon:"🎨",label:"THEME",act:()=>setShowTheme(true)},{icon:"📣",label:"REPORT",act:onFeedback}].map((n, i) => (
           <button key={i} onClick={n.act||undefined} style={{ background:"none", border:"none", cursor:n.act?"pointer":"default", display:"flex", flexDirection:"column", alignItems:"center", gap:2, color: n.active ? C.cyan : C.dim }}>
             <div style={{ fontSize:19 }}>{n.icon}</div>
             <div style={{ fontSize:8, fontFamily:"'Orbitron',sans-serif" }}>{n.label}</div>
@@ -3163,14 +3188,11 @@ function LessonMap({ world, child, onBack, onLesson }) {
     });
   }, [child.id]);
 
-  const isSetDone     = (lid, si) => progress.some(p => p.lesson_id === lid + "_s" + si && (p.stars_earned||0) >= 1);
-  // Set unlocked if: it's Set 1 (si===0) OR the previous set is done
+  const isSetDone   = (lid, si) => progress.some(p => p.lesson_id === lid + "_s" + si && (p.stars_earned||0) >= 1);
   const isSetUnlocked = (lid, si) => si === 0 || isSetDone(lid, si - 1);
-  const lessonDone    = (lid) => isSetDone(lid, 19);
+  const lessonDone  = (lid) => isSetDone(lid, 19); // all 20 sets done
   const lessonStarted = (lid) => isSetDone(lid, 0);
   const completedSets = (lid) => Array.from({length:20},(_,i)=>i).filter(i=>isSetDone(lid,i)).length;
-  // ALL lessons are unlocked from the start — child can access Set 1 of any lesson
-  const lessonUnlocked = (li) => true;
   const worldProg = lessons.filter(l => lessonStarted(l.id)).length;
   const totalSets = lessons.length * 20;
   const doneSets  = lessons.reduce((s,l)=>s+completedSets(l.id),0);
@@ -3197,25 +3219,25 @@ function LessonMap({ world, child, onBack, onLesson }) {
           const done   = lessonDone(lesson.id);
           const cSets  = completedSets(lesson.id);
           const isExp  = expanded === lesson.id;
-          const lUnlocked = lessonUnlocked(li);
+          const lessonUnlocked = li === 0 || completedSets(lessons[li-1].id) >= 1;
           return (
             <div key={lesson.id} style={{ marginBottom:10 }}>
               {/* Lesson header row */}
               <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom: isExp ? 8 : 0 }}>
-                <div style={{ width:48, height:48, borderRadius:14, background: done ? `linear-gradient(135deg,${world.color},${world.color}aa)` : lUnlocked ? C.card2 : "#060614", border:`2px solid ${done ? world.color : lUnlocked ? world.color+"44" : "#0c0c28"}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, flexShrink:0 }}>
-                  {done ? "✅" : lUnlocked ? lesson.emoji : "🔒"}
+                <div style={{ width:48, height:48, borderRadius:14, background: done ? `linear-gradient(135deg,${world.color},${world.color}aa)` : lessonUnlocked ? C.card2 : "#060614", border:`2px solid ${done ? world.color : lessonUnlocked ? world.color+"44" : "#0c0c28"}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, flexShrink:0 }}>
+                  {done ? "✅" : lessonUnlocked ? lesson.emoji : "🔒"}
                 </div>
-                <button onClick={() => lUnlocked && setExpanded(isExp ? null : lesson.id)}
-                  style={{ flex:1, background: done ? `${world.color}0e` : lUnlocked ? C.card : "#050510", border:`1.5px solid ${done ? world.color+"44" : lUnlocked ? world.color+"1a" : "#0c0c28"}`, borderRadius:13, padding:"10px 13px", cursor: lUnlocked ? "pointer" : "not-allowed", textAlign:"left" }}>
+                <button onClick={() => lessonUnlocked && setExpanded(isExp ? null : lesson.id)}
+                  style={{ flex:1, background: done ? `${world.color}0e` : lessonUnlocked ? C.card : "#050510", border:`1.5px solid ${done ? world.color+"44" : lessonUnlocked ? world.color+"1a" : "#0c0c28"}`, borderRadius:13, padding:"10px 13px", cursor: lessonUnlocked ? "pointer" : "not-allowed", textAlign:"left" }}>
                   <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                    <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:12, color: lUnlocked ? "white" : "#181828" }}>{lesson.title}</div>
+                    <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:12, color: lessonUnlocked ? "white" : "#181828" }}>{lesson.title}</div>
                     <div style={{ display:"flex", gap:5, alignItems:"center" }}>
                       <span style={{ fontSize:9, color:C.dim, fontFamily:"'Orbitron',sans-serif" }}>{cSets}/20 sets</span>
-                      <span style={{ fontSize:13, color: lUnlocked ? world.color : "#181828" }}>{isExp ? "▲" : "▼"}</span>
+                      <span style={{ fontSize:13, color: lessonUnlocked ? world.color : "#181828" }}>{isExp ? "▲" : "▼"}</span>
                     </div>
                   </div>
                   <div style={{ fontSize:11, color:C.dim, marginTop:2 }}>{lesson.sub}</div>
-                  {lUnlocked && (
+                  {lessonUnlocked && (
                     <div style={{ marginTop:5, background:"rgba(255,255,255,0.05)", borderRadius:5, height:4, overflow:"hidden" }}>
                       <div style={{ width:`${cSets*5}%`, height:"100%", background:`linear-gradient(90deg,${world.color},${C.cyan})`, borderRadius:5 }}/>
                     </div>
@@ -3223,7 +3245,7 @@ function LessonMap({ world, child, onBack, onLesson }) {
                 </button>
               </div>
               {/* Sets grid — shown when expanded */}
-              {isExp && lUnlocked && (
+              {isExp && lessonUnlocked && (
                 <div style={{ marginLeft:58, display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:7 }}>
                   {Array.from({length:20},(_,si) => {
                     const sDone   = isSetDone(lesson.id, si);
