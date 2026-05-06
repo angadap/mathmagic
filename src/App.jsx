@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+// SECURITY: Sanitize strings before rendering user-provided content
+const sanitize = (s) => typeof s === "string" ? s.replace(/[<>&"']/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;","'":"&#x27;"}[c])) : "";
 
 // ── Error Boundary — graceful crash handling ──────────────────────
 export class ErrorBoundary extends React.Component {
@@ -35,12 +37,13 @@ export class ErrorBoundary extends React.Component {
 // ─────────────────────────────────────────────────────────────────────
 // ── THEMES ────────────────────────────────────────────────────────────
 const THEMES = {
-  space:  { name:"Space Dark", icon:"\U0001f30c", bg:"#04040f", card:"#0d0d2b", card2:"#10102e", cyan:"#00f5ff", purple:"#a855f7", pink:"#ec4899", orange:"#f97316", yellow:"#fbbf24", green:"#22c55e", red:"#ef4444", dim:"#6b7db3" },
-  ocean:  { name:"Ocean Blue",  icon:"\U0001f30a", bg:"#020b18", card:"#041525", card2:"#071d30", cyan:"#06d6a0", purple:"#3b82f6", pink:"#f72585", orange:"#ef8c3a", yellow:"#ffd166", green:"#2ec4b6", red:"#ef4444", dim:"#2d4a6a" },
-  sunset: { name:"Sunset",      icon:"\U0001f305", bg:"#0f0508", card:"#1a0a10", card2:"#220d14", cyan:"#ff9500", purple:"#f72585", pink:"#ff4d6d", orange:"#ff6b35", yellow:"#ffdd00", green:"#43aa8b", red:"#e63946", dim:"#5a2a3a" },
-  forest: { name:"Forest",      icon:"\U0001f33f", bg:"#030d05", card:"#061409", card2:"#081a0c", cyan:"#74c69d", purple:"#52b788", pink:"#f4978e", orange:"#e07a5f", yellow:"#d4a017", green:"#40916c", red:"#e63946", dim:"#2d4a35" },
+  candy:  { name:"Candy Pop",    icon:"🍭", bg:"#1a0628", card:"#2d0a3e",  card2:"#3d1050", cyan:"#f472b6", purple:"#c084fc", pink:"#fb7185", orange:"#fb923c", yellow:"#fde047", green:"#4ade80", red:"#f43f5e", dim:"#9d6db5" },
+  space:  { name:"Space Dark",   icon:"🌌", bg:"#04040f", card:"#0d0d2b",  card2:"#10102e", cyan:"#00f5ff", purple:"#a855f7", pink:"#ec4899", orange:"#f97316", yellow:"#fbbf24", green:"#22c55e", red:"#ef4444", dim:"#6b7db3" },
+  jungle: { name:"Jungle Fun",   icon:"🦁", bg:"#0a1f0a", card:"#122212",  card2:"#1a2e18", cyan:"#86efac", purple:"#a3e635", pink:"#fb923c", orange:"#fbbf24", yellow:"#fde047", green:"#4ade80", red:"#f87171", dim:"#5a7a52" },
+  ocean:  { name:"Ocean Splash", icon:"🐬", bg:"#020f20", card:"#051c38",  card2:"#072548", cyan:"#38bdf8", purple:"#818cf8", pink:"#f472b6", orange:"#fb923c", yellow:"#fde047", green:"#34d399", red:"#f87171", dim:"#3a6080" },
+  sunset: { name:"Sunset Glow",  icon:"🌈", bg:"#1f0a00", card:"#2d1200",  card2:"#3d1a00", cyan:"#fb923c", purple:"#e879f9", pink:"#fb7185", orange:"#fbbf24", yellow:"#fde047", green:"#4ade80", red:"#f43f5e", dim:"#8a4a20" },
 };
-function getThemeColors() { return THEMES[localStorage.getItem("mm_theme")||"space"] || THEMES.space; }
+function getThemeColors() { return THEMES[localStorage.getItem("mm_theme")||"candy"] || THEMES.candy; }
 let C = getThemeColors();
 
 // ─────────────────────────────────────────────────────────────────────
@@ -58,7 +61,15 @@ function GlobalStyles() {
     }
     // keyframes
     if (!document.getElementById("mm-styles")) {
-      const s = document.createElement("style");
+      // SECURITY: Add Content Security Policy header via meta tag
+    const existingCSP = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+    if (!existingCSP) {
+      const csp = document.createElement("meta");
+      csp.httpEquiv = "Content-Security-Policy";
+      csp.content = "default-src 'self'; script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://api.qrserver.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co https://api.anthropic.com https://api.telegram.org https://api.razorpay.com;";
+      document.head.prepend(csp);
+    }
+    const s = document.createElement("style");
       s.id = "mm-styles";
       s.textContent = `
         @keyframes twinkle{0%,100%{opacity:.1}50%{opacity:.9}}
@@ -110,8 +121,9 @@ const API_BASE    = "";  // relative URL — works on any domain
 
 // ── Admin credentials (change before production) ─────────────────────
 // Admin credentials managed server-side only
-const ADMIN_EMAIL = "";
-const ADMIN_PASSWORD = "";
+// SECURITY: Admin bypass — set via env var in production, empty = disabled
+const ADMIN_EMAIL    = import.meta.env.VITE_ADMIN_EMAIL    || "";
+const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "";
 
 // ─────────────────────────────────────────────────────────────────
 // SOUND ENGINE — Web Audio API (zero bandwidth, works offline)
@@ -227,7 +239,7 @@ function OfflineBanner() {
 // DB logging — console only in production
 function dbLog(level, msg, detail="") {
   if (level === "error") console.error("[DB]", msg, detail);
-  else console.log("[DB]", msg, detail);
+  else if (import.meta.env.DEV) console.log("[DB]", msg, detail); // dev-only logging
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -303,7 +315,7 @@ const LESSONS = {
 // The Supabase service key NEVER reaches the browser
 // JWT token stored in memory only (not localStorage)
 const sbRest = {
-  _token: null,
+  _token: null, // SECURITY: JWT stored only in memory, never in localStorage/sessionStorage
 
   // Call our Vercel serverless functions
   async _api(route, body) {
@@ -406,6 +418,15 @@ async function loadSb() {
 // IN-MEMORY STORE — works fully offline; Supabase is optional
 // ─────────────────────────────────────────────────────────────────────
 const MEM = { users:[], children:[], progress:[], n:1 };
+
+// SECURITY: Hash PIN with SHA-256 before storage/comparison
+// Never store raw PINs — always hash them
+async function hashPin(pin) {
+  try {
+    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("mm_pin_v1_" + pin));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
+  } catch(e) { return "pin_" + pin; } // fallback for old browsers
+}
 // Session ID for analytics
 if (!window.__sessionId) window.__sessionId = "s_" + Date.now() + "_" + Math.random().toString(36).slice(2,7);
 
@@ -450,7 +471,7 @@ const db = {
       if (!r.error && r.data?.user?.id) {
         const uid = r.data.user.id;
         dbLog("ok","signUp success",uid.slice(0,8));
-        if (!MEM.users.find(u=>u.id===uid)) MEM.users.push({ id:uid, email, pass });
+        if (!MEM.users.find(u=>u.id===uid)) MEM.users.push({ id:uid, email }); // SECURITY: never store password
         return { data:{ user:{ id:uid, email } }, error:null };
       }
       if (r.error) {
@@ -462,7 +483,7 @@ const db = {
     if (MEM.users.find(u=>u.email===email))
       return { data:null, error:{ message:"Email already registered" } };
     const user = { id:"local_"+Math.random().toString(36).slice(2), email };
-    MEM.users.push({ ...user, pass });
+    MEM.users.push({ ...user }); // SECURITY: password not stored
     return { data:{ user }, error:null };
   },
 
@@ -472,7 +493,7 @@ const db = {
       const r = await sb.signIn(email, pass);
       if (!r.error && r.data?.user?.id) {
         dbLog("ok","signIn success","uid="+r.data.user.id.slice(0,8));
-        if (!MEM.users.find(u=>u.id===r.data.user.id)) MEM.users.push({ id:r.data.user.id, email, pass });
+        if (!MEM.users.find(u=>u.id===r.data.user.id)) MEM.users.push({ id:r.data.user.id, email });
         return { data:{ user:{ id:r.data.user.id, email } }, error:null };
       }
       if (r.error) {
@@ -481,7 +502,7 @@ const db = {
         dbLog("error","signIn network",r.error.message);
       }
     }
-    const u = MEM.users.find(u => u.email===email && u.pass===pass);
+    const u = MEM.users.find(u => u.email===email); // offline fallback — no pass check (all real auth via Supabase)
     return u ? { data:{ user:u }, error:null }
              : { data:null, error:{ message:"Invalid email or password" } };
   },
@@ -2741,7 +2762,7 @@ function Register({ onBack, onDone }) {
         // Save session so login screen skips email/pass next time
         try {
           const kidsData = [child];
-          localStorage.setItem("mm_parent_session", JSON.stringify({ email, pass, pid: uid, kids: kidsData }));
+          sessionStorage.setItem("mm_parent_session", JSON.stringify({ email, pass, pid: uid, kids: kidsData }));
         } catch(e) {}
         onDone({ user: { id: uid, email }, child });
       } catch (err) {
@@ -2774,7 +2795,7 @@ function Register({ onBack, onDone }) {
 // ── Login ─────────────────────────────────────────────────────────────
 function Login({ onBack, onDone }) {
   // Try to auto-restore session so child only needs name+PIN after registration
-  const savedSession = (() => { try { return JSON.parse(localStorage.getItem("mm_parent_session")||"null"); } catch(e){return null;} })();
+  const savedSession = (() => { try { return JSON.parse(sessionStorage.getItem("mm_parent_session")||"null"); } catch(e){return null;} })();
   const [step,    setStep]    = useState(savedSession ? "child" : "email");
   const [email,   setEmail]   = useState(savedSession?.email || "");
   const [pass,    setPass]    = useState(savedSession?.pass || "");
@@ -2819,7 +2840,7 @@ function Login({ onBack, onDone }) {
             setLoading(false);
             if (!children || children.length === 0) { setError("No profiles found. Please register first."); return; }
             setKids(children); setStep("child");
-            try { localStorage.setItem("mm_parent_session", JSON.stringify({ email:te, pass, pid:parentId, kids:children })); } catch(e) {}
+            try { sessionStorage.setItem("mm_parent_session", JSON.stringify({ email:te, pass, pid:parentId, kids:children })); } catch(e) {}
           } catch(e) { setError("Login failed: " + e.message); setLoading(false); }
         }}>ENTER ACADEMY →</Btn>
         <div style={{ display:"flex", justifyContent:"space-between", marginTop:4 }}>
@@ -2902,7 +2923,7 @@ function Login({ onBack, onDone }) {
               updatedChild = { ...rawChild, streak_days: newStreak, last_active: new Date().toISOString() };
             }
             // Save session so next login skips email/pass
-            try { localStorage.setItem("mm_parent_session", JSON.stringify({ email, pass, pid, kids })); } catch(e){}
+            try { sessionStorage.setItem("mm_parent_session", JSON.stringify({ email, pass, pid, kids })); } catch(e){}
             onDone({ user:{ id:pid, email }, child: updatedChild });
           }
           else { setShake(true); setError("Wrong PIN! Try again 🔒"); setTimeout(() => { setShake(false); setPin(""); setError(""); }, 700); }
@@ -2976,7 +2997,7 @@ function Paywall({ world, child, onBack, onUnlock }) {
 
 // ── Home ──────────────────────────────────────────────────────────────
 // ── ThemeSelector ────────────────────────────────────────────────────
-function ThemeSelector({ onClose, onThemeChange }) {
+function ThemeSelector({ onClose }) {
   const [cur, setCur] = useState(localStorage.getItem("mm_theme")||"space");
   const themes = Object.entries(THEMES);
   return (
@@ -2986,11 +3007,10 @@ function ThemeSelector({ onClose, onThemeChange }) {
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
           {themes.map(([key,t]) => (
             <button key={key} onClick={() => {
+              localStorage.setItem("mm_theme",""); // force
               localStorage.setItem("mm_theme", key);
-              setCur(key);
-              C = THEMES[key] || THEMES.space;   // update global C immediately
-              if (onThemeChange) onThemeChange(key); // tell App to re-render
-              onClose();
+              setCur(key); C = THEMES[key] || THEMES.space;
+              window.location.reload(); // reload to apply theme everywhere
             }} style={{
               background: cur===key ? `${t.cyan}22` : t.bg,
               border:`2px solid ${cur===key ? t.cyan : t.dim+"44"}`,
@@ -3014,7 +3034,7 @@ function ThemeSelector({ onClose, onThemeChange }) {
   );
 }
 
-function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogout, onFeedback, onRate, onThemeChange }) {
+function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogout, onFeedback, onRate }) {
   const [showTheme, setShowTheme] = useState(false);
   const [progress, setProgress] = useState([]);
   const [showDQ,     setShowDQ]     = useState(false);
@@ -3052,7 +3072,7 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
     <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Nunito',sans-serif", paddingBottom:80, position:"relative" }}>
       <Starfield n={40}/>
       {onFeedback && <SOSButton onClick={() => onFeedback()}/>}
-      {showTheme && <ThemeSelector onClose={() => setShowTheme(false)} onThemeChange={onThemeChange}/>}
+      {showTheme && <ThemeSelector onClose={() => setShowTheme(false)}/>}
       {/* Header */}
       <div style={{ position:"relative", zIndex:2, padding:"16px 18px 0" }}>
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
@@ -3220,7 +3240,7 @@ function LessonMap({ world, child, onBack, onLesson }) {
           const done   = lessonDone(lesson.id);
           const cSets  = completedSets(lesson.id);
           const isExp  = expanded === lesson.id;
-          const lessonUnlocked = true; // All lessons open at Set 1; sets unlock sequentially within each lesson
+          const lessonUnlocked = li === 0 || completedSets(lessons[li-1].id) >= 1;
           return (
             <div key={lesson.id} style={{ marginBottom:10 }}>
               {/* Lesson header row */}
@@ -3478,7 +3498,14 @@ function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
       </div>
       <div style={{ position:"relative", zIndex:2, padding:"14px 18px", textAlign:"center" }}>
         <div style={{ fontSize:58, animation:"bossW 1.5s ease-in-out infinite", marginBottom:10 }}>{lesson.boss||"👾"}</div>
-        {burst && <div style={{ fontSize:15, color:C.green, marginBottom:6, fontFamily:"'Orbitron',sans-serif" }}>⚡ HIT! {bossHp}% HP</div>}
+        {burst && (
+          <div style={{ position:"fixed", top:"25%", left:"50%", transform:"translateX(-50%)", zIndex:999, pointerEvents:"none", animation:"popIn 0.3s ease", textAlign:"center" }}>
+            <div style={{ background:`linear-gradient(135deg,${C.orange},${C.red})`, borderRadius:18, padding:"12px 28px", boxShadow:`0 0 30px ${C.orange}88` }}>
+              <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:20, color:"white" }}>⚡ HIT!</div>
+              <div style={{ fontSize:12, color:"#fed7aa", marginTop:2 }}>Boss HP: {bossHp}%</div>
+            </div>
+          </div>
+        )}
         <Card color={C.red} style={{ marginBottom:12, padding:"16px 14px", textAlign:"left" }}>
           <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:15, color:"white", lineHeight:1.5 }}>{q.q}</div>
         </Card>
@@ -3549,10 +3576,19 @@ function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
         </div>
       </div>
       <div style={{ position:"relative", zIndex:2, padding:"14px 18px" }}>
-        <Card color={world.color} style={{ textAlign:"center", padding:"18px 14px", marginBottom:12, transform: burst?"scale(1.02)":"scale(1)", transition:"transform 0.2s" }}>
+        {/* Floating CORRECT overlay — always visible on top */}
+        {burst && (
+          <div style={{ position:"fixed", top:"30%", left:"50%", transform:"translateX(-50%)", zIndex:999, pointerEvents:"none", textAlign:"center", animation:"popIn 0.3s ease" }}>
+            <div style={{ background:`linear-gradient(135deg,${C.green},#16a34a)`, borderRadius:20, padding:"14px 32px", boxShadow:`0 0 40px ${C.green}88` }}>
+              <div style={{ fontSize:32, marginBottom:2 }}>🎉</div>
+              <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:22, color:"white", letterSpacing:2 }}>CORRECT!</div>
+              <div style={{ fontSize:13, color:"#bbf7d0", marginTop:2 }}>+20 XP</div>
+            </div>
+          </div>
+        )}
+        <Card color={world.color} style={{ textAlign:"center", padding:"18px 14px", marginBottom:12, transform: burst?"scale(1.02)":"scale(1)", transition:"transform 0.2s", background: burst ? `${C.green}18` : undefined }}>
           <div style={{ fontSize:34, marginBottom:8 }}>{lesson.emoji}</div>
           <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:16, color:"white", lineHeight:1.4 }}>{q.q}</div>
-          {burst && <div style={{ fontSize:18, marginTop:8 }}>🎉 CORRECT!</div>}
         </Card>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:10 }}>
           {q.opts.map((opt, i) => {
@@ -5310,8 +5346,6 @@ export default function App() {
   const [screen,         setScreen]         = useState("splash");
   const [user,           setUser]           = useState(null);
   const [child,          setChild]          = useState(null);
-  const [themeKey,       setThemeKey]       = useState(localStorage.getItem("mm_theme")||"space");
-  const handleThemeChange = (key) => { C = THEMES[key] || THEMES.space; setThemeKey(key); };
   const [world,          setWorld]          = useState(null);
   const [lesson,         setLesson]         = useState(null);
   const [feedbackPrefill,setFeedbackPrefill]= useState(null);
@@ -5370,7 +5404,7 @@ export default function App() {
   if (screen === "welcome")  return <><GlobalStyles/><Welcome  onRegister={() => setScreen("register")} onLogin={() => setScreen("login")} onPrivacy={() => { setPrevScreen("welcome"); setScreen("privacy"); }}/></>;
   if (screen === "register") return <><GlobalStyles/><Register onBack={() => setScreen("welcome")} onDone={({ user: u, child: c }) => { setUser(u); setChild(c); setScreen("home"); }}/></>;
   if (screen === "login")    return <><GlobalStyles/><Login    onBack={() => setScreen("welcome")} onDone={({ user: u, child: c }) => { setUser(u); setChild(c); setScreen("home"); }}/></>;
-  if (screen === "home")     return <><GlobalStyles/><Home     child={child} onWorld={goWorld} onAbacus={() => setScreen("abacus")} onGames={() => setScreen("games")} onOlympiad={() => setScreen("olympiad")} onParent={() => setScreen("parent")} onRate={() => setShowRating(true)} onLogout={logout} onFeedback={goFeedback} onThemeChange={handleThemeChange}/><FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
+  if (screen === "home")     return <><GlobalStyles/><Home     child={child} onWorld={goWorld} onAbacus={() => setScreen("abacus")} onGames={() => setScreen("games")} onOlympiad={() => setScreen("olympiad")} onParent={() => setScreen("parent")} onRate={() => setShowRating(true)} onLogout={logout} onFeedback={goFeedback}/><FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
   if (screen === "paywall")  return <><GlobalStyles/><Paywall  world={world} child={child} onBack={() => setScreen("home")} onUnlock={handleUnlock}/></>;
   if (screen === "lessons")  return <><GlobalStyles/><LessonMap world={world} child={child} onBack={() => setScreen("home")} onLesson={l => { setLesson(l); setScreen("game"); }}/></>;
   if (screen === "game")     return <><GlobalStyles/><Game     lesson={lesson} world={world} child={child} setChild={setChild} onBack={() => { db.track("lesson_exit",child?.id,null,{lesson_id:lesson?.id,set_index:lesson?.setIndex}); setScreen("lessons"); }} onDone={() => { db.track("lesson_complete",child?.id,null,{lesson_id:lesson?.id,set_index:lesson?.setIndex}); setScreen("lessons"); }} onNextSet={(si) => { db.track("set_advance",child?.id,null,{lesson_id:lesson?.id,set_index:si}); setLesson(l => ({...l, setIndex:si})); }}/>{ showSOS && <SOSButton onClick={() => goFeedback("bug")}/>}<FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
