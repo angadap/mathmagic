@@ -1,7 +1,4 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import SFX from './sounds.js';
-import { THEMES, getThemeColors } from './theme.js';
-
 
 // ── Error Boundary — graceful crash handling ──────────────────────
 export class ErrorBoundary extends React.Component {
@@ -33,7 +30,17 @@ export class ErrorBoundary extends React.Component {
   }
 }
 
-// Theme + colors — loaded from theme.js
+// ─────────────────────────────────────────────────────────────────────
+// THEME
+// ─────────────────────────────────────────────────────────────────────
+// ── THEMES ────────────────────────────────────────────────────────────
+const THEMES = {
+  space:  { name:"Space Dark", icon:"\U0001f30c", bg:"#04040f", card:"#0d0d2b", card2:"#10102e", cyan:"#00f5ff", purple:"#a855f7", pink:"#ec4899", orange:"#f97316", yellow:"#fbbf24", green:"#22c55e", red:"#ef4444", dim:"#6b7db3" },
+  ocean:  { name:"Ocean Blue",  icon:"\U0001f30a", bg:"#020b18", card:"#041525", card2:"#071d30", cyan:"#06d6a0", purple:"#3b82f6", pink:"#f72585", orange:"#ef8c3a", yellow:"#ffd166", green:"#2ec4b6", red:"#ef4444", dim:"#2d4a6a" },
+  sunset: { name:"Sunset",      icon:"\U0001f305", bg:"#0f0508", card:"#1a0a10", card2:"#220d14", cyan:"#ff9500", purple:"#f72585", pink:"#ff4d6d", orange:"#ff6b35", yellow:"#ffdd00", green:"#43aa8b", red:"#e63946", dim:"#5a2a3a" },
+  forest: { name:"Forest",      icon:"\U0001f33f", bg:"#030d05", card:"#061409", card2:"#081a0c", cyan:"#74c69d", purple:"#52b788", pink:"#f4978e", orange:"#e07a5f", yellow:"#d4a017", green:"#40916c", red:"#e63946", dim:"#2d4a35" },
+};
+function getThemeColors() { return THEMES[localStorage.getItem("mm_theme")||"space"] || THEMES.space; }
 let C = getThemeColors();
 
 // ─────────────────────────────────────────────────────────────────────
@@ -106,7 +113,83 @@ const API_BASE    = "";  // relative URL — works on any domain
 const ADMIN_EMAIL = "";
 const ADMIN_PASSWORD = "";
 
-// SFX imported from sounds.js
+// ─────────────────────────────────────────────────────────────────
+// SOUND ENGINE — Web Audio API (zero bandwidth, works offline)
+// Battery-aware: respects prefers-reduced-motion and low power
+// ─────────────────────────────────────────────────────────────────
+const SFX = (() => {
+  let ctx = null;
+  let muted = localStorage.getItem("mm_muted") === "1";
+
+  const getCtx = () => {
+    if (!ctx) {
+      try { ctx = new (window.AudioContext || window.webkitAudioContext)(); }
+      catch(e) { return null; }
+    }
+    if (ctx.state === "suspended") ctx.resume();
+    return ctx;
+  };
+
+  const play = (freq, type, duration, vol=0.3, decay=0.8) => {
+    if (muted) return;
+    // Skip sounds if battery is low (Battery API)
+    const ac = getCtx();
+    if (!ac) return;
+    try {
+      const osc  = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.connect(gain);
+      gain.connect(ac.destination);
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, ac.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(freq * decay, ac.currentTime + duration);
+      gain.gain.setValueAtTime(vol, ac.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + duration);
+      osc.start(ac.currentTime);
+      osc.stop(ac.currentTime + duration);
+    } catch(e) {}
+  };
+
+  const chord = (freqs, type, dur, vol) => freqs.forEach((f,i) => setTimeout(()=>play(f,type,dur,vol), i*80));
+
+  return {
+    get muted() { return muted; },
+    toggleMute() { muted = !muted; localStorage.setItem("mm_muted", muted?"1":"0"); return muted; },
+
+    // UI interactions
+    tap()        { play(600, "sine",    0.08, 0.15); },
+    back()       { play(300, "sine",    0.12, 0.15); },
+    select()     { play(500, "triangle",0.10, 0.20); },
+
+    // Quiz events
+    correct()    { chord([523,659,784], "sine", 0.3, 0.25); },
+    wrong()      { play(180, "sawtooth", 0.25, 0.20, 0.5); },
+    hint()       { play(440, "sine",    0.15, 0.18); },
+
+    // Game events
+    bossHit()    { play(120, "square",  0.2,  0.30, 0.3); },
+    bossDefeat() { chord([784,988,1047,1319], "sine", 0.6, 0.30); },
+    bubblePop()  { play(800, "sine",    0.08, 0.20, 0.5); },
+    timerTick()  { play(1000,"square",  0.05, 0.10); },
+    timerWarn()  { play(440, "square",  0.10, 0.25); },
+
+    // Progress / rewards
+    levelUp()    { chord([523,659,784,1047], "sine", 0.5, 0.35); },
+    xpGain()     { play(880, "sine",    0.15, 0.20, 1.2); },
+    coinGain()   { chord([1047,1319], "triangle", 0.25, 0.25); },
+    starEarn()   { chord([659,784,988,1319], "sine", 0.7, 0.30); },
+    unlock()     { chord([392,494,587,784], "sine", 0.5, 0.28); },
+
+    // Navigation
+    screenIn()   { play(440, "sine",    0.12, 0.12, 1.1); },
+    splash()     { chord([262,330,392,523], "sine", 0.8, 0.20); },
+
+    // Daily / special
+    dailyDone()  { chord([784,988,1175,1568], "sine", 0.8, 0.30); },
+    puzzleSolve(){ chord([523,784,1047,1319,1568], "sine", 1.0, 0.28); },
+    ratingOpen() { chord([523,659,784], "triangle", 0.4, 0.18); },
+  };
+})();
 
 // Global mute toggle button component
 function MuteBtn() {
@@ -2658,7 +2741,7 @@ function Register({ onBack, onDone }) {
         // Save session so login screen skips email/pass next time
         try {
           const kidsData = [child];
-          sessionStorage.setItem("mm_parent_session", JSON.stringify({ email, pass, pid: uid, kids: kidsData }));
+          localStorage.setItem("mm_parent_session", JSON.stringify({ email, pass, pid: uid, kids: kidsData }));
         } catch(e) {}
         onDone({ user: { id: uid, email }, child });
       } catch (err) {
@@ -2691,7 +2774,7 @@ function Register({ onBack, onDone }) {
 // ── Login ─────────────────────────────────────────────────────────────
 function Login({ onBack, onDone }) {
   // Try to auto-restore session so child only needs name+PIN after registration
-  const savedSession = (() => { try { return JSON.parse(sessionStorage.getItem("mm_parent_session")||"null"); } catch(e){return null;} })();
+  const savedSession = (() => { try { return JSON.parse(localStorage.getItem("mm_parent_session")||"null"); } catch(e){return null;} })();
   const [step,    setStep]    = useState(savedSession ? "child" : "email");
   const [email,   setEmail]   = useState(savedSession?.email || "");
   const [pass,    setPass]    = useState(savedSession?.pass || "");
@@ -2736,7 +2819,7 @@ function Login({ onBack, onDone }) {
             setLoading(false);
             if (!children || children.length === 0) { setError("No profiles found. Please register first."); return; }
             setKids(children); setStep("child");
-            try { sessionStorage.setItem("mm_parent_session", JSON.stringify({ email:te, pass, pid:parentId, kids:children })); } catch(e) {}
+            try { localStorage.setItem("mm_parent_session", JSON.stringify({ email:te, pass, pid:parentId, kids:children })); } catch(e) {}
           } catch(e) { setError("Login failed: " + e.message); setLoading(false); }
         }}>ENTER ACADEMY →</Btn>
         <div style={{ display:"flex", justifyContent:"space-between", marginTop:4 }}>
@@ -2819,7 +2902,7 @@ function Login({ onBack, onDone }) {
               updatedChild = { ...rawChild, streak_days: newStreak, last_active: new Date().toISOString() };
             }
             // Save session so next login skips email/pass
-            try { sessionStorage.setItem("mm_parent_session", JSON.stringify({ email, pass, pid, kids })); } catch(e){}
+            try { localStorage.setItem("mm_parent_session", JSON.stringify({ email, pass, pid, kids })); } catch(e){}
             onDone({ user:{ id:pid, email }, child: updatedChild });
           }
           else { setShake(true); setError("Wrong PIN! Try again 🔒"); setTimeout(() => { setShake(false); setPin(""); setError(""); }, 700); }
@@ -2893,7 +2976,7 @@ function Paywall({ world, child, onBack, onUnlock }) {
 
 // ── Home ──────────────────────────────────────────────────────────────
 // ── ThemeSelector ────────────────────────────────────────────────────
-function ThemeSelector({ onClose }) {
+function ThemeSelector({ onClose, onThemeChange }) {
   const [cur, setCur] = useState(localStorage.getItem("mm_theme")||"space");
   const themes = Object.entries(THEMES);
   return (
@@ -2903,10 +2986,11 @@ function ThemeSelector({ onClose }) {
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
           {themes.map(([key,t]) => (
             <button key={key} onClick={() => {
-              localStorage.setItem("mm_theme",""); // force
               localStorage.setItem("mm_theme", key);
-              setCur(key); C = THEMES[key] || THEMES.space;
-              window.location.reload(); // reload to apply theme everywhere
+              setCur(key);
+              C = THEMES[key] || THEMES.space;   // update global C immediately
+              if (onThemeChange) onThemeChange(key); // tell App to re-render
+              onClose();
             }} style={{
               background: cur===key ? `${t.cyan}22` : t.bg,
               border:`2px solid ${cur===key ? t.cyan : t.dim+"44"}`,
@@ -2930,7 +3014,7 @@ function ThemeSelector({ onClose }) {
   );
 }
 
-function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogout, onFeedback, onRate }) {
+function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogout, onFeedback, onRate, onThemeChange }) {
   const [showTheme, setShowTheme] = useState(false);
   const [progress, setProgress] = useState([]);
   const [showDQ,     setShowDQ]     = useState(false);
@@ -2968,7 +3052,7 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
     <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Nunito',sans-serif", paddingBottom:80, position:"relative" }}>
       <Starfield n={40}/>
       {onFeedback && <SOSButton onClick={() => onFeedback()}/>}
-      {showTheme && <ThemeSelector onClose={() => setShowTheme(false)}/>}
+      {showTheme && <ThemeSelector onClose={() => setShowTheme(false)} onThemeChange={onThemeChange}/>}
       {/* Header */}
       <div style={{ position:"relative", zIndex:2, padding:"16px 18px 0" }}>
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
@@ -3136,7 +3220,7 @@ function LessonMap({ world, child, onBack, onLesson }) {
           const done   = lessonDone(lesson.id);
           const cSets  = completedSets(lesson.id);
           const isExp  = expanded === lesson.id;
-          const lessonUnlocked = li === 0 || completedSets(lessons[li-1].id) >= 1;
+          const lessonUnlocked = true; // All lessons open at Set 1; sets unlock sequentially within each lesson
           return (
             <div key={lesson.id} style={{ marginBottom:10 }}>
               {/* Lesson header row */}
@@ -5226,6 +5310,8 @@ export default function App() {
   const [screen,         setScreen]         = useState("splash");
   const [user,           setUser]           = useState(null);
   const [child,          setChild]          = useState(null);
+  const [themeKey,       setThemeKey]       = useState(localStorage.getItem("mm_theme")||"space");
+  const handleThemeChange = (key) => { C = THEMES[key] || THEMES.space; setThemeKey(key); };
   const [world,          setWorld]          = useState(null);
   const [lesson,         setLesson]         = useState(null);
   const [feedbackPrefill,setFeedbackPrefill]= useState(null);
@@ -5284,7 +5370,7 @@ export default function App() {
   if (screen === "welcome")  return <><GlobalStyles/><Welcome  onRegister={() => setScreen("register")} onLogin={() => setScreen("login")} onPrivacy={() => { setPrevScreen("welcome"); setScreen("privacy"); }}/></>;
   if (screen === "register") return <><GlobalStyles/><Register onBack={() => setScreen("welcome")} onDone={({ user: u, child: c }) => { setUser(u); setChild(c); setScreen("home"); }}/></>;
   if (screen === "login")    return <><GlobalStyles/><Login    onBack={() => setScreen("welcome")} onDone={({ user: u, child: c }) => { setUser(u); setChild(c); setScreen("home"); }}/></>;
-  if (screen === "home")     return <><GlobalStyles/><Home     child={child} onWorld={goWorld} onAbacus={() => setScreen("abacus")} onGames={() => setScreen("games")} onOlympiad={() => setScreen("olympiad")} onParent={() => setScreen("parent")} onRate={() => setShowRating(true)} onLogout={logout} onFeedback={goFeedback}/><FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
+  if (screen === "home")     return <><GlobalStyles/><Home     child={child} onWorld={goWorld} onAbacus={() => setScreen("abacus")} onGames={() => setScreen("games")} onOlympiad={() => setScreen("olympiad")} onParent={() => setScreen("parent")} onRate={() => setShowRating(true)} onLogout={logout} onFeedback={goFeedback} onThemeChange={handleThemeChange}/><FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
   if (screen === "paywall")  return <><GlobalStyles/><Paywall  world={world} child={child} onBack={() => setScreen("home")} onUnlock={handleUnlock}/></>;
   if (screen === "lessons")  return <><GlobalStyles/><LessonMap world={world} child={child} onBack={() => setScreen("home")} onLesson={l => { setLesson(l); setScreen("game"); }}/></>;
   if (screen === "game")     return <><GlobalStyles/><Game     lesson={lesson} world={world} child={child} setChild={setChild} onBack={() => { db.track("lesson_exit",child?.id,null,{lesson_id:lesson?.id,set_index:lesson?.setIndex}); setScreen("lessons"); }} onDone={() => { db.track("lesson_complete",child?.id,null,{lesson_id:lesson?.id,set_index:lesson?.setIndex}); setScreen("lessons"); }} onNextSet={(si) => { db.track("set_advance",child?.id,null,{lesson_id:lesson?.id,set_index:si}); setLesson(l => ({...l, setIndex:si})); }}/>{ showSOS && <SOSButton onClick={() => goFeedback("bug")}/>}<FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
