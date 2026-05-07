@@ -227,13 +227,21 @@ export default async function handler(req, res) {
       const { user_id } = req.body;
       if (!user?.id) return res.status(401).json({ error:"Unauthorized" });
       if (user.id !== user_id) return res.status(403).json({ error:"Forbidden" });
-      // Delete child data first
-      await sbQuery("progress","DELETE",null,`?child_id=in.(select id from children where parent_id=eq.${encodeURIComponent(user_id)})`).catch(()=>{});
+      // Step 1: Get all children for this parent
+      const chk = await sbQuery("children","GET",null,`?parent_id=eq.${encodeURIComponent(user_id)}&select=id`);
+      const childIds = Array.isArray(chk.data) ? chk.data.map(c=>c.id) : [];
+      // Step 2: Delete progress for each child
+      for (const cid of childIds) {
+        await sbQuery("progress","DELETE",null,`?child_id=eq.${encodeURIComponent(cid)}`).catch(()=>{});
+        await sbQuery("daily_completions","DELETE",null,`?child_id=eq.${encodeURIComponent(cid)}`).catch(()=>{});
+        await sbQuery("puzzle_completions","DELETE",null,`?child_id=eq.${encodeURIComponent(cid)}`).catch(()=>{});
+      }
+      // Step 3: Delete children rows
       await sbQuery("children","DELETE",null,`?parent_id=eq.${encodeURIComponent(user_id)}`).catch(()=>{});
-      // Delete Supabase auth user
-      await fetch(`${SB_URL}/auth/v1/admin/users/${encodeURIComponent(user_id)}`, {
+      // Step 4: Delete Supabase auth user via admin API
+      const delRes = await fetch(`${SB_URL}/auth/v1/admin/users/${encodeURIComponent(user_id)}`, {
         method:"DELETE", headers:{ "apikey":SB_SERVICE, "Authorization":`Bearer ${SB_SERVICE}` }
-      }).catch(()=>{});
+      }).catch(()=>({ok:false}));
       return res.status(200).json({ ok:true });
     }
 
