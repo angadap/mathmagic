@@ -1,6 +1,4 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-// SECURITY: Sanitize strings before rendering user-provided content
-const sanitize = (s) => typeof s === "string" ? s.replace(/[<>&"']/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;","'":"&#x27;"}[c])) : "";
 
 // ── Error Boundary — graceful crash handling ──────────────────────
 export class ErrorBoundary extends React.Component {
@@ -37,13 +35,14 @@ export class ErrorBoundary extends React.Component {
 // ─────────────────────────────────────────────────────────────────────
 // ── THEMES ────────────────────────────────────────────────────────────
 const THEMES = {
-  candy:  { name:"Candy Pop",    icon:"🍭", bg:"#1a0628", card:"#2d0a3e",  card2:"#3d1050", cyan:"#f472b6", purple:"#c084fc", pink:"#fb7185", orange:"#fb923c", yellow:"#fde047", green:"#4ade80", red:"#f43f5e", dim:"#9d6db5" },
-  space:  { name:"Space Dark",   icon:"🌌", bg:"#04040f", card:"#0d0d2b",  card2:"#10102e", cyan:"#00f5ff", purple:"#a855f7", pink:"#ec4899", orange:"#f97316", yellow:"#fbbf24", green:"#22c55e", red:"#ef4444", dim:"#6b7db3" },
-  jungle: { name:"Jungle Fun",   icon:"🦁", bg:"#0a1f0a", card:"#122212",  card2:"#1a2e18", cyan:"#86efac", purple:"#a3e635", pink:"#fb923c", orange:"#fbbf24", yellow:"#fde047", green:"#4ade80", red:"#f87171", dim:"#5a7a52" },
-  ocean:  { name:"Ocean Splash", icon:"🐬", bg:"#020f20", card:"#051c38",  card2:"#072548", cyan:"#38bdf8", purple:"#818cf8", pink:"#f472b6", orange:"#fb923c", yellow:"#fde047", green:"#34d399", red:"#f87171", dim:"#3a6080" },
-  sunset: { name:"Sunset Glow",  icon:"🌈", bg:"#1f0a00", card:"#2d1200",  card2:"#3d1a00", cyan:"#fb923c", purple:"#e879f9", pink:"#fb7185", orange:"#fbbf24", yellow:"#fde047", green:"#4ade80", red:"#f43f5e", dim:"#8a4a20" },
+  light:  { name:"Bright Day",   icon:"☀️",  bg:"#f0f4ff", card:"#ffffff",  card2:"#e8eeff", cyan:"#0ea5e9", purple:"#7c3aed", pink:"#db2777", orange:"#ea580c", yellow:"#d97706", green:"#16a34a", red:"#dc2626", dim:"#94a3b8" },
+  pastel: { name:"Pastel Kids",  icon:"🌸",  bg:"#fff5f9", card:"#ffffff",  card2:"#ffeef5", cyan:"#06b6d4", purple:"#9333ea", pink:"#ec4899", orange:"#f97316", yellow:"#eab308", green:"#22c55e", red:"#ef4444", dim:"#a78bba" },
+  candy:  { name:"Candy Pop",    icon:"🍭",  bg:"#1a0628", card:"#2d0a3e",  card2:"#3d1050", cyan:"#f472b6", purple:"#c084fc", pink:"#fb7185", orange:"#fb923c", yellow:"#fde047", green:"#4ade80", red:"#f43f5e", dim:"#9d6db5" },
+  space:  { name:"Space Dark",   icon:"🌌",  bg:"#04040f", card:"#0d0d2b",  card2:"#10102e", cyan:"#00f5ff", purple:"#a855f7", pink:"#ec4899", orange:"#f97316", yellow:"#fbbf24", green:"#22c55e", red:"#ef4444", dim:"#6b7db3" },
+  jungle: { name:"Jungle Fun",   icon:"🦁",  bg:"#f0fdf4", card:"#ffffff",  card2:"#dcfce7", cyan:"#059669", purple:"#15803d", pink:"#fb923c", orange:"#d97706", yellow:"#ca8a04", green:"#16a34a", red:"#dc2626", dim:"#6b8f72" },
+  ocean:  { name:"Ocean Splash", icon:"🐬",  bg:"#f0f9ff", card:"#ffffff",  card2:"#e0f2fe", cyan:"#0284c7", purple:"#4f46e5", pink:"#db2777", orange:"#ea580c", yellow:"#ca8a04", green:"#059669", red:"#dc2626", dim:"#64a0b8" },
 };
-function getThemeColors() { return THEMES[localStorage.getItem("mm_theme")||"candy"] || THEMES.candy; }
+function getThemeColors() { return THEMES[localStorage.getItem("mm_theme")||"light"] || THEMES.light; }
 let C = getThemeColors();
 
 // ─────────────────────────────────────────────────────────────────────
@@ -61,15 +60,7 @@ function GlobalStyles() {
     }
     // keyframes
     if (!document.getElementById("mm-styles")) {
-      // SECURITY: Add Content Security Policy header via meta tag
-    const existingCSP = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
-    if (!existingCSP) {
-      const csp = document.createElement("meta");
-      csp.httpEquiv = "Content-Security-Policy";
-      csp.content = "default-src 'self'; script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://api.qrserver.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co https://api.anthropic.com https://api.telegram.org https://api.razorpay.com;";
-      document.head.prepend(csp);
-    }
-    const s = document.createElement("style");
+      const s = document.createElement("style");
       s.id = "mm-styles";
       s.textContent = `
         @keyframes twinkle{0%,100%{opacity:.1}50%{opacity:.9}}
@@ -93,7 +84,7 @@ function GlobalStyles() {
         @keyframes bFloat{0%,100%{transform:translateY(0)scale(1)}50%{transform:translateY(-10px)scale(1.05)}}
         @keyframes bossW{0%,100%{transform:rotate(0)}25%{transform:rotate(-5deg)}75%{transform:rotate(5deg)}}
         *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-        body{background:#04040f}
+        body{background:${C.bg || '#04040f'}}
         input{font-family:'Nunito',sans-serif;outline:none;color:white}
         input::placeholder{color:#2a3a6a}
         ::-webkit-scrollbar{width:3px}
@@ -121,9 +112,8 @@ const API_BASE    = "";  // relative URL — works on any domain
 
 // ── Admin credentials (change before production) ─────────────────────
 // Admin credentials managed server-side only
-// SECURITY: Admin bypass — set via env var in production, empty = disabled
-const ADMIN_EMAIL    = import.meta.env.VITE_ADMIN_EMAIL    || "";
-const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "";
+const ADMIN_EMAIL = "";
+const ADMIN_PASSWORD = "";
 
 // ─────────────────────────────────────────────────────────────────
 // SOUND ENGINE — Web Audio API (zero bandwidth, works offline)
@@ -239,7 +229,7 @@ function OfflineBanner() {
 // DB logging — console only in production
 function dbLog(level, msg, detail="") {
   if (level === "error") console.error("[DB]", msg, detail);
-  else if (import.meta.env.DEV) console.log("[DB]", msg, detail); // dev-only logging
+  else console.log("[DB]", msg, detail);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -315,7 +305,7 @@ const LESSONS = {
 // The Supabase service key NEVER reaches the browser
 // JWT token stored in memory only (not localStorage)
 const sbRest = {
-  _token: null, // SECURITY: JWT stored only in memory, never in localStorage/sessionStorage
+  _token: null,
 
   // Call our Vercel serverless functions
   async _api(route, body) {
@@ -418,15 +408,6 @@ async function loadSb() {
 // IN-MEMORY STORE — works fully offline; Supabase is optional
 // ─────────────────────────────────────────────────────────────────────
 const MEM = { users:[], children:[], progress:[], n:1 };
-
-// SECURITY: Hash PIN with SHA-256 before storage/comparison
-// Never store raw PINs — always hash them
-async function hashPin(pin) {
-  try {
-    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("mm_pin_v1_" + pin));
-    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
-  } catch(e) { return "pin_" + pin; } // fallback for old browsers
-}
 // Session ID for analytics
 if (!window.__sessionId) window.__sessionId = "s_" + Date.now() + "_" + Math.random().toString(36).slice(2,7);
 
@@ -471,7 +452,7 @@ const db = {
       if (!r.error && r.data?.user?.id) {
         const uid = r.data.user.id;
         dbLog("ok","signUp success",uid.slice(0,8));
-        if (!MEM.users.find(u=>u.id===uid)) MEM.users.push({ id:uid, email }); // SECURITY: never store password
+        if (!MEM.users.find(u=>u.id===uid)) MEM.users.push({ id:uid, email, pass });
         return { data:{ user:{ id:uid, email } }, error:null };
       }
       if (r.error) {
@@ -483,7 +464,7 @@ const db = {
     if (MEM.users.find(u=>u.email===email))
       return { data:null, error:{ message:"Email already registered" } };
     const user = { id:"local_"+Math.random().toString(36).slice(2), email };
-    MEM.users.push({ ...user }); // SECURITY: password not stored
+    MEM.users.push({ ...user, pass });
     return { data:{ user }, error:null };
   },
 
@@ -493,7 +474,7 @@ const db = {
       const r = await sb.signIn(email, pass);
       if (!r.error && r.data?.user?.id) {
         dbLog("ok","signIn success","uid="+r.data.user.id.slice(0,8));
-        if (!MEM.users.find(u=>u.id===r.data.user.id)) MEM.users.push({ id:r.data.user.id, email });
+        if (!MEM.users.find(u=>u.id===r.data.user.id)) MEM.users.push({ id:r.data.user.id, email, pass });
         return { data:{ user:{ id:r.data.user.id, email } }, error:null };
       }
       if (r.error) {
@@ -502,7 +483,7 @@ const db = {
         dbLog("error","signIn network",r.error.message);
       }
     }
-    const u = MEM.users.find(u => u.email===email); // offline fallback — no pass check (all real auth via Supabase)
+    const u = MEM.users.find(u => u.email===email && u.pass===pass);
     return u ? { data:{ user:u }, error:null }
              : { data:null, error:{ message:"Invalid email or password" } };
   },
@@ -632,10 +613,10 @@ const db = {
     const sb = await this.getSb();
     if (sb) {
       const r = await sb.select("children", { id: cid });
-      if (!r.error && r.data?.[0]) { const c=r.data[0]; if(!MEM.children.find(m=>m.id===c.id)) MEM.children.push(c); return { ok:c.pin_hash===pin, child:c }; }
+      if (!r.error && r.data?.[0]) { const c=r.data[0]; if(!MEM.children.find(m=>m.id===c.id)) MEM.children.push(c); return { ok: String(c.pin_hash).trim() === String(pin).trim(), child:c }; }
     }
     const c = MEM.children.find(x=>x.id===cid);
-    return c ? { ok:c.pin_hash===pin, child:c } : { ok:false };
+    return c ? { ok: String(c.pin_hash).trim() === String(pin).trim(), child:c } : { ok:false };
   },
 
   async addXP(cid, xp, coins=0) {
@@ -3034,7 +3015,7 @@ function ThemeSelector({ onClose }) {
   );
 }
 
-function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogout, onFeedback, onRate }) {
+function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogout, onFeedback, onRate, onSettings }) {
   const [showTheme, setShowTheme] = useState(false);
   const [progress, setProgress] = useState([]);
   const [showDQ,     setShowDQ]     = useState(false);
@@ -3183,7 +3164,7 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
       </div>
       {/* Bottom nav */}
       <div style={{ position:"fixed", bottom:0, left:0, right:0, zIndex:10, background:"rgba(4,4,15,0.97)", backdropFilter:"blur(20px)", borderTop:`1px solid ${C.purple}33`, padding:"10px 14px", display:"flex", justifyContent:"space-around" }}>
-        {[{icon:"🏠",label:"HOME",act:null,active:true},{icon:"🎮",label:"GAMES",act:onGames},{icon:"🧮",label:"ABACUS",act:onAbacus},{icon:"🎓",label:"EXAMS",act:onOlympiad},{icon:"🎨",label:"THEME",act:()=>setShowTheme(true)},{icon:"📣",label:"REPORT",act:onFeedback}].map((n, i) => (
+        {[{icon:"🏠",label:"HOME",act:null,active:true},{icon:"🎮",label:"GAMES",act:onGames},{icon:"🧮",label:"ABACUS",act:onAbacus},{icon:"🎓",label:"EXAMS",act:onOlympiad},{icon:"⚙️",label:"SETTINGS",act:()=>onSettings()},{icon:"📣",label:"REPORT",act:onFeedback}].map((n, i) => (
           <button key={i} onClick={n.act||undefined} style={{ background:"none", border:"none", cursor:n.act?"pointer":"default", display:"flex", flexDirection:"column", alignItems:"center", gap:2, color: n.active ? C.cyan : C.dim }}>
             <div style={{ fontSize:19 }}>{n.icon}</div>
             <div style={{ fontSize:8, fontFamily:"'Orbitron',sans-serif" }}>{n.label}</div>
@@ -3240,7 +3221,7 @@ function LessonMap({ world, child, onBack, onLesson }) {
           const done   = lessonDone(lesson.id);
           const cSets  = completedSets(lesson.id);
           const isExp  = expanded === lesson.id;
-          const lessonUnlocked = li === 0 || completedSets(lessons[li-1].id) >= 1;
+          const lessonUnlocked = true; // All lessons open at Set 1 from day one
           return (
             <div key={lesson.id} style={{ marginBottom:10 }}>
               {/* Lesson header row */}
@@ -3498,14 +3479,7 @@ function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
       </div>
       <div style={{ position:"relative", zIndex:2, padding:"14px 18px", textAlign:"center" }}>
         <div style={{ fontSize:58, animation:"bossW 1.5s ease-in-out infinite", marginBottom:10 }}>{lesson.boss||"👾"}</div>
-        {burst && (
-          <div style={{ position:"fixed", top:"25%", left:"50%", transform:"translateX(-50%)", zIndex:999, pointerEvents:"none", animation:"popIn 0.3s ease", textAlign:"center" }}>
-            <div style={{ background:`linear-gradient(135deg,${C.orange},${C.red})`, borderRadius:18, padding:"12px 28px", boxShadow:`0 0 30px ${C.orange}88` }}>
-              <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:20, color:"white" }}>⚡ HIT!</div>
-              <div style={{ fontSize:12, color:"#fed7aa", marginTop:2 }}>Boss HP: {bossHp}%</div>
-            </div>
-          </div>
-        )}
+        {burst && <div style={{ fontSize:15, color:C.green, marginBottom:6, fontFamily:"'Orbitron',sans-serif" }}>⚡ HIT! {bossHp}% HP</div>}
         <Card color={C.red} style={{ marginBottom:12, padding:"16px 14px", textAlign:"left" }}>
           <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:15, color:"white", lineHeight:1.5 }}>{q.q}</div>
         </Card>
@@ -3576,19 +3550,10 @@ function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
         </div>
       </div>
       <div style={{ position:"relative", zIndex:2, padding:"14px 18px" }}>
-        {/* Floating CORRECT overlay — always visible on top */}
-        {burst && (
-          <div style={{ position:"fixed", top:"30%", left:"50%", transform:"translateX(-50%)", zIndex:999, pointerEvents:"none", textAlign:"center", animation:"popIn 0.3s ease" }}>
-            <div style={{ background:`linear-gradient(135deg,${C.green},#16a34a)`, borderRadius:20, padding:"14px 32px", boxShadow:`0 0 40px ${C.green}88` }}>
-              <div style={{ fontSize:32, marginBottom:2 }}>🎉</div>
-              <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:22, color:"white", letterSpacing:2 }}>CORRECT!</div>
-              <div style={{ fontSize:13, color:"#bbf7d0", marginTop:2 }}>+20 XP</div>
-            </div>
-          </div>
-        )}
-        <Card color={world.color} style={{ textAlign:"center", padding:"18px 14px", marginBottom:12, transform: burst?"scale(1.02)":"scale(1)", transition:"transform 0.2s", background: burst ? `${C.green}18` : undefined }}>
+        <Card color={world.color} style={{ textAlign:"center", padding:"18px 14px", marginBottom:12, transform: burst?"scale(1.02)":"scale(1)", transition:"transform 0.2s" }}>
           <div style={{ fontSize:34, marginBottom:8 }}>{lesson.emoji}</div>
           <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:16, color:"white", lineHeight:1.4 }}>{q.q}</div>
+          {/* correct feedback shown via floating overlay only */}
         </Card>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:10 }}>
           {q.opts.map((opt, i) => {
@@ -5252,6 +5217,215 @@ function RatingPrompt({ child, onClose }) {
 }
 
 // ── Privacy Policy ────────────────────────────────────────────────────
+
+// ── Terms of Service ─────────────────────────────────────────────
+function TermsOfService({ onBack }) {
+  useEffect(() => { window.scrollTo(0,0); }, []);
+  const S = { h: { fontFamily:"'Orbitron',sans-serif", fontSize:13, color:C.cyan, margin:"18px 0 8px" }, p: { color:C.dim, fontSize:13, lineHeight:1.7, marginBottom:10 } };
+  return (
+    <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Nunito',sans-serif", padding:"20px 18px", overflowY:"auto" }}>
+      <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:20 }}>
+        <BackBtn onClick={onBack} color={C.cyan}/>
+        <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:14, color:C.cyan }}>TERMS OF SERVICE</div>
+      </div>
+      <div style={{ maxWidth:480, margin:"0 auto" }}>
+        <div style={{ color:C.dim, fontSize:11, marginBottom:16 }}>Last updated: May 2026</div>
+        {[
+          ["1. Acceptance","By using MathMagic Space Academy, you agree to these Terms. If you are a parent or guardian registering a child, you accept these Terms on their behalf."],
+          ["2. Use of Service","MathMagic is a mathematics learning platform for children. You may not use the service for any unlawful purpose. You must provide accurate registration information."],
+          ["3. Accounts","Parents are responsible for maintaining account security. You must notify us immediately of any unauthorised use. We reserve the right to terminate accounts that violate these Terms."],
+          ["4. Content","All questions, lessons, and educational content are owned by MathMagic. You may not copy, distribute, or modify our content without written permission."],
+          ["5. Payments","Premium subscriptions are charged as selected (monthly/yearly). Refunds are subject to our refund policy. We reserve the right to change pricing with 30 days notice."],
+          ["6. Limitation of Liability","MathMagic is provided 'as is'. We are not liable for any indirect, incidental, or consequential damages arising from your use of the service."],
+          ["7. Changes","We may update these Terms at any time. Continued use after changes constitutes acceptance of the new Terms."],
+          ["8. Contact","For any queries: support@mathmagicapp.in"],
+        ].map(([h,p],i) => <div key={i}><div style={S.h}>{h}</div><p style={S.p}>{p}</p></div>)}
+      </div>
+    </div>
+  );
+}
+
+// ── Data Compliance Policy ────────────────────────────────────────
+function DataPolicy({ onBack }) {
+  useEffect(() => { window.scrollTo(0,0); }, []);
+  const S = { h: { fontFamily:"'Orbitron',sans-serif", fontSize:13, color:C.purple, margin:"18px 0 8px" }, p: { color:C.dim, fontSize:13, lineHeight:1.7, marginBottom:10 } };
+  return (
+    <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Nunito',sans-serif", padding:"20px 18px", overflowY:"auto" }}>
+      <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:20 }}>
+        <BackBtn onClick={onBack} color={C.purple}/>
+        <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:14, color:C.purple }}>DATA COMPLIANCE</div>
+      </div>
+      <div style={{ maxWidth:480, margin:"0 auto" }}>
+        <div style={{ color:C.dim, fontSize:11, marginBottom:16 }}>COPPA · DPDP Act 2023 · GDPR Compliant</div>
+        {[
+          ["Data We Collect","Child's name, avatar, class, PIN (hashed). Parent's email address. Learning progress, scores, and session data. Device type and app version."],
+          ["How We Use Data","To provide personalised learning experiences. To track academic progress for parents. To improve our question bank and features. We never sell data to third parties."],
+          ["Children's Privacy (COPPA)","We comply with the Children's Online Privacy Protection Act. We collect only data necessary to operate the service. Parents can request deletion of their child's data at any time."],
+          ["India DPDP Act 2023","We comply with India's Digital Personal Data Protection Act 2023. Data is stored in India on Supabase servers. Parents have the right to access, correct, and delete data."],
+          ["Data Storage","All data is encrypted in transit (TLS 1.3) and at rest (AES-256). We use Supabase (hosted in India) for secure data storage. JWT tokens expire after 7 days."],
+          ["Data Retention","Active account data is retained while the account is active. Deleted account data is removed within 30 days. Anonymised analytics may be retained longer."],
+          ["Your Rights","Access your data · Correct inaccuracies · Delete your account · Export your data · Withdraw consent. Contact: privacy@mathmagicapp.in"],
+          ["AI Disclosure","Question hints may be enhanced using AI. No personal child data is shared with AI providers. AI is used only for educational content generation."],
+        ].map(([h,p],i) => <div key={i}><div style={S.h}>{h}</div><p style={S.p}>{p}</p></div>)}
+      </div>
+    </div>
+  );
+}
+
+// ── Settings Screen ───────────────────────────────────────────────
+function Settings({ child, user, onBack, onThemeChange, onLogout, onDeleteAccount, onResetPassword }) {
+  const [section,   setSection]   = useState(null); // null|"theme"|"profile"|"password"
+  const [delConfirm,setDelConfirm]= useState(false);
+  const [pwEmail,   setPwEmail]   = useState(user?.email||"");
+  const [pwSent,    setPwSent]    = useState(false);
+  const [pwLoading, setPwLoading] = useState(false);
+  const [msg,       setMsg]       = useState("");
+
+  const menuItems = [
+    { icon:"👤", label:"My Profile",      sub:"Name, class, avatar",        action:()=>setSection("profile") },
+    { icon:"🎨", label:"Change Theme",    sub:"6 themes including light",    action:()=>setSection("theme") },
+    { icon:"🔑", label:"Reset Password",  sub:"Send reset link to email",    action:()=>setSection("password") },
+    { icon:"⭐", label:"Rate the App",    sub:"Share your feedback",         action:()=>onBack("rate") },
+    { icon:"🔒", label:"Privacy Policy",  sub:"How we protect your data",    action:()=>onBack("privacy") },
+    { icon:"📋", label:"Terms of Service",sub:"Usage terms and conditions",  action:()=>onBack("terms") },
+    { icon:"🛡️", label:"Data Compliance", sub:"COPPA · DPDP · GDPR",       action:()=>onBack("datapolicy") },
+    { icon:"🚪", label:"Logout",          sub:"Sign out of this device",     action:()=>onLogout(), color:C.orange },
+    { icon:"🗑️", label:"Delete Account",  sub:"Permanently remove all data", action:()=>setDelConfirm(true), color:C.red },
+  ];
+
+  const handleResetPassword = async () => {
+    if (!pwEmail.trim()) { setMsg("Enter your email address"); return; }
+    setPwLoading(true); setMsg("");
+    try {
+      const res = await fetch("/api/auth", { method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ action:"reset_password", email: pwEmail.trim() }) });
+      const data = await res.json();
+      if (data.ok) { setPwSent(true); setMsg("Reset link sent! Check your email."); }
+      else setMsg(data.error || "Failed to send reset email.");
+    } catch(e) { setMsg("Network error. Please try again."); }
+    setPwLoading(false);
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      await fetch("/api/auth", { method:"POST", headers:{"Content-Type":"application/json","Authorization":`Bearer ${db._token||""}`},
+        body: JSON.stringify({ action:"delete_account", user_id: user?.id }) });
+    } catch(e) {}
+    onDeleteAccount();
+  };
+
+  if (section === "theme") return (
+    <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Nunito',sans-serif", padding:"20px 18px" }}>
+      <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:20 }}>
+        <BackBtn onClick={()=>setSection(null)} color={C.cyan}/>
+        <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:14, color:C.cyan }}>CHOOSE THEME</div>
+      </div>
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, maxWidth:480, margin:"0 auto" }}>
+        {Object.entries(THEMES).map(([key,t]) => {
+          const cur = localStorage.getItem("mm_theme")||"light";
+          return (
+            <button key={key} onClick={() => { localStorage.setItem("mm_theme",key); C=THEMES[key]; if(onThemeChange) onThemeChange(key); setSection(null); SFX.tap(); }} style={{
+              background: cur===key ? `${t.cyan}22` : t.card,
+              border:`2px solid ${cur===key ? t.cyan : t.dim+"44"}`,
+              borderRadius:16, padding:"14px 12px", cursor:"pointer", textAlign:"center",
+              boxShadow: cur===key ? `0 0 16px ${t.cyan}44` : "none",
+            }}>
+              <div style={{ fontSize:26, marginBottom:6 }}>{t.icon}</div>
+              <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:10, color:cur===key?t.cyan:t.dim }}>{t.name}</div>
+              <div style={{ display:"flex", gap:4, justifyContent:"center", marginTop:8 }}>
+                {[t.purple,t.cyan,t.green,t.orange].map((cl,i)=><div key={i} style={{width:12,height:12,borderRadius:"50%",background:cl,border:`1px solid ${t.dim}44`}}/>)}
+              </div>
+              {cur===key && <div style={{ fontSize:8, color:t.cyan, fontFamily:"'Orbitron',sans-serif", marginTop:6 }}>✓ ACTIVE</div>}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  if (section === "profile") return (
+    <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Nunito',sans-serif", padding:"20px 18px" }}>
+      <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:24 }}>
+        <BackBtn onClick={()=>setSection(null)} color={C.yellow}/>
+        <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:14, color:C.yellow }}>MY PROFILE</div>
+      </div>
+      <div style={{ maxWidth:480, margin:"0 auto", textAlign:"center" }}>
+        <div style={{ fontSize:64, marginBottom:12 }}>{child?.avatar||"🧒"}</div>
+        <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:20, color:C.yellow, marginBottom:4 }}>{child?.name}</div>
+        <div style={{ color:C.dim, fontSize:13, marginBottom:20 }}>Class {child?.class_num} · Level {child?.level||1}</div>
+        <Card color={C.purple} style={{ textAlign:"left" }}>
+          {[["📧","Email", user?.email||"—"],["🏆","XP", `${child?.xp||0} points`],["🪙","Coins",`${child?.coins||0} coins`],["⭐","Streak",`${child?.streak_days||0} days`],["💎","Plan",child?.is_premium?"Premium ✓":"Free"]].map(([e,l,v],i)=>(
+            <div key={i} style={{ display:"flex", justifyContent:"space-between", padding:"8px 0", borderBottom:i<4?`1px solid ${C.dim}22`:"none" }}>
+              <span style={{ color:C.dim, fontSize:13 }}>{e} {l}</span>
+              <span style={{ color:"white", fontSize:13, fontWeight:700 }}>{v}</span>
+            </div>
+          ))}
+        </Card>
+      </div>
+    </div>
+  );
+
+  if (section === "password") return (
+    <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Nunito',sans-serif", padding:"20px 18px" }}>
+      <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:24 }}>
+        <BackBtn onClick={()=>setSection(null)} color={C.cyan}/>
+        <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:14, color:C.cyan }}>RESET PASSWORD</div>
+      </div>
+      <div style={{ maxWidth:480, margin:"0 auto" }}>
+        <Card color={C.cyan} style={{ marginBottom:16 }}>
+          <div style={{ color:C.dim, fontSize:13, marginBottom:14, lineHeight:1.6 }}>A password reset link will be sent to your registered email address.</div>
+          <input value={pwEmail} onChange={e=>setPwEmail(e.target.value)} placeholder="Your email address" style={{ width:"100%", background:C.card2, border:`1.5px solid ${C.cyan}44`, borderRadius:10, padding:"11px 14px", color:"white", fontFamily:"'Nunito',sans-serif", fontSize:14, marginBottom:12, display:"block" }}/>
+          {msg && <div style={{ fontSize:12, color:pwSent?C.green:C.red, marginBottom:10 }}>{msg}</div>}
+          {!pwSent
+            ? <Btn color={C.cyan} loading={pwLoading} onClick={handleResetPassword}>📧 SEND RESET LINK</Btn>
+            : <div style={{ textAlign:"center", color:C.green, fontFamily:"'Orbitron',sans-serif", fontSize:12 }}>✅ CHECK YOUR EMAIL</div>
+          }
+        </Card>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Nunito',sans-serif", padding:"20px 18px" }}>
+      <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:6 }}>
+        <BackBtn onClick={()=>onBack()} color={C.cyan}/>
+        <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:14, color:C.cyan }}>SETTINGS</div>
+      </div>
+      <div style={{ textAlign:"center", margin:"16px 0 24px" }}>
+        <div style={{ fontSize:52 }}>{child?.avatar||"🧒"}</div>
+        <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:14, color:C.yellow, marginTop:6 }}>{child?.name}</div>
+        <div style={{ color:C.dim, fontSize:11 }}>Class {child?.class_num}</div>
+      </div>
+      <div style={{ maxWidth:480, margin:"0 auto", display:"flex", flexDirection:"column", gap:8 }}>
+        {menuItems.map((item,i) => (
+          <button key={i} onClick={item.action} style={{ background:C.card, border:`1.5px solid ${(item.color||C.purple)+"33"}`, borderRadius:14, padding:"14px 16px", cursor:"pointer", display:"flex", alignItems:"center", gap:14, textAlign:"left", transition:"all 0.15s" }}>
+            <span style={{ fontSize:22, width:32, textAlign:"center" }}>{item.icon}</span>
+            <div style={{ flex:1 }}>
+              <div style={{ fontWeight:800, fontSize:14, color:item.color||"white" }}>{item.label}</div>
+              <div style={{ fontSize:11, color:C.dim, marginTop:2 }}>{item.sub}</div>
+            </div>
+            <span style={{ color:C.dim, fontSize:18 }}>›</span>
+          </button>
+        ))}
+      </div>
+
+      {delConfirm && (
+        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.8)", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+          <Card color={C.red} style={{ maxWidth:340, textAlign:"center" }}>
+            <div style={{ fontSize:40, marginBottom:12 }}>⚠️</div>
+            <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:14, color:C.red, marginBottom:10 }}>DELETE ACCOUNT?</div>
+            <div style={{ color:C.dim, fontSize:13, marginBottom:20, lineHeight:1.6 }}>This will permanently delete all data for <strong style={{color:"white"}}>{child?.name}</strong> including progress, coins, and streaks. This cannot be undone.</div>
+            <div style={{ display:"flex", gap:10 }}>
+              <button onClick={()=>setDelConfirm(false)} style={{ flex:1, background:C.card2, border:`1px solid ${C.dim}44`, borderRadius:12, padding:"12px", color:"white", cursor:"pointer", fontFamily:"'Nunito',sans-serif", fontWeight:700 }}>CANCEL</button>
+              <button onClick={handleDeleteAccount} style={{ flex:1, background:`${C.red}22`, border:`1px solid ${C.red}44`, borderRadius:12, padding:"12px", color:C.red, cursor:"pointer", fontFamily:"'Nunito',sans-serif", fontWeight:800 }}>DELETE</button>
+            </div>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function PrivacyPolicy({ onBack }) {
   return (
     <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",overflowY:"auto"}}>
@@ -5404,7 +5578,7 @@ export default function App() {
   if (screen === "welcome")  return <><GlobalStyles/><Welcome  onRegister={() => setScreen("register")} onLogin={() => setScreen("login")} onPrivacy={() => { setPrevScreen("welcome"); setScreen("privacy"); }}/></>;
   if (screen === "register") return <><GlobalStyles/><Register onBack={() => setScreen("welcome")} onDone={({ user: u, child: c }) => { setUser(u); setChild(c); setScreen("home"); }}/></>;
   if (screen === "login")    return <><GlobalStyles/><Login    onBack={() => setScreen("welcome")} onDone={({ user: u, child: c }) => { setUser(u); setChild(c); setScreen("home"); }}/></>;
-  if (screen === "home")     return <><GlobalStyles/><Home     child={child} onWorld={goWorld} onAbacus={() => setScreen("abacus")} onGames={() => setScreen("games")} onOlympiad={() => setScreen("olympiad")} onParent={() => setScreen("parent")} onRate={() => setShowRating(true)} onLogout={logout} onFeedback={goFeedback}/><FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
+  if (screen === "home")     return <><GlobalStyles/><Home     child={child} onWorld={goWorld} onAbacus={() => setScreen("abacus")} onGames={() => setScreen("games")} onOlympiad={() => setScreen("olympiad")} onParent={() => setScreen("parent")} onRate={() => setShowRating(true)} onLogout={logout} onFeedback={goFeedback} onSettings={() => setScreen('settings')}/><FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
   if (screen === "paywall")  return <><GlobalStyles/><Paywall  world={world} child={child} onBack={() => setScreen("home")} onUnlock={handleUnlock}/></>;
   if (screen === "lessons")  return <><GlobalStyles/><LessonMap world={world} child={child} onBack={() => setScreen("home")} onLesson={l => { setLesson(l); setScreen("game"); }}/></>;
   if (screen === "game")     return <><GlobalStyles/><Game     lesson={lesson} world={world} child={child} setChild={setChild} onBack={() => { db.track("lesson_exit",child?.id,null,{lesson_id:lesson?.id,set_index:lesson?.setIndex}); setScreen("lessons"); }} onDone={() => { db.track("lesson_complete",child?.id,null,{lesson_id:lesson?.id,set_index:lesson?.setIndex}); setScreen("lessons"); }} onNextSet={(si) => { db.track("set_advance",child?.id,null,{lesson_id:lesson?.id,set_index:si}); setLesson(l => ({...l, setIndex:si})); }}/>{ showSOS && <SOSButton onClick={() => goFeedback("bug")}/>}<FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
@@ -5413,6 +5587,14 @@ export default function App() {
   if (screen === "parent")   return <><GlobalStyles/><ParentDash child={child} onBack={() => setScreen("home")}/></>;
   if (screen === "feedback") return <><GlobalStyles/><FeedbackScreen child={child} currentScreen={prevScreen} prefillCategory={feedbackPrefill} onBack={() => setScreen(prevScreen)}/></>;
   if (screen === "games")    return <><GlobalStyles/><GamesHub child={child} onBack={() => setScreen("home")}/></>;
-  if (screen === "privacy")  return <><GlobalStyles/><PrivacyPolicy onBack={() => setScreen(prevScreen||"welcome")}/></>;
+  if (screen === "privacy")    return <><GlobalStyles/><PrivacyPolicy onBack={() => setScreen(prevScreen||"home")}/></>;
+  if (screen === "terms")      return <><GlobalStyles/><TermsOfService onBack={() => setScreen("settings")}/></>;
+  if (screen === "datapolicy") return <><GlobalStyles/><DataPolicy onBack={() => setScreen("settings")}/></>;
+  if (screen === "settings")   return <><GlobalStyles/><Settings child={child} user={user}
+    onThemeChange={handleThemeChange}
+    onBack={(dest) => { if(dest==="rate") setShowRating(true); else if(dest) setScreen(dest); else setScreen("home"); }}
+    onLogout={logout}
+    onDeleteAccount={() => { logout(); }}
+  /></>;
   return <><GlobalStyles/><OfflineBanner/></>;
 }
