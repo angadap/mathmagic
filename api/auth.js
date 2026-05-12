@@ -1,49 +1,55 @@
 // api/auth.js — Vercel Serverless Function
-// All Supabase auth happens HERE (server-side), never in the browser
-// Keys read from Vercel environment variables — never sent to client
+// All Supabase auth server-side only. Keys never sent to client.
 
 const SB_URL     = process.env.SUPABASE_URL;
-const SB_SERVICE = process.env.SUPABASE_SERVICE_KEY; // service role key (never anon)
+const SB_SERVICE = process.env.SUPABASE_SERVICE_KEY;
 
-// ── In-memory rate limiter (per IP, resets on cold start) ──────────
-// For production, replace with Upstash Redis for persistence across instances
+const ALLOWED_ORIGINS = [
+  "https://mathmagic-virid.vercel.app",
+  "http://localhost:5173",
+  "http://localhost:3000",
+];
+
+// ── RATE LIMITER ───────────────────────────────────────────────────
 const rateLimitMap = new Map();
-
 function rateLimit(ip, action, maxRequests, windowMs) {
   const key = `${ip}:${action}`;
   const now = Date.now();
   const entry = rateLimitMap.get(key) || { count: 0, resetAt: now + windowMs };
-
-  if (now > entry.resetAt) {
-    entry.count = 0;
-    entry.resetAt = now + windowMs;
-  }
-
+  if (now > entry.resetAt) { entry.count = 0; entry.resetAt = now + windowMs; }
   entry.count++;
   rateLimitMap.set(key, entry);
-
-  if (entry.count > maxRequests) {
-    const retryAfter = Math.ceil((entry.resetAt - now) / 1000);
-    return { limited: true, retryAfter };
-  }
+  if (entry.count > maxRequests)
+    return { limited: true, retryAfter: Math.ceil((entry.resetAt - now) / 1000) };
   return { limited: false };
 }
 
-// Rate limits per action
 const LIMITS = {
-  signup:         { max: 3,  windowMs: 60 * 60 * 1000 },  // 3 signups per hour per IP
-  signin:         { max: 10, windowMs: 15 * 60 * 1000 },  // 10 logins per 15 min per IP
-  reset_password: { max: 3,  windowMs: 60 * 60 * 1000 },  // 3 resets per hour
-  default:        { max: 30, windowMs: 60 * 1000 },        // 30 requests per minute
+  signup:         { max: 3,  windowMs: 60 * 60 * 1000 },
+  signin:         { max: 10, windowMs: 15 * 60 * 1000 },
+  signout:        { max: 20, windowMs: 60 * 60 * 1000 },
+  default:        { max: 30, windowMs: 60 * 1000 },
 };
 
-async function supabaseAuth(endpoint, body, method = "POST") {
+// ── INPUT VALIDATION ───────────────────────────────────────────────
+const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{2,}$/;
+
+function validateEmail(email) {
+  return typeof email === "string" && EMAIL_RE.test(email.trim());
+}
+
+function validatePassword(password) {
+  return typeof password === "string" && password.length >= 6 && password.length <= 128;
+}
+
+// ── SUPABASE AUTH HELPER ───────────────────────────────────────────
+async function supabaseAuth(endpoint, body) {
   const res = await fetch(`${SB_URL}/auth/v1/${endpoint}`, {
-    method,
+    method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "apikey": SB_SERVICE,
-      "Authorization": `Bearer ${SB_SERVICE}`,
+      apikey: SB_SERVICE,
+      Authorization: `Bearer ${SB_SERVICE}`,
     },
     body: JSON.stringify(body),
   });
@@ -51,53 +57,60 @@ async function supabaseAuth(endpoint, body, method = "POST") {
   return { status: res.status, data };
 }
 
-export default async function handler(req, res) {
-  // Only allow POST
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
-
-  // CORS — only allow from your domain
-  const origin = req.headers.origin || "";
-  const allowed = ["https://mathmagic-virid.vercel.app", "http://localhost:5173", "http://localhost:3000"];
-  if (allowed.includes(origin)) {
+// ── SECURITY HEADERS ───────────────────────────────────────────────
+function setHeaders(res, origin) {
+  if (ALLOWED_ORIGINS.includes(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
   }
-  res.setHeader("Access-Control-Allow-Methods", "POST");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Methods", "POST,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Cache-Control", "no-store");
+}
 
-  // Get client IP for rate limiting
-  const ip = req.headers["x-forwarded-for"]?.split(",")[0]?.trim()
-          || req.headers["x-real-ip"]
-          || req.socket?.remoteAddress
-          || "unknown";
+// ── MAIN HANDLER ──────────────────────────────────────────────────
+export default async function handler(req, res) {
+  const origin = req.headers.origin || "";
+  setHeaders(res, origin);
 
-  const { action, email, password } = req.body || {};
+  // CORS preflight
+  if (req.method === "OPTIONS") return res.status(200).end();
 
-  if (!action) return res.status(400).json({ error: "Missing action" });
+  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-  // Apply rate limit
-  const limit = LIMITS[action] || LIMITS.default;
-  const { limited, retryAfter } = rateLimit(ip, action, limit.max, limit.windowMs);
-  if (limited) {
-    return res.status(429).json({
-      error: `Too many ${action} attempts. Please wait ${retryAfter} seconds.`,
-      retryAfter,
-    });
+  // Block unknown origins in production
+  if (origin && !ALLOWED_ORIGINS.includes(origin) && !origin.includes("localhost")) {
+    return res.status(403).json({ error: "Forbidden" });
   }
 
-  try {
-    // ── SIGN UP ─────────────────────────────────────────────────
-    if (action === "signup") {
-      if (!email || !password) return res.status(400).json({ error: "Email and password required" });
-      if (password.length < 6) return res.status(400).json({ error: "Password must be at least 6 characters" });
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: "Invalid email format" });
+  const ip = req.headers["x-forwarded-for"]?.split(",")[0]?.trim()
+          || req.headers["x-real-ip"]
+          || "unknown";
 
-      const { status, data } = await supabaseAuth("signup", { email, password });
+  const { action } = req.body || {};
+  if (!action) return res.status(400).json({ error: "Missing action" });
+
+  const limit = LIMITS[action] || LIMITS.default;
+  const { limited, retryAfter } = rateLimit(ip, action, limit.max, limit.windowMs);
+  if (limited) return res.status(429).json({
+    error: `Too many attempts. Wait ${retryAfter}s.`, retryAfter,
+  });
+
+  try {
+    // ── SIGN UP ────────────────────────────────────────────────
+    if (action === "signup") {
+      const { email, password } = req.body;
+      if (!validateEmail(email))    return res.status(400).json({ error: "Invalid email format" });
+      if (!validatePassword(password)) return res.status(400).json({ error: "Password must be 6–128 characters" });
+
+      const { status, data } = await supabaseAuth("signup", {
+        email: email.trim().toLowerCase(),
+        password,
+      });
 
       if (status >= 400) return res.status(status).json({ error: data.msg || data.message || "Signup failed" });
 
-      // Return only what client needs — never return service key or internal data
       return res.status(200).json({
         user: { id: data.user?.id, email: data.user?.email },
         access_token: data.access_token || data.session?.access_token || null,
@@ -105,12 +118,18 @@ export default async function handler(req, res) {
       });
     }
 
-    // ── SIGN IN ─────────────────────────────────────────────────
+    // ── SIGN IN ────────────────────────────────────────────────
     if (action === "signin") {
-      if (!email || !password) return res.status(400).json({ error: "Email and password required" });
+      const { email, password } = req.body;
+      if (!validateEmail(email) || !validatePassword(password))
+        return res.status(400).json({ error: "Invalid credentials" });
 
-      const { status, data } = await supabaseAuth("token?grant_type=password", { email, password });
+      const { status, data } = await supabaseAuth("token?grant_type=password", {
+        email: email.trim().toLowerCase(),
+        password,
+      });
 
+      // Always return same error to prevent email enumeration
       if (status >= 400) return res.status(401).json({ error: "Invalid email or password" });
 
       return res.status(200).json({
@@ -119,14 +138,14 @@ export default async function handler(req, res) {
       });
     }
 
-    // ── SIGN OUT ─────────────────────────────────────────────────
+    // ── SIGN OUT ───────────────────────────────────────────────
     if (action === "signout") {
-      const token = req.headers.authorization?.replace("Bearer ", "");
+      const token = req.headers.authorization?.replace("Bearer ", "").trim();
       if (token) {
         await fetch(`${SB_URL}/auth/v1/logout`, {
           method: "POST",
-          headers: { "apikey": SB_SERVICE, "Authorization": `Bearer ${token}` },
-        });
+          headers: { apikey: SB_SERVICE, Authorization: `Bearer ${token}` },
+        }).catch(() => {});
       }
       return res.status(200).json({ ok: true });
     }
@@ -134,7 +153,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Unknown action" });
 
   } catch (err) {
-    console.error("[auth API error]", err);
+    console.error("[auth API error]", err.message);
     return res.status(500).json({ error: "Server error. Please try again." });
   }
 }
