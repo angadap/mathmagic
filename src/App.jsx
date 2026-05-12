@@ -87,8 +87,8 @@ function GlobalStyles() {
         @keyframes bFloat{0%,100%{transform:translateY(0)scale(1)}50%{transform:translateY(-10px)scale(1.05)}}
         @keyframes bossW{0%,100%{transform:rotate(0)}25%{transform:rotate(-5deg)}75%{transform:rotate(5deg)}}
         *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-        body{background:#04040f}
-        input{font-family:'Nunito',sans-serif;outline:none;color:white}
+        body{background:${C.bg};color:${textColor()}}
+        input{font-family:'Nunito',sans-serif;outline:none;color:${textColor()}}
         input::placeholder{color:#2a3a6a}
         ::-webkit-scrollbar{width:3px}
         ::-webkit-scrollbar-thumb{background:#a855f7;border-radius:4px}
@@ -749,7 +749,7 @@ async function fetchSetQuestions(lessonId, setIndex) {
     const res = await fetch("/api/db", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "get_questions", lesson_id: lessonId, set_index: setIndex })
+      body: JSON.stringify({ action: "get_questions", lesson_id: lessonId + "_s" + setIndex, set_index: setIndex })
     });
     const json = await res.json();
     const data = json.data;
@@ -2395,7 +2395,7 @@ function XPBar({ xp = 0, level = 1 }) {
       <div style={{
         background:`linear-gradient(135deg,${C.purple},${C.pink})`,
         borderRadius:20, padding:"3px 10px", fontSize:10,
-        fontFamily:"'Orbitron',sans-serif", color:"white", flexShrink:0,
+        fontFamily:"'Orbitron',sans-serif", color:textColor(), flexShrink:0,
       }}>LV {level}</div>
       <div style={{ flex:1, background:"rgba(255,255,255,0.07)", borderRadius:7, height:7, overflow:"hidden" }}>
         <div style={{
@@ -2430,7 +2430,7 @@ function PinPad({ pin, setPin, error, shake, onComplete }) {
             border:`2px solid ${shake ? C.red : pin.length > i ? C.cyan : "#181840"}`,
             boxShadow: pin.length > i ? `0 0 14px ${C.cyan}77` : shake ? `0 0 12px ${C.red}66` : "none",
             display:"flex", alignItems:"center", justifyContent:"center",
-            fontSize:22, color:"white", transition:"all 0.2s",
+            fontSize:22, color:textColor(), transition:"all 0.2s",
           }}>{pin.length > i ? "●" : ""}</div>
         ))}
       </div>
@@ -3491,7 +3491,7 @@ function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
       </div>
       <div style={{ position:"relative", zIndex:2, padding:"14px 18px", textAlign:"center" }}>
         <div style={{ fontSize:58, animation:"bossW 1.5s ease-in-out infinite", marginBottom:10 }}>{lesson.boss||"👾"}</div>
-        {burst && <div style={{ fontSize:15, color:C.green, marginBottom:6, fontFamily:"'Orbitron',sans-serif" }}>⚡ HIT! {bossHp}% HP</div>}
+        {burst && <div style={{ fontSize:13, color:C.green, marginBottom:6, fontFamily:"'Orbitron',sans-serif", position:"fixed", top:"20%", left:"50%", transform:"translateX(-50%)", zIndex:998, background:`${C.green}22`, borderRadius:12, padding:"8px 20px" }}>⚡ HIT! Boss HP: {bossHp}%</div>}
         <Card color={C.red} style={{ marginBottom:12, padding:"16px 14px", textAlign:"left" }}>
           <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:15, color:"white", lineHeight:1.5 }}>{q.q}</div>
         </Card>
@@ -3573,7 +3573,7 @@ function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
         )}
         <Card color={world.color} style={{ textAlign:"center", padding:"18px 14px", marginBottom:12, transform: burst?"scale(1.02)":"scale(1)", transition:"transform 0.2s" }}>
           <div style={{ fontSize:34, marginBottom:8 }}>{lesson.emoji}</div>
-          <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:16, color:"white", lineHeight:1.4 }}>{q.q}</div>
+          <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:16, color:textColor(), lineHeight:1.4 }}>{q.q}</div>
           {/* correct shown via overlay below */}
         </Card>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:10 }}>
@@ -5148,7 +5148,7 @@ function DailyPuzzle({ child, onClose }) {
             {result === "correct" && (
               <div style={{textAlign:"center"}}>
                 <div style={{fontSize:48,marginBottom:8}}>🎉</div>
-                <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.green,marginBottom:4}}>BRILLIANT! CORRECT!</div>
+                {/* correct shown via floating overlay */}
                 <div style={{fontSize:12,color:C.dim,marginBottom:14}}>Answer: {puzzle.answer}</div>
                 <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:12,color:C.yellow,marginBottom:14}}>+{puzzle.xp_reward||75} XP · +{puzzle.coin_reward||15} COINS</div>
                 <Btn color={C.green} onClick={onClose}>🏆 AWESOME!</Btn>
