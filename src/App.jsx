@@ -5419,29 +5419,26 @@ function Settings({ child, user, onBack, onThemeChange, onLogout }) {
 
 
 
-// ── EntryScreen — clean role selector ────────────────────────────
+// ── EntryScreen ───────────────────────────────────────────────────
 function EntryScreen({ onSelect }) {
   useEffect(()=>{ SFX.screenIn(); },[]);
-  const roles = [
-    { icon:"🧒", label:"I'm a Student",    sub:"School login",          screen:"student_login", color:C.cyan   },
-    { icon:"👨‍👩‍👧", label:"I'm a Parent",     sub:"Home learning",         screen:"welcome",       color:C.purple },
-    { icon:"👨‍🏫", label:"I'm a Teacher",    sub:"Manage my class",       screen:"teacher_login", color:C.yellow },
-    { icon:"🔐", label:"Admin",             sub:"School management",     screen:"admin_panel",   color:C.red    },
-  ];
   return (
     <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"24px 18px",position:"relative"}}>
       <Starfield n={30}/>
       <div style={{position:"relative",zIndex:2,width:"100%",maxWidth:420}}>
-        <div style={{textAlign:"center",marginBottom:32}}>
-          <div style={{fontSize:52,marginBottom:8}}>🚀</div>
-          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:20,color:C.yellow,letterSpacing:2}}>MATHMAGIC</div>
+        <div style={{textAlign:"center",marginBottom:36}}>
+          <div style={{fontSize:56,marginBottom:8,animation:"floatUp 2s ease-in-out infinite"}}>🚀</div>
+          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:22,color:C.yellow,letterSpacing:2}}>MATHMAGIC</div>
           <div style={{color:C.dim,fontSize:13,marginTop:4}}>Space Academy</div>
         </div>
-        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:11,color:C.dim,textAlign:"center",marginBottom:16}}>WHO ARE YOU?</div>
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
-          {roles.map((r,i)=>(
-            <button key={i} onClick={()=>{SFX.tap();onSelect(r.screen);}} style={{background:`${r.color}15`,border:`1.5px solid ${r.color}44`,borderRadius:16,padding:"16px 18px",cursor:"pointer",display:"flex",alignItems:"center",gap:14,transition:"all 0.15s",textAlign:"left"}}>
-              <span style={{fontSize:28}}>{r.icon}</span>
+          {[
+            {icon:"🧒",label:"I'm a Student",    sub:"Login or register",       s:"student_entry", color:C.cyan},
+            {icon:"👨‍🏫",label:"I'm a Teacher",   sub:"Manage my class",         s:"teacher_login",  color:C.yellow},
+            {icon:"🔐",label:"Admin",             sub:"School management",       s:"admin_panel",    color:C.red},
+          ].map((r,i)=>(
+            <button key={i} onClick={()=>{SFX.tap();onSelect(r.s);}} style={{background:`${r.color}18`,border:`1.5px solid ${r.color}44`,borderRadius:16,padding:"16px 18px",cursor:"pointer",display:"flex",alignItems:"center",gap:14,textAlign:"left"}}>
+              <span style={{fontSize:30}}>{r.icon}</span>
               <div style={{flex:1}}>
                 <div style={{fontWeight:800,fontSize:15,color:"white"}}>{r.label}</div>
                 <div style={{fontSize:12,color:C.dim,marginTop:2}}>{r.sub}</div>
@@ -5449,6 +5446,51 @@ function EntryScreen({ onSelect }) {
               <span style={{color:r.color,fontSize:20}}>›</span>
             </button>
           ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── StudentEntry — school vs individual ───────────────────────────
+function StudentEntry({ onBack, onSelect }) {
+  return (
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"24px 18px",position:"relative"}}>
+      <Starfield n={20}/>
+      <div style={{position:"relative",zIndex:2,width:"100%",maxWidth:420}}>
+        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:28}}>
+          <BackBtn onClick={onBack} color={C.cyan}/>
+          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.cyan}}>STUDENT ACCESS</div>
+        </div>
+        <div style={{textAlign:"center",marginBottom:28}}>
+          <div style={{fontSize:48}}>🧒</div>
+          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:16,color:C.cyan,marginTop:8}}>HOW DO YOU STUDY?</div>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:12}}>
+          <button onClick={()=>{SFX.tap();onSelect("student_login");}} style={{background:`${C.cyan}18`,border:`1.5px solid ${C.cyan}44`,borderRadius:16,padding:"18px",cursor:"pointer",textAlign:"left",display:"flex",gap:14,alignItems:"center"}}>
+            <span style={{fontSize:28}}>🏫</span>
+            <div style={{flex:1}}>
+              <div style={{fontWeight:800,fontSize:15,color:"white"}}>My School uses MathMagic</div>
+              <div style={{fontSize:12,color:C.dim,marginTop:2}}>Login with school code + roll number</div>
+            </div>
+            <span style={{color:C.cyan,fontSize:20}}>›</span>
+          </button>
+          <button onClick={()=>{SFX.tap();onSelect("login");}} style={{background:`${C.purple}18`,border:`1.5px solid ${C.purple}44`,borderRadius:16,padding:"18px",cursor:"pointer",textAlign:"left",display:"flex",gap:14,alignItems:"center"}}>
+            <span style={{fontSize:28}}>🏠</span>
+            <div style={{flex:1}}>
+              <div style={{fontWeight:800,fontSize:15,color:"white"}}>I study at home</div>
+              <div style={{fontSize:12,color:C.dim,marginTop:2}}>Login with my account</div>
+            </div>
+            <span style={{color:C.purple,fontSize:20}}>›</span>
+          </button>
+          <button onClick={()=>{SFX.tap();onSelect("register");}} style={{background:`${C.green}18`,border:`2px solid ${C.green}55`,borderRadius:16,padding:"18px",cursor:"pointer",textAlign:"left",display:"flex",gap:14,alignItems:"center"}}>
+            <span style={{fontSize:28}}>✨</span>
+            <div style={{flex:1}}>
+              <div style={{fontWeight:800,fontSize:15,color:C.green}}>New? Register here</div>
+              <div style={{fontSize:12,color:C.dim,marginTop:2}}>Create a free account in 2 minutes</div>
+            </div>
+            <span style={{color:C.green,fontSize:20}}>›</span>
+          </button>
         </div>
       </div>
     </div>
@@ -6089,7 +6131,8 @@ export default function App() {
   }, [child]);
 
   if (screen === "splash")   return <><GlobalStyles/><Splash   onDone={() => setScreen("entry")}/></>;
-  if (screen === "entry")    return <><GlobalStyles/><EntryScreen onSelect={(s)=>setScreen(s)}/></>;
+  if (screen === "entry")         return <><GlobalStyles/><EntryScreen onSelect={(s)=>setScreen(s)}/></>;
+  if (screen === "student_entry") return <><GlobalStyles/><StudentEntry onBack={()=>setScreen("entry")} onSelect={(s)=>setScreen(s)}/></>;
   if (screen === "welcome")  return <><GlobalStyles/><Welcome  onRegister={() => setScreen("register")} onLogin={() => setScreen("login")} onPrivacy={() => { setPrevScreen("welcome"); setScreen("privacy"); }}/></>;
   if (screen === "register") return <><GlobalStyles/><Register onBack={() => setScreen("welcome")} onDone={({ user: u, child: c }) => { setUser(u); setChild(c); setScreen("home"); }}/></>;
   if (screen === "login")    return <><GlobalStyles/><Login    onBack={() => setScreen("welcome")} onDone={({ user: u, child: c }) => { setUser(u); setChild(c); setScreen("home"); }}/></>;
@@ -6102,7 +6145,7 @@ export default function App() {
   if (screen === "parent")   return <><GlobalStyles/><ParentDash child={child} onBack={() => setScreen("home")}/></>;
   if (screen === "feedback") return <><GlobalStyles/><FeedbackScreen child={child} currentScreen={prevScreen} prefillCategory={feedbackPrefill} onBack={() => setScreen(prevScreen)}/></>;
   if (screen === "games")    return <><GlobalStyles/><GamesHub child={child} onBack={() => setScreen("home")}/></>;
-  if (screen === "student_login") return <><GlobalStyles/><StudentLogin onBack={()=>setScreen("entry")} onDone={(s)=>{setSchoolStudent(s);setScreen("home");}}/></>;
+  if (screen === "student_login") return <><GlobalStyles/><StudentLogin onBack={()=>setScreen("student_entry")} onDone={(s)=>{setSchoolStudent(s);setScreen("home");}}/></>;
   if (screen === "teacher_login") return <><GlobalStyles/><TeacherLogin onBack={()=>setScreen("entry")} onDone={(t)=>{setTeacher(t);localStorage.setItem("mm_teacher_session",JSON.stringify(t));setScreen("teacher_dash");}}/></>;
   if (screen === "teacher_dash")  return <><GlobalStyles/><TeacherDashboard teacher={teacher} onLogout={()=>{setTeacher(null);setScreen("entry");}}/></>;
   if (screen === "admin_panel")   return <><GlobalStyles/><AdminPanel onBack={()=>setScreen("entry")}/></>;
