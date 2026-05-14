@@ -121,7 +121,15 @@ export default async function handler(req, res) {
         return res.status(200).json({data:r.data});
       }
 
-      return res.status(400).json({error:"Unknown admin action"});
+      if (action==="admin_list_students") {
+      const {school_id, teacher_id} = req.body;
+      if (!isUUID(school_id)) return res.status(400).json({error:"Invalid school_id"});
+      let params = `?school_id=eq.${school_id}&order=class_num,section,roll_no`;
+      if (teacher_id && isUUID(teacher_id)) params += `&teacher_id=eq.${teacher_id}`;
+      const r = await sb("students","GET",null,params);
+      return res.status(200).json({data:r.data});
+    }
+        return res.status(400).json({error:"Unknown admin action"});
     }
 
     // ══════════════════════════════════════════════════════
@@ -282,7 +290,72 @@ export default async function handler(req, res) {
       }
       return res.status(200).json({ok:true, ...results});
     }
-    return res.status(400).json({error:"Unknown action"});
+    // Teacher: add student to specific class/section
+    if (action==="add_student_to_class") {
+      const teacher = await verifyTeacher(teacher_id, session_token);
+      if (!teacher) return res.status(401).json({error:"Unauthorized"});
+      const {name, roll_no, pin, class_num, section} = req.body;
+      if (!name||!roll_no||!pin) return res.status(400).json({error:"Missing fields"});
+      const pin_hash = await hashPin(String(pin).slice(0,4));
+      const r = await sb("students","POST",{
+        school_id:teacher.school_id, teacher_id,
+        name:clean(name,50), roll_no:clean(String(roll_no),10),
+        class_num:cleanInt(class_num,1,5), section:clean(String(section||"A"),5).toUpperCase(),
+        pin_hash, xp:0, coins:50, level:1, streak_days:0
+      });
+      if (!r.ok) return res.status(400).json({error:"Duplicate roll number in this class/section"});
+      return res.status(200).json({data:Array.isArray(r.data)?r.data[0]:r.data});
+    }
+
+    // Teacher: create custom lesson
+    if (action==="create_lesson") {
+      const teacher = await verifyTeacher(teacher_id, session_token);
+      if (!teacher) return res.status(401).json({error:"Unauthorized"});
+      const {title, class_num, emoji} = req.body;
+      if (!title) return res.status(400).json({error:"Title required"});
+      // Store as a custom lesson record
+      const lesson_id = `school_${teacher.school_id.slice(0,8)}_${Date.now()}`;
+      const r = await sb("custom_lessons","POST",{
+        lesson_id, title:clean(title,80), class_num:cleanInt(class_num,1,5),
+        emoji:clean(emoji||"📚",5), school_id:teacher.school_id,
+        teacher_id, created_at:new Date().toISOString()
+      });
+      if (!r.ok) return res.status(400).json({error:"Failed to create lesson"});
+      return res.status(200).json({data:{lesson_id,title,class_num}});
+    }
+
+    // Teacher: create question in a lesson set
+    if (action==="create_question") {
+      const teacher = await verifyTeacher(teacher_id, session_token);
+      if (!teacher) return res.status(401).json({error:"Unauthorized"});
+      const {lesson_id, set_index, question_index, question, options, correct_answer, hint} = req.body;
+      if (!lesson_id||!question||!options) return res.status(400).json({error:"Missing fields"});
+      if (!Array.isArray(options)||options.length!==4) return res.status(400).json({error:"Need exactly 4 options"});
+      const r = await sb("questions","POST",{
+        lesson_id: clean(lesson_id,40),
+        set_index: cleanInt(set_index,0,19),
+        question_index: cleanInt(question_index,0,19),
+        question: clean(question,500),
+        options: options.map(o=>clean(String(o),200)),
+        correct_answer: cleanInt(correct_answer,0,3),
+        hint: clean(hint||"",200),
+      });
+      if (!r.ok) return res.status(400).json({error:"Failed to create question (duplicate index?)"});
+      return res.status(200).json({data:Array.isArray(r.data)?r.data[0]:r.data});
+    }
+
+    // Teacher: list custom lessons for their school
+    if (action==="list_custom_lessons") {
+      const teacher = await verifyTeacher(teacher_id, session_token);
+      if (!teacher) return res.status(401).json({error:"Unauthorized"});
+      const {class_num} = req.body;
+      let params = `?school_id=eq.${teacher.school_id}&order=created_at`;
+      if (class_num) params += `&class_num=eq.${cleanInt(class_num,1,5)}`;
+      const r = await sb("custom_lessons","GET",null,params);
+      return res.status(200).json({data:r.data});
+    }
+
+        return res.status(400).json({error:"Unknown action"});
 
   } catch(err) {
     console.error("[school API]", err.message);
