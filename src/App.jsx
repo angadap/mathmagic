@@ -230,6 +230,73 @@ function Mascot({ message, mood="happy" }) {
     </div>
   );
 }
+
+
+// ── Certificate ───────────────────────────────────────────────────
+function Certificate({ child, lesson, stars, onClose }) {
+  const canvasRef = useRef(null);
+  useEffect(()=>{
+    const cv = canvasRef.current; if(!cv) return;
+    const ctx = cv.getContext("2d");
+    const w=600, h=400;
+    cv.width=w; cv.height=h;
+    // Background
+    ctx.fillStyle="#12002e"; ctx.fillRect(0,0,w,h);
+    // Border
+    ctx.strokeStyle="#fbbf24"; ctx.lineWidth=6;
+    ctx.strokeRect(12,12,w-24,h-24);
+    ctx.strokeStyle="#a78bfa"; ctx.lineWidth=2;
+    ctx.strokeRect(20,20,w-40,h-40);
+    // Stars
+    const starX=[80,300,520], sy=60;
+    starX.forEach(x=>{ ctx.font="28px serif"; ctx.fillText("⭐",x-14,sy+10); });
+    // Title
+    ctx.font="bold 22px 'Arial'"; ctx.fillStyle="#fbbf24"; ctx.textAlign="center";
+    ctx.fillText("CERTIFICATE OF ACHIEVEMENT",w/2,100);
+    // Body
+    ctx.font="16px 'Arial'"; ctx.fillStyle="#ccc";
+    ctx.fillText("This is to certify that",w/2,145);
+    ctx.font="bold 28px 'Arial'"; ctx.fillStyle="#ffffff";
+    ctx.fillText(child?.name||"Student",w/2,185);
+    ctx.font="15px 'Arial'"; ctx.fillStyle="#a78bfa";
+    ctx.fillText(`has successfully completed`,w/2,220);
+    ctx.font="bold 18px 'Arial'"; ctx.fillStyle="#06b6d4";
+    ctx.fillText(`${lesson?.emoji||"📚"} ${lesson?.title||"Lesson"}`,w/2,250);
+    ctx.font="13px 'Arial'"; ctx.fillStyle="#fbbf24";
+    ctx.fillText(`Stars Earned: ${"⭐".repeat(stars||1)}  |  Date: ${new Date().toLocaleDateString("en-IN")}`,w/2,295);
+    ctx.font="11px 'Arial'"; ctx.fillStyle="#6b7db3";
+    ctx.fillText("MathMagic Space Academy",w/2,360);
+  },[child,lesson,stars]);
+
+  const download = () => {
+    const a = document.createElement("a");
+    a.download = `MathMagic_Certificate_${child?.name||"student"}.png`;
+    a.href = canvasRef.current.toDataURL("image/png");
+    a.click();
+  };
+
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:999,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:20}}>
+      <canvas ref={canvasRef} style={{maxWidth:"100%",borderRadius:12,boxShadow:`0 0 40px ${C.yellow}66`,marginBottom:16}}/>
+      <div style={{display:"flex",gap:12}}>
+        <Btn color={C.yellow} onClick={download}>⬇️ DOWNLOAD</Btn>
+        <button onClick={onClose} style={{background:"none",border:`1px solid ${C.dim}44`,borderRadius:12,padding:"12px 20px",color:C.dim,cursor:"pointer",fontFamily:"'Nunito',sans-serif",fontWeight:700}}>CLOSE</button>
+      </div>
+    </div>
+  );
+}
+// ── Difficulty Auto-Adjust ────────────────────────────────────────
+// Returns {level:"easy"|"medium"|"hard", suggestSkip:bool, extraHints:bool}
+function getDifficulty(progress, lessonId) {
+  const sets = Array.from({length:20},(_,i)=>i)
+    .map(i=>progress.find(p=>p.lesson_id===`${lessonId}_s${i}`))
+    .filter(Boolean).slice(-3); // last 3 completed sets
+  if (!sets.length) return {level:"medium", suggestSkip:false, extraHints:false};
+  const avg = sets.reduce((s,p)=>s+(p.correct_count||0)/(p.total_questions||20),0)/sets.length;
+  if (avg > 0.85) return {level:"easy",   suggestSkip:true,  extraHints:false};
+  if (avg < 0.40) return {level:"hard",   suggestSkip:false, extraHints:true};
+  return              {level:"medium", suggestSkip:false, extraHints:false};
+}
 // ── ProgressMap ───────────────────────────────────────────────────
 function ProgressMap({ child, lessons, progress, world, onSelectSet }) {
   const completedSets = (lid) => Array.from({length:20},(_,i)=>i).filter(i=>progress.some(p=>p.lesson_id===`${lid}_s${i}`&&(p.stars_earned||0)>=1)).length;
@@ -3363,7 +3430,7 @@ function LessonMap({ world, child, onBack, onLesson }) {
                     const sDone   = isSetDone(lesson.id, si);
                     const sUnlock = isSetUnlocked(lesson.id, si);
                     return (
-                      <button key={si} onClick={() => { if(sUnlock){ SFX.unlock(); onLesson({...lesson, setIndex:si}); } else SFX.wrong(); }}
+                      <button key={si} onClick={() => { if(sUnlock){ SFX.unlock(); onLesson({...lesson, setIndex:si, _progress:progress}); } else SFX.wrong(); }}
                         style={{ background: sDone ? `${world.color}22` : sUnlock ? C.card2 : "#060614", border:`1.5px solid ${sDone ? world.color : sUnlock ? world.color+"33" : "#0c0c20"}`, borderRadius:11, padding:"8px 5px", cursor: sUnlock ? "pointer" : "not-allowed", textAlign:"center", opacity: sUnlock ? 1 : 0.4 }}>
                         <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:9, color: sDone ? world.color : sUnlock ? "#aaa" : "#333" }}>SET {si+1}</div>
                         <div style={{ fontSize:14, marginTop:2 }}>{sDone ? "✅" : sUnlock ? "▶" : "🔒"}</div>
@@ -3384,6 +3451,8 @@ function LessonMap({ world, child, onBack, onLesson }) {
 // ── Game ──────────────────────────────────────────────────────────────
 function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
   const setIndex   = lesson.setIndex || 0;
+  const difficulty = getDifficulty(lesson._progress||[], lesson.id);
+  const [showCert, setShowCert] = useState(false);
   const mode       = lesson.mode || "quiz";
   const [questions, setQuestions] = useState(null); // null = loading
 
@@ -3520,6 +3589,8 @@ function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
 
   if (done) return (
     <div style={{ minHeight:"100vh", background:C.bg, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", fontFamily:"'Nunito',sans-serif", padding:22, position:"relative" }}>
+      {showCert && <Certificate child={child} lesson={lesson} stars={fst} onClose={()=>setShowCert(false)}/>}
+      <Confetti active={fst>=2}/>
       <Starfield n={60}/>
       <div style={{ position:"relative", zIndex:1, textAlign:"center", animation:"popIn 0.5s ease" }}>
         <div style={{ fontSize:72, marginBottom:10, filter:`drop-shadow(0 0 24px ${fst>=2 ? C.yellow : C.dim})` }}>
