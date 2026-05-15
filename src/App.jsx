@@ -20,7 +20,7 @@ export class ErrorBoundary extends React.Component {
       <div style={{minHeight:"100vh",background:"#04040f",display:"flex",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"'Nunito',sans-serif"}}>
         <div style={{background:"#0d0d2b",border:"1px solid #ef444433",borderRadius:20,padding:28,maxWidth:360,width:"100%",textAlign:"center"}}>
           <div style={{fontSize:52,marginBottom:12}}>🚀💥</div>
-          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:14,color:"#00f5ff",marginBottom:8}}>HOUSTON, WE HAVE A PROBLEM!</div>
+          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:14,color:"#00f5ff",marginBottom:8}}>Oops! Something went wrong 🚀</div>
           <div style={{color:"#6b7db3",fontSize:13,lineHeight:1.7,marginBottom:20}}>The app encountered an unexpected error. Your progress is saved. Please refresh to continue your mission!</div>
           <button onClick={()=>window.location.reload()} style={{background:"linear-gradient(135deg,#00f5ff,#a855f7)",border:"none",borderRadius:12,padding:"12px 24px",color:"white",fontFamily:"'Orbitron',sans-serif",fontSize:12,cursor:"pointer",fontWeight:700}}>🔄 RELAUNCH APP</button>
           {process.env.NODE_ENV==="development" && <pre style={{marginTop:14,color:"#f87171",fontSize:9,textAlign:"left",overflow:"auto",maxHeight:100}}>{this.state.error?.message}</pre>}
@@ -217,6 +217,100 @@ function MuteBtn() {
   );
 }
 
+// ── Mascot ────────────────────────────────────────────────────────
+function Mascot({ message, mood="happy" }) {
+  const faces = { happy:"🚀", thinking:"🤔", celebrate:"🎉", sleep:"😴", cheer:"⭐" };
+  return (
+    <div style={{display:"flex",alignItems:"center",gap:12,background:C.card,border:`1.5px solid ${C.cyan}33`,borderRadius:16,padding:"10px 14px",marginBottom:12}}>
+      <div style={{fontSize:32,animation:"floatUp 2s ease-in-out infinite",flexShrink:0}}>{faces[mood]||faces.happy}</div>
+      <div style={{background:C.card2,borderRadius:12,padding:"8px 12px",flex:1,position:"relative"}}>
+        <div style={{fontSize:13,color:"white",lineHeight:1.5}}>{message}</div>
+        <div style={{position:"absolute",left:-8,top:"50%",transform:"translateY(-50%)",width:0,height:0,borderTop:"6px solid transparent",borderBottom:"6px solid transparent",borderRight:`8px solid ${C.card2}`}}/>
+      </div>
+    </div>
+  );
+}
+// ── ProgressMap ───────────────────────────────────────────────────
+function ProgressMap({ child, lessons, progress, world, onSelectSet }) {
+  const completedSets = (lid) => Array.from({length:20},(_,i)=>i).filter(i=>progress.some(p=>p.lesson_id===`${lid}_s${i}`&&(p.stars_earned||0)>=1)).length;
+  return (
+    <div style={{overflowX:"auto",paddingBottom:8}}>
+      <div style={{display:"flex",gap:12,minWidth:"max-content",padding:"4px 2px"}}>
+        {lessons.slice(0,6).map((lesson,li)=>{
+          const done = completedSets(lesson.id);
+          const pct  = Math.round(done/20*100);
+          return (
+            <div key={lesson.id} style={{background:C.card,border:`1.5px solid ${pct===100?C.green:pct>0?world.color:C.dim+"33"}`,borderRadius:14,padding:"10px 12px",minWidth:90,textAlign:"center",flexShrink:0}}>
+              <div style={{fontSize:22,marginBottom:4}}>{pct===100?"⭐":pct>0?"📖":"🔒"}</div>
+              <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:8,color:pct===100?C.green:pct>0?world.color:C.dim,marginBottom:4}}>L{li+1}</div>
+              <div style={{background:C.card2,borderRadius:6,height:6,overflow:"hidden",marginBottom:4}}>
+                <div style={{width:`${pct}%`,height:"100%",background:pct===100?C.green:world.color,borderRadius:6,transition:"width 0.5s ease"}}/>
+              </div>
+              <div style={{color:C.dim,fontSize:9}}>{done}/20 sets</div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+// ── Confetti ─────────────────────────────────────────────────────
+function Confetti({ active }) {
+  if (!active) return null;
+  const pieces = Array.from({length:40},(_,i)=>({
+    x: Math.random()*100, delay: Math.random()*1.5,
+    color: [C.yellow,C.cyan,C.green,C.pink,C.orange,C.purple][i%6],
+    size: Math.random()*8+4, rot: Math.random()*360,
+  }));
+  return (
+    <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:998,overflow:"hidden"}}>
+      {pieces.map((p,i)=>(
+        <div key={i} style={{position:"absolute",left:`${p.x}%`,top:"-20px",width:p.size,height:p.size,background:p.color,borderRadius:Math.random()>0.5?"50%":"2px",animation:`coinBounce 1.5s ${p.delay}s ease-in forwards`,transform:`rotate(${p.rot}deg)`}}/>
+      ))}
+    </div>
+  );
+}
+// ── Tutorial (first-time) ────────────────────────────────────────
+function Tutorial({ onDone }) {
+  const [step, setStep] = useState(0);
+  const steps = [
+    { icon:"🚀", title:"Welcome to MathMagic!", body:"Your personal space academy for maths. Complete lessons, earn XP and unlock new worlds!", color:C.yellow },
+    { icon:"📚", title:"How Lessons Work",       body:"Each lesson has 20 sets of questions. Complete Set 1 to unlock Set 2, and so on. Answer correctly to earn stars and XP!", color:C.cyan },
+    { icon:"🎮", title:"Play Games",             body:"Visit the Games Hub to play 8 fun maths games. The more you play, the more coins you earn!", color:C.purple },
+    { icon:"🏆", title:"Daily Challenges",       body:"A new Word Problem and Brain Puzzle every day! Solve both to earn bonus XP and keep your streak going!", color:C.orange },
+    { icon:"🎯", title:"You're Ready!",          body:"Tap Start to begin your maths adventure. Remember — practice every day to climb the leaderboard!", color:C.green },
+  ];
+  const s = steps[step];
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",padding:20,fontFamily:"'Nunito',sans-serif"}}>
+      <div style={{background:C.card,borderRadius:24,padding:"32px 24px",maxWidth:380,width:"100%",textAlign:"center",border:`2px solid ${s.color}44`,animation:"popIn 0.3s ease"}}>
+        <div style={{fontSize:64,marginBottom:16,animation:"floatUp 2s ease-in-out infinite"}}>{s.icon}</div>
+        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:16,color:s.color,marginBottom:12}}>{s.title}</div>
+        <div style={{color:C.dim,fontSize:14,lineHeight:1.7,marginBottom:24}}>{s.body}</div>
+        <div style={{display:"flex",gap:6,justifyContent:"center",marginBottom:20}}>
+          {steps.map((_,i)=><div key={i} style={{width:i===step?24:8,height:8,borderRadius:4,background:i===step?s.color:C.dim+"44",transition:"all 0.3s"}}/>)}
+        </div>
+        <div style={{display:"flex",gap:10}}>
+          {step>0&&<button onClick={()=>setStep(s=>s-1)} style={{flex:1,background:"none",border:`1px solid ${C.dim}44`,borderRadius:12,padding:"12px",color:C.dim,cursor:"pointer",fontFamily:"'Nunito',sans-serif",fontWeight:700}}>← BACK</button>}
+          <button onClick={()=>step<steps.length-1?setStep(s=>s+1):onDone()} style={{flex:1,background:`linear-gradient(135deg,${s.color},${s.color}aa)`,border:"none",borderRadius:12,padding:"12px",color:"white",cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:12,fontWeight:700}}>
+            {step<steps.length-1?"NEXT →":"🚀 START!"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+// ── Skeleton Loader ──────────────────────────────────────────────
+function SkeletonLoader({ rows=4 }) {
+  return (
+    <div style={{padding:"16px 0"}}>
+      <div style={{background:C.card2,borderRadius:12,height:60,marginBottom:16,animation:"pulseG 1.5s ease-in-out infinite"}}/>
+      {Array.from({length:rows},(_,i)=>(
+        <div key={i} style={{background:C.card2,borderRadius:10,height:44,marginBottom:8,opacity:1-i*0.15,animation:"pulseG 1.5s ease-in-out infinite"}}/>
+      ))}
+    </div>
+  );
+}
 // ── Offline Banner ───────────────────────────────────────────────
 function OfflineBanner() {
   const [offline, setOffline] = useState(!navigator.onLine);
@@ -3031,6 +3125,8 @@ function ThemeSelector({ onClose }) {
 }
 
 function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogout, onFeedback, onRate, onSettings }) {
+  const [showTutorial, setShowTutorial] = useState(()=>!localStorage.getItem('mm_tutorial_done'));
+  const doneTutorial = () => { localStorage.setItem('mm_tutorial_done','1'); setShowTutorial(false); };
   const [showTheme, setShowTheme] = useState(false);
   const [progress, setProgress] = useState([]);
   const [showDQ,     setShowDQ]     = useState(false);
@@ -3068,7 +3164,7 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
     <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Nunito',sans-serif", paddingBottom:80, position:"relative" }}>
       <Starfield n={40}/>
       {onFeedback && <SOSButton onClick={() => onFeedback()}/>}
-      {/* theme in Settings */}
+      {showTutorial && <Tutorial onDone={doneTutorial}/>}
       {/* Header */}
       <div style={{ position:"relative", zIndex:2, padding:"16px 18px 0" }}>
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
@@ -3143,6 +3239,9 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
       </div>
       {/* Quick actions */}
       <div style={{ position:"relative", zIndex:2, display:"flex", gap:10, padding:"0 18px 14px" }}>
+        {/* Mascot */}
+        <Mascot message={`Hi ${child?.name?.split(" ")[0]||""}! Ready to learn?`} mood="happy"/>
+
         {[{i:"🧮",l:"ABACUS",c:C.yellow,a:onAbacus},{i:"🎮",l:"GAMES",c:C.cyan,a:onGames},{i:"🎓",l:"OLYMPIAD",c:C.purple,a:onOlympiad},{i:"📊",l:"PARENT",c:C.pink,a:onParent}].map((n,i) => (
           <button key={i} onClick={n.a} style={{ flex:1, background:`${n.c}18`, border:`1.5px solid ${n.c}44`, borderRadius:14, padding:"11px 8px", cursor:"pointer", textAlign:"center" }}>
             <div style={{ fontSize:22, marginBottom:4 }}>{n.i}</div>
@@ -5664,7 +5763,7 @@ function TeacherDashboard({ teacher, onLogout }) {
     setSaving(true); setSaveMsg("");
     try {
       const d = await schoolApi("create_student",{...form,teacher_id:teacher.id,session_token:teacher.session_token||""});
-      if (d.data) { setSaveMsg("✅ Student added!"); setForm({...form,name:"",roll_no:"",pin:""}); load(); }
+      if (d.data) { setSaveMsg("✅ Student added!"); setForm({name:"",roll_no:"",pin:"",class_num:form.class_num,section:form.section}); loadAll(); setTimeout(()=>setView("classes"),1200); }
       else setSaveMsg(d.error||"Failed");
     } catch(e) { setSaveMsg("Network error"); }
     setSaving(false);
@@ -5728,11 +5827,27 @@ function TeacherDashboard({ teacher, onLogout }) {
         )}
         {view==="add" ? (
           <Card color={C.cyan}>
-            <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:11,color:C.cyan,marginBottom:14}}>➕ ADD NEW STUDENT</div>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
+              <button onClick={()=>setView("classes")} style={{background:"none",border:`1px solid ${C.dim}44`,borderRadius:8,padding:"6px 10px",color:C.dim,cursor:"pointer",fontFamily:"'Nunito',sans-serif",fontSize:12}}>← Back</button>
+              <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:11,color:C.cyan}}>➕ ADD STUDENT</div>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
+              <div>
+                <div style={{color:C.dim,fontSize:11,marginBottom:4}}>CLASS</div>
+                <select value={form.class_num} onChange={e=>setForm({...form,class_num:parseInt(e.target.value)})} style={{width:"100%",background:C.card2,border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"10px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14}}>
+                  {[1,2,3,4,5].map(n=><option key={n} value={n}>Class {n}</option>)}
+                </select>
+              </div>
+              <div>
+                <div style={{color:C.dim,fontSize:11,marginBottom:4}}>SECTION</div>
+                <input value={form.section} onChange={e=>setForm({...form,section:e.target.value.toUpperCase().slice(0,3)})} placeholder="A"
+                  style={{width:"100%",background:C.card2,border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"10px 12px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14,display:"block"}}/>
+              </div>
+            </div>
             {[["Name","name","text","Full name"],["Roll No","roll_no","text","01"],["PIN (4 digits)","pin","password","••••"]].map(([l,k,t,ph])=>(
               <div key={k} style={{marginBottom:10}}>
                 <div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div>
-                <input value={form[k]} onChange={e=>setForm({...form,[k]:k==="pin"?e.target.value.replace(/\D/g,"").slice(0,4):e.target.value})}
+                <input value={form[k]} onChange={e=>setForm({...form,[k]:k==="pin"?e.target.value.replace(/[^0-9]/g,"").slice(0,4):e.target.value})}
                   type={t} placeholder={ph}
                   style={{width:"100%",background:C.card2,border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"10px 12px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14,display:"block"}}/>
               </div>
