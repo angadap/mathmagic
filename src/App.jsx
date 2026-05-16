@@ -6017,11 +6017,6 @@ function TeacherDashboard({ teacher, onLogout }) {
                 </div>
                 {selStudent?.id===s.id && <StudentActions student={s} teacher={teacher} onRefresh={load} onClose={()=>setSelStudent(null)}/>}
               </div>
-                <div style={{textAlign:"right"}}>
-                  <div style={{fontSize:10,color:C.dim}}>{s.last_active ? new Date(s.last_active).toLocaleDateString("en-IN") : "Never"}</div>
-                  <div style={{fontSize:10,color:s.streak_days>0?C.orange:C.dim}}>🔥 {s.streak_days||0} days</div>
-                </div>
-              </div>
             ))}
             {!loading&&students.length===0&&<div style={{textAlign:"center",color:C.dim,padding:30}}>No students yet. Add your first student!</div>}
           </div>
