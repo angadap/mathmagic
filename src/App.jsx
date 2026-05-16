@@ -297,6 +297,45 @@ function getDifficulty(progress, lessonId) {
   if (avg < 0.40) return {level:"hard",   suggestSkip:false, extraHints:true};
   return              {level:"medium", suggestSkip:false, extraHints:false};
 }
+
+// ── LessonTimeline ────────────────────────────────────────────────
+function LessonTimeline({ lessons, progress }) {
+  if (!lessons || !lessons.length) return null;
+  const setsDone = (lid) => Array.from({length:20},(_,i)=>i).filter(i=>
+    progress.some(p=>p.lesson_id===`${lid}_s${i}`&&(p.stars_earned||0)>=1)).length;
+  return (
+    <div style={{marginBottom:16}}>
+      <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:10,color:C.dim,marginBottom:10}}>📍 LESSON PROGRESS MAP</div>
+      <div style={{position:"relative",paddingLeft:20}}>
+        <div style={{position:"absolute",left:8,top:8,bottom:8,width:2,background:`${C.purple}33`,borderRadius:2}}/>
+        {lessons.map((l,i)=>{
+          const done = setsDone(l.id);
+          const pct  = Math.round(done/20*100);
+          const started = done>0;
+          const complete= done===20;
+          return (
+            <div key={l.id} style={{display:"flex",alignItems:"flex-start",gap:12,marginBottom:12,position:"relative"}}>
+              <div style={{width:16,height:16,borderRadius:"50%",background:complete?C.green:started?C.cyan:C.card2,border:`2px solid ${complete?C.green:started?C.cyan:C.dim+"44"}`,flexShrink:0,marginTop:2,zIndex:1}}/>
+              <div style={{flex:1,background:C.card,borderRadius:12,padding:"8px 12px",border:`1px solid ${complete?C.green+"44":started?C.cyan+"33":C.dim+"22"}`}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <div style={{fontWeight:700,fontSize:13,color:complete?C.green:started?"white":C.dim}}>
+                    {l.emoji} L{i+1}: {l.title}
+                  </div>
+                  <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:9,color:complete?C.green:started?C.cyan:C.dim}}>
+                    {done}/20
+                  </div>
+                </div>
+                {started&&<div style={{background:C.card2,borderRadius:4,height:4,marginTop:6,overflow:"hidden"}}>
+                  <div style={{width:`${pct}%`,height:"100%",background:complete?C.green:C.cyan,borderRadius:4}}/>
+                </div>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 // ── ProgressMap ───────────────────────────────────────────────────
 function ProgressMap({ child, lessons, progress, world, onSelectSet }) {
   const completedSets = (lid) => Array.from({length:20},(_,i)=>i).filter(i=>progress.some(p=>p.lesson_id===`${lid}_s${i}`&&(p.stars_earned||0)>=1)).length;
@@ -3282,8 +3321,8 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
         {/* Daily Challenge + Daily Puzzle cards */}
         {(()=>{
           const todayKey = new Date().toISOString().slice(0,10);
-          const dqKey = `dq_${child.id}_${todayKey}`;
-          const dpKey = `dp_${child.id}_${todayKey}`;
+          const dqKey = `dq_done_${child.id}_${todayKey}`;
+          const dpKey = `dp_done_${child.id}_${todayKey}`;
           const dqDone = !!localStorage.getItem(dqKey);
           const dpDone = !!localStorage.getItem(dpKey);
           return (<>
@@ -5923,7 +5962,7 @@ function TeacherDashboard({ teacher, onLogout }) {
           <div style={{fontSize:11,color:C.dim}}>{selClass?`Class ${selClass.class_num}-${selClass.section}`:"All Classes"}</div>
         </div>
         <div style={{display:"flex",gap:8}}>
-          <button onClick={()=>setView(view==="add"?"list":"add")} style={{background:`${C.cyan}22`,border:`1px solid ${C.cyan}44`,borderRadius:10,padding:"8px 14px",color:C.cyan,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:10}}>
+          <button onClick={()=>{if(view==="add"){setView(selClass?"list":"classes");}else{setSelStudent(null);setView("add");}}} style={{background:`${C.cyan}22`,border:`1px solid ${C.cyan}44`,borderRadius:10,padding:"8px 14px",color:C.cyan,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:10}}>
             {view==="add"?"📋 LIST":"➕ ADD"}
           </button>
           <button onClick={onLogout} style={{background:`${C.red}22`,border:`1px solid ${C.red}44`,borderRadius:10,padding:"8px 12px",color:C.red,cursor:"pointer",fontSize:11,fontFamily:"'Nunito',sans-serif",fontWeight:700}}>LOGOUT</button>
@@ -6018,7 +6057,7 @@ function TeacherDashboard({ teacher, onLogout }) {
                 {selStudent?.id===s.id && <StudentActions student={s} teacher={teacher} onRefresh={load} onClose={()=>setSelStudent(null)}/>}
               </div>
             ))}
-            {!loading&&students.length===0&&<div style={{textAlign:"center",color:C.dim,padding:30}}>No students yet. Add your first student!</div>}
+            {!loading&&students.length===0&&selClass&&<div style={{textAlign:"center",color:C.dim,padding:30}}>No students in this class yet.</div>}
           </div>
         )}
 
@@ -6266,9 +6305,12 @@ function AdminPanel({ onBack }) {
   };
 
   const loadStudents = async (teacher) => {
+    if (!selSchool?.id) return;
     setLoading(true); setSelTeacher(teacher); setStudents([]);
-    const d = await api("admin_list_students", {school_id: selSchool.id, teacher_id: teacher.id});
-    if (d.data) setStudents(d.data);
+    try {
+      const d = await api("admin_list_students", {school_id: selSchool.id, teacher_id: teacher.id});
+      setStudents(Array.isArray(d.data)?d.data:[]);
+    } catch(e) { setMsg("Failed to load students"); }
     setView("teacher_detail"); setLoading(false);
   };
 
