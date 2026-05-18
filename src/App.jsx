@@ -298,100 +298,46 @@ function getDifficulty(progress, lessonId) {
   return              {level:"medium", suggestSkip:false, extraHints:false};
 }
 
-// ── GalaxyMap — collapsible planet progress view ─────────────────
-function GalaxyMap({ lessons, progress }) {
-  const [open, setOpen] = useState(true);
+// ── ProgressGrid ─────────────────────────────────────────────────
+function ProgressGrid({ lessons, progress }) {
+  const [open, setOpen] = useState(false);
   if (!lessons?.length) return null;
-
   const setsDone = (lid) => Array.from({length:20},(_,i)=>i)
     .filter(i=>progress.some(p=>p.lesson_id===`${lid}_s${i}`&&(p.stars_earned||0)>=1)).length;
-  const totalDone = lessons.reduce((s,l)=>s+setsDone(l.id),0);
-  const totalSets = lessons.length*20;
-  const pctOverall = Math.round(totalDone/totalSets*100);
-
-  const planetColors = [C.cyan,C.purple,C.yellow,C.orange,C.green,C.pink,C.red,C.cyan,C.purple];
-
+  const total = lessons.reduce((s,l)=>s+setsDone(l.id),0);
+  const max   = lessons.length*20;
   return (
-    <div style={{marginBottom:16,background:C.card,borderRadius:16,overflow:"hidden",border:`1px solid ${C.purple}33`}}>
-      {/* Header — always visible */}
+    <div style={{marginBottom:14,background:C.card,borderRadius:14,border:`1px solid ${C.purple}33`}}>
       <div onClick={()=>setOpen(o=>!o)} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 14px",cursor:"pointer"}}>
-        <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <span style={{fontSize:20}}>🌌</span>
-          <div>
-            <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:11,color:C.purple}}>GALAXY MAP</div>
-            <div style={{fontSize:11,color:C.dim,marginTop:2}}>{totalDone}/{totalSets} sets · {pctOverall}% complete</div>
-          </div>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <span>📊</span>
+          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:10,color:C.purple}}>MY PROGRESS</div>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <div style={{background:C.card2,borderRadius:8,height:6,width:80,overflow:"hidden"}}>
-            <div style={{width:`${pctOverall}%`,height:"100%",background:`linear-gradient(90deg,${C.cyan},${C.purple})`,borderRadius:8}}/>
+          <div style={{fontSize:11,color:C.dim}}>{total}/{max} sets</div>
+          <div style={{background:C.card2,borderRadius:6,height:5,width:60,overflow:"hidden"}}>
+            <div style={{width:`${Math.round(total/max*100)}%`,height:"100%",background:C.cyan,borderRadius:6}}/>
           </div>
-          <span style={{color:C.dim,fontSize:14}}>{open?"▲":"▼"}</span>
+          <span style={{color:C.dim,fontSize:12}}>{open?"▲":"▼"}</span>
         </div>
       </div>
-
-      {/* Planet map */}
       {open && (
-        <div style={{padding:"0 14px 16px",overflowX:"auto"}}>
-          <div style={{display:"flex",alignItems:"center",gap:0,minWidth:"max-content",paddingBottom:4}}>
-            {lessons.map((l,i)=>{
-              const done=setsDone(l.id), complete=done===20, started=done>0;
-              const pct=Math.round(done/20*100);
-              const col=planetColors[i%planetColors.length];
-              const [showTip,setShowTip]=React.useState(false);
-              return (
-                <React.Fragment key={l.id}>
-                  {/* Planet */}
-                  <div style={{display:"flex",flexDirection:"column",alignItems:"center",position:"relative"}}>
-                    <div onClick={()=>setShowTip(s=>!s)} style={{
-                      width:complete?52:started?46:38,height:complete?52:started?46:38,
-                      borderRadius:"50%",cursor:"pointer",
-                      background:complete?`radial-gradient(circle at 35% 35%,${col},${col}88)`
-                               :started?`radial-gradient(circle at 35% 35%,${col}88,${col}44)`
-                               :`radial-gradient(circle at 35% 35%,${C.dim}44,${C.dim}22)`,
-                      boxShadow:complete?`0 0 16px ${col}88,0 0 4px ${col}`
-                               :started?`0 0 8px ${col}44`:"none",
-                      border:`2px solid ${complete?col:started?col+"88":C.dim+"33"}`,
-                      display:"flex",alignItems:"center",justifyContent:"center",
-                      fontSize:complete?18:started?14:12,
-                      transition:"all 0.2s",
-                      position:"relative",
-                    }}>
-                      {complete?"⭐":started?l.emoji||"📚":"🔒"}
-                      {started&&!complete&&(
-                        <div style={{position:"absolute",bottom:-2,right:-2,background:C.yellow,borderRadius:"50%",width:14,height:14,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,color:"#000",fontWeight:800}}>{pct}%</div>
-                      )}
-                    </div>
-                    <div style={{fontSize:9,color:complete?col:started?col:C.dim,marginTop:4,fontFamily:"'Orbitron',sans-serif",maxWidth:52,textAlign:"center",lineHeight:1.2}}>L{i+1}</div>
-                    {/* Tooltip on tap */}
-                    {showTip&&(
-                      <div onClick={e=>e.stopPropagation()} style={{position:"absolute",top:60,left:"50%",transform:"translateX(-50%)",background:C.card2,border:`1px solid ${col}44`,borderRadius:12,padding:"8px 10px",zIndex:10,minWidth:120,boxShadow:`0 4px 20px rgba(0,0,0,0.4)`}}>
-                        <div style={{fontSize:11,fontWeight:800,color:"white",marginBottom:4}}>{l.emoji} {l.title}</div>
-                        <div style={{fontSize:10,color:C.dim,marginBottom:6}}>{done}/20 sets done</div>
-                        <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:2}}>
-                          {Array.from({length:20},(_,si)=>{
-                            const d=progress.some(p=>p.lesson_id===`${l.id}_s${si}`&&(p.stars_earned||0)>=1);
-                            return <div key={si} style={{height:8,borderRadius:2,background:d?C.green:`${C.dim}33`}} title={`Set ${si+1}`}/>;
-                          })}
-                        </div>
-                        <button onClick={()=>setShowTip(false)} style={{marginTop:6,background:"none",border:"none",color:C.dim,fontSize:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif",width:"100%"}}>close</button>
-                      </div>
-                    )}
-                  </div>
-                  {/* Connector */}
-                  {i<lessons.length-1&&(
-                    <div style={{display:"flex",alignItems:"center",marginTop:-8}}>
-                      {[0,1,2].map(d=>(
-                        <div key={d} style={{width:8,height:3,borderRadius:2,background:setsDone(lessons[i+1].id)>0||complete?`${col}66`:C.dim+"22",margin:"0 1px"}}/>
-                      ))}
-                    </div>
-                  )}
-                </React.Fragment>
-              );
-            })}
-            {/* Rocket at end */}
-            <div style={{marginLeft:8,fontSize:24,animation:"floatUp 1.5s ease-in-out infinite",marginTop:-8}}>🚀</div>
-          </div>
+        <div style={{padding:"0 14px 14px"}}>
+          {lessons.map((l,i)=>{
+            const done=setsDone(l.id), pct=Math.round(done/20*100);
+            const complete=done===20, started=done>0;
+            return (
+              <div key={l.id} style={{marginBottom:8}}>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:3}}>
+                  <span style={{color:complete?C.green:started?"white":C.dim}}>{l.emoji} L{i+1}: {l.title}</span>
+                  <span style={{color:C.dim,fontSize:11}}>{done}/20</span>
+                </div>
+                <div style={{background:C.card2,borderRadius:4,height:6,overflow:"hidden"}}>
+                  <div style={{width:`${pct}%`,height:"100%",background:complete?C.green:C.cyan,borderRadius:4,transition:"width 0.4s"}}/>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -3408,7 +3354,6 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
       {/* Quick actions */}
       <div style={{ position:"relative", zIndex:2, display:"flex", gap:10, padding:"0 18px 14px" }}>
         {/* Mascot */}
-        <Mascot message={`Hi ${child?.name?.split(" ")[0]||""}! Ready to learn?`} mood="happy"/>
 
         {[{i:"🧮",l:"ABACUS",c:C.yellow,a:onAbacus},{i:"🎮",l:"GAMES",c:C.cyan,a:onGames},{i:"🎓",l:"OLYMPIAD",c:C.purple,a:onOlympiad},{i:"📊",l:"PARENT",c:C.pink,a:onParent}].map((n,i) => (
           <button key={i} onClick={n.a} style={{ flex:1, background:`${n.c}18`, border:`1.5px solid ${n.c}44`, borderRadius:14, padding:"11px 8px", cursor:"pointer", textAlign:"center" }}>
@@ -3421,7 +3366,7 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
       <div style={{ position:"relative", zIndex:2, padding:"0 18px 10px" }}>
         <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:11, color:C.purple, letterSpacing:2, marginBottom:10 }}>🗺️ GALACTIC WORLDS</div>
         <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-          <GalaxyMap lessons={myLessons} progress={progress}/>
+          <ProgressGrid lessons={myLessons} progress={progress}/>
         {WORLDS.filter(cw => cw.id === child.class_num || child.id === "admin-001").map(cw => (
             <button key={cw.id} onClick={() => onWorld(cw, true)} style={{
               background: `linear-gradient(135deg,${cw.color}16,${cw.color}08)`,
@@ -5781,7 +5726,7 @@ function StudentLogin({ onBack, onDone }) {
     if (!rollNo.trim()||pin.length<4) { setError("Enter roll number and 4-digit PIN"); return; }
     setLoading(true); setError("");
     try {
-      const d = await schoolApi("student_login", {school_code:schoolCode.trim().toUpperCase(), name:rollNo.trim(), pin, class_num:classNum?parseInt(classNum):undefined, section:section||undefined});
+      const d = await schoolApi("student_login", {school_code:schoolCode.trim().toUpperCase(), roll_no:rollNo.trim(), name:rollNo.trim(), pin, class_num:classNum?parseInt(classNum):undefined, section:section||undefined});
       if (d.student) { SFX.select(); onDone(d.student); }
       else setError(d.error||"Invalid credentials");
     } catch(e) { setError("Network error"); }
@@ -6503,7 +6448,7 @@ function AdminPanel({ onBack }) {
         <BackBtn onClick={()=>setView("school_detail")} color={C.cyan}/>
         <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.cyan}}>ADD TEACHER — {selSchool?.name}</div>
       </div>
-      <Card color={C.cyan} style={{maxWidth:480}}>
+      <Card color={C.cyan} style={{maxWidth:480,margin:'0 auto'}}>
         {[["Name","name","text","Mrs. Sharma"],["Email","email","email","teacher@school.com"],["PIN (4-6 digits)","pin","password","••••"]].map(([l,k,t,ph])=>(
           <div key={k}>
             <div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div>
