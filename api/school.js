@@ -129,6 +129,19 @@ export default async function handler(req, res) {
       const r = await sb("students","GET",null,params);
       return res.status(200).json({data:r.data});
     }
+        if (action==="create_student_admin") {
+      const {school_id, teacher_id, name, roll_no, pin, class_num, section} = req.body;
+      if (!school_id||!name||!roll_no||!pin) return res.status(400).json({error:"Missing fields"});
+      const pin_hash = await hashPin(String(pin).slice(0,4));
+      const r = await sb("students","POST",{
+        school_id:clean(school_id,36), teacher_id:teacher_id||null,
+        name:clean(name,50), roll_no:clean(String(roll_no),10),
+        class_num:cleanInt(class_num,0,7), section:clean(String(section||"A"),5).toUpperCase(),
+        pin_hash, xp:0, coins:50, level:1, streak_days:0
+      });
+      if (!r.ok) return res.status(400).json({error:"Duplicate roll number"});
+      return res.status(200).json({data:Array.isArray(r.data)?r.data[0]:r.data});
+    }
         return res.status(400).json({error:"Unknown admin action"});
     }
 
