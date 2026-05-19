@@ -3150,6 +3150,7 @@ function Paywall({ world, child, onBack, onUnlock }) {
     <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Nunito',sans-serif", position:"relative", overflowY:"auto" }}>
       <Starfield n={35}/>
       <div style={{ position:"relative", zIndex:2, padding:"20px 18px" }}>
+        <div style={{textAlign:"center",marginBottom:8,fontFamily:"'Orbitron',sans-serif",fontSize:11,color:C.cyan,letterSpacing:1}}>🚀 Welcome, {child?.name?.split(" ")[0]}! — MathMagic Space Academy</div>
         <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:20 }}>
           <BackBtn onClick={onBack} color={C.yellow}/>
           <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:14, color:C.yellow }}>UNLOCK PREMIUM</div>
@@ -5759,8 +5760,8 @@ function StudentLogin({ onBack, onDone }) {
         ) : (
           <Card color={C.purple} style={{marginBottom:16}}>
             <div style={{color:C.cyan,fontSize:11,fontFamily:"'Orbitron',sans-serif",marginBottom:12}}>🏫 {schoolCode}</div>
-            <div style={{color:C.dim,fontSize:12,marginBottom:6,fontFamily:"'Orbitron',sans-serif"}}>YOUR NAME</div>
-            <input value={rollNo} onChange={e=>setRollNo(e.target.value)} placeholder="Enter your name"
+            <div style={{color:C.dim,fontSize:12,marginBottom:6,fontFamily:"'Orbitron',sans-serif"}}>USERNAME</div>
+            <input value={rollNo} onChange={e=>setRollNo(e.target.value)} placeholder="Enter your username"
               style={{width:"100%",background:C.card2,border:`1.5px solid ${C.purple}44`,borderRadius:10,padding:"11px 14px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:15,marginBottom:10,display:"block"}}/>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
               <div>
@@ -6024,7 +6025,7 @@ function TeacherDashboard({ teacher, onLogout }) {
                   style={{width:"100%",background:C.card2,border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"10px 12px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14,display:"block"}}/>
               </div>
             </div>
-            {[["Name","name","text","Full name"],["Roll No","roll_no","text","01"],["PIN (4 digits)","pin","password","••••"]].map(([l,k,t,ph])=>(
+            {[["Name","name","text","Full name"],["Roll No","roll_no","text","01"],["Username","username","text","e.g. arjun123"],["PIN (4 digits)","pin","password","••••"]].map(([l,k,t,ph])=>(
               <div key={k} style={{marginBottom:10}}>
                 <div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div>
                 <input value={form[k]} onChange={e=>setForm({...form,[k]:k==="pin"?e.target.value.replace(/[^0-9]/g,"").slice(0,4):e.target.value})}
@@ -6911,7 +6912,7 @@ export default function App() {
   if (screen === "entry")         return <><GlobalStyles/><EntryScreen onSelect={(s)=>setScreen(s)}/></>;
   if (screen === "student_entry") return <><GlobalStyles/><StudentEntry onBack={()=>setScreen("entry")} onSelect={(s)=>setScreen(s)}/></>;
   if (screen === "welcome")  return <><GlobalStyles/><Welcome  onRegister={() => setScreen("register")} onLogin={() => setScreen("login")} onPrivacy={() => { setPrevScreen("welcome"); setScreen("privacy"); }}/></>;
-  if (screen === "register") return <><GlobalStyles/><Register onBack={() => setScreen("student_entry")} onDone={({ user: u, child: c }) => { setUser(u); setChild(c); setScreen("home"); }}/></>;
+  if (screen === "register") return <><GlobalStyles/><Register onBack={() => setScreen("student_entry")} onDone={({ user: u, child: c, requirePayment }) => { setUser(u); setChild(c); setScreen(requirePayment?"paywall":"home"); }}/></>;
   if (screen === "login")    return <><GlobalStyles/><Login    onBack={() => setScreen("student_entry")} onDone={({ user: u, child: c }) => { setUser(u); setChild(c); setScreen("home"); }}/></>;
   if (screen === "home")     return <><GlobalStyles/><Home     child={child} onWorld={goWorld} onAbacus={() => setScreen("abacus")} onGames={() => setScreen("games")} onOlympiad={() => setScreen("olympiad")} onParent={() => setScreen("parent")} onRate={() => setShowRating(true)} onLogout={logout} onFeedback={goFeedback} onSettings={()=>setScreen('settings')} onThemeChange={handleThemeChange}/><FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
   if (screen === "paywall")  return <><GlobalStyles/><Paywall  world={world} child={child} onBack={() => setScreen("home")} onUnlock={handleUnlock}/></>;
