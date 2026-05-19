@@ -129,19 +129,6 @@ export default async function handler(req, res) {
       const r = await sb("students","GET",null,params);
       return res.status(200).json({data:r.data});
     }
-        if (action==="create_student_admin") {
-      const {school_id, teacher_id, name, roll_no, pin, class_num, section} = req.body;
-      if (!school_id||!name||!roll_no||!pin) return res.status(400).json({error:"Missing fields"});
-      const pin_hash = await hashPin(String(pin).slice(0,4));
-      const r = await sb("students","POST",{
-        school_id:clean(school_id,36), teacher_id:teacher_id||null,
-        name:clean(name,50), roll_no:clean(String(roll_no),10),
-        class_num:cleanInt(class_num,0,7), section:clean(String(section||"A"),5).toUpperCase(),
-        pin_hash, xp:0, coins:50, level:1, streak_days:0
-      });
-      if (!r.ok) return res.status(400).json({error:"Duplicate roll number"});
-      return res.status(200).json({data:Array.isArray(r.data)?r.data[0]:r.data});
-    }
         return res.status(400).json({error:"Unknown admin action"});
     }
 
@@ -237,25 +224,21 @@ export default async function handler(req, res) {
     // STUDENT LOGIN — school_code + roll_no + PIN
     // ══════════════════════════════════════════════════════
     if (action==="student_login") {
-      const {school_code, pin, class_num, section} = req.body;
-      const nameOrRoll = clean(req.body.name||req.body.roll_no||"",50);
-      if (!school_code||!nameOrRoll||!pin) return res.status(400).json({error:"Missing fields"});
+      const {school_code, roll_no, pin, class_num, section} = req.body;
+      if (!school_code||!roll_no||!pin) return res.status(400).json({error:"Missing fields"});
       // Find school
       const sc = await sb("schools","GET",null,
         `?school_code=eq.${encodeURIComponent(clean(school_code,20).toUpperCase())}&is_active=eq.true&select=id&limit=1`);
       if (!Array.isArray(sc.data)||!sc.data[0]) return res.status(401).json({error:"Invalid school code"});
       const school_id = sc.data[0].id;
-      // Find student by name (case-insensitive via ilike) + PIN
+      // Find student
       const pin_hash = await hashPin(String(pin).slice(0,4));
-      const searchName = nameOrRoll.toLowerCase();
-      // Fetch all students in school then match name case-insensitively
-      let params = `?school_id=eq.${school_id}&pin_hash=eq.${pin_hash}&limit=20`;
+      let params = `?school_id=eq.${school_id}&roll_no=eq.${encodeURIComponent(clean(roll_no,10))}&pin_hash=eq.${pin_hash}&limit=1`;
       if (class_num) params += `&class_num=eq.${cleanInt(class_num,1,5)}`;
       if (section)   params += `&section=eq.${encodeURIComponent(clean(section,5).toUpperCase())}`;
       const r = await sb("students","GET",null,params);
-      if (!Array.isArray(r.data)||!r.data.length) return res.status(401).json({error:"Invalid credentials"});
-      const s = r.data.find(st=>st.name.toLowerCase()===searchName)||r.data[0];
-      if (!s) return res.status(401).json({error:"Invalid credentials"});
+      if (!Array.isArray(r.data)||!r.data[0]) return res.status(401).json({error:"Invalid credentials"});
+      const s = r.data[0];
       // Update last_active
       sb("students","PATCH",{last_active:new Date().toISOString()},`?id=eq.${s.id}`).catch(()=>{});
       return res.status(200).json({student:{id:s.id,name:s.name,roll_no:s.roll_no,class_num:s.class_num,section:s.section,school_id:s.school_id,xp:s.xp,coins:s.coins,level:s.level,streak_days:s.streak_days}});
@@ -307,90 +290,7 @@ export default async function handler(req, res) {
       }
       return res.status(200).json({ok:true, ...results});
     }
-    // Teacher: add student to specific class/section
-    if (action==="add_student_to_class") {
-      const teacher = await verifyTeacher(teacher_id, session_token);
-      if (!teacher) return res.status(401).json({error:"Unauthorized"});
-      const {name, roll_no, pin, class_num, section} = req.body;
-      if (!name||!roll_no||!pin) return res.status(400).json({error:"Missing fields"});
-      const pin_hash = await hashPin(String(pin).slice(0,4));
-      const r = await sb("students","POST",{
-        school_id:teacher.school_id, teacher_id,
-        name:clean(name,50), roll_no:clean(String(roll_no),10),
-        class_num:cleanInt(class_num,1,5), section:clean(String(section||"A"),5).toUpperCase(),
-        pin_hash, xp:0, coins:50, level:1, streak_days:0
-      });
-      if (!r.ok) return res.status(400).json({error:"Duplicate roll number in this class/section"});
-      return res.status(200).json({data:Array.isArray(r.data)?r.data[0]:r.data});
-    }
-
-    // Teacher: create custom lesson
-    if (action==="create_lesson") {
-      const teacher = await verifyTeacher(teacher_id, session_token);
-      if (!teacher) return res.status(401).json({error:"Unauthorized"});
-      const {title, class_num, emoji} = req.body;
-      if (!title) return res.status(400).json({error:"Title required"});
-      // Store as a custom lesson record
-      const lesson_id = `school_${teacher.school_id.slice(0,8)}_${Date.now()}`;
-      const r = await sb("custom_lessons","POST",{
-        lesson_id, title:clean(title,80), class_num:cleanInt(class_num,1,5),
-        emoji:clean(emoji||"📚",5), school_id:teacher.school_id,
-        teacher_id, created_at:new Date().toISOString()
-      });
-      if (!r.ok) return res.status(400).json({error:"Failed to create lesson"});
-      return res.status(200).json({data:{lesson_id,title,class_num}});
-    }
-
-    // Teacher: create question in a lesson set
-    if (action==="create_question") {
-      const teacher = await verifyTeacher(teacher_id, session_token);
-      if (!teacher) return res.status(401).json({error:"Unauthorized"});
-      const {lesson_id, set_index, question_index, question, options, correct_answer, hint} = req.body;
-      if (!lesson_id||!question||!options) return res.status(400).json({error:"Missing fields"});
-      if (!Array.isArray(options)||options.length!==4) return res.status(400).json({error:"Need exactly 4 options"});
-      const r = await sb("questions","POST",{
-        lesson_id: clean(lesson_id,40),
-        set_index: cleanInt(set_index,0,19),
-        question_index: cleanInt(question_index,0,19),
-        question: clean(question,500),
-        options: options.map(o=>clean(String(o),200)),
-        correct_answer: cleanInt(correct_answer,0,3),
-        hint: clean(hint||"",200),
-      });
-      if (!r.ok) return res.status(400).json({error:"Failed to create question (duplicate index?)"});
-      return res.status(200).json({data:Array.isArray(r.data)?r.data[0]:r.data});
-    }
-
-    // Teacher: list custom lessons for their school
-    if (action==="list_custom_lessons") {
-      const teacher = await verifyTeacher(teacher_id, session_token);
-      if (!teacher) return res.status(401).json({error:"Unauthorized"});
-      const {class_num} = req.body;
-      let params = `?school_id=eq.${teacher.school_id}&order=created_at`;
-      if (class_num) params += `&class_num=eq.${cleanInt(class_num,1,5)}`;
-      const r = await sb("custom_lessons","GET",null,params);
-      return res.status(200).json({data:r.data});
-    }
-
-        if (action==="update_student_pin") {
-      const teacher = await verifyTeacher(teacher_id, session_token);
-      if (!teacher) return res.status(401).json({error:"Unauthorized"});
-      const {student_id, new_pin} = req.body;
-      if (!isUUID(student_id)||!new_pin) return res.status(400).json({error:"Missing fields"});
-      const pin_hash = await hashPin(String(new_pin).slice(0,4));
-      const r = await sb("students","PATCH",{pin_hash},`?id=eq.${student_id}&school_id=eq.${teacher.school_id}`);
-      return res.status(200).json({ok:r.ok});
-    }
-    if (action==="delete_student") {
-      const teacher = await verifyTeacher(teacher_id, session_token);
-      if (!teacher) return res.status(401).json({error:"Unauthorized"});
-      const {student_id} = req.body;
-      if (!isUUID(student_id)) return res.status(400).json({error:"Invalid"});
-      await sb("student_progress","DELETE",null,`?student_id=eq.${student_id}`).catch(()=>{});
-      const r = await sb("students","DELETE",null,`?id=eq.${student_id}&school_id=eq.${teacher.school_id}`);
-      return res.status(200).json({ok:r.ok});
-    }
-        return res.status(400).json({error:"Unknown action"});
+    return res.status(400).json({error:"Unknown action"});
 
   } catch(err) {
     console.error("[school API]", err.message);
