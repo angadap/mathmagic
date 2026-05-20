@@ -3150,7 +3150,10 @@ function Paywall({ world, child, onBack, onUnlock }) {
     <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Nunito',sans-serif", position:"relative", overflowY:"auto" }}>
       <Starfield n={35}/>
       <div style={{ position:"relative", zIndex:2, padding:"20px 18px" }}>
-        <div style={{textAlign:"center",marginBottom:8,fontFamily:"'Orbitron',sans-serif",fontSize:11,color:C.cyan,letterSpacing:1}}>🚀 Welcome, {child?.name?.split(" ")[0]}! — MathMagic Space Academy</div>
+        <div style={{textAlign:"center",marginBottom:12,padding:"14px 16px",background:`linear-gradient(135deg,${C.purple}22,${C.cyan}11)`,borderRadius:16,border:`1px solid ${C.cyan}33`}}>
+          <div style={{fontSize:11,color:C.dim,fontFamily:"'Nunito',sans-serif",marginBottom:4}}>Welcome to MathMagic Space Academy</div>
+          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:16,color:C.yellow,letterSpacing:1}}>🚀 Hello, {child?.name?.split(" ")[0]}!</div>
+        </div>
         <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:20 }}>
           <BackBtn onClick={onBack} color={C.yellow}/>
           <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:14, color:C.yellow }}>UNLOCK PREMIUM</div>
@@ -3402,7 +3405,7 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
 }
 
 // ── Lessons ───────────────────────────────────────────────────────────
-function LessonMap({ world, child, onBack, onLesson }) {
+function LessonMap({ world, child, onBack, onLesson, isLessonPurchased, onPurchaseLesson }) {
   const [progress,   setProgress]   = useState([]);
   const [expanded,   setExpanded]   = useState(null); // which lesson is expanded
   const lessons = LESSONS[child.class_num] || LESSONS[1];
@@ -3457,7 +3460,10 @@ function LessonMap({ world, child, onBack, onLesson }) {
                 <button onClick={() => lessonUnlocked && setExpanded(isExp ? null : lesson.id)}
                   style={{ flex:1, background: done ? `${world.color}0e` : lessonUnlocked ? C.card : C.card2, border:`1.5px solid ${done ? world.color+"44" : lessonUnlocked ? world.color+"1a" : C.dim+"33"}`, borderRadius:13, padding:"10px 13px", cursor: lessonUnlocked ? "pointer" : "not-allowed", textAlign:"left" }}>
                   <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                    <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:12, color: lessonUnlocked ? "white" : C.dim }}>L{li+1}: {lesson.title}</div>
+                    <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:12, color: lessonUnlocked ? "white" : C.dim }}>
+                      L{li+1}: {lesson.title}
+                      {world.id !== child.class_num && isLessonPurchased && !isLessonPurchased(world.id, lesson.id) && <span style={{fontSize:10,color:C.orange,marginLeft:6}}>💰 ₹49</span>}
+                    </div>
                     <div style={{ display:"flex", gap:5, alignItems:"center" }}>
                       <span style={{ fontSize:9, color:C.dim, fontFamily:"'Orbitron',sans-serif" }}>{cSets}/20 sets</span>
                       <span style={{ fontSize:13, color: lessonUnlocked ? world.color : C.dim }}>{isExp ? "▲" : "▼"}</span>
@@ -6881,6 +6887,7 @@ function GamesHub({ child, onBack }) {
 export default function App() {
   const [themeKey,setThemeKey]=useState(localStorage.getItem('mm_theme')||'royal');
   const [schoolStudent, setSchoolStudent] = useState(null);
+  const [purchasedLessons, setPurchasedLessons] = useState(()=>{ try{return JSON.parse(localStorage.getItem('mm_purchased')||'[]')}catch{return []} });
   const [teacher,       setTeacher]       = useState(null);
   const handleThemeChange=(key)=>{C=THEMES[key]||THEMES.royal;setThemeKey(key);};
   const [screen,         setScreen]         = useState("splash");
@@ -6927,12 +6934,19 @@ export default function App() {
     setScreen("entry");
   };
 
-  const goWorld = (cw, canAccess) => {
-    if (!canAccess) {
-      // Show a friendly message instead of paywall
-      alert(`This is Class ${cw.id} content. You are registered for Class ${child.class_num}. Please ask your parent to update your class if needed.`);
-      return;
-    }
+
+  const isLessonPurchased = (worldId, lessonId) => {
+    if ((child?.class_num||1) === worldId) return true; // own class always free
+    if (child?.is_premium) return true; // full premium
+    return purchasedLessons.includes(lessonId);
+  };
+  const purchaseLesson = (lessonId, worldId, price=49) => {
+    // Store purchase locally + in DB
+    const updated = [...purchasedLessons, lessonId];
+    setPurchasedLessons(updated);
+    localStorage.setItem('mm_purchased', JSON.stringify(updated));
+  };
+  const goWorld = (cw) => {
     setWorld(cw);
     setScreen("lessons");
   };
@@ -6951,7 +6965,7 @@ export default function App() {
   if (screen === "login")    return <><GlobalStyles/><Login    onBack={() => setScreen("student_entry")} onDone={({ user: u, child: c }) => { setUser(u); setChild(c); setScreen("home"); }}/></>;
   if (screen === "home")     return <><GlobalStyles/><Home     child={child} onWorld={goWorld} onAbacus={() => setScreen("abacus")} onGames={() => setScreen("games")} onOlympiad={() => setScreen("olympiad")} onParent={() => setScreen("parent")} onRate={() => setShowRating(true)} onLogout={logout} onFeedback={goFeedback} onSettings={()=>setScreen('settings')} onThemeChange={handleThemeChange}/><FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
   if (screen === "paywall")  return <><GlobalStyles/><Paywall  world={world} child={child} onBack={() => setScreen("home")} onUnlock={handleUnlock}/></>;
-  if (screen === "lessons")  return <><GlobalStyles/><LessonMap world={world} child={child} onBack={() => setScreen("home")} onLesson={l => { setLesson(l); setScreen("game"); }}/></>;
+  if (screen === "lessons")  return <><GlobalStyles/><LessonMap world={world} child={child} onBack={() => setScreen("home")} isLessonPurchased={isLessonPurchased} onPurchaseLesson={purchaseLesson} onLesson={l => { setLesson(l); setScreen("game"); }}/></>;
   if (screen === "game")     return <><GlobalStyles/><Game     lesson={lesson} world={world} child={child} setChild={setChild} onBack={() => { db.track("lesson_exit",child?.id,null,{lesson_id:lesson?.id,set_index:lesson?.setIndex}); setScreen("lessons"); }} onDone={() => { db.track("lesson_complete",child?.id,null,{lesson_id:lesson?.id,set_index:lesson?.setIndex}); setScreen("lessons"); }} onNextSet={(si) => { db.track("set_advance",child?.id,null,{lesson_id:lesson?.id,set_index:si}); setLesson(l => ({...l, setIndex:si})); }}/>{ showSOS && <SOSButton onClick={() => goFeedback("bug")}/>}<FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
   if (screen === "abacus")   return <><GlobalStyles/><Abacus   onBack={() => setScreen("home")} child={child}/>{ showSOS && <SOSButton onClick={() => goFeedback("bug")}/>}<FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
   if (screen === "olympiad") return <><GlobalStyles/><Olympiad child={child} setChild={setChild} onBack={() => setScreen("home")}/>{ showSOS && <SOSButton onClick={() => goFeedback("bug")}/>}<FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
