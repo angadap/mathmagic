@@ -3179,6 +3179,7 @@ function loadRazorpayScript() {
 }
 
 async function openRazorpay({ keyId, orderId, amount, description, prefillName, onSuccess, onFail }) {
+  if (!keyId) { onFail("Payment gateway not configured. Contact support."); return; }
   const loaded = await loadRazorpayScript();
   if (!loaded) { onFail("Could not load payment gateway. Check internet."); return; }
   const rzp = new window.Razorpay({
@@ -3204,6 +3205,7 @@ function RegPayment({ onBack, onPaid }) {
   const [tab,     setTab]     = useState("razorpay");
 
   const handleRazorpay = async () => {
+    if (!window.__RZP_KEY__) { setMsg("Payment gateway not ready. Please refresh and try again."); return; }
     setLoading(true); setMsg("");
     try {
       const r = await fetch("/api/payment", {
@@ -3301,6 +3303,7 @@ function LessonPayment({ lessonToBuy, child, user, onBack, onPaid }) {
   const authH = () => ({ "Content-Type":"application/json", Authorization:`Bearer ${user?.access_token||""}` });
 
   const handleRazorpay = async () => {
+    if (!window.__RZP_KEY__) { setMsg("Payment gateway not ready. Please refresh and try again."); return; }
     setLoading(true); setMsg("");
     try {
       const r = await fetch("/api/payment", {
@@ -3619,7 +3622,7 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
         <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
           <ProgressGrid lessons={myLessons} progress={progress}/>
         {WORLDS.map(cw => {
-          const isMyClass = cw.id === (child.class_num||1) || child.is_premium;
+          const isMyClass = cw.id === parseInt(child.class_num||1) || child.is_premium;
           return (
             <button key={cw.id} onClick={() => onWorld(cw)} style={{
               background: isMyClass ? `linear-gradient(135deg,${cw.color}16,${cw.color}08)` : "rgba(10,10,28,0.7)",
@@ -3699,7 +3702,7 @@ function LessonMap({ world, child, onBack, onLesson, isLessonPurchased, onPurcha
           const done   = lessonDone(lesson.id);
           const cSets  = completedSets(lesson.id);
           const isExp  = expanded === lesson.id;
-          const isOwnClass = world.id === (child.class_num||1) || child.is_premium;
+          const isOwnClass = world.id === parseInt(child.class_num||1) || child.is_premium;
           const purchased = isOwnClass || (isLessonPurchased && isLessonPurchased(world.id, lesson.id));
           const lessonUnlocked = purchased;
           return (
@@ -7265,7 +7268,7 @@ export default function App() {
 
 
   const isLessonPurchased = (worldId, lessonId) => {
-    if ((child?.class_num||1) === worldId) return true; // own class always free
+    if (parseInt(child?.class_num||1) === parseInt(worldId)) return true; // own class always free
     if (child?.is_premium) return true; // full premium
     return purchasedLessons.includes(lessonId);
   };
@@ -7294,7 +7297,7 @@ export default function App() {
   if (screen === "student_entry") return <><GlobalStyles/><StudentEntry onBack={()=>setScreen("entry")} onSelect={(s)=>setScreen(s)}/></>;
   if (screen === "welcome")  return <><GlobalStyles/><Welcome  onRegister={() => setScreen("register")} onLogin={() => setScreen("login")} onPrivacy={() => { setPrevScreen("welcome"); setScreen("privacy"); }}/></>;
   if (screen === "reg_payment") return <><GlobalStyles/><RegPayment onBack={()=>setScreen("student_entry")} onPaid={()=>setScreen("register")}/></>;
-  if (screen === "register") return <><GlobalStyles/><Register onBack={() => setScreen("student_entry")} onDone={({ user: u, child: c, requirePayment }) => { setUser(u); setChild(c); setWorld(WORLDS[(c?.class_num||1)-1]||WORLDS[0]); setScreen(requirePayment?"paywall":"home"); }}/></>;
+  if (screen === "register") return <><GlobalStyles/><Register onBack={() => setScreen("student_entry")} onDone={({ user: u, child: c, requirePayment }) => { setUser(u); setChild(c); setWorld(WORLDS.find(w=>w.id===parseInt(c?.class_num||1))||WORLDS[0]); setScreen(requirePayment?"paywall":"home"); }}/></>;
   if (screen === "login")    return <><GlobalStyles/><Login    onBack={() => setScreen("student_entry")} onDone={({ user: u, child: c }) => { setUser(u); setChild(c); setScreen("home"); }}/></>;
   if (screen === "home")     return <><GlobalStyles/><Home     child={child} isLessonPurchased={isLessonPurchased} onWorld={goWorld} onAbacus={() => setScreen("abacus")} onGames={() => setScreen("games")} onOlympiad={() => setScreen("olympiad")} onParent={() => setScreen("parent")} onRate={() => setShowRating(true)} onLogout={logout} onFeedback={goFeedback} onSettings={()=>setScreen('settings')} onThemeChange={handleThemeChange}/><FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
   if (screen === "paywall")  return <><GlobalStyles/><Paywall  world={world||WORLDS[(child?.class_num||1)-1]||WORLDS[0]} child={child} onBack={() => setScreen("home")} onUnlock={handleUnlock}/></>;
