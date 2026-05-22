@@ -3496,6 +3496,8 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
   const [showTutorial, setShowTutorial] = useState(()=>!localStorage.getItem('mm_tutorial_done'));
   const doneTutorial = () => { localStorage.setItem('mm_tutorial_done','1'); setShowTutorial(false); };
   const [showTheme, setShowTheme] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(()=>!localStorage.getItem('mm_welcomed_'+((typeof child!=="undefined"&&child?.id)||"")));
+  const dismissWelcome = () => { localStorage.setItem('mm_welcomed_'+(child?.id||""),'1'); setShowWelcome(false); };
   const [progress, setProgress] = useState([]);
   const [showDQ,     setShowDQ]     = useState(false);
   const [showPuzzle, setShowPuzzle] = useState(false);
@@ -3535,6 +3537,11 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
       {showTutorial && <Tutorial onDone={doneTutorial}/>}
       {/* Header */}
       <div style={{ position:"relative", zIndex:2, padding:"16px 18px 0" }}>
+        <div style={{ textAlign:"center", marginBottom:8 }}>
+          <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:10, color:C.dim, letterSpacing:2 }}>WELCOME BACK,</div>
+          <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:15, color:C.cyan, fontWeight:900, letterSpacing:1 }}>{child.name.toUpperCase()} 👋</div>
+          <div style={{ fontSize:10, color:C.dim, marginTop:1 }}>to MathMagic Space Academy</div>
+        </div>
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
           <div style={{ display:"flex", alignItems:"center", gap:10 }}>
             <div style={{ width:44, height:44, background:`${C.purple}22`, borderRadius:13, border:`2px solid ${C.purple}44`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:22 }}>{child.avatar}</div>
@@ -3553,6 +3560,21 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
         </div>
         <XPBar xp={child.xp||0} level={child.level||1}/>
       </div>
+      {/* Welcome banner */}
+      {showWelcome && (
+        <div onClick={dismissWelcome} style={{ position:"fixed", inset:0, zIndex:150, display:"flex", alignItems:"center", justifyContent:"center", background:"rgba(4,4,15,0.88)", backdropFilter:"blur(8px)", padding:"0 20px" }}>
+          <div style={{ background:`linear-gradient(135deg,${C.purple}22,${C.cyan}18)`, border:`2px solid ${C.cyan}55`, borderRadius:24, padding:"32px 24px", maxWidth:380, width:"100%", textAlign:"center", boxShadow:`0 0 60px ${C.cyan}33`, animation:"fadeIn 0.4s ease" }}>
+            <div style={{ fontSize:64, marginBottom:8 }}>{child.avatar||"🧒"}</div>
+            <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:11, color:C.cyan, letterSpacing:3, marginBottom:6 }}>WELCOME TO</div>
+            <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:20, color:"white", fontWeight:900, marginBottom:4 }}>MATHMAGIC</div>
+            <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:13, color:C.yellow, marginBottom:16 }}>SPACE ACADEMY</div>
+            <div style={{ fontSize:18, color:"white", fontWeight:800, marginBottom:6 }}>Hello, {child.name}! 👋</div>
+            <div style={{ fontSize:13, color:C.dim, lineHeight:1.6, marginBottom:20 }}>Ready to blast off on your math adventure? Your mission awaits, Cadet!</div>
+            <button onClick={dismissWelcome} style={{ background:`linear-gradient(135deg,${C.cyan},${C.purple})`, border:"none", borderRadius:14, padding:"12px 32px", color:"white", fontFamily:"'Orbitron',sans-serif", fontSize:12, cursor:"pointer", fontWeight:700, boxShadow:`0 0 20px ${C.cyan}44`, letterSpacing:1 }}>🚀 LET'S GO!</button>
+            <div style={{ fontSize:10, color:C.dim, marginTop:12 }}>Tap anywhere to continue</div>
+          </div>
+        </div>
+      )}
       {/* Stats */}
       <div style={{ position:"relative", zIndex:2, display:"flex", gap:10, padding:"11px 18px" }}>
         {[{e:"⭐",v:totalStars,l:"STARS"},{e:"💰",v:child.coins||0,l:"COINS"},{e:"📚",v:myProgress.length,l:"DONE"}].map((s,i) => (
