@@ -3309,7 +3309,7 @@ function LessonPayment({ lessonToBuy, child, user, onBack, onPaid }) {
   const [tab,     setTab]     = useState("razorpay");
   if (!lessonToBuy) return null;
   const { lessonId, price=300 } = lessonToBuy;
-  const authH = () => ({ "Content-Type":"application/json", Authorization:`Bearer ${user?.access_token||""}` });
+  const authH = () => ({ "Content-Type":"application/json", Authorization:`Bearer ${db._token||""}` });
 
   const handleRazorpay = async () => {
     setLoading(true); setMsg("");
