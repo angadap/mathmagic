@@ -3179,11 +3179,21 @@ function loadRazorpayScript() {
 }
 
 async function openRazorpay({ keyId, orderId, amount, description, prefillName, onSuccess, onFail }) {
-  if (!keyId) { onFail("Payment gateway not configured. Contact support."); return; }
+  // Fetch key on-demand if not yet loaded
+  let resolvedKey = keyId;
+  if (!resolvedKey) {
+    try {
+      const kr = await fetch("/api/payment",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"get_rzp_key"})});
+      const kd = await kr.json();
+      resolvedKey = kd.key || "";
+      if (resolvedKey) window.__RZP_KEY__ = resolvedKey;
+    } catch(e) {}
+  }
+  if (!resolvedKey) { onFail("Payment not configured. Contact support."); return; }
   const loaded = await loadRazorpayScript();
   if (!loaded) { onFail("Could not load payment gateway. Check internet."); return; }
   const rzp = new window.Razorpay({
-    key: keyId,
+    key: resolvedKey,
     order_id: orderId,
     amount: amount * 100,
     currency: "INR",
@@ -3205,7 +3215,6 @@ function RegPayment({ onBack, onPaid }) {
   const [tab,     setTab]     = useState("razorpay");
 
   const handleRazorpay = async () => {
-    if (!window.__RZP_KEY__) { setMsg("Payment gateway not ready. Please refresh and try again."); return; }
     setLoading(true); setMsg("");
     try {
       const r = await fetch("/api/payment", {
@@ -3303,7 +3312,6 @@ function LessonPayment({ lessonToBuy, child, user, onBack, onPaid }) {
   const authH = () => ({ "Content-Type":"application/json", Authorization:`Bearer ${user?.access_token||""}` });
 
   const handleRazorpay = async () => {
-    if (!window.__RZP_KEY__) { setMsg("Payment gateway not ready. Please refresh and try again."); return; }
     setLoading(true); setMsg("");
     try {
       const r = await fetch("/api/payment", {
