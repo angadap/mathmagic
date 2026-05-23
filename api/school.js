@@ -182,6 +182,169 @@ export default async function handler(req, res) {
       if (!r.ok) return res.status(400).json({error:"Delete failed"});
       return res.status(200).json({data:true});
     }
+
+      // Delete school
+      if (action==="admin_delete_school") {
+        const {school_id} = req.body;
+        if (!isUUID(school_id)) return res.status(400).json({error:"Invalid school_id"});
+        await sb("students","DELETE",null,`?school_id=eq.${school_id}`).catch(()=>{});
+        await sb("teachers","DELETE",null,`?school_id=eq.${school_id}`).catch(()=>{});
+        const r = await sb("schools","DELETE",null,`?id=eq.${school_id}`);
+        return res.status(200).json({ok:r.ok});
+      }
+
+      // List classes (distinct class_num+section from students)
+      if (action==="admin_list_classes") {
+        const {school_id} = req.body;
+        if (!isUUID(school_id)) return res.status(400).json({error:"Invalid school_id"});
+        const r = await sb("students","GET",null,`?school_id=eq.${school_id}&select=class_num,section&order=class_num,section`);
+        if (!r.ok) return res.status(400).json({error:"Failed"});
+        const seen = new Set(); const rows = [];
+        for (const s of (r.data||[])) {
+          const key = `${s.class_num}__${s.section}`;
+          if (!seen.has(key)) { seen.add(key); rows.push(s); }
+        }
+        return res.status(200).json({data:rows});
+      }
+
+      // Add a class (creates a teacher placeholder to represent the class)
+      if (action==="admin_add_class") {
+        const {school_id, class_num, section, teacher_name} = req.body;
+        if (!isUUID(school_id)) return res.status(400).json({error:"Invalid school_id"});
+        const cn = cleanInt(class_num,0,12);
+        const sec = clean(String(section||"A"),5).toUpperCase();
+        const labels = {10:"Nursery",11:"Jr KG",12:"Sr KG",1:"Class 1",2:"Class 2",3:"Class 3",4:"Class 4",5:"Class 5"};
+        const label = labels[cn]||`Class ${cn}`;
+        const name = clean(teacher_name||`${label}-${sec} Teacher`,100);
+        const email = `class${cn}${sec.toLowerCase()}_${school_id.slice(0,6)}@mathmagic.internal`;
+        const pin_hash = await hashPin("1234");
+        const r = await sb("teachers","POST",{school_id,name,email,pin_hash,class_label:`${label}-${sec}`});
+        if (!r.ok) return res.status(400).json({error:"Class/teacher may already exist"});
+        return res.status(200).json({data:Array.isArray(r.data)?r.data[0]:r.data});
+      }
+
+      // Bulk create teachers (CSV-style [{name,email,pin}])
+      if (action==="admin_bulk_create_teachers") {
+        const {school_id, rows} = req.body;
+        if (!isUUID(school_id)||!Array.isArray(rows)) return res.status(400).json({error:"Missing fields"});
+        const results = [];
+        for (const row of rows.slice(0,50)) {
+          const pin_hash = await hashPin(String(row.pin||"1234").slice(0,6));
+          const r = await sb("teachers","POST",{school_id,name:clean(row.name,100),email:clean(row.email,100).toLowerCase(),pin_hash});
+          results.push({name:row.name,ok:r.ok,error:r.ok?null:"Failed (duplicate?)"});
+        }
+        return res.status(200).json({data:results});
+      }
+
+      // Bulk create students [{name,roll_no,class_num,section,pin}]
+      if (action==="admin_bulk_create_students") {
+        const {school_id, teacher_id, rows} = req.body;
+        if (!isUUID(school_id)||!Array.isArray(rows)) return res.status(400).json({error:"Missing fields"});
+        const results = [];
+        for (const row of rows.slice(0,200)) {
+          const pin_hash = await hashPin(String(row.pin||"1234").slice(0,6));
+          const username = `${clean(row.name||"",20).toLowerCase().replace(/\s+/g,"")}_${String(row.roll_no||"").padStart(3,"0")}`;
+          const r = await sb("students","POST",{school_id,teacher_id:teacher_id||null,name:clean(row.name,50),roll_no:clean(String(row.roll_no),10),class_num:cleanInt(row.class_num,0,12),section:clean(String(row.section||"A"),5).toUpperCase(),username,pin_hash,xp:0,level:1,streak_days:0});
+          results.push({name:row.name,ok:r.ok,error:r.ok?null:"Failed"});
+        }
+        return res.status(200).json({data:results});
+      }
+
+      // Questions: list lessons for a class
+      if (action==="admin_list_lessons_for_class") {
+        const {class_num} = req.body;
+        const cn = cleanInt(class_num,0,12);
+        const prefixMap = {10:"n",11:"jk",12:"sk",1:"c1",2:"c2",3:"c3",4:"c4",5:"c5"};
+        const prefix = prefixMap[cn]||`c${cn}`;
+        const r = await sb("questions","GET",null,`?lesson_id=like.${prefix}-%25&select=lesson_id&order=lesson_id`);
+        if (!r.ok) return res.status(400).json({error:"Failed"});
+        const seen = new Set(); const lessons = [];
+        for (const q of (r.data||[])) {
+          const lid = q.lesson_id.includes("_s") ? q.lesson_id.split("_s")[0] : q.lesson_id;
+          if (!seen.has(lid)) { seen.add(lid); lessons.push(lid); }
+        }
+        return res.status(200).json({data:lessons.sort()});
+      }
+
+      // Questions: list sets for a lesson
+      if (action==="admin_list_sets_for_lesson") {
+        const {lesson_id_prefix} = req.body;
+        const safe = clean(lesson_id_prefix,30);
+        const r = await sb("questions","GET",null,`?lesson_id=like.${safe}%25&select=set_index&order=set_index`);
+        if (!r.ok) return res.status(400).json({error:"Failed"});
+        const seen = new Set(); const sets = [];
+        for (const q of (r.data||[])) { if (!seen.has(q.set_index)) { seen.add(q.set_index); sets.push(q.set_index); } }
+        return res.status(200).json({data:sets.sort((a,b)=>a-b)});
+      }
+
+      // Questions: list questions in a set
+      if (action==="admin_list_questions") {
+        const {lesson_id_prefix, set_index} = req.body;
+        const safe = clean(lesson_id_prefix,30);
+        const si = cleanInt(set_index,0,99);
+        const r = await sb("questions","GET",null,`?lesson_id=like.${safe}%25&set_index=eq.${si}&order=question_index&limit=50`);
+        return res.status(200).json({data:r.data||[]});
+      }
+
+      // Questions: add single question
+      if (action==="admin_add_question") {
+        const {lesson_id,set_index,question_index,question,options,correct_answer,hint} = req.body;
+        if (!lesson_id||!question||!Array.isArray(options)||options.length!==4) return res.status(400).json({error:"Need lesson_id, question, 4 options"});
+        const r = await sb("questions","POST",{lesson_id:clean(lesson_id,50),set_index:cleanInt(set_index,0,99),question_index:cleanInt(question_index||0,0,99),question:clean(question,500),options:options.map(o=>clean(String(o),200)),correct_answer:cleanInt(correct_answer,0,3),hint:clean(hint||"",200)});
+        if (!r.ok) return res.status(400).json({error:"Failed — duplicate index?"});
+        return res.status(200).json({data:Array.isArray(r.data)?r.data[0]:r.data});
+      }
+
+      // Questions: update question
+      if (action==="admin_update_question") {
+        const {id,question,options,correct_answer,hint} = req.body;
+        if (!isUUID(id)) return res.status(400).json({error:"Invalid id"});
+        const update = {};
+        if (question) update.question = clean(question,500);
+        if (options&&Array.isArray(options)&&options.length===4) update.options = options.map(o=>clean(String(o),200));
+        if (correct_answer!==undefined) update.correct_answer = cleanInt(correct_answer,0,3);
+        if (hint!==undefined) update.hint = clean(hint,200);
+        const r = await sb("questions","PATCH",update,`?id=eq.${id}`);
+        return res.status(200).json({ok:r.ok});
+      }
+
+      // Questions: delete question
+      if (action==="admin_delete_question") {
+        const {id} = req.body;
+        if (!isUUID(id)) return res.status(400).json({error:"Invalid id"});
+        const r = await sb("questions","DELETE",null,`?id=eq.${id}`);
+        return res.status(200).json({ok:r.ok});
+      }
+
+      // Questions: create new lesson (returns next lesson_id)
+      if (action==="admin_add_lesson") {
+        const {class_num} = req.body;
+        const cn = cleanInt(class_num,0,12);
+        const prefixMap = {10:"n",11:"jk",12:"sk",1:"c1",2:"c2",3:"c3",4:"c4",5:"c5"};
+        const prefix = prefixMap[cn]||`c${cn}`;
+        const r = await sb("questions","GET",null,`?lesson_id=like.${prefix}-%25&select=lesson_id&order=lesson_id`);
+        const existing = new Set((r.data||[]).map(q=>q.lesson_id.includes("_s")?q.lesson_id.split("_s")[0]:q.lesson_id));
+        let n = 1; while (existing.has(`${prefix}-l${n}`)) n++;
+        const new_lesson_id = `${prefix}-l${n}`;
+        return res.status(200).json({data:{lesson_id:new_lesson_id,class_num:cn}});
+      }
+
+      // Questions: bulk add questions to a set
+      if (action==="admin_bulk_add_questions") {
+        const {lesson_id,set_index,questions} = req.body;
+        if (!lesson_id||!Array.isArray(questions)) return res.status(400).json({error:"Missing fields"});
+        const si = cleanInt(set_index,0,99);
+        const existing = await sb("questions","GET",null,`?lesson_id=eq.${clean(lesson_id,50)}&set_index=eq.${si}&select=question_index&order=question_index.desc&limit=1`);
+        let nextIdx = existing.data&&existing.data.length>0 ? existing.data[0].question_index+1 : 0;
+        const results = [];
+        for (const [i,q] of questions.slice(0,100).entries()) {
+          if (!q.question||!Array.isArray(q.options)||q.options.length!==4) { results.push({ok:false,error:"Bad row "+i}); continue; }
+          const r = await sb("questions","POST",{lesson_id:clean(lesson_id,50),set_index:si,question_index:nextIdx+i,question:clean(q.question,500),options:q.options.map(o=>clean(String(o),200)),correct_answer:cleanInt(q.correct_answer,0,3),hint:clean(q.hint||"",200)});
+          results.push({ok:r.ok,error:r.ok?null:"Failed"});
+        }
+        return res.status(200).json({data:results});
+      }
+
         return res.status(400).json({error:"Unknown admin action"});
     }
 
