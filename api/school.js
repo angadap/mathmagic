@@ -100,17 +100,57 @@ export default async function handler(req, res) {
 
       // Create teacher
       if (action==="admin_create_teacher") {
-        const {school_id, name, email, pin, class_num, section} = req.body;
+        const {school_id, name, email, pin, permissions} = req.body;
         if (!isUUID(school_id)) return res.status(400).json({error:"Invalid school_id"});
         if (!email||!pin||!name) return res.status(400).json({error:"Missing fields"});
         const pin_hash = await hashPin(String(pin).slice(0,6));
+        const validPerms = ["change_student_pin","modify_student","delete_student","add_lesson_set_question","modify_lesson_set_question","delete_lesson_set_question","view_analytics"];
+        const perms = Array.isArray(permissions) ? permissions.filter(p=>validPerms.includes(p)) : [];
         const r = await sb("teachers","POST",{
           school_id, name:clean(name,50),
           email:clean(email,100).toLowerCase(),
-          pin_hash, is_active:true
+          pin_hash, is_active:true, permissions:perms
         });
         if (!r.ok) return res.status(400).json({error:"Email may already exist"});
         return res.status(200).json({data: Array.isArray(r.data)?r.data[0]:r.data});
+      }
+
+      // List ALL teachers across all schools (for dashboard tiles)
+      if (action==="admin_list_all_teachers") {
+        const {search, school_id} = req.body;
+        let params = "?order=created_at.desc";
+        if (school_id && isUUID(school_id)) params += `&school_id=eq.${school_id}`;
+        const r = await sb("teachers","GET",null,params);
+        let data = r.data||[];
+        if (search) { const s=search.toLowerCase(); data=data.filter(t=>t.name?.toLowerCase().includes(s)||t.email?.toLowerCase().includes(s)); }
+        return res.status(200).json({data});
+      }
+
+      // List ALL students across all schools
+      if (action==="admin_list_all_students") {
+        const {search, school_id, class_num, section} = req.body;
+        let params = "?order=class_num,section,roll_no";
+        if (school_id && isUUID(school_id)) params += `&school_id=eq.${school_id}`;
+        if (class_num !== undefined) params += `&class_num=eq.${cleanInt(class_num,0,12)}`;
+        if (section) params += `&section=eq.${clean(section,5).toUpperCase()}`;
+        const r = await sb("students","GET",null,params);
+        let data = r.data||[];
+        if (search) { const s=search.toLowerCase(); data=data.filter(t=>t.name?.toLowerCase().includes(s)||String(t.roll_no).includes(s)); }
+        return res.status(200).json({data});
+      }
+
+      // List ALL classes (distinct class_num+section across all schools or one school)
+      if (action==="admin_list_all_classes") {
+        const {school_id, search} = req.body;
+        let params = "?select=class_num,section,school_id&order=class_num,section";
+        if (school_id && isUUID(school_id)) params += `&school_id=eq.${school_id}`;
+        const r = await sb("students","GET",null,params);
+        const seen = new Set(); const rows = [];
+        for (const s of (r.data||[])) {
+          const key = `${s.school_id}__${s.class_num}__${s.section}`;
+          if (!seen.has(key)) { seen.add(key); rows.push(s); }
+        }
+        return res.status(200).json({data:rows});
       }
 
       // List teachers for a school
@@ -144,11 +184,15 @@ export default async function handler(req, res) {
       return res.status(200).json({data:Array.isArray(r.data)?r.data[0]:r.data});
     }
       if (action==="admin_modify_teacher") {
-      const {teacher_id, name, email} = req.body;
+      const {teacher_id, name, email, permissions} = req.body;
       if (!teacher_id) return res.status(400).json({error:"Missing teacher_id"});
       const update = {};
       if (name)  update.name  = clean(name,100);
       if (email) update.email = clean(email,100).toLowerCase();
+      if (Array.isArray(permissions)) {
+        const validPerms = ["change_student_pin","modify_student","delete_student","add_lesson_set_question","modify_lesson_set_question","delete_lesson_set_question","view_analytics"];
+        update.permissions = permissions.filter(p=>validPerms.includes(p));
+      }
       const r = await sb("teachers","PATCH",update,`?id=eq.${teacher_id}`);
       if (!r.ok) return res.status(400).json({error:"Update failed"});
       return res.status(200).json({data:true});

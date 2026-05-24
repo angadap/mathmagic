@@ -6604,50 +6604,81 @@ function ExcelImport({ teacher, onDone }) {
 
 // ── AdminPanel Screen ─────────────────────────────────────────────
 function AdminPanel({ onBack }) {
-  const [key,       setKey]       = useState(localStorage.getItem("mm_admin_key")||"");
-  const [authed,    setAuthed]    = useState(!!localStorage.getItem("mm_admin_key"));
-  const [view,      setView]      = useState("schools");
-  const [schools,   setSchools]   = useState([]);
-  const [selSchool, setSelSchool] = useState(null);
-  const [teachers,  setTeachers]  = useState([]);
-  const [selTeacher,setSelTeacher]= useState(null);
-  const [students,  setStudents]  = useState([]);
-  const [form,      setForm]      = useState({});
-  const [loading,   setLoading]   = useState(false);
-  const [msg,       setMsg]       = useState("");
-  // Questions management state
-  const [qClassNum, setQClassNum] = useState(1);
-  const [qLessons,  setQLessons]  = useState([]);
-  const [qLesson,   setQLesson]   = useState(null);
-  const [qSets,     setQSets]     = useState([]);
-  const [qSet,      setQSet]      = useState(null);
-  const [questions, setQuestions] = useState([]);
-  const [editQ,     setEditQ]     = useState(null); // question being edited
-  const [bulkText,  setBulkText]  = useState("");
-  const [bulkResult,setBulkResult]= useState([]);
+  const [key,         setKey]         = useState(localStorage.getItem("mm_admin_key")||"");
+  const [authed,      setAuthed]      = useState(!!localStorage.getItem("mm_admin_key"));
+  const [view,        setView]        = useState("home");
+  const [toastMsg,    setToastMsg]    = useState(""); // home-level toast
+  const [schools,     setSchools]     = useState([]);
+  const [selSchool,   setSelSchool]   = useState(null);
+  const [teachers,    setTeachers]    = useState([]);
+  const [allTeachers, setAllTeachers] = useState([]);
+  const [selTeacher,  setSelTeacher]  = useState(null);
+  const [students,    setStudents]    = useState([]);
+  const [allStudents, setAllStudents] = useState([]);
+  const [allClasses,  setAllClasses]  = useState([]);
+  const [form,        setForm]        = useState({});
+  const [loading,     setLoading]     = useState(false);
+  const [msg,         setMsg]         = useState("");
+  const [search,      setSearch]      = useState("");
+  const [sortBy,      setSortBy]      = useState("name");
+  const [filterVal,   setFilterVal]   = useState("");
+  // Questions
+  const [qClassNum,   setQClassNum]   = useState(1);
+  const [qLessons,    setQLessons]    = useState([]);
+  const [qLesson,     setQLesson]     = useState(null);
+  const [qSets,       setQSets]       = useState([]);
+  const [qSet,        setQSet]        = useState(null);
+  const [questions,   setQuestions]   = useState([]);
+  const [bulkText,    setBulkText]    = useState("");
+  const [bulkResult,  setBulkResult]  = useState([]);
+
+  const PERMS = [
+    {id:"change_student_pin",         label:"Change Student PIN",             icon:"🔑"},
+    {id:"modify_student",             label:"Modify Student Details",         icon:"✏️"},
+    {id:"delete_student",             label:"Delete Student",                 icon:"🗑️"},
+    {id:"add_lesson_set_question",    label:"Add Lesson / Set / Question",    icon:"➕"},
+    {id:"modify_lesson_set_question", label:"Modify Lesson / Set / Question", icon:"📝"},
+    {id:"delete_lesson_set_question", label:"Delete Lesson / Set / Question", icon:"❌"},
+    {id:"view_analytics",             label:"View Analytics",                 icon:"📊"},
+  ];
+  const PERM_PRESETS = {
+    "Class Teacher":    ["change_student_pin","modify_student","view_analytics"],
+    "Full Access":      ["change_student_pin","modify_student","delete_student","add_lesson_set_question","modify_lesson_set_question","delete_lesson_set_question","view_analytics"],
+    "Content Manager":  ["add_lesson_set_question","modify_lesson_set_question","delete_lesson_set_question"],
+    "Read Only":        ["view_analytics"],
+  };
+  const CLASS_LABELS = {10:"Nursery",11:"Jr KG",12:"Sr KG",1:"Class 1",2:"Class 2",3:"Class 3",4:"Class 4",5:"Class 5"};
+  const CLASS_OPTS   = ["Nursery","Jr KG","Sr KG","Class 1","Class 2","Class 3","Class 4","Class 5"];
+  const CLASS_NUMS   = [10,11,12,1,2,3,4,5];
 
   const api = (action, body={}) => schoolApi(action, body, key);
-  const iS = (accent) => ({width:"100%",background:C.card2,border:`1.5px solid ${accent}44`,borderRadius:10,padding:"10px 12px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14,display:"block",marginBottom:10});
-  const Hdr = ({title,back,backLabel,accent,extra}) => (
+  const iS  = (a) => ({width:"100%",background:C.card2,border:`1.5px solid ${a}44`,borderRadius:10,padding:"10px 12px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14,display:"block",marginBottom:10});
+  const Hdr = ({title,back,accent,extra}) => (
     <div style={{background:C.card,padding:"14px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:10,borderBottom:`1px solid ${accent}33`}}>
       <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:12,color:accent}}>{title}</div>
-      <div style={{display:"flex",gap:8,alignItems:"center"}}>
-        {extra}
-        <BackBtn onClick={back} color={C.dim}/>
-      </div>
+      <div style={{display:"flex",gap:8,alignItems:"center"}}>{extra}<BackBtn onClick={back} color={C.dim}/></div>
     </div>
   );
+  const MsgBar = ({m}) => m ? <div style={{margin:"0 0 12px",padding:"10px 14px",borderRadius:10,background:m.startsWith("✅")?`${C.green}18`:`${C.red}18`,color:m.startsWith("✅")?C.green:C.red,fontSize:13,fontWeight:700}}>{m}</div> : null;
+  const SearchBar = ({val,onChange,placeholder,accent}) => (
+    <input value={val} onChange={e=>onChange(e.target.value)} placeholder={placeholder||"🔍 Search..."} style={{width:"100%",background:C.card2,border:`1.5px solid ${accent||C.cyan}33`,borderRadius:10,padding:"9px 12px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:13,display:"block",marginBottom:10}}/>
+  );
+  const toast = (m) => { setToastMsg(m); setTimeout(()=>setToastMsg(""),3500); };
 
-  const loadSchools = async () => { setLoading(true); const d=await api("admin_list_schools"); if(d.data)setSchools(d.data); else setMsg(d.error||"Failed"); setLoading(false); };
-  const loadTeachers = async (school) => { setLoading(true);setSelSchool(school);setTeachers([]);setStudents([]); const d=await api("admin_list_teachers",{school_id:school.id}); setTeachers(Array.isArray(d.data)?d.data:[]); if(d.error)setMsg(d.error); setView("school_detail");setLoading(false); };
-  const loadStudents = async (teacher) => { if(!selSchool?.id)return; setLoading(true);setSelTeacher(teacher);setStudents([]); const d=await api("admin_list_students",{school_id:selSchool.id,teacher_id:teacher.id}); setStudents(Array.isArray(d.data)?d.data:[]); setView("teacher_detail");setLoading(false); };
-  const loadQLessons = async (cn) => { setLoading(true);setQClassNum(cn);setQLessons([]);setQLesson(null);setQSets([]);setQSet(null);setQuestions([]); const d=await api("admin_list_lessons_for_class",{class_num:cn}); setQLessons(d.data||[]);setLoading(false); };
-  const loadQSets = async (lid) => { setLoading(true);setQLesson(lid);setQSets([]);setQSet(null);setQuestions([]); const d=await api("admin_list_sets_for_lesson",{lesson_id_prefix:lid}); setQSets(d.data||[]);setLoading(false); };
-  const loadQs = async (lid, si) => { setLoading(true);setQSet(si);setQuestions([]); const d=await api("admin_list_questions",{lesson_id_prefix:lid,set_index:si}); setQuestions(d.data||[]);setLoading(false); };
+  const loadSchools     = async () => { setLoading(true); const d=await api("admin_list_schools"); if(d.data)setSchools(d.data); else setMsg(d.error||"Failed"); setLoading(false); };
+  const loadAllTeachers = async (sid) => { setLoading(true); const d=await api("admin_list_all_teachers",{school_id:sid}); setAllTeachers(d.data||[]); setLoading(false); };
+  const loadAllStudents = async (sid,cn,sec) => { setLoading(true); const body={}; if(sid)body.school_id=sid; if(cn!==undefined)body.class_num=cn; if(sec)body.section=sec; const d=await api("admin_list_all_students",body); setAllStudents(d.data||[]); setLoading(false); };
+  const loadAllClasses  = async (sid) => { setLoading(true); const d=await api("admin_list_all_classes",{school_id:sid}); setAllClasses(d.data||[]); setLoading(false); };
+  const loadTeachers    = async (school) => { setLoading(true);setSelSchool(school);setTeachers([]); const d=await api("admin_list_teachers",{school_id:school.id}); setTeachers(Array.isArray(d.data)?d.data:[]); setView("school_detail");setLoading(false); };
+  const loadStudents    = async (teacher) => { if(!selSchool?.id)return; setLoading(true);setSelTeacher(teacher); const d=await api("admin_list_students",{school_id:selSchool.id,teacher_id:teacher.id}); setStudents(Array.isArray(d.data)?d.data:[]); setView("teacher_detail");setLoading(false); };
+  const loadQLessons    = async (cn) => { setLoading(true);setQClassNum(cn);setQLessons([]);setQLesson(null);setQSets([]);setQSet(null);setQuestions([]); const d=await api("admin_list_lessons_for_class",{class_num:cn}); setQLessons(d.data||[]);setLoading(false); };
+  const loadQSets       = async (lid) => { setLoading(true);setQLesson(lid);setQSets([]);setQSet(null);setQuestions([]); const d=await api("admin_list_sets_for_lesson",{lesson_id_prefix:lid}); setQSets(d.data||[]);setLoading(false); };
+  const loadQs          = async (lid,si) => { setLoading(true);setQSet(si);setQuestions([]); const d=await api("admin_list_questions",{lesson_id_prefix:lid,set_index:si}); setQuestions(d.data||[]);setLoading(false); };
 
   const handleAuth = () => { if(!key.trim())return; localStorage.setItem("mm_admin_key",key); setAuthed(true); loadSchools(); };
-  useEffect(()=>{ if(authed)loadSchools(); },[]);
+  useEffect(()=>{ if(authed){loadSchools();loadAllTeachers();loadAllStudents();loadAllClasses();} },[]);
 
+  // ── Login ──────────────────────────────────────────────────────────
   if (!authed) return (
     <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"24px 18px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
       <BackBtn onClick={onBack} color={C.red} style={{alignSelf:"flex-start",marginBottom:24}}/>
@@ -6660,27 +6691,57 @@ function AdminPanel({ onBack }) {
     </div>
   );
 
-  // ── Schools List ──────────────────────────────────────────────────
+  // ── Home Dashboard — 5 Tiles ──────────────────────────────────────
+  if (view==="home") return (
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",overflowY:"auto"}}>
+      <div style={{background:C.card,padding:"14px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:`1px solid ${C.red}33`}}>
+        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.red}}>🔐 ADMIN PANEL</div>
+        <BackBtn onClick={onBack} color={C.dim}/>
+      </div>
+      {toastMsg && (
+        <div style={{margin:"12px 18px 0",padding:"12px 16px",borderRadius:12,background:toastMsg.startsWith("✅")?`${C.green}20`:`${C.red}20`,color:toastMsg.startsWith("✅")?C.green:C.red,fontSize:13,fontWeight:700,display:"flex",alignItems:"center",gap:8}}>
+          <span style={{fontSize:20}}>{toastMsg.startsWith("✅")?"✅":"❌"}</span>{toastMsg.replace(/^✅\s*/,"").replace(/^❌\s*/,"")}
+        </div>
+      )}
+      <div style={{padding:"16px 18px",maxWidth:620,margin:"0 auto"}}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
+          {[
+            {icon:"🏫",label:"Schools",    sub:`${schools.length} total`,       color:C.yellow,  action:()=>{setSearch("");setMsg("");setView("schools");}},
+            {icon:"👩‍🏫",label:"Teachers",  sub:`${allTeachers.length} total`,   color:C.cyan,    action:()=>{setSearch("");setSortBy("name");setMsg("");loadAllTeachers();setView("all_teachers");}},
+            {icon:"🏛️",label:"Classes",    sub:`${allClasses.length} classes`,  color:C.green,   action:()=>{setSearch("");setFilterVal("");setMsg("");loadAllClasses();setView("all_classes");}},
+            {icon:"👦",label:"Students",   sub:`${allStudents.length} total`,   color:C.purple,  action:()=>{setSearch("");setSortBy("name");setFilterVal("");setMsg("");loadAllStudents();setView("all_students");}},
+            {icon:"📚",label:"Questions",  sub:"Manage content",                color:C.orange,  action:()=>{setMsg("");setView("questions_class");}},
+          ].map((t,i)=>(
+            <button key={i} onClick={t.action} style={{background:C.card,border:`2px solid ${t.color}33`,borderRadius:18,padding:"20px 16px",cursor:"pointer",textAlign:"left",display:"flex",flexDirection:"column",gap:6,transition:"all 0.2s",gridColumn:i===4?"span 2":"auto"}}>
+              <div style={{fontSize:28}}>{t.icon}</div>
+              <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:12,color:t.color}}>{t.label}</div>
+              <div style={{fontSize:11,color:C.dim}}>{t.sub}</div>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  // ── Schools ───────────────────────────────────────────────────────
   if (view==="schools") return (
     <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",overflowY:"auto"}}>
-      <Hdr title="🔐 ADMIN PANEL" back={onBack} accent={C.red}
-        extra={<>
-          <button onClick={()=>{setForm({});setView("add_school");}} style={{background:`${C.yellow}22`,border:`1px solid ${C.yellow}44`,borderRadius:10,padding:"7px 12px",color:C.yellow,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:9}}>+ SCHOOL</button>
-          <button onClick={()=>{setView("questions_class");}} style={{background:`${C.cyan}22`,border:`1px solid ${C.cyan}44`,borderRadius:10,padding:"7px 12px",color:C.cyan,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:9}}>📚 QUESTIONS</button>
-        </>}
+      <Hdr title="🏫 SCHOOLS" back={()=>setView("home")} accent={C.yellow}
+        extra={<button onClick={()=>{setForm({});setMsg("");setView("add_school");}} style={{background:`${C.yellow}22`,border:`1px solid ${C.yellow}44`,borderRadius:10,padding:"7px 12px",color:C.yellow,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:9}}>+ SCHOOL</button>}
       />
-      <div style={{padding:"16px 18px",maxWidth:600,margin:"0 auto"}}>
-        {msg&&<div style={{color:msg.startsWith("✅")?C.green:C.red,fontSize:12,marginBottom:12,padding:"8px 12px",background:msg.startsWith("✅")?`${C.green}11`:`${C.red}11`,borderRadius:10}}>{msg}</div>}
+      <div style={{padding:"12px 16px",maxWidth:620,margin:"0 auto"}}>
+        <SearchBar val={search} onChange={setSearch} placeholder="🔍 Search school..." accent={C.yellow}/>
+        <MsgBar m={msg}/>
         {loading&&<div style={{textAlign:"center",color:C.dim,padding:20}}>Loading...</div>}
-        {schools.map(s=>(
+        {schools.filter(s=>!search||s.name?.toLowerCase().includes(search.toLowerCase())||s.school_code?.toLowerCase().includes(search.toLowerCase())).map(s=>(
           <div key={s.id} style={{background:C.card,border:`1px solid ${C.yellow}33`,borderRadius:14,padding:"14px 16px",marginBottom:10,display:"flex",alignItems:"center",gap:10}}>
             <button onClick={()=>loadTeachers(s)} style={{flex:1,background:"none",border:"none",cursor:"pointer",textAlign:"left",padding:0}}>
               <div style={{fontWeight:800,color:"white",fontSize:14}}>{s.name}</div>
               <div style={{color:C.dim,fontSize:12}}>{s.city} · {s.school_code}</div>
               <div style={{fontSize:10,color:s.is_active?C.green:C.red,marginTop:2}}>{s.is_active?"● Active":"○ Inactive"}</div>
             </button>
-            <button onClick={()=>{setSelSchool(s);setForm({name:s.name,city:s.city,school_code:s.school_code,is_active:s.is_active});setView("edit_school");}} style={{background:`${C.cyan}22`,border:`1px solid ${C.cyan}44`,borderRadius:8,padding:"5px 9px",color:C.cyan,cursor:"pointer",fontSize:11}}>✏️</button>
-            <button onClick={async()=>{if(!window.confirm("Delete school "+s.name+"? This deletes ALL teachers and students!"))return;setLoading(true);const d=await api("admin_delete_school",{school_id:s.id});setMsg(d.ok?"✅ Deleted":d.error||"Failed");loadSchools();setLoading(false);}} style={{background:`${C.red}22`,border:`1px solid ${C.red}44`,borderRadius:8,padding:"5px 9px",color:C.red,cursor:"pointer",fontSize:11}}>🗑️</button>
+            <button onClick={()=>{setSelSchool(s);setForm({name:s.name,city:s.city,school_code:s.school_code,is_active:s.is_active});setMsg("");setView("edit_school");}} style={{background:`${C.cyan}22`,border:`1px solid ${C.cyan}44`,borderRadius:8,padding:"5px 9px",color:C.cyan,cursor:"pointer",fontSize:11}}>✏️</button>
+            <button onClick={async()=>{if(!window.confirm("Delete school "+s.name+"? This deletes ALL teachers and students!"))return;setLoading(true);const d=await api("admin_delete_school",{school_id:s.id});if(d.ok){toast("✅ School deleted: "+s.name);loadSchools();}else setMsg(d.error||"Failed");setLoading(false);}} style={{background:`${C.red}22`,border:`1px solid ${C.red}44`,borderRadius:8,padding:"5px 9px",color:C.red,cursor:"pointer",fontSize:11}}>🗑️</button>
           </div>
         ))}
         {!loading&&schools.length===0&&<div style={{textAlign:"center",color:C.dim,padding:30}}>No schools yet.</div>}
@@ -6688,71 +6749,54 @@ function AdminPanel({ onBack }) {
     </div>
   );
 
-  // ── Add School ────────────────────────────────────────────────────
   if (view==="add_school") return (
     <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"20px 18px"}}>
-      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
-        <BackBtn onClick={()=>setView("schools")} color={C.yellow}/>
-        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.yellow}}>CREATE SCHOOL</div>
-      </div>
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><BackBtn onClick={()=>setView("schools")} color={C.yellow}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.yellow}}>CREATE SCHOOL</div></div>
       <Card color={C.yellow} style={{maxWidth:480,margin:"0 auto"}}>
         {[["School Name","name","text","St. Xavier's School"],["City","city","text","Mumbai"],["School Code","school_code","text","STXAV001"]].map(([l,k,t,ph])=>(
-          <div key={k}>
-            <div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div>
-            <input value={form[k]||""} onChange={e=>setForm({...form,[k]:k==="school_code"?e.target.value.toUpperCase():e.target.value})} type={t} placeholder={ph} style={iS(C.yellow)}/>
-          </div>
+          <div key={k}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div><input value={form[k]||""} onChange={e=>setForm({...form,[k]:k==="school_code"?e.target.value.toUpperCase():e.target.value})} type={t} placeholder={ph} style={iS(C.yellow)}/></div>
         ))}
-        {msg&&<div style={{color:msg.startsWith("✅")?C.green:C.red,fontSize:12,marginBottom:10}}>{msg}</div>}
-        <Btn color={C.yellow} loading={loading} onClick={async()=>{setLoading(true);setMsg("");const d=await api("admin_create_school",form);if(d.data){setMsg("✅ Created!");loadSchools();setForm({});setView("schools");}else setMsg(d.error||"Failed");setLoading(false);}}>CREATE SCHOOL</Btn>
+        <MsgBar m={msg}/>
+        <Btn color={C.yellow} loading={loading} onClick={async()=>{setLoading(true);setMsg("");const d=await api("admin_create_school",form);if(d.data){toast("✅ School created: "+form.name);loadSchools();setForm({});setView("schools");}else setMsg(d.error||"Failed");setLoading(false);}}>CREATE SCHOOL</Btn>
       </Card>
     </div>
   );
 
-  // ── Edit School ───────────────────────────────────────────────────
   if (view==="edit_school") return (
     <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"20px 18px"}}>
-      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
-        <BackBtn onClick={()=>setView("schools")} color={C.yellow}/>
-        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.yellow}}>EDIT SCHOOL</div>
-      </div>
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><BackBtn onClick={()=>setView("schools")} color={C.yellow}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.yellow}}>EDIT SCHOOL</div></div>
       <Card color={C.yellow} style={{maxWidth:480,margin:"0 auto"}}>
         {[["School Name","name","text"],["City","city","text"],["School Code","school_code","text"]].map(([l,k,t])=>(
-          <div key={k}>
-            <div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div>
-            <input value={form[k]||""} onChange={e=>setForm({...form,[k]:k==="school_code"?e.target.value.toUpperCase():e.target.value})} type={t} style={iS(C.yellow)}/>
-          </div>
+          <div key={k}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div><input value={form[k]||""} onChange={e=>setForm({...form,[k]:k==="school_code"?e.target.value.toUpperCase():e.target.value})} type={t} style={iS(C.yellow)}/></div>
         ))}
-        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
-          <input type="checkbox" checked={!!form.is_active} onChange={e=>setForm({...form,is_active:e.target.checked})} style={{width:18,height:18}}/>
-          <span style={{color:"white",fontSize:13}}>School is Active</span>
-        </div>
-        {msg&&<div style={{color:msg.startsWith("✅")?C.green:C.red,fontSize:12,marginBottom:10}}>{msg}</div>}
-        <Btn color={C.yellow} loading={loading} onClick={async()=>{setLoading(true);setMsg("");const d=await api("admin_update_school",{school_id:selSchool?.id,...form});if(d.ok){setMsg("✅ Saved!");loadSchools();}else setMsg(d.error||"Failed");setLoading(false);}}>SAVE CHANGES</Btn>
+        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}><input type="checkbox" checked={!!form.is_active} onChange={e=>setForm({...form,is_active:e.target.checked})} style={{width:18,height:18}}/><span style={{color:"white",fontSize:13}}>School is Active</span></div>
+        <MsgBar m={msg}/>
+        <Btn color={C.yellow} loading={loading} onClick={async()=>{setLoading(true);setMsg("");const d=await api("admin_update_school",{school_id:selSchool?.id,...form});if(d.ok){toast("✅ School updated: "+form.name);loadSchools();setView("schools");}else setMsg(d.error||"Failed");setLoading(false);}}>SAVE CHANGES</Btn>
       </Card>
     </div>
   );
 
-  // ── School Detail — Teachers + Classes ───────────────────────────
   if (view==="school_detail") return (
     <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",overflowY:"auto"}}>
       <Hdr title={selSchool?.name||""} back={()=>setView("schools")} accent={C.cyan}
         extra={<>
-          <button onClick={()=>{setForm({});setView("add_class");}} style={{background:`${C.green}22`,border:`1px solid ${C.green}44`,borderRadius:10,padding:"7px 12px",color:C.green,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:9}}>+ CLASS</button>
-          <button onClick={()=>{setForm({});setView("add_teacher");}} style={{background:`${C.cyan}22`,border:`1px solid ${C.cyan}44`,borderRadius:10,padding:"7px 12px",color:C.cyan,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:9}}>+ TEACHER</button>
-          <button onClick={()=>{setForm({});setView("bulk_teachers");}} style={{background:`${C.purple}22`,border:`1px solid ${C.purple}44`,borderRadius:10,padding:"7px 12px",color:C.purple,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:9}}>⚡ BULK</button>
+          <button onClick={()=>{setForm({});setMsg("");setView("add_class");}} style={{background:`${C.green}22`,border:`1px solid ${C.green}44`,borderRadius:10,padding:"7px 12px",color:C.green,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:9}}>+ CLASS</button>
+          <button onClick={()=>{setForm({});setMsg("");setView("add_teacher");}} style={{background:`${C.cyan}22`,border:`1px solid ${C.cyan}44`,borderRadius:10,padding:"7px 12px",color:C.cyan,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:9}}>+ TEACHER</button>
+          <button onClick={()=>{setBulkText("");setBulkResult([]);setMsg("");setView("bulk_teachers");}} style={{background:`${C.purple}22`,border:`1px solid ${C.purple}44`,borderRadius:10,padding:"7px 12px",color:C.purple,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:9}}>⚡ BULK</button>
         </>}
       />
-      <div style={{padding:"16px 18px",maxWidth:600,margin:"0 auto"}}>
-        <div style={{color:C.dim,fontSize:11,marginBottom:8}}>Code: {selSchool?.school_code} · Teachers: {teachers.length}</div>
+      <div style={{padding:"12px 16px",maxWidth:620,margin:"0 auto"}}>
+        <div style={{color:C.dim,fontSize:11,marginBottom:8}}>Code: {selSchool?.school_code} · {teachers.length} teachers</div>
         {loading&&<div style={{textAlign:"center",color:C.dim,padding:20}}>Loading...</div>}
         {teachers.map(t=>(
           <div key={t.id} style={{background:C.card,border:`1px solid ${C.purple}33`,borderRadius:14,padding:"12px 14px",marginBottom:10,display:"flex",alignItems:"center",gap:10}}>
             <button onClick={()=>loadStudents(t)} style={{flex:1,background:"none",border:"none",cursor:"pointer",textAlign:"left",padding:0}}>
               <div style={{fontWeight:800,color:"white",fontSize:14}}>{t.name}</div>
               <div style={{color:C.dim,fontSize:12}}>{t.email}</div>
+              {(t.permissions||[]).length>0&&<div style={{fontSize:10,color:C.cyan,marginTop:3}}>{(t.permissions||[]).length} permissions</div>}
             </button>
-            <button onClick={()=>{setView("edit_teacher");setSelTeacher(t);setForm({name:t.name,email:t.email});}} style={{background:`${C.cyan}22`,border:`1px solid ${C.cyan}44`,borderRadius:8,padding:"5px 9px",color:C.cyan,cursor:"pointer",fontSize:11}}>✏️</button>
-            <button onClick={async()=>{if(!window.confirm("Delete "+t.name+"?"))return;setLoading(true);const d=await api("admin_delete_teacher",{teacher_id:t.id});setMsg(d.data?"✅ Deleted":d.error||"Failed");loadTeachers(selSchool);setLoading(false);}} style={{background:`${C.red}22`,border:`1px solid ${C.red}44`,borderRadius:8,padding:"5px 9px",color:C.red,cursor:"pointer",fontSize:11}}>🗑️</button>
+            <button onClick={()=>{setSelTeacher(t);setForm({name:t.name,email:t.email,permissions:t.permissions||[]});setMsg("");setView("edit_teacher");}} style={{background:`${C.cyan}22`,border:`1px solid ${C.cyan}44`,borderRadius:8,padding:"5px 9px",color:C.cyan,cursor:"pointer",fontSize:11}}>✏️</button>
+            <button onClick={async()=>{if(!window.confirm("Delete "+t.name+"?"))return;setLoading(true);const d=await api("admin_delete_teacher",{teacher_id:t.id});if(d.data){toast("✅ Teacher deleted: "+t.name);loadTeachers(selSchool);}else setMsg(d.error||"Failed");setLoading(false);}} style={{background:`${C.red}22`,border:`1px solid ${C.red}44`,borderRadius:8,padding:"5px 9px",color:C.red,cursor:"pointer",fontSize:11}}>🗑️</button>
           </div>
         ))}
         {!loading&&teachers.length===0&&<div style={{textAlign:"center",color:C.dim,padding:20}}>No teachers yet.</div>}
@@ -6760,180 +6804,272 @@ function AdminPanel({ onBack }) {
     </div>
   );
 
-  // ── Add Class ────────────────────────────────────────────────────
+  // ── All Teachers (tile view) ───────────────────────────────────────
+  if (view==="all_teachers") {
+    const filtered = allTeachers.filter(t=>!search||t.name?.toLowerCase().includes(search.toLowerCase())||t.email?.toLowerCase().includes(search.toLowerCase()));
+    const sorted   = [...filtered].sort((a,b)=>sortBy==="name"?a.name?.localeCompare(b.name):0);
+    return (
+      <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",overflowY:"auto"}}>
+        <Hdr title="👩‍🏫 ALL TEACHERS" back={()=>setView("home")} accent={C.cyan}
+          extra={<button onClick={()=>{setMsg("");setView("add_teacher_global");setSelSchool(null);setForm({});}} style={{background:`${C.cyan}22`,border:`1px solid ${C.cyan}44`,borderRadius:10,padding:"7px 12px",color:C.cyan,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:9}}>+ TEACHER</button>}
+        />
+        <div style={{padding:"12px 16px",maxWidth:620,margin:"0 auto"}}>
+          <div style={{display:"flex",gap:8,marginBottom:10}}>
+            <SearchBar val={search} onChange={setSearch} placeholder="🔍 Search teacher..." accent={C.cyan}/>
+          </div>
+          <div style={{display:"flex",gap:8,marginBottom:12}}>
+            <select value={sortBy} onChange={e=>setSortBy(e.target.value)} style={{background:C.card2,border:`1px solid ${C.cyan}33`,borderRadius:8,padding:"6px 10px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:12,flex:1}}>
+              <option value="name">Sort: Name A-Z</option>
+            </select>
+          </div>
+          <MsgBar m={msg}/>
+          {loading&&<div style={{textAlign:"center",color:C.dim,padding:20}}>Loading...</div>}
+          <div style={{color:C.dim,fontSize:11,marginBottom:8}}>{sorted.length} teacher{sorted.length!==1?"s":""}</div>
+          {sorted.map(t=>(
+            <div key={t.id} style={{background:C.card,border:`1px solid ${C.cyan}22`,borderRadius:14,padding:"12px 14px",marginBottom:8,display:"flex",alignItems:"center",gap:10}}>
+              <div style={{flex:1}}>
+                <div style={{fontWeight:800,color:"white",fontSize:14}}>{t.name}</div>
+                <div style={{color:C.dim,fontSize:12}}>{t.email}</div>
+                <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:4}}>
+                  {(t.permissions||[]).map(p=>{const pr=PERMS.find(x=>x.id===p);return pr?<span key={p} style={{background:`${C.cyan}18`,border:`1px solid ${C.cyan}33`,borderRadius:6,padding:"2px 6px",fontSize:10,color:C.cyan}}>{pr.icon} {pr.label}</span>:null;})}
+                  {(t.permissions||[]).length===0&&<span style={{fontSize:10,color:C.dim}}>No permissions</span>}
+                </div>
+              </div>
+              <button onClick={()=>{setSelTeacher(t);setForm({name:t.name,email:t.email,permissions:t.permissions||[]});setMsg("");setView("edit_teacher");}} style={{background:`${C.cyan}22`,border:`1px solid ${C.cyan}44`,borderRadius:8,padding:"5px 9px",color:C.cyan,cursor:"pointer",fontSize:11}}>✏️</button>
+              <button onClick={async()=>{if(!window.confirm("Delete "+t.name+"?"))return;setLoading(true);const d=await api("admin_delete_teacher",{teacher_id:t.id});if(d.data){toast("✅ Teacher deleted: "+t.name);loadAllTeachers();}else setMsg(d.error||"Failed");setLoading(false);}} style={{background:`${C.red}22`,border:`1px solid ${C.red}44`,borderRadius:8,padding:"5px 9px",color:C.red,cursor:"pointer",fontSize:11}}>🗑️</button>
+            </div>
+          ))}
+          {!loading&&sorted.length===0&&<div style={{textAlign:"center",color:C.dim,padding:30}}>No teachers found.</div>}
+        </div>
+      </div>
+    );
+  }
+
+  // ── All Classes (tile view) ────────────────────────────────────────
+  if (view==="all_classes") {
+    const filtered = allClasses.filter(c=>!search||(CLASS_LABELS[c.class_num]||"").toLowerCase().includes(search.toLowerCase())||c.section?.toLowerCase().includes(search.toLowerCase()));
+    const grouped  = {};
+    for (const c of filtered) { const k=c.school_id||"unknown"; if(!grouped[k])grouped[k]=[]; grouped[k].push(c); }
+    return (
+      <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",overflowY:"auto"}}>
+        <Hdr title="🏛️ ALL CLASSES" back={()=>setView("home")} accent={C.green}
+          extra={<>
+            <select value={filterVal} onChange={e=>{setFilterVal(e.target.value);loadAllClasses(e.target.value||undefined);}} style={{background:C.card2,border:`1px solid ${C.green}33`,borderRadius:8,padding:"6px 8px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:11}}>
+              <option value="">All Schools</option>
+              {schools.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </>}
+        />
+        <div style={{padding:"12px 16px",maxWidth:620,margin:"0 auto"}}>
+          <SearchBar val={search} onChange={setSearch} placeholder="🔍 Search class..." accent={C.green}/>
+          <MsgBar m={msg}/>
+          {loading&&<div style={{textAlign:"center",color:C.dim,padding:20}}>Loading...</div>}
+          <div style={{color:C.dim,fontSize:11,marginBottom:8}}>{filtered.length} class{filtered.length!==1?"es":""}</div>
+          {filtered.map((c,i)=>(
+            <div key={i} style={{background:C.card,border:`1px solid ${C.green}22`,borderRadius:12,padding:"12px 14px",marginBottom:8,display:"flex",alignItems:"center",gap:12}}>
+              <div style={{background:`${C.green}22`,borderRadius:10,width:44,height:44,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                <span style={{fontFamily:"'Orbitron',sans-serif",fontSize:11,color:C.green}}>{c.section||"A"}</span>
+              </div>
+              <div style={{flex:1}}>
+                <div style={{fontWeight:800,color:"white",fontSize:14}}>{CLASS_LABELS[c.class_num]||`Class ${c.class_num}`} — {c.section}</div>
+                <div style={{color:C.dim,fontSize:12}}>{schools.find(s=>s.id===c.school_id)?.name||"Unknown School"}</div>
+              </div>
+            </div>
+          ))}
+          {!loading&&filtered.length===0&&<div style={{textAlign:"center",color:C.dim,padding:30}}>No classes found.</div>}
+        </div>
+      </div>
+    );
+  }
+
+  // ── All Students (tile view) ───────────────────────────────────────
+  if (view==="all_students") {
+    const filtered = allStudents.filter(s=>!search||s.name?.toLowerCase().includes(search.toLowerCase())||String(s.roll_no).includes(search));
+    const sorted   = [...filtered].sort((a,b)=>sortBy==="name"?a.name?.localeCompare(b.name):sortBy==="class"?(a.class_num-b.class_num)||a.section?.localeCompare(b.section):0);
+    return (
+      <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",overflowY:"auto"}}>
+        <Hdr title="👦 ALL STUDENTS" back={()=>setView("home")} accent={C.purple}/>
+        <div style={{padding:"12px 16px",maxWidth:620,margin:"0 auto"}}>
+          <SearchBar val={search} onChange={setSearch} placeholder="🔍 Search student or roll no..." accent={C.purple}/>
+          <div style={{display:"flex",gap:8,marginBottom:10}}>
+            <select value={sortBy} onChange={e=>setSortBy(e.target.value)} style={{background:C.card2,border:`1px solid ${C.purple}33`,borderRadius:8,padding:"6px 10px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:12,flex:1}}>
+              <option value="name">Sort: Name A-Z</option>
+              <option value="class">Sort: By Class</option>
+            </select>
+            <select value={filterVal} onChange={e=>{setFilterVal(e.target.value);loadAllStudents(undefined,e.target.value?parseInt(e.target.value):undefined);}} style={{background:C.card2,border:`1px solid ${C.purple}33`,borderRadius:8,padding:"6px 10px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:12,flex:1}}>
+              <option value="">All Classes</option>
+              {CLASS_OPTS.map((n,i)=><option key={i} value={CLASS_NUMS[i]}>{n}</option>)}
+            </select>
+          </div>
+          <MsgBar m={msg}/>
+          {loading&&<div style={{textAlign:"center",color:C.dim,padding:20}}>Loading...</div>}
+          <div style={{color:C.dim,fontSize:11,marginBottom:8}}>{sorted.length} student{sorted.length!==1?"s":""}</div>
+          {sorted.map(s=>(
+            <div key={s.id} style={{background:C.card,border:`1px solid ${C.purple}22`,borderRadius:14,padding:"12px 14px",marginBottom:8,display:"flex",alignItems:"center",gap:10}}>
+              <div style={{background:`${C.purple}33`,borderRadius:10,width:36,height:36,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Orbitron',sans-serif",fontSize:11,color:C.purple,flexShrink:0}}>{String(s.roll_no).padStart(2,"0")}</div>
+              <div style={{flex:1}}>
+                <div style={{fontWeight:800,fontSize:14,color:"white"}}>{s.name}</div>
+                <div style={{fontSize:11,color:C.dim}}>{CLASS_LABELS[s.class_num]||`Class ${s.class_num}`}-{s.section} · Lv {s.level||1} · {s.xp||0} XP</div>
+              </div>
+              <button onClick={()=>{setSelTeacher({id:s.teacher_id});setSelSchool({id:s.school_id});setForm({student_id:s.id,name:s.name,roll_no:s.roll_no,class_num:s.class_num,section:s.section});setMsg("");setView("edit_student");}} style={{background:`${C.cyan}22`,border:`1px solid ${C.cyan}44`,borderRadius:8,padding:"5px 9px",color:C.cyan,cursor:"pointer",fontSize:11}}>✏️</button>
+              <button onClick={async()=>{if(!window.confirm("Delete "+s.name+"?"))return;setLoading(true);const d=await api("admin_delete_student",{student_id:s.id});if(d.data){toast("✅ Student deleted: "+s.name);loadAllStudents();}else setMsg(d.error||"Failed");setLoading(false);}} style={{background:`${C.red}22`,border:`1px solid ${C.red}44`,borderRadius:8,padding:"5px 9px",color:C.red,cursor:"pointer",fontSize:11}}>🗑️</button>
+            </div>
+          ))}
+          {!loading&&sorted.length===0&&<div style={{textAlign:"center",color:C.dim,padding:30}}>No students found.</div>}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Add Class ─────────────────────────────────────────────────────
   if (view==="add_class") return (
     <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"20px 18px"}}>
-      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
-        <BackBtn onClick={()=>setView("school_detail")} color={C.green}/>
-        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.green}}>ADD CLASS — {selSchool?.name}</div>
-      </div>
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><BackBtn onClick={()=>setView("school_detail")} color={C.green}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.green}}>ADD CLASS — {selSchool?.name}</div></div>
       <Card color={C.green} style={{maxWidth:480,margin:"0 auto"}}>
         <div style={{marginBottom:10}}>
           <div style={{color:C.dim,fontSize:11,marginBottom:4}}>CLASS</div>
-          <select value={form.class_num??1} onChange={e=>setForm({...form,class_num:parseInt(e.target.value)})}
-            style={{width:"100%",background:C.card2,border:`1.5px solid ${C.green}44`,borderRadius:10,padding:"10px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14,marginBottom:10}}>
-            {["Nursery","Jr KG","Sr KG","Class 1","Class 2","Class 3","Class 4","Class 5"].map((n,i)=><option key={i} value={[10,11,12,1,2,3,4,5][i]}>{n}</option>)}
+          <select value={form.class_num??1} onChange={e=>setForm({...form,class_num:parseInt(e.target.value)})} style={{width:"100%",background:C.card2,border:`1.5px solid ${C.green}44`,borderRadius:10,padding:"10px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14,marginBottom:10}}>
+            {CLASS_OPTS.map((n,i)=><option key={i} value={CLASS_NUMS[i]}>{n}</option>)}
           </select>
         </div>
-        <div style={{marginBottom:10}}>
-          <div style={{color:C.dim,fontSize:11,marginBottom:4}}>SECTION</div>
-          <input value={form.section||"A"} onChange={e=>setForm({...form,section:e.target.value.toUpperCase().slice(0,3)})} placeholder="A" style={iS(C.green)}/>
-        </div>
-        <div style={{marginBottom:10}}>
-          <div style={{color:C.dim,fontSize:11,marginBottom:4}}>CLASS TEACHER NAME (optional)</div>
-          <input value={form.teacher_name||""} onChange={e=>setForm({...form,teacher_name:e.target.value})} placeholder="Mrs. Sharma" style={iS(C.green)}/>
-        </div>
-        {msg&&<div style={{color:msg.startsWith("✅")?C.green:C.red,fontSize:12,marginBottom:10}}>{msg}</div>}
-        <Btn color={C.green} loading={loading} onClick={async()=>{setLoading(true);setMsg("");const d=await api("admin_add_class",{school_id:selSchool?.id,...form});if(d.data){setMsg("✅ Class created! Default PIN: 1234");loadTeachers(selSchool);}else setMsg(d.error||"Failed");setLoading(false);}}>CREATE CLASS</Btn>
-        <div style={{marginTop:14,borderTop:`1px solid ${C.green}22`,paddingTop:14}}>
-          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:10,color:C.green,marginBottom:8}}>ADD STUDENT TO THIS CLASS</div>
-          <div style={{color:C.dim,fontSize:11,marginBottom:8}}>After creating the class, go to Teacher Detail → + Student to add students.</div>
-        </div>
+        <div style={{marginBottom:10}}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>SECTION</div><input value={form.section||"A"} onChange={e=>setForm({...form,section:e.target.value.toUpperCase().slice(0,3)})} placeholder="A" style={iS(C.green)}/></div>
+        <div style={{marginBottom:10}}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>CLASS TEACHER NAME (optional)</div><input value={form.teacher_name||""} onChange={e=>setForm({...form,teacher_name:e.target.value})} placeholder="Mrs. Sharma" style={iS(C.green)}/></div>
+        <MsgBar m={msg}/>
+        <Btn color={C.green} loading={loading} onClick={async()=>{setLoading(true);setMsg("");const d=await api("admin_add_class",{school_id:selSchool?.id,...form});if(d.data){toast("✅ Class created!");loadTeachers(selSchool);}else setMsg(d.error||"Failed");setLoading(false);}}>CREATE CLASS</Btn>
       </Card>
     </div>
   );
 
-  // ── Add Teacher ──────────────────────────────────────────────────
-  if (view==="add_teacher") return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"20px 18px"}}>
-      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
-        <BackBtn onClick={()=>setView("school_detail")} color={C.cyan}/>
-        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.cyan}}>ADD TEACHER — {selSchool?.name}</div>
-      </div>
-      <Card color={C.cyan} style={{maxWidth:480,margin:"0 auto"}}>
-        {[["Name","name","text","Mrs. Sharma"],["Email","email","email","teacher@school.com"],["PIN (4-6 digits)","pin","password","••••"]].map(([l,k,t,ph])=>(
-          <div key={k}>
-            <div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div>
-            <input value={form[k]||""} onChange={e=>setForm({...form,[k]:e.target.value})} type={t} placeholder={ph} style={iS(C.cyan)}/>
+  // ── Add Teacher (from school detail) ──────────────────────────────
+  if (view==="add_teacher"||view==="add_teacher_global") {
+    const targetSchool = selSchool;
+    return (
+      <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"20px 18px"}}>
+        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><BackBtn onClick={()=>setView(view==="add_teacher_global"?"all_teachers":"school_detail")} color={C.cyan}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.cyan}}>ADD TEACHER{targetSchool?" — "+targetSchool.name:""}</div></div>
+        <Card color={C.cyan} style={{maxWidth:500,margin:"0 auto"}}>
+          {view==="add_teacher_global"&&(
+            <div style={{marginBottom:12}}>
+              <div style={{color:C.dim,fontSize:11,marginBottom:4}}>SCHOOL</div>
+              <select value={form.school_id||""} onChange={e=>setForm({...form,school_id:e.target.value})} style={{width:"100%",background:C.card2,border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"10px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14,marginBottom:10}}>
+                <option value="">Select school...</option>
+                {schools.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+            </div>
+          )}
+          {[["Name","name","text","Mrs. Sharma"],["Email","email","email","teacher@school.com"],["PIN (4-6 digits)","pin","password","••••"]].map(([l,k,t,ph])=>(
+            <div key={k}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div><input value={form[k]||""} onChange={e=>setForm({...form,[k]:e.target.value})} type={t} placeholder={ph} style={iS(C.cyan)}/></div>
+          ))}
+          {/* Permission Sets */}
+          <div style={{marginBottom:12}}>
+            <div style={{color:C.dim,fontSize:11,marginBottom:6}}>PERMISSION PRESET (quick assign)</div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}}>
+              {Object.entries(PERM_PRESETS).map(([pname,pperms])=>(
+                <button key={pname} onClick={()=>setForm({...form,permissions:pperms})} style={{background:`${C.cyan}18`,border:`1px solid ${C.cyan}44`,borderRadius:8,padding:"5px 10px",color:C.cyan,cursor:"pointer",fontSize:11,fontWeight:700}}>{pname}</button>
+              ))}
+              <button onClick={()=>setForm({...form,permissions:[]})} style={{background:`${C.red}11`,border:`1px solid ${C.red}33`,borderRadius:8,padding:"5px 10px",color:C.dim,cursor:"pointer",fontSize:11}}>Clear</button>
+            </div>
+            <div style={{color:C.dim,fontSize:11,marginBottom:6}}>INDIVIDUAL PERMISSIONS</div>
+            {PERMS.map(p=>(
+              <div key={p.id} onClick={()=>{const cur=form.permissions||[];const has=cur.includes(p.id);setForm({...form,permissions:has?cur.filter(x=>x!==p.id):[...cur,p.id]});}} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 10px",borderRadius:10,background:(form.permissions||[]).includes(p.id)?`${C.cyan}18`:"transparent",border:`1px solid ${(form.permissions||[]).includes(p.id)?C.cyan+"44":"transparent"}`,cursor:"pointer",marginBottom:4}}>
+                <div style={{width:18,height:18,borderRadius:5,border:`2px solid ${C.cyan}66`,background:(form.permissions||[]).includes(p.id)?C.cyan:"transparent",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,flexShrink:0}}>{(form.permissions||[]).includes(p.id)?"✓":""}</div>
+                <span style={{fontSize:13,color:"white"}}>{p.icon} {p.label}</span>
+              </div>
+            ))}
           </div>
-        ))}
-        {msg&&<div style={{color:msg.startsWith("✅")?C.green:C.red,fontSize:12,marginBottom:10}}>{msg}</div>}
-        <Btn color={C.cyan} loading={loading} onClick={async()=>{setLoading(true);setMsg("");const d=await api("admin_create_teacher",{...form,school_id:selSchool?.id});if(d.data){setMsg("✅ Teacher created!");loadTeachers(selSchool);setForm({});setView("school_detail");}else setMsg(d.error||"Failed");setLoading(false);}}>ADD TEACHER</Btn>
-      </Card>
-    </div>
-  );
+          <MsgBar m={msg}/>
+          <Btn color={C.cyan} loading={loading} onClick={async()=>{
+            const sid=view==="add_teacher_global"?form.school_id:targetSchool?.id;
+            if(!sid){setMsg("Select a school.");return;}
+            setLoading(true);setMsg("");
+            const d=await api("admin_create_teacher",{...form,school_id:sid});
+            if(d.data){toast("✅ Teacher created: "+form.name);if(view==="add_teacher")loadTeachers(selSchool);else loadAllTeachers();setForm({});setView(view==="add_teacher"?"school_detail":"all_teachers");}else setMsg(d.error||"Failed");
+            setLoading(false);
+          }}>ADD TEACHER</Btn>
+        </Card>
+      </div>
+    );
+  }
 
-  // ── Bulk Add Teachers ─────────────────────────────────────────────
+  // ── Bulk Teachers ─────────────────────────────────────────────────
   if (view==="bulk_teachers") return (
     <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"20px 18px"}}>
-      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
-        <BackBtn onClick={()=>setView("school_detail")} color={C.purple}/>
-        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.purple}}>BULK ADD TEACHERS</div>
-      </div>
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><BackBtn onClick={()=>setView("school_detail")} color={C.purple}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.purple}}>BULK ADD TEACHERS — {selSchool?.name}</div></div>
       <Card color={C.purple} style={{maxWidth:520,margin:"0 auto"}}>
-        <div style={{color:C.dim,fontSize:11,marginBottom:8}}>Paste CSV rows — one per line: <b style={{color:C.purple}}>Name, Email, PIN</b></div>
-        <div style={{color:C.dim,fontSize:10,marginBottom:10,background:`${C.purple}11`,borderRadius:8,padding:"8px 10px"}}>
-          Example:<br/>Mrs. Sharma, sharma@school.com, 1234<br/>Mr. Patel, patel@school.com, 5678
-        </div>
-        <textarea value={bulkText} onChange={e=>setBulkText(e.target.value)} rows={8} placeholder="Name, Email, PIN (one per line)"
-          style={{width:"100%",background:C.card2,border:`1.5px solid ${C.purple}44`,borderRadius:10,padding:"10px 12px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:13,display:"block",marginBottom:10,resize:"vertical"}}/>
-        {bulkResult.length>0&&(
-          <div style={{maxHeight:120,overflowY:"auto",marginBottom:10}}>
-            {bulkResult.map((r,i)=><div key={i} style={{fontSize:11,color:r.ok?C.green:C.red}}>{r.ok?"✅":"❌"} {r.name} {r.error||""}</div>)}
-          </div>
-        )}
-        {msg&&<div style={{color:msg.startsWith("✅")?C.green:C.red,fontSize:12,marginBottom:10}}>{msg}</div>}
+        <div style={{color:C.dim,fontSize:11,marginBottom:8}}>CSV: <b style={{color:C.purple}}>Name, Email, PIN</b></div>
+        <div style={{color:C.dim,fontSize:10,marginBottom:10,background:`${C.purple}11`,borderRadius:8,padding:"8px 10px"}}>Mrs. Sharma, sharma@school.com, 1234</div>
+        <textarea value={bulkText} onChange={e=>setBulkText(e.target.value)} rows={8} placeholder="Name, Email, PIN" style={{width:"100%",background:C.card2,border:`1.5px solid ${C.purple}44`,borderRadius:10,padding:"10px 12px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:13,display:"block",marginBottom:10,resize:"vertical"}}/>
+        {bulkResult.length>0&&<div style={{maxHeight:120,overflowY:"auto",marginBottom:10}}>{bulkResult.map((r,i)=><div key={i} style={{fontSize:11,color:r.ok?C.green:C.red}}>{r.ok?"✅":"❌"} {r.name} {r.error||""}</div>)}</div>}
+        <MsgBar m={msg}/>
         <Btn color={C.purple} loading={loading} onClick={async()=>{
-          const rows = bulkText.split("\n").map(l=>l.trim()).filter(Boolean).map(l=>{const p=l.split(",").map(s=>s.trim());return{name:p[0],email:p[1],pin:p[2]||"1234"};}).filter(r=>r.name&&r.email);
-          if(!rows.length){setMsg("No valid rows found.");return;}
+          const rows=bulkText.split("\n").map(l=>l.trim()).filter(Boolean).map(l=>{const p=l.split(",").map(s=>s.trim());return{name:p[0],email:p[1],pin:p[2]||"1234"};}).filter(r=>r.name&&r.email);
+          if(!rows.length){setMsg("No valid rows.");return;}
           setLoading(true);setMsg("");setBulkResult([]);
           const d=await api("admin_bulk_create_teachers",{school_id:selSchool?.id,rows});
-          setBulkResult(d.data||[]);
-          const ok=(d.data||[]).filter(r=>r.ok).length;
-          setMsg(`✅ ${ok}/${rows.length} teachers created.`);
-          setLoading(false);
+          setBulkResult(d.data||[]);const ok=(d.data||[]).filter(r=>r.ok).length;
+          toast(`✅ ${ok}/${rows.length} teachers created.`);setLoading(false);
         }}>IMPORT TEACHERS</Btn>
       </Card>
     </div>
   );
 
-  // ── Bulk Add Students ─────────────────────────────────────────────
+  // ── Bulk Students ─────────────────────────────────────────────────
   if (view==="bulk_students") return (
     <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"20px 18px"}}>
-      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
-        <BackBtn onClick={()=>setView("teacher_detail")} color={C.purple}/>
-        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.purple}}>BULK ADD STUDENTS</div>
-      </div>
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><BackBtn onClick={()=>setView("teacher_detail")} color={C.purple}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.purple}}>BULK ADD STUDENTS</div></div>
       <Card color={C.purple} style={{maxWidth:520,margin:"0 auto"}}>
         <div style={{color:C.dim,fontSize:11,marginBottom:8}}>CSV: <b style={{color:C.purple}}>Name, Roll No, Class (1-5 or 10/11/12), Section, PIN</b></div>
-        <div style={{color:C.dim,fontSize:10,marginBottom:10,background:`${C.purple}11`,borderRadius:8,padding:"8px 10px"}}>
-          Example:<br/>Aarav Sharma, 01, 3, A, 1234<br/>Priya Patel, 02, 3, A, 5678
-        </div>
-        <textarea value={bulkText} onChange={e=>setBulkText(e.target.value)} rows={10} placeholder="Name, Roll No, Class, Section, PIN"
-          style={{width:"100%",background:C.card2,border:`1.5px solid ${C.purple}44`,borderRadius:10,padding:"10px 12px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:13,display:"block",marginBottom:10,resize:"vertical"}}/>
-        {bulkResult.length>0&&(
-          <div style={{maxHeight:150,overflowY:"auto",marginBottom:10}}>
-            {bulkResult.map((r,i)=><div key={i} style={{fontSize:11,color:r.ok?C.green:C.red}}>{r.ok?"✅":"❌"} {r.name} {r.error||""}</div>)}
-          </div>
-        )}
-        {msg&&<div style={{color:msg.startsWith("✅")?C.green:C.red,fontSize:12,marginBottom:10}}>{msg}</div>}
+        <div style={{color:C.dim,fontSize:10,marginBottom:10,background:`${C.purple}11`,borderRadius:8,padding:"8px 10px"}}>Aarav Sharma, 01, 3, A, 1234</div>
+        <textarea value={bulkText} onChange={e=>setBulkText(e.target.value)} rows={10} placeholder="Name, Roll No, Class, Section, PIN" style={{width:"100%",background:C.card2,border:`1.5px solid ${C.purple}44`,borderRadius:10,padding:"10px 12px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:13,display:"block",marginBottom:10,resize:"vertical"}}/>
+        {bulkResult.length>0&&<div style={{maxHeight:150,overflowY:"auto",marginBottom:10}}>{bulkResult.map((r,i)=><div key={i} style={{fontSize:11,color:r.ok?C.green:C.red}}>{r.ok?"✅":"❌"} {r.name} {r.error||""}</div>)}</div>}
+        <MsgBar m={msg}/>
         <Btn color={C.purple} loading={loading} onClick={async()=>{
           const rows=bulkText.split("\n").map(l=>l.trim()).filter(Boolean).map(l=>{const p=l.split(",").map(s=>s.trim());return{name:p[0],roll_no:p[1],class_num:parseInt(p[2])||1,section:p[3]||"A",pin:p[4]||"1234"};}).filter(r=>r.name);
           if(!rows.length){setMsg("No valid rows.");return;}
           setLoading(true);setMsg("");setBulkResult([]);
           const d=await api("admin_bulk_create_students",{school_id:selSchool?.id,teacher_id:selTeacher?.id,rows});
-          setBulkResult(d.data||[]);
-          const ok=(d.data||[]).filter(r=>r.ok).length;
-          setMsg(`✅ ${ok}/${rows.length} students created.`);
-          setLoading(false);
+          setBulkResult(d.data||[]);const ok=(d.data||[]).filter(r=>r.ok).length;
+          toast(`✅ ${ok}/${rows.length} students created.`);setLoading(false);
         }}>IMPORT STUDENTS</Btn>
       </Card>
     </div>
   );
 
-  // ── Add Student ──────────────────────────────────────────────────
+  // ── Add Student ───────────────────────────────────────────────────
   if (view==="add_student") return (
     <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"20px 18px"}}>
-      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
-        <BackBtn onClick={()=>setView("teacher_detail")} color={C.cyan}/>
-        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.cyan}}>ADD STUDENT — {selTeacher?.name}</div>
-      </div>
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><BackBtn onClick={()=>setView("teacher_detail")} color={C.cyan}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.cyan}}>ADD STUDENT — {selTeacher?.name}</div></div>
       <Card color={C.cyan} style={{maxWidth:480,margin:"0 auto"}}>
         {[["Name","name","text","Full name"],["Roll No","roll_no","text","01"],["PIN (4 digits)","pin","password","••••"]].map(([l,k,t,ph])=>(
-          <div key={k} style={{marginBottom:10}}>
-            <div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div>
-            <input value={form[k]||""} onChange={e=>setForm({...form,[k]:e.target.value})} type={t} placeholder={ph} style={{width:"100%",background:C.card2,border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"10px 12px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14,display:"block"}}/>
-          </div>
+          <div key={k} style={{marginBottom:10}}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div><input value={form[k]||""} onChange={e=>setForm({...form,[k]:e.target.value})} type={t} placeholder={ph} style={{width:"100%",background:C.card2,border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"10px 12px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14,display:"block"}}/></div>
         ))}
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
-          <div>
-            <div style={{color:C.dim,fontSize:11,marginBottom:4}}>CLASS</div>
-            <select value={form.class_num??1} onChange={e=>setForm({...form,class_num:parseInt(e.target.value)})} style={{width:"100%",background:C.card2,border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"10px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14}}>
-              {["Nursery","Jr KG","Sr KG","Class 1","Class 2","Class 3","Class 4","Class 5"].map((n,i)=><option key={i} value={[10,11,12,1,2,3,4,5][i]}>{n}</option>)}
-            </select>
-          </div>
-          <div>
-            <div style={{color:C.dim,fontSize:11,marginBottom:4}}>SECTION</div>
-            <input value={form.section||"A"} onChange={e=>setForm({...form,section:e.target.value.toUpperCase().slice(0,3)})} placeholder="A" style={{width:"100%",background:C.card2,border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"10px 12px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14,display:"block"}}/>
-          </div>
+          <div><div style={{color:C.dim,fontSize:11,marginBottom:4}}>CLASS</div><select value={form.class_num??1} onChange={e=>setForm({...form,class_num:parseInt(e.target.value)})} style={{width:"100%",background:C.card2,border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"10px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14}}>{CLASS_OPTS.map((n,i)=><option key={i} value={CLASS_NUMS[i]}>{n}</option>)}</select></div>
+          <div><div style={{color:C.dim,fontSize:11,marginBottom:4}}>SECTION</div><input value={form.section||"A"} onChange={e=>setForm({...form,section:e.target.value.toUpperCase().slice(0,3)})} placeholder="A" style={{width:"100%",background:C.card2,border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"10px 12px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14,display:"block"}}/></div>
         </div>
-        {msg&&<div style={{color:msg.startsWith("✅")?C.green:C.red,fontSize:12,marginBottom:8}}>{msg}</div>}
-        <Btn color={C.cyan} loading={loading} onClick={async()=>{setLoading(true);setMsg("");const d=await api("create_student_admin",{...form,teacher_id:selTeacher?.id,school_id:selSchool?.id});if(d.data){setMsg("✅ Student added!");setForm({});}else setMsg(d.error||"Failed");setLoading(false);}}>ADD STUDENT</Btn>
+        <MsgBar m={msg}/>
+        <Btn color={C.cyan} loading={loading} onClick={async()=>{setLoading(true);setMsg("");const d=await api("create_student_admin",{...form,teacher_id:selTeacher?.id,school_id:selSchool?.id});if(d.data){toast("✅ Student added: "+form.name);setForm({});}else setMsg(d.error||"Failed");setLoading(false);}}>ADD STUDENT</Btn>
       </Card>
     </div>
   );
 
-  // ── Teacher Detail — Student List ────────────────────────────────
+  // ── Teacher Detail — Student List ─────────────────────────────────
   if (view==="teacher_detail") return (
     <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",overflowY:"auto"}}>
       <Hdr title={selTeacher?.name||""} back={()=>setView("school_detail")} accent={C.purple}
         extra={<>
-          <button onClick={()=>{setForm({});setView("add_student");}} style={{background:`${C.cyan}22`,border:`1px solid ${C.cyan}44`,borderRadius:10,padding:"7px 12px",color:C.cyan,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:9}}>+ STUDENT</button>
+          <button onClick={()=>{setForm({});setMsg("");setView("add_student");}} style={{background:`${C.cyan}22`,border:`1px solid ${C.cyan}44`,borderRadius:10,padding:"7px 12px",color:C.cyan,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:9}}>+ STUDENT</button>
           <button onClick={()=>{setBulkText("");setBulkResult([]);setMsg("");setView("bulk_students");}} style={{background:`${C.purple}22`,border:`1px solid ${C.purple}44`,borderRadius:10,padding:"7px 12px",color:C.purple,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:9}}>⚡ BULK</button>
         </>}
       />
-      <div style={{padding:"16px 18px",maxWidth:600,margin:"0 auto"}}>
-        <div style={{color:C.dim,fontSize:11,marginBottom:8}}>{selSchool?.name} · Students: {students.length}</div>
+      <div style={{padding:"12px 16px",maxWidth:620,margin:"0 auto"}}>
+        <div style={{color:C.dim,fontSize:11,marginBottom:8}}>{selSchool?.name} · {students.length} students</div>
         {loading&&<div style={{textAlign:"center",color:C.dim,padding:20}}>Loading...</div>}
         {students.map(s=>(
           <div key={s.id} style={{background:C.card,border:`1px solid ${C.purple}22`,borderRadius:14,padding:"12px 14px",marginBottom:8,display:"flex",alignItems:"center",gap:10}}>
             <div style={{background:`${C.purple}33`,borderRadius:10,width:36,height:36,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Orbitron',sans-serif",fontSize:11,color:C.purple,flexShrink:0}}>{String(s.roll_no).padStart(2,"0")}</div>
-            <div style={{flex:1}}>
-              <div style={{fontWeight:800,fontSize:14,color:"white"}}>{s.name}</div>
-              <div style={{fontSize:11,color:C.dim}}>Class {s.class_num}-{s.section} · Lv {s.level||1} · {s.xp||0} XP</div>
-            </div>
-            <button onClick={()=>{setView("edit_student");setForm({student_id:s.id,name:s.name,roll_no:s.roll_no,class_num:s.class_num,section:s.section});}} style={{background:`${C.cyan}22`,border:`1px solid ${C.cyan}44`,borderRadius:8,padding:"5px 9px",color:C.cyan,cursor:"pointer",fontSize:11}}>✏️</button>
-            <button onClick={async()=>{if(!window.confirm("Delete "+s.name+"?"))return;setLoading(true);const d=await api("admin_delete_student",{student_id:s.id});setMsg(d.data?"✅ Deleted":d.error||"Failed");loadStudents(selTeacher);setLoading(false);}} style={{background:`${C.red}22`,border:`1px solid ${C.red}44`,borderRadius:8,padding:"5px 9px",color:C.red,cursor:"pointer",fontSize:11}}>🗑️</button>
+            <div style={{flex:1}}><div style={{fontWeight:800,fontSize:14,color:"white"}}>{s.name}</div><div style={{fontSize:11,color:C.dim}}>{CLASS_LABELS[s.class_num]||`Class ${s.class_num}`}-{s.section} · Lv {s.level||1} · {s.xp||0} XP</div></div>
+            <button onClick={()=>{setForm({student_id:s.id,name:s.name,roll_no:s.roll_no,class_num:s.class_num,section:s.section});setMsg("");setView("edit_student");}} style={{background:`${C.cyan}22`,border:`1px solid ${C.cyan}44`,borderRadius:8,padding:"5px 9px",color:C.cyan,cursor:"pointer",fontSize:11}}>✏️</button>
+            <button onClick={async()=>{if(!window.confirm("Delete "+s.name+"?"))return;setLoading(true);const d=await api("admin_delete_student",{student_id:s.id});if(d.data){toast("✅ Student deleted: "+s.name);loadStudents(selTeacher);}else setMsg(d.error||"Failed");setLoading(false);}} style={{background:`${C.red}22`,border:`1px solid ${C.red}44`,borderRadius:8,padding:"5px 9px",color:C.red,cursor:"pointer",fontSize:11}}>🗑️</button>
           </div>
         ))}
         {!loading&&students.length===0&&<div style={{textAlign:"center",color:C.dim,padding:30}}>No students.</div>}
@@ -6941,54 +7077,63 @@ function AdminPanel({ onBack }) {
     </div>
   );
 
-  // ── Edit Teacher ─────────────────────────────────────────────────
+  // ── Edit Teacher (with permissions) ──────────────────────────────
   if (view==="edit_teacher") return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"20px 18px"}}>
-      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
-        <BackBtn onClick={()=>setView("school_detail")} color={C.cyan}/>
-        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.cyan}}>EDIT TEACHER</div>
-      </div>
-      <Card color={C.cyan} style={{maxWidth:480,margin:"0 auto"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"20px 18px",overflowY:"auto"}}>
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><BackBtn onClick={()=>setView(selSchool?"school_detail":"all_teachers")} color={C.cyan}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.cyan}}>EDIT TEACHER</div></div>
+      <Card color={C.cyan} style={{maxWidth:500,margin:"0 auto"}}>
         {[["Name","name","text","Teacher name"],["Email","email","email","teacher@school.com"]].map(([l,k,t,ph])=>(
-          <div key={k}>
-            <div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div>
-            <input value={form[k]||""} onChange={e=>setForm({...form,[k]:e.target.value})} type={t} placeholder={ph} style={iS(C.cyan)}/>
-          </div>
+          <div key={k}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div><input value={form[k]||""} onChange={e=>setForm({...form,[k]:e.target.value})} type={t} placeholder={ph} style={iS(C.cyan)}/></div>
         ))}
-        {msg&&<div style={{color:msg.startsWith("✅")?C.green:C.red,fontSize:12,marginBottom:10}}>{msg}</div>}
-        <Btn color={C.cyan} loading={loading} onClick={async()=>{setLoading(true);setMsg("");const d=await api("admin_modify_teacher",{teacher_id:selTeacher?.id,...form});if(d.data){setMsg("✅ Saved!");loadTeachers(selSchool);}else setMsg(d.error||"Failed");setLoading(false);}}>SAVE CHANGES</Btn>
+        {/* Permission Sets */}
+        <div style={{marginBottom:12}}>
+          <div style={{color:C.dim,fontSize:11,marginBottom:6}}>PERMISSION PRESET</div>
+          <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}}>
+            {Object.entries(PERM_PRESETS).map(([pname,pperms])=>(
+              <button key={pname} onClick={()=>setForm({...form,permissions:pperms})} style={{background:`${C.cyan}18`,border:`1px solid ${C.cyan}44`,borderRadius:8,padding:"5px 10px",color:C.cyan,cursor:"pointer",fontSize:11,fontWeight:700}}>{pname}</button>
+            ))}
+            <button onClick={()=>setForm({...form,permissions:[]})} style={{background:`${C.red}11`,border:`1px solid ${C.red}33`,borderRadius:8,padding:"5px 10px",color:C.dim,cursor:"pointer",fontSize:11}}>Clear All</button>
+          </div>
+          <div style={{color:C.dim,fontSize:11,marginBottom:6}}>INDIVIDUAL PERMISSIONS</div>
+          {PERMS.map(p=>(
+            <div key={p.id} onClick={()=>{const cur=form.permissions||[];const has=cur.includes(p.id);setForm({...form,permissions:has?cur.filter(x=>x!==p.id):[...cur,p.id]});}} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 10px",borderRadius:10,background:(form.permissions||[]).includes(p.id)?`${C.cyan}18`:"transparent",border:`1px solid ${(form.permissions||[]).includes(p.id)?C.cyan+"44":"transparent"}`,cursor:"pointer",marginBottom:4}}>
+              <div style={{width:18,height:18,borderRadius:5,border:`2px solid ${C.cyan}66`,background:(form.permissions||[]).includes(p.id)?C.cyan:"transparent",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,flexShrink:0}}>{(form.permissions||[]).includes(p.id)?"✓":""}</div>
+              <span style={{fontSize:13,color:"white"}}>{p.icon} {p.label}</span>
+            </div>
+          ))}
+        </div>
+        <MsgBar m={msg}/>
+        <Btn color={C.cyan} loading={loading} onClick={async()=>{
+          setLoading(true);setMsg("");
+          const d=await api("admin_modify_teacher",{teacher_id:selTeacher?.id,...form});
+          if(d.data){toast("✅ Teacher updated: "+form.name);if(selSchool)loadTeachers(selSchool);else loadAllTeachers();setView(selSchool?"school_detail":"all_teachers");}else setMsg(d.error||"Failed");
+          setLoading(false);
+        }}>SAVE CHANGES</Btn>
       </Card>
     </div>
   );
 
-  // ── Edit Student ─────────────────────────────────────────────────
+  // ── Edit Student ──────────────────────────────────────────────────
   if (view==="edit_student") return (
     <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"20px 18px"}}>
-      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
-        <BackBtn onClick={()=>setView("teacher_detail")} color={C.purple}/>
-        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.purple}}>EDIT STUDENT</div>
-      </div>
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><BackBtn onClick={()=>setView(selTeacher?.id&&selSchool?.id?"teacher_detail":"all_students")} color={C.purple}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.purple}}>EDIT STUDENT</div></div>
       <Card color={C.purple} style={{maxWidth:480,margin:"0 auto"}}>
         {[["Name","name","text","Full name"],["Roll No","roll_no","text","01"],["New PIN (blank = keep)","pin","password",""]].map(([l,k,t,ph])=>(
-          <div key={k}>
-            <div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div>
-            <input value={form[k]||""} onChange={e=>setForm({...form,[k]:e.target.value})} type={t} placeholder={ph} style={iS(C.purple)}/>
-          </div>
+          <div key={k}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div><input value={form[k]||""} onChange={e=>setForm({...form,[k]:e.target.value})} type={t} placeholder={ph} style={iS(C.purple)}/></div>
         ))}
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
-          <div>
-            <div style={{color:C.dim,fontSize:11,marginBottom:4}}>CLASS</div>
-            <select value={form.class_num??1} onChange={e=>setForm({...form,class_num:parseInt(e.target.value)})} style={{width:"100%",background:C.card2,border:`1.5px solid ${C.purple}44`,borderRadius:10,padding:"10px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14}}>
-              {["Nursery","Jr KG","Sr KG","Class 1","Class 2","Class 3","Class 4","Class 5"].map((n,i)=><option key={i} value={[10,11,12,1,2,3,4,5][i]}>{n}</option>)}
-            </select>
-          </div>
-          <div>
-            <div style={{color:C.dim,fontSize:11,marginBottom:4}}>SECTION</div>
-            <input value={form.section||"A"} onChange={e=>setForm({...form,section:e.target.value.toUpperCase().slice(0,3)})} style={iS(C.purple)}/>
-          </div>
+          <div><div style={{color:C.dim,fontSize:11,marginBottom:4}}>CLASS</div><select value={form.class_num??1} onChange={e=>setForm({...form,class_num:parseInt(e.target.value)})} style={{width:"100%",background:C.card2,border:`1.5px solid ${C.purple}44`,borderRadius:10,padding:"10px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14}}>{CLASS_OPTS.map((n,i)=><option key={i} value={CLASS_NUMS[i]}>{n}</option>)}</select></div>
+          <div><div style={{color:C.dim,fontSize:11,marginBottom:4}}>SECTION</div><input value={form.section||"A"} onChange={e=>setForm({...form,section:e.target.value.toUpperCase().slice(0,3)})} style={iS(C.purple)}/></div>
         </div>
-        {msg&&<div style={{color:msg.startsWith("✅")?C.green:C.red,fontSize:12,marginBottom:8}}>{msg}</div>}
-        <Btn color={C.purple} loading={loading} onClick={async()=>{setLoading(true);setMsg("");const payload={student_id:form.student_id,name:form.name,roll_no:form.roll_no,class_num:form.class_num,section:form.section};if(form.pin)payload.pin=form.pin;const d=await api("admin_modify_student",payload);if(d.data){setMsg("✅ Saved!");loadStudents(selTeacher);}else setMsg(d.error||"Failed");setLoading(false);}}>SAVE CHANGES</Btn>
+        <MsgBar m={msg}/>
+        <Btn color={C.purple} loading={loading} onClick={async()=>{
+          setLoading(true);setMsg("");
+          const payload={student_id:form.student_id,name:form.name,roll_no:form.roll_no,class_num:form.class_num,section:form.section};
+          if(form.pin)payload.pin=form.pin;
+          const d=await api("admin_modify_student",payload);
+          if(d.data){toast("✅ Student updated: "+form.name);if(selTeacher?.id&&selSchool?.id)loadStudents(selTeacher);else loadAllStudents();setView(selTeacher?.id&&selSchool?.id?"teacher_detail":"all_students");}else setMsg(d.error||"Failed");
+          setLoading(false);
+        }}>SAVE CHANGES</Btn>
       </Card>
     </div>
   );
@@ -6996,15 +7141,16 @@ function AdminPanel({ onBack }) {
   // ── Questions: Class Selector ─────────────────────────────────────
   if (view==="questions_class") return (
     <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",overflowY:"auto"}}>
-      <Hdr title="📚 QUESTION MANAGER" back={()=>setView("schools")} accent={C.cyan}/>
+      <Hdr title="📚 QUESTION MANAGER" back={()=>setView("home")} accent={C.orange}/>
       <div style={{padding:"16px 18px",maxWidth:600,margin:"0 auto"}}>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-          {["Nursery","Jr KG","Sr KG","Class 1","Class 2","Class 3","Class 4","Class 5"].map((n,i)=>{
-            const cn=[10,11,12,1,2,3,4,5][i];
+          {CLASS_OPTS.map((n,i)=>{
+            const cn=CLASS_NUMS[i];
+            const emojis=["🌱","🌙","☀️","🌍","🪐","⭐","🔴","🌌"];
             return (
-              <button key={cn} onClick={()=>{loadQLessons(cn);setView("questions_lessons");}} style={{background:C.card,border:`2px solid ${C.cyan}33`,borderRadius:16,padding:"18px 14px",cursor:"pointer",textAlign:"center"}}>
-                <div style={{fontSize:28}}>{"🌱🌙☀️🌍🪐⭐🔴🌌".split("").filter((_,ii)=>ii<8)[i]||"📚"}</div>
-                <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:11,color:C.cyan,marginTop:6}}>{n}</div>
+              <button key={cn} onClick={()=>{loadQLessons(cn);setView("questions_lessons");}} style={{background:C.card,border:`2px solid ${C.orange}33`,borderRadius:16,padding:"18px 14px",cursor:"pointer",textAlign:"center"}}>
+                <div style={{fontSize:28}}>{emojis[i]}</div>
+                <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:11,color:C.orange,marginTop:6}}>{n}</div>
               </button>
             );
           })}
@@ -7016,22 +7162,30 @@ function AdminPanel({ onBack }) {
   // ── Questions: Lessons List ───────────────────────────────────────
   if (view==="questions_lessons") return (
     <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",overflowY:"auto"}}>
-      <Hdr title={`📚 CLASS ${qClassNum} — LESSONS`} back={()=>setView("questions_class")} accent={C.cyan}
-        extra={<button onClick={async()=>{setLoading(true);setMsg("");const d=await api("admin_add_lesson",{class_num:qClassNum});if(d.data){setMsg("✅ New lesson ID: "+d.data.lesson_id);loadQLessons(qClassNum);}else setMsg(d.error||"Failed");setLoading(false);}} style={{background:`${C.green}22`,border:`1px solid ${C.green}44`,borderRadius:10,padding:"7px 12px",color:C.green,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:9}}>+ LESSON</button>}
+      <Hdr title={`${CLASS_LABELS[qClassNum]||"Class "+qClassNum} — LESSONS`} back={()=>setView("questions_class")} accent={C.orange}
+        extra={<button onClick={async()=>{setLoading(true);setMsg("");const d=await api("admin_add_lesson",{class_num:qClassNum});if(d.data){const lid=d.data.lesson_id;toast("✅ New lesson: "+lid);await loadQLessons(qClassNum);}else setMsg(d.error||"Failed");setLoading(false);}} style={{background:`${C.green}22`,border:`1px solid ${C.green}44`,borderRadius:10,padding:"7px 12px",color:C.green,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:9}}>+ LESSON</button>}
       />
-      <div style={{padding:"16px 18px",maxWidth:600,margin:"0 auto"}}>
+      <div style={{padding:"12px 16px",maxWidth:600,margin:"0 auto"}}>
+        <SearchBar val={search} onChange={setSearch} placeholder="🔍 Filter lessons..." accent={C.orange}/>
         {loading&&<div style={{textAlign:"center",color:C.dim,padding:20}}>Loading...</div>}
-        {msg&&<div style={{color:msg.startsWith("✅")?C.green:C.red,fontSize:12,marginBottom:12,padding:"8px",borderRadius:8,background:msg.startsWith("✅")?`${C.green}11`:`${C.red}11`}}>{msg}</div>}
-        {qLessons.map(lid=>(
-          <button key={lid} onClick={()=>{loadQSets(lid);setView("questions_sets");}} style={{width:"100%",background:C.card,border:`1px solid ${C.cyan}33`,borderRadius:12,padding:"14px 16px",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,textAlign:"left"}}>
-            <div>
-              <div style={{fontWeight:800,color:"white",fontSize:14}}>{lid}</div>
-              <div style={{fontSize:11,color:C.dim,marginTop:2}}>Tap to view sets</div>
-            </div>
-            <span style={{color:C.cyan,fontSize:20}}>›</span>
-          </button>
-        ))}
-        {!loading&&qLessons.length===0&&<div style={{textAlign:"center",color:C.dim,padding:30}}>No lessons found for this class.</div>}
+        {msg&&<div style={{color:msg.startsWith("✅")?C.green:C.red,fontSize:12,marginBottom:10,padding:"8px",borderRadius:8,background:msg.startsWith("✅")?`${C.green}11`:`${C.red}11`}}>{msg}</div>}
+        <div style={{color:C.dim,fontSize:11,marginBottom:8}}>{qLessons.filter(l=>!search||l.toLowerCase().includes(search.toLowerCase())).length} lessons</div>
+        {qLessons.filter(l=>!search||l.toLowerCase().includes(search.toLowerCase())).map(lid=>{
+          const prefixMap={10:"n",11:"jk",12:"sk",1:"c1",2:"c2",3:"c3",4:"c4",5:"c5"};
+          const prefix=prefixMap[qClassNum]||`c${qClassNum}`;
+          const lessonNum=lid.replace(prefix+"-l","");
+          const className=CLASS_LABELS[qClassNum]||"Class "+qClassNum;
+          return (
+            <button key={lid} onClick={()=>{loadQSets(lid);setView("questions_sets");}} style={{width:"100%",background:C.card,border:`1px solid ${C.orange}33`,borderRadius:12,padding:"14px 16px",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,textAlign:"left"}}>
+              <div>
+                <div style={{fontWeight:800,color:"white",fontSize:14}}>{className} — Lesson {lessonNum}</div>
+                <div style={{fontSize:11,color:C.dim,marginTop:2}}>ID: <span style={{color:C.orange,fontFamily:"monospace"}}>{lid}</span></div>
+              </div>
+              <span style={{color:C.orange,fontSize:20}}>›</span>
+            </button>
+          );
+        })}
+        {!loading&&qLessons.length===0&&<div style={{textAlign:"center",color:C.dim,padding:30}}>No lessons found. Click + LESSON to create one.</div>}
       </div>
     </div>
   );
@@ -7040,20 +7194,17 @@ function AdminPanel({ onBack }) {
   if (view==="questions_sets") return (
     <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",overflowY:"auto"}}>
       <Hdr title={`${qLesson} — SETS`} back={()=>setView("questions_lessons")} accent={C.purple}
-        extra={<button onClick={()=>{setForm({lesson_id:qLesson,set_index:(Math.max(...(qSets.length?qSets:[-1]))+1)});setMsg("");setView("questions_add_set");}} style={{background:`${C.green}22`,border:`1px solid ${C.green}44`,borderRadius:10,padding:"7px 12px",color:C.green,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:9}}>+ SET</button>}
+        extra={<button onClick={()=>{setForm({lesson_id:qLesson,set_index:(qSets.length>0?Math.max(...qSets)+1:0)});setMsg("");setView("questions_add_set");}} style={{background:`${C.green}22`,border:`1px solid ${C.green}44`,borderRadius:10,padding:"7px 12px",color:C.green,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:9}}>+ SET</button>}
       />
-      <div style={{padding:"16px 18px",maxWidth:600,margin:"0 auto"}}>
+      <div style={{padding:"12px 16px",maxWidth:600,margin:"0 auto"}}>
         {loading&&<div style={{textAlign:"center",color:C.dim,padding:20}}>Loading...</div>}
         {qSets.map(si=>(
           <button key={si} onClick={()=>{loadQs(qLesson,si);setView("questions_list");}} style={{width:"100%",background:C.card,border:`1px solid ${C.purple}33`,borderRadius:12,padding:"14px 16px",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,textAlign:"left"}}>
-            <div>
-              <div style={{fontWeight:800,color:"white",fontSize:14}}>Set {si+1}</div>
-              <div style={{fontSize:11,color:C.dim,marginTop:2}}>set_index: {si}</div>
-            </div>
+            <div><div style={{fontWeight:800,color:"white",fontSize:14}}>Set {si+1}</div><div style={{fontSize:11,color:C.dim,marginTop:2}}>set_index: {si}</div></div>
             <span style={{color:C.purple,fontSize:20}}>›</span>
           </button>
         ))}
-        {!loading&&qSets.length===0&&<div style={{textAlign:"center",color:C.dim,padding:30}}>No sets yet. Create one!</div>}
+        {!loading&&qSets.length===0&&<div style={{textAlign:"center",color:C.dim,padding:30}}>No sets yet.</div>}
       </div>
     </div>
   );
@@ -7061,38 +7212,26 @@ function AdminPanel({ onBack }) {
   // ── Questions: Add New Set ────────────────────────────────────────
   if (view==="questions_add_set") return (
     <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"20px 18px"}}>
-      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
-        <BackBtn onClick={()=>setView("questions_sets")} color={C.green}/>
-        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.green}}>NEW SET — {qLesson} · Set {(form.set_index??0)+1}</div>
-      </div>
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><BackBtn onClick={()=>setView("questions_sets")} color={C.green}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.green}}>NEW SET — {qLesson} · Set {(form.set_index??0)+1}</div></div>
       <Card color={C.green} style={{maxWidth:520,margin:"0 auto"}}>
-        <div style={{color:C.dim,fontSize:11,marginBottom:4}}>Set Index (auto-assigned: {form.set_index??0})</div>
-        <div style={{color:"white",fontSize:13,marginBottom:12,background:`${C.green}11`,borderRadius:8,padding:"8px 12px"}}>This will create Set {(form.set_index??0)+1} in lesson {qLesson}. Add the first question below to create the set.</div>
-        {[["Question","question",""],["Option A","opt0",""],["Option B","opt1",""],["Option C","opt2",""],["Option D","opt3",""],["Hint (optional)","hint",""]].map(([l,k,ph])=>(
-          <div key={k}>
-            <div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div>
-            <input value={form[k]||""} onChange={e=>setForm({...form,[k]:e.target.value})} placeholder={ph} style={iS(C.green)}/>
-          </div>
+        <div style={{color:"white",fontSize:13,marginBottom:12,background:`${C.green}11`,borderRadius:8,padding:"8px 12px"}}>Creates Set {(form.set_index??0)+1} in lesson <b style={{color:C.green}}>{qLesson}</b>. Fill the first question to create the set.</div>
+        {[["Question","question"],["Option A","opt0"],["Option B","opt1"],["Option C","opt2"],["Option D","opt3"],["Hint (optional)","hint"]].map(([l,k])=>(
+          <div key={k}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div><input value={form[k]||""} onChange={e=>setForm({...form,[k]:e.target.value})} style={iS(C.green)}/></div>
         ))}
-        <div style={{marginBottom:12}}>
-          <div style={{color:C.dim,fontSize:11,marginBottom:4}}>CORRECT ANSWER</div>
-          <select value={form.correct||0} onChange={e=>setForm({...form,correct:parseInt(e.target.value)})} style={{width:"100%",background:C.card2,border:`1.5px solid ${C.green}44`,borderRadius:10,padding:"10px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14}}>
-            {["A","B","C","D"].map((l,i)=><option key={i} value={i}>Option {l}</option>)}
-          </select>
-        </div>
-        {msg&&<div style={{color:msg.startsWith("✅")?C.green:C.red,fontSize:12,marginBottom:8}}>{msg}</div>}
+        <div style={{marginBottom:12}}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>CORRECT ANSWER</div><select value={form.correct||0} onChange={e=>setForm({...form,correct:parseInt(e.target.value)})} style={{width:"100%",background:C.card2,border:`1.5px solid ${C.green}44`,borderRadius:10,padding:"10px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14}}>{["A","B","C","D"].map((l,i)=><option key={i} value={i}>Option {l}</option>)}</select></div>
+        <MsgBar m={msg}/>
         <Btn color={C.green} loading={loading} onClick={async()=>{
           if(!form.question||!form.opt0||!form.opt1||!form.opt2||!form.opt3){setMsg("Fill all fields.");return;}
           setLoading(true);setMsg("");
           const d=await api("admin_add_question",{lesson_id:form.lesson_id,set_index:form.set_index??0,question_index:0,question:form.question,options:[form.opt0,form.opt1,form.opt2,form.opt3],correct_answer:form.correct??0,hint:form.hint||""});
-          if(d.data){setMsg("✅ Set created with first question!");loadQSets(qLesson);setTimeout(()=>setView("questions_sets"),1000);}else setMsg(d.error||"Failed");
+          if(d.data){toast("✅ Set created!");loadQSets(qLesson);setTimeout(()=>setView("questions_sets"),800);}else setMsg(d.error||"Failed");
           setLoading(false);
         }}>CREATE SET + ADD QUESTION</Btn>
       </Card>
     </div>
   );
 
-  // ── Questions: List in Set ────────────────────────────────────────
+  // ── Questions: List in Set (table) ────────────────────────────────
   if (view==="questions_list") return (
     <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",overflowY:"auto"}}>
       <Hdr title={`${qLesson} · Set ${(qSet??0)+1}`} back={()=>setView("questions_sets")} accent={C.yellow}
@@ -7101,29 +7240,24 @@ function AdminPanel({ onBack }) {
           <button onClick={()=>{setBulkText("");setBulkResult([]);setMsg("");setView("questions_bulk");}} style={{background:`${C.purple}22`,border:`1px solid ${C.purple}44`,borderRadius:10,padding:"7px 12px",color:C.purple,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:9}}>⚡ BULK</button>
         </>}
       />
-      <div style={{padding:"12px 14px",maxWidth:700,margin:"0 auto"}}>
+      <div style={{padding:"10px 12px",maxWidth:800,margin:"0 auto"}}>
         {loading&&<div style={{textAlign:"center",color:C.dim,padding:20}}>Loading...</div>}
-        {msg&&<div style={{color:msg.startsWith("✅")?C.green:C.red,fontSize:12,marginBottom:10,padding:"8px",borderRadius:8,background:msg.startsWith("✅")?`${C.green}11`:`${C.red}11`}}>{msg}</div>}
-        {/* Table */}
+        <MsgBar m={msg}/>
         {questions.length>0&&(
           <div style={{overflowX:"auto"}}>
             <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
-              <thead>
-                <tr style={{background:C.card2}}>
-                  {["#","Question","A","B","C","D","✓","Hint",""].map((h,i)=><th key={i} style={{padding:"8px 10px",textAlign:"left",color:C.dim,fontWeight:700,whiteSpace:"nowrap",borderBottom:`1px solid ${C.yellow}33`}}>{h}</th>)}
-                </tr>
-              </thead>
+              <thead><tr style={{background:C.card2}}>{["#","Question","A","B","C","D","✓","Hint",""].map((h,i)=><th key={i} style={{padding:"8px 10px",textAlign:"left",color:C.dim,fontWeight:700,whiteSpace:"nowrap",borderBottom:`1px solid ${C.yellow}33`}}>{h}</th>)}</tr></thead>
               <tbody>
                 {questions.map((q,i)=>(
                   <tr key={q.id} style={{background:i%2===0?C.card:"transparent",borderBottom:`1px solid #ffffff08`}}>
-                    <td style={{padding:"8px 10px",color:C.dim,whiteSpace:"nowrap"}}>{i+1}</td>
+                    <td style={{padding:"8px 10px",color:C.dim}}>{i+1}</td>
                     <td style={{padding:"8px 10px",color:"white",maxWidth:200,wordBreak:"break-word"}}>{q.question}</td>
                     {(q.options||[]).map((o,oi)=><td key={oi} style={{padding:"8px 10px",color:oi===q.correct_answer?C.green:"#aaa",maxWidth:120,wordBreak:"break-word"}}>{o}</td>)}
                     <td style={{padding:"8px 10px",color:C.green,fontWeight:800}}>{"ABCD"[q.correct_answer]}</td>
                     <td style={{padding:"8px 10px",color:C.dim,maxWidth:100,wordBreak:"break-word"}}>{q.hint||"—"}</td>
                     <td style={{padding:"8px 6px",whiteSpace:"nowrap"}}>
-                      <button onClick={()=>{setEditQ(q);setForm({id:q.id,question:q.question,opt0:q.options[0],opt1:q.options[1],opt2:q.options[2],opt3:q.options[3],correct:q.correct_answer,hint:q.hint||""});setMsg("");setView("questions_edit_q");}} style={{background:`${C.cyan}22`,border:`1px solid ${C.cyan}44`,borderRadius:6,padding:"4px 7px",color:C.cyan,cursor:"pointer",marginRight:4,fontSize:11}}>✏️</button>
-                      <button onClick={async()=>{if(!window.confirm("Delete this question?"))return;setLoading(true);const d=await api("admin_delete_question",{id:q.id});if(d.ok)loadQs(qLesson,qSet);else setMsg(d.error||"Failed");setLoading(false);}} style={{background:`${C.red}22`,border:`1px solid ${C.red}44`,borderRadius:6,padding:"4px 7px",color:C.red,cursor:"pointer",fontSize:11}}>🗑️</button>
+                      <button onClick={()=>{setForm({id:q.id,question:q.question,opt0:q.options[0],opt1:q.options[1],opt2:q.options[2],opt3:q.options[3],correct:q.correct_answer,hint:q.hint||""});setMsg("");setView("questions_edit_q");}} style={{background:`${C.cyan}22`,border:`1px solid ${C.cyan}44`,borderRadius:6,padding:"4px 7px",color:C.cyan,cursor:"pointer",marginRight:4,fontSize:11}}>✏️</button>
+                      <button onClick={async()=>{if(!window.confirm("Delete?"))return;setLoading(true);const d=await api("admin_delete_question",{id:q.id});if(d.ok){toast("✅ Question deleted");loadQs(qLesson,qSet);}else setMsg(d.error||"Failed");setLoading(false);}} style={{background:`${C.red}22`,border:`1px solid ${C.red}44`,borderRadius:6,padding:"4px 7px",color:C.red,cursor:"pointer",fontSize:11}}>🗑️</button>
                     </td>
                   </tr>
                 ))}
@@ -7139,29 +7273,18 @@ function AdminPanel({ onBack }) {
   // ── Questions: Add Single Question ────────────────────────────────
   if (view==="questions_add_q") return (
     <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"20px 18px"}}>
-      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
-        <BackBtn onClick={()=>setView("questions_list")} color={C.green}/>
-        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.green}}>ADD QUESTION — {qLesson} Set {(qSet??0)+1}</div>
-      </div>
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><BackBtn onClick={()=>setView("questions_list")} color={C.green}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.green}}>ADD QUESTION — {qLesson} Set {(qSet??0)+1}</div></div>
       <Card color={C.green} style={{maxWidth:520,margin:"0 auto"}}>
         {[["Question","question"],["Option A","opt0"],["Option B","opt1"],["Option C","opt2"],["Option D","opt3"],["Hint (optional)","hint"]].map(([l,k])=>(
-          <div key={k}>
-            <div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div>
-            <input value={form[k]||""} onChange={e=>setForm({...form,[k]:e.target.value})} style={iS(C.green)}/>
-          </div>
+          <div key={k}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div><input value={form[k]||""} onChange={e=>setForm({...form,[k]:e.target.value})} style={iS(C.green)}/></div>
         ))}
-        <div style={{marginBottom:12}}>
-          <div style={{color:C.dim,fontSize:11,marginBottom:4}}>CORRECT ANSWER</div>
-          <select value={form.correct??0} onChange={e=>setForm({...form,correct:parseInt(e.target.value)})} style={{width:"100%",background:C.card2,border:`1.5px solid ${C.green}44`,borderRadius:10,padding:"10px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14}}>
-            {["A","B","C","D"].map((l,i)=><option key={i} value={i}>Option {l} — {form["opt"+i]||""}</option>)}
-          </select>
-        </div>
-        {msg&&<div style={{color:msg.startsWith("✅")?C.green:C.red,fontSize:12,marginBottom:8}}>{msg}</div>}
+        <div style={{marginBottom:12}}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>CORRECT ANSWER</div><select value={form.correct??0} onChange={e=>setForm({...form,correct:parseInt(e.target.value)})} style={{width:"100%",background:C.card2,border:`1.5px solid ${C.green}44`,borderRadius:10,padding:"10px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14}}>{["A","B","C","D"].map((l,i)=><option key={i} value={i}>Option {l} — {form["opt"+i]||""}</option>)}</select></div>
+        <MsgBar m={msg}/>
         <Btn color={C.green} loading={loading} onClick={async()=>{
           if(!form.question||!form.opt0||!form.opt1||!form.opt2||!form.opt3){setMsg("Fill question and all 4 options.");return;}
           setLoading(true);setMsg("");
           const d=await api("admin_add_question",{lesson_id:form.lesson_id,set_index:form.set_index??0,question_index:form.question_index??0,question:form.question,options:[form.opt0,form.opt1,form.opt2,form.opt3],correct_answer:form.correct??0,hint:form.hint||""});
-          if(d.data){setMsg("✅ Question added!");setForm(f=>({...f,question:"",opt0:"",opt1:"",opt2:"",opt3:"",hint:"",question_index:(f.question_index??0)+1}));loadQs(qLesson,qSet);}else setMsg(d.error||"Failed");
+          if(d.data){toast("✅ Question added!");setForm(f=>({...f,question:"",opt0:"",opt1:"",opt2:"",opt3:"",hint:"",question_index:(f.question_index??0)+1}));loadQs(qLesson,qSet);}else setMsg(d.error||"Failed");
           setLoading(false);
         }}>ADD QUESTION</Btn>
       </Card>
@@ -7171,28 +7294,17 @@ function AdminPanel({ onBack }) {
   // ── Questions: Edit Question ──────────────────────────────────────
   if (view==="questions_edit_q") return (
     <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"20px 18px"}}>
-      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
-        <BackBtn onClick={()=>setView("questions_list")} color={C.cyan}/>
-        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.cyan}}>EDIT QUESTION</div>
-      </div>
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><BackBtn onClick={()=>setView("questions_list")} color={C.cyan}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.cyan}}>EDIT QUESTION</div></div>
       <Card color={C.cyan} style={{maxWidth:520,margin:"0 auto"}}>
         {[["Question","question"],["Option A","opt0"],["Option B","opt1"],["Option C","opt2"],["Option D","opt3"],["Hint","hint"]].map(([l,k])=>(
-          <div key={k}>
-            <div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div>
-            <input value={form[k]||""} onChange={e=>setForm({...form,[k]:e.target.value})} style={iS(C.cyan)}/>
-          </div>
+          <div key={k}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div><input value={form[k]||""} onChange={e=>setForm({...form,[k]:e.target.value})} style={iS(C.cyan)}/></div>
         ))}
-        <div style={{marginBottom:12}}>
-          <div style={{color:C.dim,fontSize:11,marginBottom:4}}>CORRECT ANSWER</div>
-          <select value={form.correct??0} onChange={e=>setForm({...form,correct:parseInt(e.target.value)})} style={{width:"100%",background:C.card2,border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"10px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14}}>
-            {["A","B","C","D"].map((l,i)=><option key={i} value={i}>Option {l} — {form["opt"+i]||""}</option>)}
-          </select>
-        </div>
-        {msg&&<div style={{color:msg.startsWith("✅")?C.green:C.red,fontSize:12,marginBottom:8}}>{msg}</div>}
+        <div style={{marginBottom:12}}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>CORRECT ANSWER</div><select value={form.correct??0} onChange={e=>setForm({...form,correct:parseInt(e.target.value)})} style={{width:"100%",background:C.card2,border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"10px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14}}>{["A","B","C","D"].map((l,i)=><option key={i} value={i}>Option {l} — {form["opt"+i]||""}</option>)}</select></div>
+        <MsgBar m={msg}/>
         <Btn color={C.cyan} loading={loading} onClick={async()=>{
           setLoading(true);setMsg("");
           const d=await api("admin_update_question",{id:form.id,question:form.question,options:[form.opt0,form.opt1,form.opt2,form.opt3],correct_answer:form.correct??0,hint:form.hint||""});
-          if(d.ok){setMsg("✅ Saved!");loadQs(qLesson,qSet);}else setMsg(d.error||"Failed");
+          if(d.ok){toast("✅ Question updated!");loadQs(qLesson,qSet);setView("questions_list");}else setMsg(d.error||"Failed");
           setLoading(false);
         }}>SAVE CHANGES</Btn>
       </Card>
@@ -7202,34 +7314,20 @@ function AdminPanel({ onBack }) {
   // ── Questions: Bulk Upload ────────────────────────────────────────
   if (view==="questions_bulk") return (
     <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"20px 18px"}}>
-      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
-        <BackBtn onClick={()=>setView("questions_list")} color={C.purple}/>
-        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.purple}}>BULK UPLOAD — {qLesson} Set {(qSet??0)+1}</div>
-      </div>
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><BackBtn onClick={()=>setView("questions_list")} color={C.purple}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.purple}}>BULK UPLOAD — {qLesson} Set {(qSet??0)+1}</div></div>
       <Card color={C.purple} style={{maxWidth:520,margin:"0 auto"}}>
-        <div style={{color:C.dim,fontSize:11,marginBottom:6}}>CSV format: <b style={{color:C.purple}}>Question, Option A, Option B, Option C, Option D, Correct (0-3), Hint</b></div>
-        <div style={{color:C.dim,fontSize:10,marginBottom:10,background:`${C.purple}11`,borderRadius:8,padding:"8px 10px"}}>
-          Example:<br/>
-          What is 2+2?, 3, 4, 5, 6, 1, Add the numbers<br/>
-          What is 5×3?, 10, 12, 15, 18, 2, Multiply
-        </div>
-        <textarea value={bulkText} onChange={e=>setBulkText(e.target.value)} rows={10} placeholder="Question, A, B, C, D, correct(0-3), hint"
-          style={{width:"100%",background:C.card2,border:`1.5px solid ${C.purple}44`,borderRadius:10,padding:"10px 12px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:12,display:"block",marginBottom:10,resize:"vertical"}}/>
-        {bulkResult.length>0&&(
-          <div style={{maxHeight:150,overflowY:"auto",marginBottom:10}}>
-            {bulkResult.map((r,i)=><div key={i} style={{fontSize:11,color:r.ok?C.green:C.red}}>{r.ok?"✅":"❌"} Row {i+1}: {r.error||"OK"}</div>)}
-          </div>
-        )}
-        {msg&&<div style={{color:msg.startsWith("✅")?C.green:C.red,fontSize:12,marginBottom:8}}>{msg}</div>}
+        <div style={{color:C.dim,fontSize:11,marginBottom:6}}>CSV: <b style={{color:C.purple}}>Question, Option A, Option B, Option C, Option D, Correct (0-3), Hint</b></div>
+        <div style={{color:C.dim,fontSize:10,marginBottom:10,background:`${C.purple}11`,borderRadius:8,padding:"8px 10px"}}>What is 2+2?, 3, 4, 5, 6, 1, Add the numbers</div>
+        <textarea value={bulkText} onChange={e=>setBulkText(e.target.value)} rows={10} placeholder="Question, A, B, C, D, correct(0-3), hint" style={{width:"100%",background:C.card2,border:`1.5px solid ${C.purple}44`,borderRadius:10,padding:"10px 12px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:12,display:"block",marginBottom:10,resize:"vertical"}}/>
+        {bulkResult.length>0&&<div style={{maxHeight:150,overflowY:"auto",marginBottom:10}}>{bulkResult.map((r,i)=><div key={i} style={{fontSize:11,color:r.ok?C.green:C.red}}>{r.ok?"✅":"❌"} Row {i+1}: {r.error||"OK"}</div>)}</div>}
+        <MsgBar m={msg}/>
         <Btn color={C.purple} loading={loading} onClick={async()=>{
           const rows=bulkText.split("\n").map(l=>l.trim()).filter(Boolean).map(l=>{const p=l.split(",").map(s=>s.trim());return{question:p[0],options:[p[1]||"",p[2]||"",p[3]||"",p[4]||""],correct_answer:parseInt(p[5])||0,hint:p[6]||""};}).filter(r=>r.question);
           if(!rows.length){setMsg("No valid rows.");return;}
           setLoading(true);setMsg("");setBulkResult([]);
           const d=await api("admin_bulk_add_questions",{lesson_id:qLesson,set_index:qSet??0,questions:rows});
-          setBulkResult(d.data||[]);
-          const ok=(d.data||[]).filter(r=>r.ok).length;
-          setMsg(`✅ ${ok}/${rows.length} questions added.`);
-          if(ok>0)loadQs(qLesson,qSet);
+          setBulkResult(d.data||[]);const ok=(d.data||[]).filter(r=>r.ok).length;
+          toast(`✅ ${ok}/${rows.length} questions added.`);if(ok>0)loadQs(qLesson,qSet);
           setLoading(false);
         }}>UPLOAD QUESTIONS</Btn>
       </Card>
