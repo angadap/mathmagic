@@ -3513,16 +3513,25 @@ function ThemeSelector({ onClose }) {
 function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogout, onFeedback, onRate, onSettings, isLessonPurchased }) {
   const [showTutorial, setShowTutorial] = useState(()=>!localStorage.getItem('mm_tutorial_done'));
   const doneTutorial = () => { localStorage.setItem('mm_tutorial_done','1'); setShowTutorial(false); };
-  const [showTheme, setShowTheme] = useState(false);
   const [showWelcome, setShowWelcome] = useState(()=>!localStorage.getItem('mm_welcomed_'+((typeof child!=="undefined"&&child?.id)||"")));
   const dismissWelcome = () => { localStorage.setItem('mm_welcomed_'+(child?.id||""),'1'); setShowWelcome(false); };
   const [progress, setProgress] = useState([]);
   const [showDQ,     setShowDQ]     = useState(false);
   const [showPuzzle, setShowPuzzle] = useState(false);
   const [showRating, setShowRating] = useState(false);
-  const w = WORLDS[(child.class_num||1) - 1];
+  const [mascotMsg,  setMascotMsg]  = useState(0);
+  const [rocketAnim, setRocketAnim] = useState(false);
+  const w = WORLDS.find(x=>x.id===parseInt(child.class_num||1)) || WORLDS[0];
 
-  // Show rating prompt after 3rd session
+  const MASCOT_MSGS = [
+    `Hi ${child.name?.split(" ")[0]}! Ready to blast off? 🚀`,
+    "You're a Math Superstar! ⭐ Keep going!",
+    "Every problem you solve makes you smarter! 💡",
+    "Don't forget your Daily Challenge today! 🎯",
+    `${child.streak_days||0} day streak! You're on fire! 🔥`,
+    "Math is your superpower! 🦸 Show the galaxy!",
+  ];
+
   useEffect(() => {
     if (localStorage.getItem("mm_rated")) return;
     const sessions = parseInt(localStorage.getItem("mm_sessions")||"0") + 1;
@@ -3530,166 +3539,240 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
     if (sessions === 3) setTimeout(() => { setShowRating(true); SFX.ratingOpen(); }, 5000);
     db.track("app_open", child.id, null, { session: sessions, class_num: child.class_num });
   }, [child.id, child.class_num]);
+
   useEffect(() => {
     db.getProgress(child.id).then(({ data }) => setProgress(data || []));
-    // Prefetch Set 1 of all unlocked lessons silently
     const lessons = LESSONS[child.class_num] || LESSONS[1];
-    lessons.forEach((l, i) => {
-      if (i === 0) fetchSetQuestions(l.id, 0); // always prefetch first lesson
-    });
+    lessons.forEach((l, i) => { if (i === 0) fetchSetQuestions(l.id, 0); });
+    // Rotate mascot message every 4s
+    const t = setInterval(() => setMascotMsg(m => (m+1) % 6), 4000);
+    return () => clearInterval(t);
   }, [child.id]);
+
   const myLessons  = LESSONS[child.class_num] || LESSONS[1];
-  const myProgress = [...new Set(
-    progress
-      .filter(p => myLessons.some(l => p.lesson_id && p.lesson_id.startsWith(l.id + "_s")))
-      .map(p => p.lesson_id.replace(/_s[0-9]+$/, ""))
-  )];
+  const myProgress = [...new Set(progress.filter(p => myLessons.some(l => p.lesson_id && p.lesson_id.startsWith(l.id+"_s"))).map(p => p.lesson_id.replace(/_s[0-9]+$/, "")))];
   const totalStars = progress.reduce((s, p) => s + (p.stars_earned||0), 0);
   const todayStr   = new Date().toDateString();
   const todaySets  = progress.filter(p => p.completed_at && new Date(p.completed_at).toDateString() === todayStr).length;
+  const totalSets  = myLessons.length * 20;
+  const doneSets   = myLessons.reduce((s,l) => s + Array.from({length:20},(_,i)=>i).filter(i=>progress.some(p=>p.lesson_id===l.id+"_s"+i&&(p.stars_earned||0)>=1)).length, 0);
+  const pctDone    = totalSets > 0 ? Math.round((doneSets/totalSets)*100) : 0;
+  const todayKey   = new Date().toISOString().slice(0,10);
+  const dqDone     = !!localStorage.getItem(`dq_done_${child.id}_${todayKey}`);
+  const dpDone     = !!localStorage.getItem(`dp_done_${child.id}_${todayKey}`);
+  const levelEmoji = ["🌱","🌟","💫","🚀","🏆","👑"][Math.min(Math.floor((child.level||1)/2), 5)];
 
   return (
-    <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Nunito',sans-serif", paddingBottom:80, position:"relative" }}>
-      <Starfield n={40}/>
+    <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Baloo 2','Nunito',sans-serif", paddingBottom:88, position:"relative", overflowX:"hidden" }}>
+      <Starfield n={50}/>
       {onFeedback && <SOSButton onClick={() => onFeedback()}/>}
       {showTutorial && <Tutorial onDone={doneTutorial}/>}
-      {/* Header */}
-      <div style={{ position:"relative", zIndex:2, padding:"16px 18px 0" }}>
-        <div style={{ textAlign:"center", marginBottom:8 }}>
-          <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:10, color:C.dim, letterSpacing:2 }}>WELCOME BACK,</div>
-          <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:15, color:C.cyan, fontWeight:900, letterSpacing:1 }}>{child.name.toUpperCase()} 👋</div>
-          <div style={{ fontSize:10, color:C.dim, marginTop:1 }}>to MathMagic Space Academy</div>
-        </div>
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
-          <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-            <div style={{ width:44, height:44, background:`${C.purple}22`, borderRadius:13, border:`2px solid ${C.purple}44`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:22 }}>{child.avatar}</div>
-            <div>
-              <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:12, color:C.cyan }}>CADET {child.name.toUpperCase()}</div>
-              <div style={{ fontSize:11, color:C.dim, fontWeight:600 }}>{w.world} · {child.is_premium ? "⭐ Premium" : "Free"}</div>
-            </div>
-          </div>
-          <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-            <div style={{ textAlign:"center" }}>
-              <div style={{ display:"flex", alignItems:"center", gap:3 }}><span style={{ fontSize:14 }}>🔥</span><span style={{ fontFamily:"'Orbitron',sans-serif", fontSize:14, color:C.orange }}>{child.streak_days||0}</span></div>
-              <div style={{ fontSize:8, color:C.dim, fontFamily:"'Orbitron',sans-serif" }}>STREAK</div>
-            </div>
-            <MuteBtn/><button onClick={onLogout} style={{ background:`${C.pink}14`, border:`1px solid ${C.pink}44`, borderRadius:10, padding:"5px 9px", color:C.pink, fontSize:10, cursor:"pointer", fontFamily:"'Orbitron',sans-serif" }}>EXIT</button>
-          </div>
-        </div>
-        <XPBar xp={child.xp||0} level={child.level||1}/>
-      </div>
-      {/* Welcome banner */}
-      {showWelcome && (
-        <div onClick={dismissWelcome} style={{ position:"fixed", inset:0, zIndex:150, display:"flex", alignItems:"center", justifyContent:"center", background:"rgba(4,4,15,0.88)", backdropFilter:"blur(8px)", padding:"0 20px" }}>
-          <div style={{ background:`linear-gradient(135deg,${C.purple}22,${C.cyan}18)`, border:`2px solid ${C.cyan}55`, borderRadius:24, padding:"32px 24px", maxWidth:380, width:"100%", textAlign:"center", boxShadow:`0 0 60px ${C.cyan}33`, animation:"fadeIn 0.4s ease" }}>
-            <div style={{ fontSize:64, marginBottom:8 }}>{child.avatar||"🧒"}</div>
-            <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:11, color:C.cyan, letterSpacing:3, marginBottom:6 }}>WELCOME TO</div>
-            <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:20, color:"white", fontWeight:900, marginBottom:4 }}>MATHMAGIC</div>
-            <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:13, color:C.yellow, marginBottom:16 }}>SPACE ACADEMY</div>
-            <div style={{ fontSize:18, color:"white", fontWeight:800, marginBottom:6 }}>Hello, {child.name}! 👋</div>
-            <div style={{ fontSize:13, color:C.dim, lineHeight:1.6, marginBottom:20 }}>Ready to blast off on your math adventure? Your mission awaits, Cadet!</div>
-            <button onClick={dismissWelcome} style={{ background:`linear-gradient(135deg,${C.cyan},${C.purple})`, border:"none", borderRadius:14, padding:"12px 32px", color:"white", fontFamily:"'Orbitron',sans-serif", fontSize:12, cursor:"pointer", fontWeight:700, boxShadow:`0 0 20px ${C.cyan}44`, letterSpacing:1 }}>🚀 LET'S GO!</button>
-            <div style={{ fontSize:10, color:C.dim, marginTop:12 }}>Tap anywhere to continue</div>
-          </div>
-        </div>
-      )}
-      {/* Stats */}
-      <div style={{ position:"relative", zIndex:2, display:"flex", gap:10, padding:"11px 18px" }}>
-        {[{e:"⭐",v:totalStars,l:"STARS"},{e:"💰",v:child.coins||0,l:"COINS"},{e:"📚",v:myProgress.length,l:"DONE"}].map((s,i) => (
-          <div key={i} style={{ flex:1, background:C.card, borderRadius:13, padding:"9px 6px", textAlign:"center", border:`1px solid ${[C.yellow,C.orange,C.purple][i]}28` }}>
-            <div style={{ fontSize:18 }}>{s.e}</div>
-            <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:15, color:"white"}}>{s.v}</div>
-            <div style={{ fontSize:8, color:C.dim, letterSpacing:1, fontFamily:"'Orbitron',sans-serif" }}>{s.l}</div>
-          </div>
-        ))}
-      </div>
-      {/* Modals */}
       {showDQ     && <DailyQuiz   child={child} onClose={() => setShowDQ(false)}/>}
       {showPuzzle && <DailyPuzzle child={child} onClose={() => setShowPuzzle(false)}/>}
       {showRating && <RatingPrompt child={child} onClose={() => setShowRating(false)}/>}
-      <div style={{ position:"relative", zIndex:2, margin:"0 18px 14px", display:"flex", flexDirection:"column", gap:9 }}>
-        {/* Daily set mission */}
-        <div style={{ background:`linear-gradient(135deg,${C.purple}28,${C.cyan}14)`, border:`1px solid ${C.cyan}33`, borderRadius:15, padding:"12px 14px", display:"flex", alignItems:"center", gap:12, animation:"pulseG 3s ease-in-out infinite" }}>
-          <div style={{ fontSize:28 }}>🎯</div>
-          <div style={{ flex:1 }}>
-            <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:10, color:C.cyan, letterSpacing:1 }}>DAILY MISSION</div>
-            <div style={{ color:"white", fontSize:13, fontWeight:700, marginTop:2 }}>Complete 1 set today! 🚀</div>
-            <div style={{ marginTop:5, background:"rgba(255,255,255,0.06)", borderRadius:5, height:4, overflow:"hidden" }}>
-              <div style={{ width:`${Math.min((todaySets/1)*100,100)}%`, height:"100%", background:`linear-gradient(90deg,${C.cyan},${C.purple})`, borderRadius:5 }}/>
+
+      {/* ── Welcome modal ── */}
+      {showWelcome && (
+        <div onClick={dismissWelcome} style={{ position:"fixed", inset:0, zIndex:150, display:"flex", alignItems:"center", justifyContent:"center", background:"rgba(4,4,15,0.92)", backdropFilter:"blur(10px)", padding:"0 20px" }}>
+          <div style={{ background:`linear-gradient(135deg,${C.purple}28,${C.cyan}18)`, border:`2px solid ${C.cyan}55`, borderRadius:28, padding:"36px 28px", maxWidth:380, width:"100%", textAlign:"center", boxShadow:`0 0 80px ${C.cyan}33`, animation:"popIn 0.5s ease" }}>
+            <div style={{ fontSize:80, marginBottom:10, animation:"floatUp 2s ease-in-out infinite" }}>{child.avatar||"🧒"}</div>
+            <div style={{ fontSize:13, color:C.cyan, letterSpacing:4, marginBottom:6, fontWeight:700 }}>WELCOME TO</div>
+            <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:26, color:"white", fontWeight:900, marginBottom:4 }}>MathMagic</div>
+            <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:14, color:C.yellow, marginBottom:20 }}>SPACE ACADEMY 🚀</div>
+            <div style={{ fontSize:20, color:"white", fontWeight:800, marginBottom:8 }}>Hello, {child.name}! 👋</div>
+            <div style={{ fontSize:15, color:C.dim, lineHeight:1.7, marginBottom:24 }}>Your math adventure awaits, Cadet!<br/>Let's explore the galaxy together! 🌌</div>
+            <button onClick={dismissWelcome} style={{ background:`linear-gradient(135deg,${C.cyan},${C.purple})`, border:"none", borderRadius:20, padding:"16px 40px", color:"white", fontFamily:"'Baloo 2',sans-serif", fontSize:18, cursor:"pointer", fontWeight:800, boxShadow:`0 0 30px ${C.cyan}55`, letterSpacing:1 }}>🚀 LET'S GO!</button>
+            <div style={{ fontSize:11, color:C.dim, marginTop:14 }}>Tap anywhere to continue</div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Hero Header ── */}
+      <div style={{ position:"relative", zIndex:2, padding:"0 0 0" }}>
+        {/* Gradient hero band */}
+        <div style={{ background:`linear-gradient(160deg,${w.color}28 0%,${C.purple}18 50%,transparent 100%)`, padding:"20px 20px 16px", position:"relative", overflow:"hidden" }}>
+          {/* Animated planet in background */}
+          <div style={{ position:"absolute", right:-20, top:-20, fontSize:100, opacity:0.12, animation:"floatUp 4s ease-in-out infinite", pointerEvents:"none", zIndex:0 }}>{w.planet}</div>
+          <div style={{ position:"relative", zIndex:1 }}>
+            {/* Top row: avatar + name + controls */}
+            <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:14 }}>
+              <div style={{ position:"relative", flexShrink:0 }}>
+                <div style={{ width:56, height:56, background:`linear-gradient(135deg,${w.color}44,${C.purple}44)`, borderRadius:18, border:`3px solid ${w.color}66`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:30, boxShadow:`0 0 20px ${w.color}44` }}>{child.avatar}</div>
+                <div style={{ position:"absolute", bottom:-4, right:-4, background:C.yellow, borderRadius:10, padding:"2px 6px", fontSize:10, fontWeight:900, color:"#000", border:"2px solid "+C.bg }}>Lv{child.level||1}</div>
+              </div>
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize:20, fontWeight:900, color:"white", lineHeight:1.1 }}>Hey, {child.name?.split(" ")[0]}! {levelEmoji}</div>
+                <div style={{ fontSize:13, color:w.color, fontWeight:700, marginTop:2 }}>{w.world} · Cadet</div>
+              </div>
+              <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                {child.streak_days>0 && (
+                  <div style={{ background:`${C.orange}22`, border:`1px solid ${C.orange}44`, borderRadius:12, padding:"5px 9px", textAlign:"center" }}>
+                    <div style={{ fontSize:16, lineHeight:1 }}>🔥</div>
+                    <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:12, color:C.orange, fontWeight:900 }}>{child.streak_days}</div>
+                  </div>
+                )}
+                <MuteBtn/>
+                <button onClick={onLogout} style={{ background:`${C.pink}14`, border:`1px solid ${C.pink}44`, borderRadius:12, padding:"7px 11px", color:C.pink, fontSize:12, cursor:"pointer", fontWeight:700 }}>Exit</button>
+              </div>
+            </div>
+
+            {/* XP bar */}
+            <XPBar xp={child.xp||0} level={child.level||1}/>
+
+            {/* Overall progress ring area */}
+            <div style={{ display:"flex", alignItems:"center", gap:12, marginTop:12 }}>
+              {/* Mini circular progress */}
+              <div style={{ position:"relative", width:54, height:54, flexShrink:0 }}>
+                <svg width="54" height="54" style={{ transform:"rotate(-90deg)" }}>
+                  <circle cx="27" cy="27" r="22" fill="none" stroke="#ffffff10" strokeWidth="5"/>
+                  <circle cx="27" cy="27" r="22" fill="none" stroke={w.color} strokeWidth="5" strokeDasharray={`${2*Math.PI*22*pctDone/100} ${2*Math.PI*22}`} strokeLinecap="round" style={{transition:"stroke-dasharray 1s ease"}}/>
+                </svg>
+                <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:900, color:"white" }}>{pctDone}%</div>
+              </div>
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize:14, fontWeight:800, color:"white" }}>Overall Progress</div>
+                <div style={{ fontSize:12, color:C.dim }}>{doneSets} of {totalSets} sets completed</div>
+              </div>
+              <div style={{ textAlign:"right" }}>
+                <div style={{ fontSize:22, fontWeight:900, color:C.yellow }}>{totalStars}</div>
+                <div style={{ fontSize:10, color:C.dim }}>Stars ⭐</div>
+              </div>
             </div>
           </div>
-          <div style={{ color:C.yellow, fontFamily:"'Orbitron',sans-serif", fontSize:11, textAlign:"center" }}><div>+150</div><div style={{ fontSize:8 }}>XP</div></div>
         </div>
-        {/* Daily Challenge + Daily Puzzle cards */}
-        {(()=>{
-          const todayKey = new Date().toISOString().slice(0,10);
-          const dqKey = `dq_done_${child.id}_${todayKey}`;
-          const dpKey = `dp_done_${child.id}_${todayKey}`;
-          const dqDone = !!localStorage.getItem(dqKey);
-          const dpDone = !!localStorage.getItem(dpKey);
-          return (<>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-              <button onClick={()=>setShowDQ(true)} style={{background:`linear-gradient(135deg,${C.yellow}22,${C.orange}0c)`,border:`1.5px solid ${dqDone?C.green+"66":C.yellow+"55"}`,borderRadius:15,padding:"12px 10px",cursor:"pointer",textAlign:"center",animation:dqDone?"none":"pulseG 3s ease-in-out infinite"}}>
-                <div style={{fontSize:26,marginBottom:4}}>{dqDone?"✅":"🌟"}</div>
-                <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:9,color:dqDone?C.green:C.yellow,letterSpacing:1}}>WORD PROBLEM</div>
-                <div style={{color:"white",fontSize:11,fontWeight:700,marginTop:3}}>{dqDone?"Done! 🎉":"Solve today"}</div>
-                <div style={{color:dqDone?C.green:C.yellow,fontSize:10,marginTop:4,fontWeight:800}}>+50 XP</div>
-              </button>
-              <button onClick={()=>setShowPuzzle(true)} style={{background:`linear-gradient(135deg,${C.purple}22,${C.cyan}0c)`,border:`1.5px solid ${dpDone?C.green+"66":C.purple+"55"}`,borderRadius:15,padding:"12px 10px",cursor:"pointer",textAlign:"center",animation:dpDone?"none":"pulseG 3s ease-in-out infinite"}}>
-                <div style={{fontSize:26,marginBottom:4}}>{dpDone?"🏆":"🧩"}</div>
-                <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:9,color:dpDone?C.green:C.purple,letterSpacing:1}}>BRAIN PUZZLE</div>
-                <div style={{color:"white",fontSize:11,fontWeight:700,marginTop:3}}>{dpDone?"Solved! 🎉":"New puzzle"}</div>
-                <div style={{color:dpDone?C.green:C.purple,fontSize:10,marginTop:4,fontWeight:800}}>+75 XP</div>
-              </button>
-            </div>
-          </>);
-        })()}
       </div>
-      {/* Quick actions */}
-      <div style={{ position:"relative", zIndex:2, display:"flex", gap:10, padding:"0 18px 14px" }}>
-        {/* Mascot */}
 
-        {[{i:"🧮",l:"ABACUS",c:C.yellow,a:onAbacus},{i:"🎮",l:"GAMES",c:C.cyan,a:onGames},{i:"🎓",l:"OLYMPIAD",c:C.purple,a:onOlympiad},{i:"📊",l:"PARENT",c:C.pink,a:onParent}].map((n,i) => (
-          <button key={i} onClick={n.a} style={{ flex:1, background:`${n.c}18`, border:`1.5px solid ${n.c}44`, borderRadius:14, padding:"11px 8px", cursor:"pointer", textAlign:"center" }}>
-            <div style={{ fontSize:22, marginBottom:4 }}>{n.i}</div>
-            <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:8, color:n.c, letterSpacing:1 }}>{n.l}</div>
-          </button>
+      {/* ── Animated Mascot ── */}
+      <div style={{ position:"relative", zIndex:2, margin:"14px 18px 0" }}>
+        <div style={{ background:`linear-gradient(135deg,${C.purple}22,${C.cyan}14)`, border:`1.5px solid ${C.cyan}33`, borderRadius:20, padding:"12px 16px", display:"flex", alignItems:"center", gap:12 }}>
+          <div style={{ fontSize:36, animation:"floatUp 2.5s ease-in-out infinite", flexShrink:0 }}>🤖</div>
+          <div style={{ flex:1 }}>
+            <div style={{ fontSize:11, color:C.cyan, fontWeight:700, marginBottom:2 }}>COSMO SAYS</div>
+            <div key={mascotMsg} style={{ fontSize:15, color:"white", fontWeight:700, animation:"slideUp 0.4s ease" }}>{MASCOT_MSGS[mascotMsg]}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Stats row ── */}
+      <div style={{ position:"relative", zIndex:2, display:"flex", gap:10, padding:"12px 18px 0" }}>
+        {[
+          {e:"⭐", v:totalStars, l:"Stars",   c:C.yellow},
+          {e:"🪙", v:child.coins||0, l:"Coins", c:C.orange},
+          {e:"📚", v:myProgress.length, l:"Lessons", c:C.purple},
+          {e:"🗓️", v:todaySets, l:"Today",  c:C.cyan},
+        ].map((s,i) => (
+          <div key={i} style={{ flex:1, background:C.card, borderRadius:16, padding:"10px 6px", textAlign:"center", border:`1.5px solid ${s.c}28` }}>
+            <div style={{ fontSize:20 }}>{s.e}</div>
+            <div style={{ fontSize:18, fontWeight:900, color:"white" }}>{s.v}</div>
+            <div style={{ fontSize:10, color:C.dim, fontWeight:700 }}>{s.l}</div>
+          </div>
         ))}
       </div>
-      {/* Worlds */}
-      <div style={{ position:"relative", zIndex:2, padding:"0 18px 10px" }}>
-        <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:11, color:C.purple, letterSpacing:2, marginBottom:10 }}>🗺️ GALACTIC WORLDS</div>
-        <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-          <ProgressGrid lessons={myLessons} progress={progress}/>
-        {WORLDS.map(cw => {
-          const isMyClass = cw.id === parseInt(child.class_num||1) || child.is_premium;
-          return (
-            <button key={cw.id} onClick={() => onWorld(cw)} style={{
-              background: isMyClass ? `linear-gradient(135deg,${cw.color}16,${cw.color}08)` : "rgba(10,10,28,0.7)",
-              border:`2px solid ${isMyClass ? cw.color+"44" : "#222240"}`, borderRadius:17, padding:"13px 15px",
-              cursor:"pointer", display:"flex", alignItems:"center", gap:12,
-              boxShadow: isMyClass ? `0 0 16px ${cw.glow}` : "none", transition:"all 0.2s", opacity: isMyClass ? 1 : 0.55,
-            }}>
-              <div style={{ width:48, height:48, borderRadius:13, background:`${cw.color}18`, border:`2px solid ${cw.color}33`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, flexShrink:0 }}>
-                {isMyClass ? cw.planet : "🔒"}
-              </div>
-              <div style={{ flex:1, textAlign:"left" }}>
-                <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:13, color: isMyClass ? cw.color : C.dim }}>{cw.name}</div>
-                <div style={{ fontSize:11, color:C.dim, marginTop:2 }}>{isMyClass ? `${cw.world} · 🎯 Your class` : "Buy lessons · ₹300 each"}</div>
-              </div>
-              <div style={{ color: isMyClass ? cw.color : C.dim, fontSize:22 }}>{isMyClass ? "›" : "💰"}</div>
-            </button>
-          );
-        })}
+
+      {/* ── Daily missions ── */}
+      <div style={{ position:"relative", zIndex:2, margin:"14px 18px 0" }}>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
+          <div style={{ fontSize:16, fontWeight:900, color:"white" }}>🎯 Today's Missions</div>
+          <div style={{ fontSize:12, color:C.dim }}>{[dqDone,dpDone,todaySets>=1].filter(Boolean).length}/3 done</div>
+        </div>
+        {/* Mission progress bar */}
+        <div style={{ background:"rgba(255,255,255,0.06)", borderRadius:8, height:6, overflow:"hidden", marginBottom:14 }}>
+          <div style={{ width:`${([dqDone,dpDone,todaySets>=1].filter(Boolean).length/3)*100}%`, height:"100%", background:`linear-gradient(90deg,${C.cyan},${C.purple})`, borderRadius:8, transition:"width 0.6s ease" }}/>
+        </div>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:9 }}>
+          {/* Daily set */}
+          <button onClick={() => onWorld(w)} style={{ background: todaySets>=1 ? `${C.green}18` : `${C.cyan}14`, border:`2px solid ${todaySets>=1 ? C.green+"55" : C.cyan+"33"}`, borderRadius:16, padding:"14px 8px", cursor:"pointer", textAlign:"center", animation:todaySets>=1?"none":"pulseG 3s ease-in-out infinite" }}>
+            <div style={{ fontSize:28, marginBottom:6 }}>{todaySets>=1?"✅":"🧮"}</div>
+            <div style={{ fontSize:11, fontWeight:800, color:todaySets>=1?C.green:C.cyan }}>Do a Set</div>
+            <div style={{ fontSize:10, color:C.dim, marginTop:2 }}>+150 XP</div>
+          </button>
+          {/* Daily quiz */}
+          <button onClick={()=>setShowDQ(true)} style={{ background: dqDone ? `${C.green}18` : `${C.yellow}14`, border:`2px solid ${dqDone?C.green+"55":C.yellow+"33"}`, borderRadius:16, padding:"14px 8px", cursor:"pointer", textAlign:"center", animation:dqDone?"none":"pulseG 3s 0.5s ease-in-out infinite" }}>
+            <div style={{ fontSize:28, marginBottom:6 }}>{dqDone?"🏅":"🌟"}</div>
+            <div style={{ fontSize:11, fontWeight:800, color:dqDone?C.green:C.yellow }}>Word Problem</div>
+            <div style={{ fontSize:10, color:C.dim, marginTop:2 }}>+50 XP</div>
+          </button>
+          {/* Daily puzzle */}
+          <button onClick={()=>setShowPuzzle(true)} style={{ background: dpDone ? `${C.green}18` : `${C.purple}14`, border:`2px solid ${dpDone?C.green+"55":C.purple+"33"}`, borderRadius:16, padding:"14px 8px", cursor:"pointer", textAlign:"center", animation:dpDone?"none":"pulseG 3s 1s ease-in-out infinite" }}>
+            <div style={{ fontSize:28, marginBottom:6 }}>{dpDone?"🏆":"🧩"}</div>
+            <div style={{ fontSize:11, fontWeight:800, color:dpDone?C.green:C.purple }}>Brain Puzzle</div>
+            <div style={{ fontSize:10, color:C.dim, marginTop:2 }}>+75 XP</div>
+          </button>
         </div>
       </div>
-      {/* Bottom nav */}
-      <div style={{ position:"fixed", bottom:0, left:0, right:0, zIndex:10, background:"rgba(4,4,15,0.97)", backdropFilter:"blur(20px)", borderTop:`1px solid ${C.purple}33`, padding:"10px 14px", display:"flex", justifyContent:"space-around" }}>
-        {[{icon:"🏠",label:"HOME",act:null,active:true},{icon:"🎮",label:"GAMES",act:onGames},{icon:"🧮",label:"ABACUS",act:onAbacus},{icon:"🎓",label:"EXAMS",act:onOlympiad},{icon:"⚙️",label:"SETTINGS",act:()=>onSettings()},{icon:"📣",label:"REPORT",act:onFeedback}].map((n, i) => (
+
+      {/* ── Quick Launch ── */}
+      <div style={{ position:"relative", zIndex:2, margin:"14px 18px 0" }}>
+        <div style={{ fontSize:16, fontWeight:900, color:"white", marginBottom:10 }}>⚡ Quick Launch</div>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
+          {[
+            {i:"🧮", l:"Abacus",    sub:"Train your brain",  c:C.yellow,  a:onAbacus},
+            {i:"🎮", l:"Games Hub", sub:"Fun challenges",     c:C.cyan,    a:onGames},
+            {i:"🎓", l:"Olympiad",  sub:"Compete & win",      c:C.purple,  a:onOlympiad},
+            {i:"📊", l:"Parent",    sub:"Progress report",    c:C.pink,    a:onParent},
+          ].map((n,i) => (
+            <button key={i} onClick={n.a} style={{ background:`${n.c}14`, border:`2px solid ${n.c}33`, borderRadius:18, padding:"16px 14px", cursor:"pointer", textAlign:"left", display:"flex", alignItems:"center", gap:12, transition:"all 0.2s" }}>
+              <div style={{ fontSize:32, flexShrink:0 }}>{n.i}</div>
+              <div>
+                <div style={{ fontSize:16, fontWeight:800, color:"white" }}>{n.l}</div>
+                <div style={{ fontSize:11, color:n.c, marginTop:2, fontWeight:600 }}>{n.sub}</div>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── My Class World ── */}
+      <div style={{ position:"relative", zIndex:2, margin:"14px 18px 0" }}>
+        <div style={{ fontSize:16, fontWeight:900, color:"white", marginBottom:10 }}>🌍 My Class</div>
+        <div onClick={() => onWorld(w)}
+          style={{ background:`linear-gradient(135deg,${w.color}22,${w.color}0a)`, border:`2px solid ${w.color}55`, borderRadius:22, padding:"18px 18px", cursor:"pointer", display:"flex", alignItems:"center", gap:16, boxShadow:`0 0 30px ${w.glow}`, transition:"all 0.2s", position:"relative", overflow:"hidden" }}>
+          <div style={{ position:"absolute", right:-10, top:-10, fontSize:80, opacity:0.15, animation:"floatUp 3s ease-in-out infinite", pointerEvents:"none" }}>{w.planet}</div>
+          <div style={{ width:64, height:64, borderRadius:20, background:`${w.color}25`, border:`3px solid ${w.color}55`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:36, flexShrink:0, boxShadow:`0 0 20px ${w.color}44` }}>{w.planet}</div>
+          <div style={{ flex:1, position:"relative", zIndex:1 }}>
+            <div style={{ fontSize:20, fontWeight:900, color:"white" }}>{w.name}</div>
+            <div style={{ fontSize:13, color:w.color, fontWeight:700, marginTop:2 }}>{w.world}</div>
+            <div style={{ fontSize:12, color:C.dim, marginTop:4 }}>{myLessons.length} Lessons · {pctDone}% complete</div>
+          </div>
+          <div style={{ fontSize:32, color:w.color }}>›</div>
+        </div>
+      </div>
+
+      {/* ── Other Worlds ── */}
+      <div style={{ position:"relative", zIndex:2, margin:"14px 18px 0" }}>
+        <div style={{ fontSize:16, fontWeight:900, color:"white", marginBottom:10 }}>🌌 Explore Other Worlds</div>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
+          {WORLDS.filter(cw => cw.id !== parseInt(child.class_num||1)).slice(0,4).map(cw => (
+            <button key={cw.id} onClick={() => onWorld(cw)}
+              style={{ background:"rgba(10,10,28,0.8)", border:`1.5px solid ${cw.color}22`, borderRadius:18, padding:"14px 12px", cursor:"pointer", textAlign:"center", opacity:0.75, transition:"all 0.2s" }}>
+              <div style={{ fontSize:28, marginBottom:4 }}>🔒</div>
+              <div style={{ fontSize:13, fontWeight:800, color:cw.color }}>{cw.name}</div>
+              <div style={{ fontSize:10, color:C.dim, marginTop:2 }}>₹300/lesson</div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Progress Grid ── */}
+      <div style={{ position:"relative", zIndex:2, margin:"14px 18px 0" }}>
+        <div style={{ fontSize:16, fontWeight:900, color:"white", marginBottom:10 }}>📈 Lesson Progress</div>
+        <ProgressGrid lessons={myLessons} progress={progress}/>
+      </div>
+
+      {/* ── Bottom nav ── */}
+      <div style={{ position:"fixed", bottom:0, left:0, right:0, zIndex:10, background:"rgba(4,4,15,0.97)", backdropFilter:"blur(20px)", borderTop:`1px solid ${C.purple}33`, padding:"10px 14px 14px", display:"flex", justifyContent:"space-around" }}>
+        {[
+          {icon:"🏠", label:"Home",     act:null,       active:true},
+          {icon:"🎮", label:"Games",    act:onGames},
+          {icon:"🧮", label:"Abacus",   act:onAbacus},
+          {icon:"🎓", label:"Exams",    act:onOlympiad},
+          {icon:"⚙️", label:"Settings", act:()=>onSettings()},
+          {icon:"📣", label:"Report",   act:onFeedback},
+        ].map((n, i) => (
           <button key={i} onClick={n.act||undefined} style={{ background:"none", border:"none", cursor:n.act?"pointer":"default", display:"flex", flexDirection:"column", alignItems:"center", gap:2, color: n.active ? C.cyan : C.dim }}>
-            <div style={{ fontSize:19 }}>{n.icon}</div>
-            <div style={{ fontSize:8, fontFamily:"'Orbitron',sans-serif" }}>{n.label}</div>
-            {n.active && <div style={{ width:4, height:4, borderRadius:"50%", background:C.cyan, boxShadow:`0 0 5px ${C.cyan}` }}/>}
+            <div style={{ fontSize:22 }}>{n.icon}</div>
+            <div style={{ fontSize:9, fontFamily:"'Orbitron',sans-serif" }}>{n.label}</div>
+            {n.active && <div style={{ width:5, height:5, borderRadius:"50%", background:C.cyan, boxShadow:`0 0 6px ${C.cyan}` }}/>}
           </button>
         ))}
       </div>
