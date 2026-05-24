@@ -21,12 +21,15 @@ function rateLimit(ip, max=30, ms=60000) {
 }
 
 async function sb(table, method, body, params="") {
+  const headers = {
+    apikey:SB_SERVICE, Authorization:`Bearer ${SB_SERVICE}`,
+    "Content-Type":"application/json",
+    Prefer: method==="POST"?"return=representation":"return=minimal",
+  };
+  // For GET requests, request up to 10000 rows (overrides PostgREST default of 1000)
+  if (method==="GET") headers["Range-Unit"] = "items", headers["Range"] = "0-9999";
   const r = await fetch(`${SB_URL}/rest/v1/${table}${params}`, {
-    method, headers: {
-      apikey:SB_SERVICE, Authorization:`Bearer ${SB_SERVICE}`,
-      "Content-Type":"application/json",
-      Prefer: method==="POST"?"return=representation":"return=minimal"
-    }, body: body?JSON.stringify(body):undefined
+    method, headers, body: body?JSON.stringify(body):undefined
   });
   const t = await r.text();
   try { return {ok:r.ok, data:JSON.parse(t)}; } catch { return {ok:r.ok, data:t}; }
@@ -326,7 +329,7 @@ export default async function handler(req, res) {
         const {lesson_id_prefix, set_index} = req.body;
         const safe = clean(lesson_id_prefix,30);
         const si = cleanInt(set_index,0,99);
-        const r = await sb("questions","GET",null,`?lesson_id=like.${safe}%25&set_index=eq.${si}&order=question_index&limit=50`);
+        const r = await sb("questions","GET",null,`?lesson_id=like.${safe}%25&set_index=eq.${si}&order=question_index`);
         return res.status(200).json({data:r.data||[]});
       }
 
