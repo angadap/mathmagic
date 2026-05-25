@@ -302,15 +302,38 @@ export default async function handler(req, res) {
         const {class_num} = req.body;
         const cn = cleanInt(class_num,0,12);
         const prefixMap = {10:"n",11:"jk",12:"sk",1:"c1",2:"c2",3:"c3",4:"c4",5:"c5"};
+        const LESSON_TITLES = {
+          10:["Counting 1–5","Counting 6–10","Shapes","Colors & Numbers","Big & Small","Patterns","More & Less","Number Writing","Sorting"],
+          11:["Numbers 1–20","Addition Basics","Subtraction Basics","Shapes & Sizes","Patterns","Comparing Numbers","Missing Numbers","Simple Word Problems","Measurement Basics"],
+          12:["Numbers 1–50","Addition to 20","Subtraction to 20","Multiplication Intro","Division Intro","Geometry Basics","Fractions Intro","Word Problems","Data Handling"],
+          1:["Number Sense","Addition Basics","Subtraction Basics","Shapes & Space","Measurement","Patterns","Data Handling","Money Basics","Time Basics"],
+          2:["Numbers to 100","Addition with Carry","Subtraction with Borrow","Multiplication Tables 2–5","Division Basics","Geometry","Fractions","Measurement","Data & Graphs"],
+          3:["Numbers to 1000","Addition & Subtraction","Multiplication Tables","Division","Fractions","Decimals Intro","Geometry","Measurement","Time & Calendar"],
+          4:["Large Numbers","Operations","Fractions & Decimals","Factors & Multiples","Geometry","Measurement","Data Handling","Patterns","Problem Solving"],
+          5:["Number Systems","Fractions & Decimals","Algebra Basics","Geometry","Ratio & Proportion","Percentage","Data Handling","Mensuration","Problem Solving"],
+        };
         const prefix = prefixMap[cn]||`c${cn}`;
-        const r = await sb("questions","GET",null,`?lesson_id=like.${prefix}-%25&select=lesson_id&order=lesson_id`);
-        if (!r.ok) return res.status(400).json({error:"Failed"});
+        const titles = LESSON_TITLES[cn]||[];
+        // Fetch with large range to get all rows
+        const r = await sb("questions","GET",null,`?lesson_id=like.${prefix}-%25&select=lesson_id&order=lesson_id&limit=50000`);
         const seen = new Set(); const lessons = [];
         for (const q of (r.data||[])) {
-          const lid = q.lesson_id.includes("_s") ? q.lesson_id.split("_s")[0] : q.lesson_id;
-          if (!seen.has(lid)) { seen.add(lid); lessons.push(lid); }
+          const raw = q.lesson_id||"";
+          const lid = raw.includes("_s") ? raw.split("_s")[0] : raw;
+          if (lid && !seen.has(lid)) { seen.add(lid); lessons.push(lid); }
         }
-        return res.status(200).json({data:lessons.sort()});
+        // Also include expected lesson IDs from LESSONS constant that may exist in DB
+        // Sort by lesson number
+        const sorted = lessons.sort((a,b)=>{
+          const na=parseInt(a.split("-l")[1]||0), nb=parseInt(b.split("-l")[1]||0);
+          return na-nb;
+        });
+        // Attach title to each
+        const withTitles = sorted.map(lid=>{
+          const n=parseInt(lid.split("-l")[1]||1)-1;
+          return {id:lid, title:titles[n]||`Lesson ${n+1}`};
+        });
+        return res.status(200).json({data:withTitles});
       }
 
       // Questions: list sets for a lesson

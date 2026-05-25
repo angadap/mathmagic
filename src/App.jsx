@@ -2587,29 +2587,45 @@ function Starfield({ n = 40 }) {
 
 // Primary button
 function Btn({ children, onClick, color = C.cyan, disabled, loading, style: sx = {} }) {
+  const [hov, setHov] = React.useState(false);
   const handleClick = () => { SFX.tap(); if(onClick) onClick(); };
+  const isOff = disabled || loading;
   return (
     <button
-      onClick={!disabled && !loading ? handleClick : undefined}
+      onClick={!isOff ? handleClick : undefined}
+      onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}
       className="mm-btn-press"
       style={{
-        width:"100%", padding:"16px 20px",
-        border:`2px solid ${disabled || loading ? "#1a1a35" : color}`,
-        borderRadius:16,
-        background: disabled || loading ? "#08081a" : `${color}18`,
-        color: disabled || loading ? "#2a2a50" : color,
-        fontSize:16, fontFamily:"'Baloo 2','Nunito',sans-serif", fontWeight:800,
-        cursor: disabled || loading ? "not-allowed" : "pointer",
-        letterSpacing:1,
-        boxShadow: disabled || loading ? "none" : `0 0 14px ${color}33`,
-        transition:"all 0.2s", ...sx,
+        width:"100%", padding:"17px 24px",
+        border:"none",
+        borderRadius:20,
+        background: isOff
+          ? "linear-gradient(135deg,#111128,#0a0a1f)"
+          : hov
+            ? `linear-gradient(135deg,${color},${color}cc,${color}aa)`
+            : `linear-gradient(135deg,${color}ee,${color}bb,${color}88)`,
+        color: isOff ? "#2a2a50" : "#fff",
+        fontSize:16, fontFamily:"'Baloo 2','Nunito',sans-serif", fontWeight:900,
+        cursor: isOff ? "not-allowed" : "pointer",
+        letterSpacing:1.5,
+        textShadow: isOff ? "none" : `0 1px 8px ${color}88`,
+        boxShadow: isOff
+          ? "none"
+          : hov
+            ? `0 6px 28px ${color}88, 0 0 0 2px ${color}55, inset 0 1px 0 rgba(255,255,255,0.25)`
+            : `0 4px 18px ${color}55, 0 0 0 1px ${color}33, inset 0 1px 0 rgba(255,255,255,0.15)`,
+        transform: hov && !isOff ? "translateY(-2px) scale(1.01)" : "none",
+        transition:"all 0.18s ease",
+        position:"relative", overflow:"hidden",
+        ...sx,
       }}
     >
+      {!isOff && <div style={{position:"absolute",inset:0,background:`linear-gradient(180deg,rgba(255,255,255,0.12) 0%,transparent 60%)`,borderRadius:20,pointerEvents:"none"}}/>}
       {loading ? (
-        <span style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
+        <span style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:10 }}>
           <span style={{
-            width:13, height:13,
-            border:`2px solid ${color}44`, borderTopColor:color,
+            width:16, height:16,
+            border:"3px solid rgba(255,255,255,0.3)", borderTopColor:"white",
             borderRadius:"50%", animation:"spinR 0.7s linear infinite", display:"inline-block",
           }}/>
           Please wait…
@@ -6300,6 +6316,8 @@ function StudentActions({ student, teacher, onRefresh, onClose }) {
   const [prog,    setProg]    = useState(null);
 
   const api = (action,body={}) => schoolApi(action,{...body,teacher_id:teacher.id,session_token:teacher.session_token||""});
+  // Permission helper — checks teacher.permissions array set by admin
+  const hasPerm = (p) => Array.isArray(teacher?.permissions) && teacher.permissions.includes(p);
 
   const changePin = async () => {
     if (newPin.length<4) { setMsg("Enter 4-digit PIN"); return; }
@@ -6386,12 +6404,24 @@ function StudentActions({ student, teacher, onRefresh, onClose }) {
     </div>
   );
 
+  const noPerms = !Array.isArray(teacher?.permissions) || teacher.permissions.length === 0;
   return (
     <div style={{marginTop:10,display:"flex",gap:8,flexWrap:"wrap"}}>
-      <button onClick={loadProgress} style={{background:`${C.cyan}22`,border:`1px solid ${C.cyan}44`,borderRadius:8,padding:"6px 10px",color:C.cyan,cursor:"pointer",fontSize:11,fontFamily:"'Nunito',sans-serif"}}>📊 Progress</button>
-      <button onClick={()=>setView("pin")} style={{background:`${C.yellow}22`,border:`1px solid ${C.yellow}44`,borderRadius:8,padding:"6px 10px",color:C.yellow,cursor:"pointer",fontSize:11,fontFamily:"'Nunito',sans-serif"}}>🔑 Change PIN</button>
-      <button onClick={()=>setView("modify")} style={{background:`${C.purple}22`,border:`1px solid ${C.purple}44`,borderRadius:8,padding:"6px 10px",color:C.purple,cursor:"pointer",fontSize:11,fontFamily:"'Nunito',sans-serif"}}>✏️ Modify</button>
-      <button onClick={deleteStudent} style={{background:`${C.red}22`,border:`1px solid ${C.red}44`,borderRadius:8,padding:"6px 10px",color:C.red,cursor:"pointer",fontSize:11,fontFamily:"'Nunito',sans-serif"}}>🗑 Delete</button>
+      {(hasPerm("view_analytics")||noPerms) && (
+        <button onClick={loadProgress} style={{background:`${C.cyan}22`,border:`1px solid ${C.cyan}44`,borderRadius:8,padding:"6px 10px",color:C.cyan,cursor:"pointer",fontSize:11,fontFamily:"'Nunito',sans-serif"}}>📊 Progress</button>
+      )}
+      {hasPerm("change_student_pin") && (
+        <button onClick={()=>setView("pin")} style={{background:`${C.yellow}22`,border:`1px solid ${C.yellow}44`,borderRadius:8,padding:"6px 10px",color:C.yellow,cursor:"pointer",fontSize:11,fontFamily:"'Nunito',sans-serif"}}>🔑 Change PIN</button>
+      )}
+      {hasPerm("modify_student") && (
+        <button onClick={()=>setView("modify")} style={{background:`${C.purple}22`,border:`1px solid ${C.purple}44`,borderRadius:8,padding:"6px 10px",color:C.purple,cursor:"pointer",fontSize:11,fontFamily:"'Nunito',sans-serif"}}>✏️ Modify</button>
+      )}
+      {hasPerm("delete_student") && (
+        <button onClick={deleteStudent} style={{background:`${C.red}22`,border:`1px solid ${C.red}44`,borderRadius:8,padding:"6px 10px",color:C.red,cursor:"pointer",fontSize:11,fontFamily:"'Nunito',sans-serif"}}>🗑 Delete</button>
+      )}
+      {!noPerms && !hasPerm("modify_student") && !hasPerm("delete_student") && !hasPerm("change_student_pin") && !hasPerm("view_analytics") && (
+        <div style={{color:C.dim,fontSize:12,padding:"6px 10px"}}>👁 View only — no actions permitted</div>
+      )}
     </div>
   );
 }
@@ -6809,14 +6839,21 @@ function AdminPanel({ onBack }) {
   const api = (action, body={}) => schoolApi(action, body, key);
   const iS  = (a) => ({width:"100%",background:C.card2,border:`1.5px solid ${a}44`,borderRadius:10,padding:"10px 12px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14,display:"block",marginBottom:10});
   const Hdr = ({title,back,accent,extra}) => (
-    <div style={{background:C.card,padding:"14px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:10,borderBottom:`1px solid ${accent}33`}}>
-      <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:12,color:accent}}>{title}</div>
-      <div style={{display:"flex",gap:8,alignItems:"center"}}>{extra}<BackBtn onClick={back} color={C.dim}/></div>
+    <div style={{background:`linear-gradient(135deg,${accent}1a,rgba(4,4,15,0.98))`,padding:"14px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:10,borderBottom:`1px solid ${accent}33`,backdropFilter:"blur(20px)"}}>
+      <div style={{fontFamily:"'Baloo 2',sans-serif",fontSize:15,fontWeight:900,color:"white",flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{title}</div>
+      <div style={{display:"flex",gap:6,alignItems:"center",flexShrink:0}}>
+        {extra}
+        <button onClick={()=>setView("home")} title="Admin Home" style={{background:`${C.red}22`,border:`1px solid ${C.red}44`,borderRadius:10,padding:"7px 11px",color:C.red,cursor:"pointer",fontSize:14,fontWeight:800}}>🏠</button>
+        <BackBtn onClick={back} color={C.dim}/>
+      </div>
     </div>
   );
-  const MsgBar = ({m}) => m ? <div style={{margin:"0 0 12px",padding:"10px 14px",borderRadius:10,background:m.startsWith("✅")?`${C.green}18`:`${C.red}18`,color:m.startsWith("✅")?C.green:C.red,fontSize:13,fontWeight:700}}>{m}</div> : null;
+  const MsgBar = ({m}) => m ? <div style={{margin:"0 0 14px",padding:"12px 16px",borderRadius:14,background:m.startsWith("✅")?`${C.green}18`:`${C.red}18`,border:`1px solid ${m.startsWith("✅")?C.green+"33":C.red+"33"}`,color:m.startsWith("✅")?C.green:C.red,fontSize:14,fontWeight:800}}>{m}</div> : null;
   const SearchBar = ({val,onChange,placeholder,accent}) => (
-    <input value={val} onChange={e=>onChange(e.target.value)} placeholder={placeholder||"🔍 Search..."} style={{width:"100%",background:C.card2,border:`1.5px solid ${accent||C.cyan}33`,borderRadius:10,padding:"9px 12px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:13,display:"block",marginBottom:10}}/>
+    <div style={{position:"relative",marginBottom:12}}>
+      <span style={{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",fontSize:15,pointerEvents:"none"}}>🔍</span>
+      <input value={val} onChange={e=>onChange(e.target.value)} placeholder={placeholder||"Search..."} style={{width:"100%",background:"rgba(255,255,255,0.06)",border:`1.5px solid ${accent||C.cyan}33`,borderRadius:14,padding:"12px 14px 12px 40px",color:"white",fontFamily:"'Baloo 2','Nunito',sans-serif",fontSize:14,display:"block",outline:"none"}}/>
+    </div>
   );
   const toast = (m) => { setToastMsg(m); setTimeout(()=>setToastMsg(""),3500); };
 
@@ -6826,7 +6863,7 @@ function AdminPanel({ onBack }) {
   const loadAllClasses  = async (sid) => { setLoading(true); const d=await api("admin_list_all_classes",{school_id:sid}); setAllClasses(d.data||[]); setLoading(false); };
   const loadTeachers    = async (school) => { setLoading(true);setSelSchool(school);setTeachers([]); const d=await api("admin_list_teachers",{school_id:school.id}); setTeachers(Array.isArray(d.data)?d.data:[]); setView("school_detail");setLoading(false); };
   const loadStudents    = async (teacher) => { if(!selSchool?.id)return; setLoading(true);setSelTeacher(teacher); const d=await api("admin_list_students",{school_id:selSchool.id,teacher_id:teacher.id}); setStudents(Array.isArray(d.data)?d.data:[]); setView("teacher_detail");setLoading(false); };
-  const loadQLessons    = async (cn) => { setLoading(true);setQClassNum(cn);setQLessons([]);setQLesson(null);setQSets([]);setQSet(null);setQuestions([]); const d=await api("admin_list_lessons_for_class",{class_num:cn}); setQLessons(d.data||[]);setLoading(false); };
+  const loadQLessons    = async (cn) => { setLoading(true);setQClassNum(cn);setQLessons([]);setQLesson(null);setQSets([]);setQSet(null);setQuestions([]); const d=await api("admin_list_lessons_for_class",{class_num:cn}); setQLessons(Array.isArray(d.data)?d.data:[]);setLoading(false); };
   const loadQSets       = async (lid) => { setLoading(true);setQLesson(lid);setQSets([]);setQSet(null);setQuestions([]); const d=await api("admin_list_sets_for_lesson",{lesson_id_prefix:lid}); setQSets(d.data||[]);setLoading(false); };
   const loadQs          = async (lid,si) => { setLoading(true);setQSet(si);setQuestions([]); const d=await api("admin_list_questions",{lesson_id_prefix:lid,set_index:si}); setQuestions(d.data||[]);setLoading(false); };
 
@@ -7338,18 +7375,19 @@ function AdminPanel({ onBack }) {
         {loading&&<div style={{textAlign:"center",color:C.dim,padding:20}}>Loading...</div>}
         {msg&&<div style={{color:msg.startsWith("✅")?C.green:C.red,fontSize:12,marginBottom:10,padding:"8px",borderRadius:8,background:msg.startsWith("✅")?`${C.green}11`:`${C.red}11`}}>{msg}</div>}
         <div style={{color:C.dim,fontSize:11,marginBottom:8}}>{qLessons.filter(l=>!search||l.toLowerCase().includes(search.toLowerCase())).length} lessons</div>
-        {qLessons.filter(l=>!search||l.toLowerCase().includes(search.toLowerCase())).map(lid=>{
-          const prefixMap={10:"n",11:"jk",12:"sk",1:"c1",2:"c2",3:"c3",4:"c4",5:"c5"};
-          const prefix=prefixMap[qClassNum]||`c${qClassNum}`;
-          const lessonNum=lid.replace(prefix+"-l","");
+        {qLessons.filter(l=>!search||(l.title||l.id||"").toLowerCase().includes(search.toLowerCase())||(l.id||"").toLowerCase().includes(search.toLowerCase())).map((lesson,idx)=>{
+          const lid=lesson.id||lesson;
+          const title=lesson.title||lid;
+          const lessonNum=parseInt((lid.split("-l")[1])||idx+1);
           const className=CLASS_LABELS[qClassNum]||"Class "+qClassNum;
           return (
-            <button key={lid} onClick={()=>{loadQSets(lid);setView("questions_sets");}} style={{width:"100%",background:C.card,border:`1px solid ${C.orange}33`,borderRadius:12,padding:"14px 16px",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,textAlign:"left"}}>
-              <div>
-                <div style={{fontWeight:800,color:"white",fontSize:14}}>{className} — Lesson {lessonNum}</div>
-                <div style={{fontSize:11,color:C.dim,marginTop:2}}>ID: <span style={{color:C.orange,fontFamily:"monospace"}}>{lid}</span></div>
+            <button key={lid} onClick={()=>{loadQSets(lid);setView("questions_sets");}} style={{width:"100%",background:C.card,border:`1px solid ${C.orange}33`,borderRadius:14,padding:"16px 18px",cursor:"pointer",display:"flex",alignItems:"center",gap:14,marginBottom:10,textAlign:"left"}}>
+              <div style={{width:42,height:42,borderRadius:12,background:`${C.orange}22`,border:`2px solid ${C.orange}44`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.orange,fontWeight:900}}>{lessonNum}</div>
+              <div style={{flex:1}}>
+                <div style={{fontWeight:900,color:"white",fontSize:15}}>{className} — Lesson {lessonNum}: {title}</div>
+                <div style={{fontSize:11,color:C.orange,marginTop:3,fontFamily:"monospace"}}>{lid}</div>
               </div>
-              <span style={{color:C.orange,fontSize:20}}>›</span>
+              <span style={{color:C.orange,fontSize:22}}>›</span>
             </button>
           );
         })}
