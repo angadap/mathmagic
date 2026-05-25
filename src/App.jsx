@@ -17,7 +17,7 @@ export class ErrorBoundary extends React.Component {
   render() {
     if (!this.state.hasError) return this.props.children;
     return (
-      <div style={{minHeight:"100vh",background:"#04040f",display:"flex",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"'Nunito',sans-serif"}}>
+      <div style={{minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"'Nunito',sans-serif"}}>
         <div style={{background:"#0d0d2b",border:"1px solid #ef444433",borderRadius:20,padding:28,maxWidth:360,width:"100%",textAlign:"center"}}>
           <div style={{fontSize:52,marginBottom:12}}>🚀💥</div>
           <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:14,color:"#00f5ff",marginBottom:8}}>Oops! Something went wrong 🚀</div>
@@ -35,24 +35,22 @@ export class ErrorBoundary extends React.Component {
 // ─────────────────────────────────────────────────────────────────────
 // ── THEMES ────────────────────────────────────────────────────────────
 const THEMES = {
-  // ── DEFAULT: Deep Royal — rich purple + gold, premium & kids-friendly ──
-  royal:  { name:"Royal Academy", icon:"👑", bg:"#12002e", card:"#1e0045",  card2:"#2a0060", cyan:"#a78bfa", purple:"#7c3aed", pink:"#f472b6", orange:"#fb923c", yellow:"#fbbf24", green:"#34d399", red:"#f87171", dim:"#7c6b9e" },
-  // ── Cosmic Teal — deep teal + electric accents ──
-  cosmic: { name:"Cosmic Teal",   icon:"🚀", bg:"#00101e", card:"#001c30",  card2:"#00253d", cyan:"#06d6c7", purple:"#818cf8", pink:"#f472b6", orange:"#fb923c", yellow:"#fcd34d", green:"#4ade80", red:"#f87171", dim:"#4a8099" },
-  // ── Sunset Blaze — warm orange + magenta ──
-  sunset: { name:"Sunset Blaze",  icon:"🌅", bg:"#1a0800", card:"#2d1000",  card2:"#3d1800", cyan:"#fb923c", purple:"#e879f9", pink:"#fb7185", orange:"#fbbf24", yellow:"#fde047", green:"#4ade80", red:"#f43f5e", dim:"#9a5a30" },
-  // ── Emerald Forest — deep green + gold ──
-  forest: { name:"Emerald Forest", icon:"🌿", bg:"#001a0e", card:"#002b16",  card2:"#003a1e", cyan:"#34d399", purple:"#a3e635", pink:"#f472b6", orange:"#fb923c", yellow:"#fcd34d", green:"#4ade80", red:"#f87171", dim:"#3a7a55" },
-  // ── Midnight Ocean — deep navy + electric blue ──
-  ocean:  { name:"Midnight Ocean", icon:"🌊", bg:"#000c1a", card:"#001428",  card2:"#001e38", cyan:"#38bdf8", purple:"#818cf8", pink:"#f472b6", orange:"#fb923c", yellow:"#fcd34d", green:"#34d399", red:"#f87171", dim:"#2a5a80" },
-  // ── Candy Pop (dark) ──
-  candy:  { name:"Candy Pop",      icon:"🍭", bg:"#1a0628", card:"#2d0a3e",  card2:"#3d1050", cyan:"#f472b6", purple:"#c084fc", pink:"#fb7185", orange:"#fb923c", yellow:"#fde047", green:"#4ade80", red:"#f43f5e", dim:"#9d6db5" },
+  // ── DEFAULT: Bright Sky — Duolingo-style, white + lavender, child-friendly ──
+  bright: { name:"Bright Sky",     icon:"☀️",  bg:"#f0f4ff", card:"#ffffff",  card2:"#f5f0ff", cyan:"#7c6fe0", purple:"#a855f7", pink:"#f76fd1", orange:"#fb923c", yellow:"#ffd53d", green:"#2ed97a", red:"#ff6b6b", dim:"#9b8ec4", text:"#2d1f6e", text2:"#6b5b9e", border:"#ece8ff" },
+  // ── Space Dark — original deep purple theme ──
+  royal:  { name:"Royal Academy",  icon:"👑",  bg:"#12002e", card:"#1e0045",  card2:"#2a0060", cyan:"#a78bfa", purple:"#7c3aed", pink:"#f472b6", orange:"#fb923c", yellow:"#fbbf24", green:"#34d399", red:"#f87171", dim:"#7c6b9e", text:"white", text2:"#ccc", border:"#3a1a70" },
+  // ── Cosmic Teal ──
+  cosmic: { name:"Cosmic Teal",    icon:"🚀",  bg:"#00101e", card:"#001c30",  card2:"#00253d", cyan:"#06d6c7", purple:"#818cf8", pink:"#f472b6", orange:"#fb923c", yellow:"#fcd34d", green:"#4ade80", red:"#f87171", dim:"#4a8099", text:"white", text2:"#ccc", border:"#003d5a" },
+  // ── Sunset Blaze ──
+  sunset: { name:"Sunset Blaze",   icon:"🌅",  bg:"#1a0800", card:"#2d1000",  card2:"#3d1800", cyan:"#fb923c", purple:"#e879f9", pink:"#fb7185", orange:"#fbbf24", yellow:"#fde047", green:"#4ade80", red:"#f43f5e", dim:"#9a5a30", text:"white", text2:"#ccc", border:"#5a2a00" },
+  // ── Candy Pop ──
+  candy:  { name:"Candy Pop",      icon:"🍭",  bg:"#1a0628", card:"#2d0a3e",  card2:"#3d1050", cyan:"#f472b6", purple:"#c084fc", pink:"#fb7185", orange:"#fb923c", yellow:"#fde047", green:"#4ade80", red:"#f43f5e", dim:"#9d6db5", text:"white", text2:"#ccc", border:"#5a2070" },
 };
-function getThemeColors() { return THEMES[localStorage.getItem("mm_theme")||"royal"] || THEMES.royal; }
+function getThemeColors() { return THEMES[localStorage.getItem("mm_theme")||"bright"] || THEMES.bright; }
 let C = getThemeColors();
-const isDark = () => !C.bg.startsWith('#f') && !C.bg.startsWith('#e');
-const textColor = () => isDark() ? 'white' : '#1e1e3f';
-const text2Color = () => isDark() ? '#ccc' : '#4a4a7a';
+const isDark = () => !C.bg.startsWith('#f') && !C.bg.startsWith('#e') && !C.bg.startsWith('#FF') && !C.bg.startsWith('#EE');
+const textColor = () => C.text || (isDark() ? 'white' : '#2d1f6e');
+const text2Color = () => C.text2 || (isDark() ? '#ccc' : '#6b5b9e');
 
 // ─────────────────────────────────────────────────────────────────────
 // GLOBAL CSS injected once inside a component (safe in artifact env)
@@ -101,13 +99,13 @@ function GlobalStyles() {
         @keyframes bFloat{0%,100%{transform:translateY(0)scale(1)}50%{transform:translateY(-10px)scale(1.05)}}
         @keyframes bossW{0%,100%{transform:rotate(0)}25%{transform:rotate(-5deg)}75%{transform:rotate(5deg)}}
         *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-        body{background:${C.bg}}
+        body{background:${C.bg};color:${textColor()}}
         body,*{font-family:'Baloo 2','Nunito',sans-serif;}
-        input,textarea,select{font-family:'Baloo 2','Nunito',sans-serif;outline:none;color:white}
-        input::placeholder,textarea::placeholder{color:#4a5080}
-        input::placeholder{color:${C.dim}}
+        input,textarea,select{font-family:'Baloo 2','Nunito',sans-serif;outline:none;color:${textColor()};background:transparent}
+        input::placeholder,textarea::placeholder{color:${C.dim}}
+        select option{background:${C.card};color:${textColor()}}
         ::-webkit-scrollbar{width:3px}
-        ::-webkit-scrollbar-thumb{background:#a855f7;border-radius:4px}
+        ::-webkit-scrollbar-thumb{background:${C.cyan};border-radius:4px}
       `;
       document.head.appendChild(s);
     }
@@ -234,7 +232,7 @@ function Mascot({ message, mood="happy" }) {
     <div style={{display:"flex",alignItems:"center",gap:12,background:C.card,border:`1.5px solid ${C.cyan}33`,borderRadius:16,padding:"10px 14px",marginBottom:12}}>
       <div style={{fontSize:32,animation:"floatUp 2s ease-in-out infinite",flexShrink:0}}>{faces[mood]||faces.happy}</div>
       <div style={{background:C.card2,borderRadius:12,padding:"8px 12px",flex:1,position:"relative"}}>
-        <div style={{fontSize:13,color:"white",lineHeight:1.5}}>{message}</div>
+        <div style={{fontSize:13,color:textColor(),lineHeight:1.5}}>{message}</div>
         <div style={{position:"absolute",left:-8,top:"50%",transform:"translateY(-50%)",width:0,height:0,borderTop:"6px solid transparent",borderBottom:"6px solid transparent",borderRight:`8px solid ${C.card2}`}}/>
       </div>
     </div>
@@ -251,7 +249,7 @@ function Certificate({ child, lesson, stars, onClose }) {
     const w=600, h=400;
     cv.width=w; cv.height=h;
     // Background
-    ctx.fillStyle="#12002e"; ctx.fillRect(0,0,w,h);
+    ctx.fillStyle=C.bg; ctx.fillRect(0,0,w,h);
     // Border
     ctx.strokeStyle="#fbbf24"; ctx.lineWidth=6;
     ctx.strokeRect(12,12,w-24,h-24);
@@ -323,7 +321,7 @@ function ProgressGrid({ lessons, progress }) {
         <div style={{display:"flex",alignItems:"center",gap:10}}>
           <div style={{fontSize:28}}>📈</div>
           <div>
-            <div style={{fontSize:16,fontWeight:900,color:"white"}}>Lesson Progress</div>
+            <div style={{fontSize:16,fontWeight:900,color:textColor()}}>Lesson Progress</div>
             <div style={{fontSize:12,color:C.dim,marginTop:1}}>{total}/{max} sets · {totalPct}% done</div>
           </div>
         </div>
@@ -341,7 +339,7 @@ function ProgressGrid({ lessons, progress }) {
         </div>
       </div>
       <div style={{padding:"0 18px 2px"}}>
-        <div style={{background:"rgba(255,255,255,0.06)",borderRadius:8,height:6,overflow:"hidden"}}>
+        <div style={{background:isDark()?"rgba(255,255,255,0.06)":"rgba(124,111,224,0.06)",borderRadius:8,height:6,overflow:"hidden"}}>
           <div style={{width:`${totalPct}%`,height:"100%",background:`linear-gradient(90deg,${C.cyan},${C.purple})`,borderRadius:8,transition:"width 1s ease",boxShadow:`0 0 8px ${C.cyan}55`}}/>
         </div>
       </div>
@@ -452,7 +450,7 @@ function Tutorial({ onDone }) {
         </div>
         <div style={{display:"flex",gap:10}}>
           {step>0&&<button onClick={()=>setStep(s=>s-1)} style={{flex:1,background:"none",border:`1px solid ${C.dim}44`,borderRadius:12,padding:"12px",color:C.dim,cursor:"pointer",fontFamily:"'Nunito',sans-serif",fontWeight:700}}>← BACK</button>}
-          <button onClick={()=>step<steps.length-1?setStep(s=>s+1):onDone()} style={{flex:1,background:`linear-gradient(135deg,${s.color},${s.color}aa)`,border:"none",borderRadius:12,padding:"12px",color:"white",cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:12,fontWeight:700}}>
+          <button onClick={()=>step<steps.length-1?setStep(s=>s+1):onDone()} style={{flex:1,background:`linear-gradient(135deg,${s.color},${s.color}aa)`,border:"none",borderRadius:12,padding:"12px",color:textColor(),cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:12,fontWeight:700}}>
             {step<steps.length-1?"NEXT →":"🚀 START!"}
           </button>
         </div>
@@ -483,7 +481,7 @@ function OfflineBanner() {
   }, []);
   if (!offline) return null;
   return (
-    <div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#f97316",color:"white",textAlign:"center",padding:"6px 12px",fontSize:12,fontFamily:"'Orbitron',sans-serif",letterSpacing:1}}>
+    <div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#f97316",color:textColor(),textAlign:"center",padding:"6px 12px",fontSize:12,fontFamily:"'Orbitron',sans-serif",letterSpacing:1}}>
       📡 NO CONNECTION — App works offline, progress saves when back online
     </div>
   );
@@ -2577,7 +2575,8 @@ function Starfield({ n = 40 }) {
       {pts.map(p => (
         <div key={p.i} style={{
           position:"absolute", left:`${p.x}%`, top:`${p.y}%`,
-          width:p.w, height:p.w, borderRadius:"50%", background:"white",
+          width:p.w, height:p.w, borderRadius:"50%",
+          background: isDark() ? "rgba(255,255,255,0.8)" : `rgba(${100+Math.floor(p.x*1.5)},${80+Math.floor(p.y)},220,0.25)`,
           animation:`twinkle ${p.d}s ${p.dl}s ease-in-out infinite`,
         }}/>
       ))}
@@ -2604,7 +2603,7 @@ function Btn({ children, onClick, color = C.cyan, disabled, loading, style: sx =
           : hov
             ? `linear-gradient(135deg,${color},${color}cc,${color}aa)`
             : `linear-gradient(135deg,${color}ee,${color}bb,${color}88)`,
-        color: isOff ? "#2a2a50" : "#fff",
+        color: isOff ? isDark()?"#2a2a50":"#c5bde8" : "#fff",
         fontSize:16, fontFamily:"'Baloo 2','Nunito',sans-serif", fontWeight:900,
         cursor: isOff ? "not-allowed" : "pointer",
         letterSpacing:1.5,
@@ -2684,7 +2683,9 @@ function Card({ children, color = C.purple, style: sx = {} }) {
   return (
     <div style={{
       background:C.card, borderRadius:16, padding:14,
-      border:`1.5px solid ${color}33`, boxShadow:`0 4px 18px ${color}12`, ...sx,
+      border:`1.5px solid ${isDark() ? color+"33" : color+"44"}`,
+      boxShadow: isDark() ? `0 4px 18px ${color}12` : `0 4px 20px ${color}18, 0 1px 4px rgba(0,0,0,0.05)`,
+      ...sx,
     }}>
       {children}
     </div>
@@ -2698,7 +2699,7 @@ function XPBar({ xp = 0, level = 1 }) {
       <div style={{
         background:`linear-gradient(135deg,${C.purple},${C.pink})`,
         borderRadius:20, padding:"3px 10px", fontSize:10,
-        fontFamily:"'Orbitron',sans-serif", color:"white", flexShrink:0,
+        fontFamily:"'Orbitron',sans-serif", color:textColor(), flexShrink:0,
       }}>LV {level}</div>
       <div style={{ flex:1, background:"rgba(255,255,255,0.07)", borderRadius:7, height:7, overflow:"hidden" }}>
         <div style={{
@@ -2733,7 +2734,7 @@ function PinPad({ pin, setPin, error, shake, onComplete }) {
             border:`2px solid ${shake ? C.red : pin.length > i ? C.cyan : "#181840"}`,
             boxShadow: pin.length > i ? `0 0 14px ${C.cyan}77` : shake ? `0 0 12px ${C.red}66` : "none",
             display:"flex", alignItems:"center", justifyContent:"center",
-            fontSize:22, color:"white", transition:"all 0.2s",
+            fontSize:22, color:textColor(), transition:"all 0.2s",
           }}>{pin.length > i ? "●" : ""}</div>
         ))}
       </div>
@@ -2748,7 +2749,7 @@ function PinPad({ pin, setPin, error, shake, onComplete }) {
             style={{
               padding:"15px", background: k === "" ? "transparent" : C.card2,
               border: k === "" ? "none" : `1.5px solid ${C.purple}44`,
-              borderRadius:13, color:"white", fontSize:20,
+              borderRadius:13, color:textColor(), fontSize:20,
               fontFamily:"'Orbitron',sans-serif", fontWeight:700,
               cursor: k === "" ? "default" : "pointer",
             }}
@@ -3065,7 +3066,7 @@ function Register({ onBack, onDone }) {
       <RegPage step={4} title="CREATE PIN" color={C.yellow} onBack={goBack}>
         <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:10, color:C.dim, letterSpacing:2, marginBottom:4 }}>STEP 4 — SECRET PIN</div>
         <div style={{ color:C.dim, fontSize:12, fontWeight:600, marginBottom:10, lineHeight:1.6 }}>
-          Set a 4-digit PIN for <strong style={{ color:"white" }}>{name}</strong> to log in.
+          Set a 4-digit PIN for <strong style={{ color:textColor() }}>{name}</strong> to log in.
         </div>
         <div style={{ background:`${C.cyan}14`, border:`1px solid ${C.cyan}33`, borderRadius:10, padding:"8px 12px", marginBottom:12 }}>
           <div style={{ color:C.cyan, fontSize:10, fontFamily:"'Orbitron',sans-serif", marginBottom:2 }}>🔐 STEP 4 — ALMOST THERE!</div>
@@ -3169,7 +3170,7 @@ function Login({ onBack, onDone }) {
               >
                 <div style={{ width:48, height:48, background:`${w.color}18`, borderRadius:12, display:"flex", alignItems:"center", justifyContent:"center", fontSize:24, border:`1.5px solid ${w.color}33` }}>{k.avatar}</div>
                 <div style={{ textAlign:"left" }}>
-                  <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:13, color:"white"}}>{k.name}</div>
+                  <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:13, color:textColor()}}>{k.name}</div>
                   <div style={{ fontSize:11, color:C.dim, marginTop:2 }}>{w.name} · Lv {k.level||1} · {k.xp||0} XP</div>
                 </div>
                 <div style={{ marginLeft:"auto", color:w.color, fontSize:20 }}>›</div>
@@ -3322,7 +3323,7 @@ function RegPayment({ onBack, onPaid }) {
   };
 
   return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"20px 18px",display:"flex",flexDirection:"column",alignItems:"center"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),padding:"20px 18px",display:"flex",flexDirection:"column",alignItems:"center"}}>
       <div style={{width:"100%",maxWidth:420}}>
         <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:24}}>
           <BackBtn onClick={onBack} color={C.green}/>
@@ -3330,7 +3331,7 @@ function RegPayment({ onBack, onPaid }) {
         </div>
         <div style={{textAlign:"center",marginBottom:20}}>
           <div style={{fontSize:48}}>{"\u{1F680}"}</div>
-          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:28,color:"white",marginTop:8}}>{"\u20B9"}599</div>
+          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:28,color:textColor(),marginTop:8}}>{"\u20B9"}599</div>
           <div style={{color:C.dim,fontSize:13,marginTop:4}}>One-time {"\u00B7"} Lifetime access to your class</div>
         </div>
         <Card color={C.green} style={{marginBottom:14}}>
@@ -3349,10 +3350,10 @@ function RegPayment({ onBack, onPaid }) {
           <Btn color={C.green} loading={loading} onClick={handleRazorpay}>{"\u{1F680}"} PAY {"\u20B9"}599 {"\u2014"} REGISTER NOW</Btn>
         ) : (
           <div>
-            <div style={{color:C.dim,fontSize:12,marginBottom:6}}>UPI ID: <b style={{color:C.green}}>mathmagic@upi</b> {"\u00B7"} Amount: <b style={{color:"white"}}>{"\u20B9"}599</b></div>
+            <div style={{color:C.dim,fontSize:12,marginBottom:6}}>UPI ID: <b style={{color:C.green}}>mathmagic@upi</b> {"\u00B7"} Amount: <b style={{color:textColor()}}>{"\u20B9"}599</b></div>
             <div style={{color:C.dim,fontSize:11,marginBottom:8}}>After paying, enter UTR / transaction ref number:</div>
             <input value={utr} onChange={e=>setUtr(e.target.value.toUpperCase())} placeholder="UTR / Ref number"
-              style={{width:"100%",background:C.card2,border:`1.5px solid ${C.green}44`,borderRadius:10,padding:"10px 12px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14,display:"block",marginBottom:10}}/>
+              style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.green}44`,borderRadius:10,padding:"10px 12px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:14,display:"block",marginBottom:10}}/>
             <Btn color={C.green} loading={loading} onClick={handleUPI}>{"\u2705"} VERIFY {"\u0026"} REGISTER</Btn>
           </div>
         )}
@@ -3419,7 +3420,7 @@ function LessonPayment({ lessonToBuy, child, user, onBack, onPaid }) {
   };
 
   return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"20px 18px",display:"flex",flexDirection:"column",alignItems:"center"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),padding:"20px 18px",display:"flex",flexDirection:"column",alignItems:"center"}}>
       <div style={{width:"100%",maxWidth:420}}>
         <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:24}}>
           <BackBtn onClick={onBack} color={C.orange}/>
@@ -3427,7 +3428,7 @@ function LessonPayment({ lessonToBuy, child, user, onBack, onPaid }) {
         </div>
         <div style={{textAlign:"center",marginBottom:20}}>
           <div style={{fontSize:48}}>{"\ud83d\udd13"}</div>
-          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:28,color:"white",marginTop:8}}>{"\u20B9"}{price}</div>
+          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:28,color:textColor(),marginTop:8}}>{"\u20B9"}{price}</div>
           <div style={{color:C.dim,fontSize:13,marginTop:4}}>Permanent unlock {"\u00B7"} Lesson {lessonId}</div>
         </div>
         <Card color={C.orange} style={{marginBottom:14}}>
@@ -3446,9 +3447,9 @@ function LessonPayment({ lessonToBuy, child, user, onBack, onPaid }) {
           <Btn color={C.orange} loading={loading} onClick={handleRazorpay}>{"\ud83d\udd13"} UNLOCK FOR {"\u20B9"}{price}</Btn>
         ) : (
           <div>
-            <div style={{color:C.dim,fontSize:12,marginBottom:6}}>UPI ID: <b style={{color:C.orange}}>mathmagic@upi</b> {"\u00B7"} Amount: <b style={{color:"white"}}>{"\u20B9"}{price}</b></div>
+            <div style={{color:C.dim,fontSize:12,marginBottom:6}}>UPI ID: <b style={{color:C.orange}}>mathmagic@upi</b> {"\u00B7"} Amount: <b style={{color:textColor()}}>{"\u20B9"}{price}</b></div>
             <input value={utr} onChange={e=>setUtr(e.target.value.toUpperCase())} placeholder="UTR / Ref number"
-              style={{width:"100%",background:C.card2,border:`1.5px solid ${C.orange}44`,borderRadius:10,padding:"10px 12px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14,display:"block",marginBottom:10}}/>
+              style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.orange}44`,borderRadius:10,padding:"10px 12px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:14,display:"block",marginBottom:10}}/>
             <Btn color={C.orange} loading={loading} onClick={handleUPI}>{"\u2705"} VERIFY {"\u0026"} UNLOCK</Btn>
           </div>
         )}
@@ -3499,9 +3500,9 @@ function Paywall({ world, child, onBack, onUnlock }) {
               borderRadius:14, padding:"14px 10px", cursor:"pointer", textAlign:"center",
               position:"relative", boxShadow: plan===key ? `0 0 18px ${C.cyan}33` : "none", transition:"all 0.2s",
             }}>
-              {p.badge && <div style={{ position:"absolute", top:-9, left:"50%", transform:"translateX(-50%)", background:C.orange, color:"white", fontSize:9, fontFamily:"'Orbitron',sans-serif", padding:"2px 8px", borderRadius:8, whiteSpace:"nowrap" }}>{p.badge}</div>}
+              {p.badge && <div style={{ position:"absolute", top:-9, left:"50%", transform:"translateX(-50%)", background:C.orange, color:textColor(), fontSize:9, fontFamily:"'Orbitron',sans-serif", padding:"2px 8px", borderRadius:8, whiteSpace:"nowrap" }}>{p.badge}</div>}
               <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:10, color: plan===key ? C.cyan : C.dim, marginBottom:4 }}>{p.label}</div>
-              <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:22, color:"white"}}>{p.price}</div>
+              <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:22, color:textColor()}}>{p.price}</div>
               <div style={{ fontSize:11, color:C.dim, marginTop:2 }}>{p.sub}</div>
             </button>
           ))}
@@ -3616,13 +3617,13 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
       {showRating && <RatingPrompt child={child} onClose={() => setShowRating(false)}/>}
 
       {showWelcome && (
-        <div onClick={dismissWelcome} style={{ position:"fixed", inset:0, zIndex:150, display:"flex", alignItems:"center", justifyContent:"center", background:"rgba(4,4,15,0.92)", backdropFilter:"blur(10px)", padding:"0 20px" }}>
-          <div style={{ background:`linear-gradient(135deg,${C.purple}28,${C.cyan}18)`, border:`2px solid ${C.cyan}55`, borderRadius:28, padding:"36px 28px", maxWidth:380, width:"100%", textAlign:"center", boxShadow:`0 0 80px ${C.cyan}33`, animation:"popIn 0.5s ease" }}>
+        <div onClick={dismissWelcome} style={{ position:"fixed", inset:0, zIndex:150, display:"flex", alignItems:"center", justifyContent:"center", background:isDark()?"rgba(4,4,15,0.92)":"rgba(240,244,255,0.95)", backdropFilter:"blur(10px)", padding:"0 20px" }}>
+          <div style={{ background:`linear-gradient(135deg,${C.purple}28,${C.cyan}18)`, border:`2px solid ${C.cyan}${isDark()?"55":"88"}`, borderRadius:28, padding:"36px 28px", maxWidth:380, width:"100%", textAlign:"center", boxShadow:`0 0 80px ${C.cyan}33`, animation:"popIn 0.5s ease" }}>
             <div style={{ fontSize:80, marginBottom:10, animation:"floatUp 2s ease-in-out infinite" }}>{child.avatar||"🧒"}</div>
             <div style={{ fontSize:13, color:C.cyan, letterSpacing:4, marginBottom:6, fontWeight:700 }}>WELCOME TO</div>
-            <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:26, color:"white", fontWeight:900, marginBottom:4 }}>MathMagic</div>
+            <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:26, color:textColor(), fontWeight:900, marginBottom:4 }}>MathMagic</div>
             <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:14, color:C.yellow, marginBottom:20 }}>SPACE ACADEMY 🚀</div>
-            <div style={{ fontSize:20, color:"white", fontWeight:800, marginBottom:8 }}>Hello, {child.name}! 👋</div>
+            <div style={{ fontSize:20, color:textColor(), fontWeight:800, marginBottom:8 }}>Hello, {child.name}! 👋</div>
             <div style={{ fontSize:15, color:C.dim, lineHeight:1.7, marginBottom:24 }}>Your math adventure awaits!<br/>Let's explore the galaxy together! 🌌</div>
             <button onClick={dismissWelcome} style={{ background:`linear-gradient(135deg,${C.cyan},${C.purple})`, border:"none", borderRadius:20, padding:"16px 40px", color:"white", fontFamily:"'Baloo 2',sans-serif", fontSize:18, cursor:"pointer", fontWeight:800, boxShadow:`0 0 30px ${C.cyan}55` }}>🚀 LET'S GO!</button>
           </div>
@@ -3631,7 +3632,7 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
 
       {/* Hero Header */}
       <div style={{ position:"relative", zIndex:2 }}>
-        <div style={{ background:`linear-gradient(160deg,${w.color}28 0%,${C.purple}18 50%,transparent 100%)`, padding:"20px 20px 16px", position:"relative", overflow:"hidden" }}>
+        <div style={{ background:`linear-gradient(160deg,${w.color}${isDark()?"28":"18"} 0%,${C.purple}${isDark()?"18":"0f"} 50%,transparent 100%)`, padding:"20px 20px 16px", position:"relative", overflow:"hidden" }}>
           <div style={{ position:"absolute", right:-20, top:-20, fontSize:110, opacity:0.1, animation:"floatUp 4s ease-in-out infinite", pointerEvents:"none" }}>{w.planet}</div>
           <div style={{ position:"relative", zIndex:1 }}>
             <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:14 }}>
@@ -3640,7 +3641,7 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
                 <div style={{ position:"absolute", bottom:-5, right:-5, background:C.yellow, borderRadius:10, padding:"2px 7px", fontSize:10, fontWeight:900, color:"#000", border:"2px solid "+C.bg }}>Lv{child.level||1}</div>
               </div>
               <div style={{ flex:1 }}>
-                <div style={{ fontSize:21, fontWeight:900, color:"white", lineHeight:1.1 }}>Hey, {child.name?.split(" ")[0]}! {levelEmoji}</div>
+                <div style={{ fontSize:21, fontWeight:900, color:textColor(), lineHeight:1.1 }}>Hey, {child.name?.split(" ")[0]}! {levelEmoji}</div>
                 <div style={{ fontSize:13, color:w.color, fontWeight:700, marginTop:2 }}>{w.world} · Cadet</div>
               </div>
               <div style={{ display:"flex", alignItems:"center", gap:8 }}>
@@ -3658,10 +3659,10 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
                     strokeDasharray={`${2*Math.PI*22*pctDone/100} ${2*Math.PI*22}`} strokeLinecap="round"
                     style={{transition:"stroke-dasharray 1s ease"}}/>
                 </svg>
-                <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:900, color:"white" }}>{pctDone}%</div>
+                <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:900, color:textColor() }}>{pctDone}%</div>
               </div>
               <div style={{ flex:1 }}>
-                <div style={{ fontSize:14, fontWeight:800, color:"white" }}>Overall Progress</div>
+                <div style={{ fontSize:14, fontWeight:800, color:textColor() }}>Overall Progress</div>
                 <div style={{ fontSize:12, color:C.dim }}>{doneSets} of {totalSets} sets done</div>
               </div>
               <div style={{ textAlign:"right" }}><div style={{ fontSize:24, fontWeight:900, color:C.yellow }}>{totalStars}</div><div style={{ fontSize:10, color:C.dim }}>Stars ⭐</div></div>
@@ -3672,11 +3673,11 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
 
       {/* Cosmo Mascot */}
       <div style={{ position:"relative", zIndex:2, margin:"14px 18px 0" }}>
-        <div style={{ background:`linear-gradient(135deg,${C.purple}22,${C.cyan}14)`, border:`1.5px solid ${C.cyan}33`, borderRadius:20, padding:"12px 16px", display:"flex", alignItems:"center", gap:12 }}>
+        <div style={{ background:`linear-gradient(135deg,${C.purple}${isDark()?"22":"14"},${C.cyan}${isDark()?"14":"0f"})`, color:textColor(), border:`1.5px solid ${C.cyan}33`, borderRadius:20, padding:"12px 16px", display:"flex", alignItems:"center", gap:12 }}>
           <div style={{ fontSize:36, animation:"floatUp 2.5s ease-in-out infinite", flexShrink:0 }}>🤖</div>
           <div style={{ flex:1 }}>
             <div style={{ fontSize:11, color:C.cyan, fontWeight:700, marginBottom:2 }}>COSMO SAYS</div>
-            <div key={mascotMsg} style={{ fontSize:15, color:"white", fontWeight:700, animation:"slideUp 0.4s ease" }}>{MASCOT_MSGS[mascotMsg]}</div>
+            <div key={mascotMsg} style={{ fontSize:15, color:textColor(), fontWeight:700, animation:"slideUp 0.4s ease" }}>{MASCOT_MSGS[mascotMsg]}</div>
           </div>
         </div>
       </div>
@@ -3689,9 +3690,9 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
           {e:"📚",v:progress.filter(p=>myLessons.some(l=>p.lesson_id?.startsWith(l.id))).length, l:"Sets Done", c:C.purple},
           {e:"🗓️",v:todaySets,       l:"Today",   c:C.cyan},
         ].map((s,i)=>(
-          <div key={i} style={{ flex:1, background:C.card, borderRadius:16, padding:"10px 6px", textAlign:"center", border:`1.5px solid ${s.c}28` }}>
+          <div key={i} style={{ flex:1, background:C.card, borderRadius:16, padding:"10px 6px", textAlign:"center", border:`1.5px solid ${s.c}${isDark()?"28":"44"}` }}>
             <div style={{ fontSize:20 }}>{s.e}</div>
-            <div style={{ fontSize:18, fontWeight:900, color:"white" }}>{s.v}</div>
+            <div style={{ fontSize:18, fontWeight:900, color:textColor() }}>{s.v}</div>
             <div style={{ fontSize:10, color:C.dim, fontWeight:700 }}>{s.l}</div>
           </div>
         ))}
@@ -3700,10 +3701,10 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
       {/* Daily Missions */}
       <div style={{ position:"relative", zIndex:2, margin:"14px 18px 0" }}>
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
-          <div style={{ fontSize:16, fontWeight:900, color:"white" }}>🎯 Today's Missions</div>
+          <div style={{ fontSize:16, fontWeight:900, color:textColor() }}>🎯 Today's Missions</div>
           <div style={{ fontSize:12, color:C.dim }}>{[dqDone,dpDone,todaySets>=1].filter(Boolean).length}/3 done</div>
         </div>
-        <div style={{ background:"rgba(255,255,255,0.06)", borderRadius:8, height:6, overflow:"hidden", marginBottom:14 }}>
+        <div style={{ background:isDark()?isDark()?"rgba(255,255,255,0.06)":"rgba(124,111,224,0.06)":C.border||"#ece8ff", borderRadius:8, height:6, overflow:"hidden", marginBottom:14 }}>
           <div style={{ width:`${([dqDone,dpDone,todaySets>=1].filter(Boolean).length/3)*100}%`, height:"100%", background:`linear-gradient(90deg,${C.cyan},${C.purple})`, borderRadius:8, transition:"width 0.6s ease" }}/>
         </div>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:10 }}>
@@ -3727,7 +3728,7 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
 
       {/* Quick Launch */}
       <div style={{ position:"relative", zIndex:2, margin:"14px 18px 0" }}>
-        <div style={{ fontSize:16, fontWeight:900, color:"white", marginBottom:10 }}>⚡ Quick Launch</div>
+        <div style={{ fontSize:16, fontWeight:900, color:textColor(), marginBottom:10 }}>⚡ Quick Launch</div>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
           {[
             {i:"🧮",l:"Abacus",    sub:"Train your brain",  c:C.yellow,  a:onAbacus},
@@ -3737,7 +3738,7 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
           ].map((n,i)=>(
             <button key={i} onClick={n.a} style={{ background:`${n.c}14`, border:`2px solid ${n.c}33`, borderRadius:18, padding:"16px 14px", cursor:"pointer", textAlign:"left", display:"flex", alignItems:"center", gap:12 }}>
               <div style={{ fontSize:32, flexShrink:0 }}>{n.i}</div>
-              <div><div style={{ fontSize:16, fontWeight:800, color:"white" }}>{n.l}</div><div style={{ fontSize:11, color:n.c, marginTop:2, fontWeight:600 }}>{n.sub}</div></div>
+              <div><div style={{ fontSize:16, fontWeight:800, color:textColor() }}>{n.l}</div><div style={{ fontSize:11, color:n.c, marginTop:2, fontWeight:600 }}>{n.sub}</div></div>
             </button>
           ))}
         </div>
@@ -3745,12 +3746,12 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
 
       {/* My Class */}
       <div style={{ position:"relative", zIndex:2, margin:"14px 18px 0" }}>
-        <div style={{ fontSize:16, fontWeight:900, color:"white", marginBottom:10 }}>🌍 My Class</div>
+        <div style={{ fontSize:16, fontWeight:900, color:textColor(), marginBottom:10 }}>🌍 My Class</div>
         <div onClick={()=>onWorld(w)} style={{ background:`linear-gradient(135deg,${w.color}22,${w.color}0a)`, border:`2px solid ${w.color}55`, borderRadius:22, padding:"18px", cursor:"pointer", display:"flex", alignItems:"center", gap:16, boxShadow:`0 0 30px ${w.glow}`, position:"relative", overflow:"hidden" }}>
           <div style={{ position:"absolute", right:-10, top:-10, fontSize:80, opacity:0.12, animation:"floatUp 3s ease-in-out infinite", pointerEvents:"none" }}>{w.planet}</div>
           <div style={{ width:64, height:64, borderRadius:20, background:`${w.color}25`, border:`3px solid ${w.color}55`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:36, flexShrink:0 }}>{w.planet}</div>
           <div style={{ flex:1, position:"relative", zIndex:1 }}>
-            <div style={{ fontSize:20, fontWeight:900, color:"white" }}>{w.name}</div>
+            <div style={{ fontSize:20, fontWeight:900, color:textColor() }}>{w.name}</div>
             <div style={{ fontSize:13, color:w.color, fontWeight:700, marginTop:2 }}>{w.world}</div>
             <div style={{ fontSize:12, color:C.dim, marginTop:4 }}>{(LESSONS[child.class_num]||LESSONS[1]).length} Lessons · {pctDone}% complete</div>
           </div>
@@ -3760,11 +3761,11 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
 
       {/* Other Worlds — ALL classes */}
       <div style={{ position:"relative", zIndex:2, margin:"14px 18px 0" }}>
-        <div style={{ fontSize:16, fontWeight:900, color:"white", marginBottom:10 }}>🌌 Explore Other Worlds</div>
+        <div style={{ fontSize:16, fontWeight:900, color:textColor(), marginBottom:10 }}>🌌 Explore Other Worlds</div>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
           {WORLDS.filter(cw=>cw.id!==parseInt(child.class_num||1)).map(cw=>(
             <button key={cw.id} onClick={()=>onWorld(cw)}
-              style={{ background:`linear-gradient(135deg,${cw.color}12,rgba(10,10,28,0.9))`, border:`1.5px solid ${cw.color}33`, borderRadius:18, padding:"14px 12px", cursor:"pointer", textAlign:"center", opacity:0.82, display:"flex", flexDirection:"column", alignItems:"center", gap:4 }}>
+              style={{ background:`linear-gradient(135deg,${cw.color}12,isDark()?"rgba(10,10,28,0.9)":C.card)`, border:`1.5px solid ${cw.color}33`, borderRadius:18, padding:"14px 12px", cursor:"pointer", textAlign:"center", opacity:0.82, display:"flex", flexDirection:"column", alignItems:"center", gap:4 }}>
               <div style={{ fontSize:30 }}>{cw.planet}</div>
               <div style={{ fontSize:13, fontWeight:800, color:cw.color }}>{cw.name}</div>
               <div style={{ fontSize:10, color:C.dim }}>{cw.world}</div>
@@ -3778,12 +3779,12 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
 
       {/* Progress Grid */}
       <div style={{ position:"relative", zIndex:2, margin:"14px 18px 0" }}>
-        <div style={{ fontSize:16, fontWeight:900, color:"white", marginBottom:10 }}>📈 Lesson Progress</div>
+        <div style={{ fontSize:16, fontWeight:900, color:textColor(), marginBottom:10 }}>📈 Lesson Progress</div>
         <ProgressGrid lessons={LESSONS[child.class_num]||LESSONS[1]} progress={progress}/>
       </div>
 
       {/* Bottom Nav */}
-      <div style={{ position:"fixed", bottom:0, left:0, right:0, zIndex:10, background:"rgba(4,4,15,0.97)", backdropFilter:"blur(20px)", borderTop:`1px solid ${C.purple}33`, padding:"10px 14px 14px", display:"flex", justifyContent:"space-around" }}>
+      <div style={{ position:"fixed", bottom:0, left:0, right:0, zIndex:10, background:isDark()?"rgba(4,4,15,0.97)":"rgba(255,255,255,0.97)", backdropFilter:"blur(20px)", borderTop:`1px solid ${C.purple}33`, padding:"10px 14px 14px", display:"flex", justifyContent:"space-around" }}>
         {[
           {icon:"🏠",label:"Home",    act:null,       active:true},
           {icon:"🎮",label:"Games",   act:onGames},
@@ -3838,7 +3839,7 @@ function LessonMap({ world, child, onBack, onLesson, isLessonPurchased, onPurcha
           </div>
           <div style={{ marginLeft:"auto", fontSize:28 }}>{world.planet}</div>
         </div>
-        <div style={{ background:"rgba(255,255,255,0.06)", borderRadius:7, height:6, overflow:"hidden" }}>
+        <div style={{ background:isDark()?"rgba(255,255,255,0.06)":"rgba(124,111,224,0.06)", borderRadius:7, height:6, overflow:"hidden" }}>
           <div style={{ width:`${(doneSets/totalSets)*100}%`, height:"100%", background:`linear-gradient(90deg,${world.color},${C.cyan})`, borderRadius:7 }}/>
         </div>
         <div style={{ fontSize:10, color:C.dim, marginTop:3, fontFamily:"'Orbitron',sans-serif" }}>{worldProg}/{lessons.length} LESSONS STARTED</div>
@@ -4068,7 +4069,7 @@ function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
         </div>
         <Card color={C.purple} style={{ marginBottom:16, textAlign:"center", padding:"18px 26px" }}>
           <div style={{ color:C.dim, fontSize:13, fontWeight:700, letterSpacing:1, marginBottom:4 }}>YOUR SCORE</div>
-          <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:48, color:"white", fontWeight:900 }}>{fs}<span style={{ fontSize:18, color:C.dim }}>/{questions.length}</span></div>
+          <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:48, color:textColor(), fontWeight:900 }}>{fs}<span style={{ fontSize:18, color:C.dim }}>/{questions.length}</span></div>
           <div style={{ color:C.yellow, fontWeight:800, fontSize:16, marginTop:6 }}>+{fs*20+(mode==="boss"?50:0)} XP 🌟 +{fst*10} Coins 🪙</div>
           <div style={{ color:C.green, fontSize:13, marginTop:6, fontWeight:700 }}>✅ Progress saved!</div>
         </Card>
@@ -4115,7 +4116,7 @@ function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
         </div>
         <div style={{ marginBottom:5 }}>
           <div style={{ fontSize:9, color:C.dim, fontFamily:"'Orbitron',sans-serif", marginBottom:3 }}>BOSS HP</div>
-          <div style={{ background:"rgba(255,255,255,0.06)", borderRadius:8, height:10, overflow:"hidden" }}>
+          <div style={{ background:isDark()?"rgba(255,255,255,0.06)":"rgba(124,111,224,0.06)", borderRadius:8, height:10, overflow:"hidden" }}>
             <div style={{ width:`${bossHp}%`, height:"100%", background:`linear-gradient(90deg,${C.red},${C.orange})`, borderRadius:8, transition:"width 0.4s" }}/>
           </div>
         </div>
@@ -4125,7 +4126,7 @@ function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
         <div style={{ fontSize:58, animation:"bossW 1.5s ease-in-out infinite", marginBottom:10 }}>{lesson.boss||"👾"}</div>
         {burst && <div style={{ fontSize:13, color:C.green, marginBottom:6, fontFamily:"'Orbitron',sans-serif", position:"fixed", top:"20%", left:"50%", transform:"translateX(-50%)", zIndex:998, background:`${C.green}22`, borderRadius:12, padding:"8px 20px" }}>⚡ HIT! Boss HP: {bossHp}%</div>}
         <Card color={C.red} style={{ marginBottom:12, padding:"16px 14px", textAlign:"left" }}>
-          <div style={{ fontSize:20, color:"white", lineHeight:1.5, fontWeight:800 }}>{q.q}</div>
+          <div style={{ fontSize:20, color:textColor(), lineHeight:1.5, fontWeight:800 }}>{q.q}</div>
         </Card>
         <div style={{ fontSize:9, color:C.dim, fontFamily:"'Orbitron',sans-serif", marginBottom:8 }}>Q {qi+1}/{questions.length} · Score: {score}</div>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
@@ -4152,7 +4153,7 @@ function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
       </div>
       <div style={{ position:"relative", zIndex:2, padding:"18px 18px", textAlign:"center" }}>
         <Card color={world.color} style={{ marginBottom:18, padding:"14px" }}>
-          <div style={{ fontSize:20, color:"white", fontWeight:800, lineHeight:1.4 }}>{q.q}</div>
+          <div style={{ fontSize:20, color:textColor(), fontWeight:800, lineHeight:1.4 }}>{q.q}</div>
           <div style={{ color:C.dim, fontSize:11, marginTop:5, fontFamily:"'Orbitron',sans-serif" }}>TAP THE CORRECT BUBBLE!</div>
         </Card>
         <div style={{ display:"flex", flexWrap:"wrap", gap:16, justifyContent:"center", marginTop:10 }}>
@@ -4164,7 +4165,7 @@ function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
               else if (b.id === chosen){ bg = `radial-gradient(circle at 30% 30%, ${C.red}88, ${C.red}33)`;   brd = `3px solid ${C.red}`;   }
             }
             return (
-              <button key={b.id} onClick={() => chosen === null && pick(b.id)} style={{ width:96, height:96, borderRadius:"50%", background:bg, border:brd, color:"white", fontSize:19, fontWeight:800, cursor: chosen!==null?"default":"pointer", boxShadow:`0 0 22px ${world.color}66`, animation:`bFloat ${2+idx*0.3}s ease-in-out ${idx*0.2}s infinite`, display:"flex", alignItems:"center", justifyContent:"center", transition:"all 0.2s" }}>
+              <button key={b.id} onClick={() => chosen === null && pick(b.id)} style={{ width:96, height:96, borderRadius:"50%", background:bg, border:brd, color:textColor(), fontSize:19, fontWeight:800, cursor: chosen!==null?"default":"pointer", boxShadow:`0 0 22px ${world.color}66`, animation:`bFloat ${2+idx*0.3}s ease-in-out ${idx*0.2}s infinite`, display:"flex", alignItems:"center", justifyContent:"center", transition:"all 0.2s" }}>
                 {b.text}
               </button>
             );
@@ -4185,7 +4186,7 @@ function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
           <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:11, color:world.color }}>{lesson.emoji} {lesson.title}</div>
           <div style={{ display:"flex", gap:3 }}>{[1,2,3].map(i => <span key={i} style={{ fontSize:13, opacity: i<=lives ? 1 : 0.15 }}>❤️</span>)}</div>
         </div>
-        <div style={{ background:"rgba(255,255,255,0.06)", borderRadius:7, height:5, overflow:"hidden" }}>
+        <div style={{ background:isDark()?"rgba(255,255,255,0.06)":"rgba(124,111,224,0.06)", borderRadius:7, height:5, overflow:"hidden" }}>
           <div style={{ width:`${((qi+1)/questions.length)*100}%`, height:"100%", background:`linear-gradient(90deg,${world.color},${C.cyan})`, borderRadius:7, transition:"width 0.4s" }}/>
         </div>
         <div style={{ display:"flex", justifyContent:"space-between", marginTop:3 }}>
@@ -4213,22 +4214,22 @@ function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
           transition:"box-shadow 0.3s"
         }}>
           <div style={{ fontSize:42, marginBottom:10 }}>{lesson.emoji}</div>
-          <div style={{ fontSize:20, color:"white", lineHeight:1.5, fontWeight:800 }}>{q.q}</div>
+          <div style={{ fontSize:20, color:textColor(), lineHeight:1.5, fontWeight:800 }}>{q.q}</div>
         </Card>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:14 }}>
           {q.opts.map((opt, i) => {
             const isCorrect = i===q.ans;
             const isChosen  = i===chosen;
             const answered  = chosen!==null;
-            let bg=C.card, border=`2px solid ${world.color}28`, col="white", shadow="none", anim="none";
+            let bg=C.card, border=`2px solid ${world.color}${isDark()?"28":"44"}`, col=textColor(), shadow="none", anim="none";
             if (answered) {
-              if (isCorrect)     { bg="#052e16"; border=`3px solid ${C.green}`; col="#4ade80"; shadow=`0 0 24px ${C.green}88`; anim="superCorrect 0.5s ease"; }
-              else if (isChosen) { bg="#2d0a0a"; border=`3px solid ${C.red}`;   col="#f87171"; shadow=`0 0 14px ${C.red}44`; }
+              if (isCorrect)     { bg=isDark()?"#052e16":"#edfff6"; border=`3px solid ${C.green}`; col=isDark()?"#4ade80":"#065f46"; shadow=`0 0 24px ${C.green}88`; anim="superCorrect 0.5s ease"; }
+              else if (isChosen) { bg=isDark()?"#2d0a0a":"#fff1f1"; border=`3px solid ${C.red}`;   col=isDark()?"#f87171":"#991b1b"; shadow=`0 0 14px ${C.red}44`; }
             }
             const optLabels = ["A","B","C","D"];
             return (
               <button key={i} onClick={() => pick(i)} style={{ background:bg, border, borderRadius:18, padding:"16px 12px", fontSize:18, fontWeight:800, color:col, cursor:answered?"default":"pointer", transition:"all 0.2s", boxShadow:shadow, animation:anim, position:"relative", textAlign:"center", lineHeight:1.4 }}>
-                <div style={{fontSize:11,color:answered&&isCorrect?"#4ade80":answered&&isChosen?"#f87171":world.color,fontFamily:"'Orbitron',sans-serif",marginBottom:4,opacity:0.8}}>{optLabels[i]}</div>
+                <div style={{fontSize:11,color:answered&&isCorrect?(isDark()?"#4ade80":"#065f46"):answered&&isChosen?(isDark()?"#f87171":"#991b1b"):world.color,fontFamily:"'Orbitron',sans-serif",marginBottom:4,opacity:0.8}}>{optLabels[i]}</div>
                 {answered && isCorrect ? "✓ " : answered && isChosen && !isCorrect ? "✗ " : ""}{opt}
               </button>
             );
@@ -4240,13 +4241,13 @@ function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
           </button>
         )}
         {chosen!==null && chosen===q.ans && (
-          <div style={{marginTop:12,textAlign:"center",background:`${C.green}15`,borderRadius:16,padding:"12px 16px",border:`2px solid ${C.green}33`}}>
+          <div style={{marginTop:12,textAlign:"center",background:isDark()?`${C.green}15`:"#edfff6",borderRadius:16,padding:"12px 16px",border:`2px solid ${C.green}${isDark()?"33":"88"}`}}>
             <div style={{fontSize:28,marginBottom:4,animation:"heartbeat 1s ease infinite"}}>🌟</div>
             <div style={{color:C.green,fontSize:17,fontWeight:800}}>Amazing! +{q.xp||10} XP</div>
           </div>
         )}
         {chosen!==null && chosen!==q.ans && (
-          <div style={{marginTop:12,textAlign:"center",background:`${C.orange}12`,borderRadius:16,padding:"12px 16px",border:`2px solid ${C.orange}33`}}>
+          <div style={{marginTop:12,textAlign:"center",background:isDark()?`${C.orange}12`:"#fffbf0",borderRadius:16,padding:"12px 16px",border:`2px solid ${C.orange}${isDark()?"33":"77"}`}}>
             <div style={{color:C.orange,fontSize:15,fontWeight:800}}>💡 Hint: {q.h}</div>
           </div>
         )}
@@ -4486,7 +4487,7 @@ function Olympiad({ child, setChild, onBack }) {
             <div style={{ fontSize:10, color:C.dim }}>{doneTests.length}/30 completed · SOF IMO · ASSET · NTSE</div>
           </div>
         </div>
-        <div style={{ background:"rgba(255,255,255,0.06)", borderRadius:6, height:5, overflow:"hidden" }}>
+        <div style={{ background:isDark()?"rgba(255,255,255,0.06)":"rgba(124,111,224,0.06)", borderRadius:6, height:5, overflow:"hidden" }}>
           <div style={{ width:`${(doneTests.length/30)*100}%`, height:"100%", background:`linear-gradient(90deg,${C.purple},${C.cyan})`, borderRadius:6 }}/>
         </div>
       </div>
@@ -4523,7 +4524,7 @@ function Olympiad({ child, setChild, onBack }) {
           <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:11, color:C.purple }}>🎓 TEST {testIdx+1} · Q{qi+1}/25</div>
           <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:16, color: timeLeft <= 10 ? C.red : C.yellow }}>{timeLeft}s</div>
         </div>
-        <div style={{ background:"rgba(255,255,255,0.06)", borderRadius:6, height:5, overflow:"hidden" }}>
+        <div style={{ background:isDark()?"rgba(255,255,255,0.06)":"rgba(124,111,224,0.06)", borderRadius:6, height:5, overflow:"hidden" }}>
           <div style={{ width:`${((qi)/25)*100}%`, height:"100%", background:`linear-gradient(90deg,${C.purple},${C.cyan})`, borderRadius:6, transition:"width 0.4s" }}/>
         </div>
         <div style={{ display:"flex", justifyContent:"space-between", marginTop:3 }}>
@@ -4533,7 +4534,7 @@ function Olympiad({ child, setChild, onBack }) {
       </div>
       <div style={{ position:"relative", zIndex:2, padding:"14px 18px" }}>
         <Card color={C.purple} style={{ marginBottom:14, padding:"18px 14px" }}>
-          <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:15, color:"white", lineHeight:1.5 }}>{question.q}</div>
+          <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:15, color:textColor(), lineHeight:1.5 }}>{question.q}</div>
         </Card>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:12 }}>
           {question.opts.map((opt, i) => {
@@ -4569,9 +4570,9 @@ function Olympiad({ child, setChild, onBack }) {
           {pct>=80?"BRILLIANT!":pct>=60?"WELL DONE!":pct>=40?"GOOD TRY!":"KEEP GOING!"}
         </div>
         <Card color={C.purple} style={{ marginBottom:14, textAlign:"center" }}>
-          <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:36, color:"white"}}>{score}<span style={{ fontSize:14, color:C.dim }}>/{total}</span></div>
+          <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:36, color:textColor()}}>{score}<span style={{ fontSize:14, color:C.dim }}>/{total}</span></div>
           <div style={{ color:C.yellow, fontSize:13, fontWeight:700, marginTop:3 }}>+{score*25} XP · +{score*5} COINS</div>
-          <div style={{ marginTop:8, background:"rgba(255,255,255,0.06)", borderRadius:6, height:8, overflow:"hidden" }}>
+          <div style={{ marginTop:8, background:isDark()?"rgba(255,255,255,0.06)":"rgba(124,111,224,0.06)", borderRadius:6, height:8, overflow:"hidden" }}>
             <div style={{ width:`${pct}%`, height:"100%", background:`linear-gradient(90deg,${pct>=60?C.green:C.orange},${C.cyan})`, borderRadius:6 }}/>
           </div>
           <div style={{ color:C.dim, fontSize:11, marginTop:3 }}>{pct}% accuracy</div>
@@ -4633,7 +4634,7 @@ function ParentDash({ child, onBack }) {
         <Card color={C.purple} style={{ marginBottom:12, display:"flex", alignItems:"center", gap:14 }}>
           <div style={{ fontSize:42 }}>{child.avatar}</div>
           <div>
-            <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:14, color:"white"}}>{child.name}</div>
+            <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:14, color:textColor()}}>{child.name}</div>
             <div style={{ color:C.dim, fontSize:12, marginTop:2 }}>{WORLDS[(child.class_num||1)-1].name} · Level {child.level||1}</div>
             <div style={{ color: child.is_premium ? C.yellow : C.dim, fontSize:11, marginTop:2, fontWeight:700 }}>{child.is_premium ? "⭐ Premium" : "Free Plan"}</div>
           </div>
@@ -4642,14 +4643,14 @@ function ParentDash({ child, onBack }) {
           {[{e:"⭐",v:totalStars,l:"Stars",c:C.yellow},{e:"📚",v:progress.length,l:"Done",c:C.cyan},{e:"🎯",v:`${acc}%`,l:"Accuracy",c:C.green},{e:"💎",v:child.xp||0,l:"Total XP",c:C.purple}].map((s,i) => (
             <Card key={i} color={s.c} style={{ textAlign:"center", padding:"11px 8px" }}>
               <div style={{ fontSize:22, marginBottom:3 }}>{s.e}</div>
-              <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:17, color:"white"}}>{s.v}</div>
+              <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:17, color:textColor()}}>{s.v}</div>
               <div style={{ fontSize:9, color:C.dim, fontFamily:"'Orbitron',sans-serif" }}>{s.l}</div>
             </Card>
           ))}
         </div>
         <Card color={C.green} style={{ marginBottom:12 }}>
           <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:11, color:C.green, marginBottom:8 }}>📈 ACCURACY</div>
-          <div style={{ background:"rgba(255,255,255,0.06)", borderRadius:8, height:12, overflow:"hidden", marginBottom:5 }}>
+          <div style={{ background:isDark()?"rgba(255,255,255,0.06)":"rgba(124,111,224,0.06)", borderRadius:8, height:12, overflow:"hidden", marginBottom:5 }}>
             <div style={{ width:`${acc}%`, height:"100%", background:`linear-gradient(90deg,${C.green},${C.cyan})`, borderRadius:8, transition:"width 1s ease" }}/>
           </div>
           <div style={{ display:"flex", justifyContent:"space-between" }}>
@@ -4725,7 +4726,7 @@ function AnalyticsCard({ childId }) {
           <div key={label} style={{background:"rgba(255,255,255,0.04)",borderRadius:10,padding:"8px 10px",display:"flex",gap:8,alignItems:"center"}}>
             <span style={{fontSize:18}}>{icon}</span>
             <div>
-              <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:14, color:"white"}}>{val}</div>
+              <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:14, color:textColor()}}>{val}</div>
               <div style={{color:C.dim,fontSize:9}}>{label}</div>
             </div>
           </div>
@@ -4795,7 +4796,7 @@ function FeedbackScreen({ child, currentScreen, onBack, prefillCategory }) {
           <div style={{ fontSize:10, color:C.green, fontFamily:"'Orbitron',sans-serif", marginBottom:6 }}>YOUR REPORT</div>
           <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:4 }}>
             <span style={{ fontSize:16 }}>{FEEDBACK_CATS.find(c=>c.id===cat)?.icon}</span>
-            <span style={{ color:"white", fontSize:12, fontWeight:700 }}>{FEEDBACK_CATS.find(c=>c.id===cat)?.label}</span>
+            <span style={{ color:textColor(), fontSize:12, fontWeight:700 }}>{FEEDBACK_CATS.find(c=>c.id===cat)?.label}</span>
           </div>
           <div style={{ color:C.dim, fontSize:11, lineHeight:1.5 }}>{desc.substring(0, 100)}{desc.length>100?"…":""}</div>
         </Card>
@@ -4851,7 +4852,7 @@ function FeedbackScreen({ child, currentScreen, onBack, prefillCategory }) {
             style={{
               width:"100%", padding:"13px", background:C.card2,
               border:`1.5px solid ${C.purple}44`, borderRadius:13,
-              color:"white", fontSize:13, fontFamily:"'Nunito',sans-serif",
+              color:textColor(), fontSize:13, fontFamily:"'Nunito',sans-serif",
               resize:"none", outline:"none", lineHeight:1.6,
               boxSizing:"border-box",
             }}
@@ -5044,7 +5045,7 @@ function NumberRocket({ onBack, child }) {
       <div style={{position:"relative",zIndex:1,textAlign:"center"}}>
         <div style={{fontSize:72,marginBottom:8}}>{result==="win"?"🚀":"💥"}</div>
         <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:18,color:result==="win"?C.green:C.red,marginBottom:8}}>{result==="win"?"LAUNCH SUCCESS!":"ROCKET CRASHED!"}</div>
-        <div style={{color:"white",fontSize:28,fontFamily:"'Orbitron',sans-serif",marginBottom:16}}>{score}/{TOTAL}</div>
+        <div style={{color:textColor(),fontSize:28,fontFamily:"'Orbitron',sans-serif",marginBottom:16}}>{score}/{TOTAL}</div>
         <div style={{display:"flex",gap:10}}>
           <Btn color={C.dim} style={{flex:1}} onClick={onBack}>← BACK</Btn>
           <Btn color={C.cyan} style={{flex:1}} onClick={()=>{setScore(0);setRound(1);setResult(null);genQ();}}>↺ RETRY</Btn>
@@ -5054,7 +5055,7 @@ function NumberRocket({ onBack, child }) {
   );
 
   return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",position:"relative"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),position:"relative"}}>
       <Starfield n={25}/>
       <div style={{position:"relative",zIndex:2,background:`${C.orange}18`,borderBottom:`1px solid ${C.orange}33`,padding:"12px 18px"}}>
         <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:6}}>
@@ -5063,7 +5064,7 @@ function NumberRocket({ onBack, child }) {
           <div style={{marginLeft:"auto",fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.yellow}}>⭐ {score}/{TOTAL}</div>
         </div>
         {/* Fuel bar */}
-        <div style={{background:"rgba(255,255,255,0.06)",borderRadius:6,height:8,overflow:"hidden"}}>
+        <div style={{background:isDark()?"rgba(255,255,255,0.06)":"rgba(124,111,224,0.06)",borderRadius:6,height:8,overflow:"hidden"}}>
           <div style={{width:`${fuel}%`,height:"100%",background:`linear-gradient(90deg,${fuel>50?C.green:fuel>25?C.orange:C.red},${C.yellow})`,borderRadius:6,transition:"width 0.1s"}}/>
         </div>
         <div style={{fontSize:9,color:C.dim,marginTop:2,fontFamily:"'Orbitron',sans-serif"}}>FUEL — ANSWER BEFORE IT RUNS OUT! · Q{round}/{TOTAL}</div>
@@ -5074,7 +5075,7 @@ function NumberRocket({ onBack, child }) {
           <div style={{fontSize:64,animation:fuel<30?"shakeX 0.3s ease infinite":"bFloat 2s ease-in-out infinite"}}>{fuel<30?"💥":"🚀"}</div>
         </div>
         <Card color={C.orange} style={{textAlign:"center",marginBottom:18,padding:"18px"}}>
-          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:22, color:"white"}}>{q}</div>
+          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:22, color:textColor()}}>{q}</div>
         </Card>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
           {opts.map((o,i)=>{
@@ -5192,7 +5193,7 @@ function StarCatcher({ onBack, child }) {
       <div style={{position:"relative",zIndex:1,textAlign:"center"}}>
         <div style={{fontSize:64,marginBottom:8}}>🌟</div>
         <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:18,color:C.yellow,marginBottom:8}}>GAME OVER!</div>
-        <div style={{color:"white",fontSize:36,fontFamily:"'Orbitron',sans-serif",marginBottom:16}}>Score: {score}</div>
+        <div style={{color:textColor(),fontSize:36,fontFamily:"'Orbitron',sans-serif",marginBottom:16}}>Score: {score}</div>
         <div style={{display:"flex",gap:10}}>
           <Btn color={C.dim} style={{flex:1}} onClick={onBack}>← BACK</Btn>
           <Btn color={C.yellow} style={{flex:1}} onClick={startGame}>↺ PLAY AGAIN</Btn>
@@ -5202,7 +5203,7 @@ function StarCatcher({ onBack, child }) {
   );
 
   return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",position:"relative",overflow:"hidden"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),position:"relative",overflow:"hidden"}}>
       <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg,#000010,#04040f)"}}>
         {[...Array(20)].map((_,i)=><div key={i} style={{position:"absolute",left:`${Math.random()*100}%`,top:`${Math.random()*100}%`,width:2,height:2,background:"white",borderRadius:"50%",opacity:Math.random()*0.5+0.1}}/>)}
       </div>
@@ -5214,7 +5215,7 @@ function StarCatcher({ onBack, child }) {
       </div>
       {/* Question */}
       <div style={{position:"relative",zIndex:10,textAlign:"center",padding:"12px 18px"}}>
-        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:20, color:"white"}}>{q}</div>
+        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:20, color:textColor()}}>{q}</div>
       </div>
       {/* Play field */}
       <div style={{position:"relative",height:"65vh",overflow:"hidden",background:"transparent",touchAction:"none"}}
@@ -5308,7 +5309,7 @@ function MathMaze({ onBack, child }) {
       <div style={{position:"relative",zIndex:1,textAlign:"center"}}>
         <div style={{fontSize:72,marginBottom:8}}>🏆</div>
         <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:18,color:C.green,marginBottom:8}}>MAZE COMPLETE!</div>
-        <div style={{color:"white",fontSize:28,fontFamily:"'Orbitron',sans-serif",marginBottom:16}}>{score}/{STEPS} correct</div>
+        <div style={{color:textColor(),fontSize:28,fontFamily:"'Orbitron',sans-serif",marginBottom:16}}>{score}/{STEPS} correct</div>
         <div style={{display:"flex",gap:10}}>
           <Btn color={C.dim} style={{flex:1}} onClick={onBack}>← BACK</Btn>
           <Btn color={C.green} style={{flex:1}} onClick={()=>{setStep(0);setScore(0);setDone(false);setChosen(null);shuffledQs.current=shuffle(QUESTIONS);}}>↺ AGAIN</Btn>
@@ -5318,7 +5319,7 @@ function MathMaze({ onBack, child }) {
   );
 
   return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",position:"relative"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),position:"relative"}}>
       <Starfield n={20}/>
       <div style={{position:"relative",zIndex:2,background:`${C.green}18`,borderBottom:`1px solid ${C.green}33`,padding:"12px 18px"}}>
         <div style={{display:"flex",alignItems:"center",gap:12}}>
@@ -5338,7 +5339,7 @@ function MathMaze({ onBack, child }) {
           <div style={{width:32,height:32,borderRadius:8,background:"#0a0a20",border:`2px solid ${C.yellow}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>🏆</div>
         </div>
         <Card color={C.green} style={{textAlign:"center",marginBottom:18,padding:"20px",animation:shake?"shakeX 0.4s ease":"none"}}>
-          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:20, color:"white",marginBottom:4}}>🧑‍🚀 Solve to move forward!</div>
+          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:20, color:textColor(),marginBottom:4}}>🧑‍🚀 Solve to move forward!</div>
           <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:26,color:C.green}}>{curQ.q}</div>
         </Card>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
@@ -5447,17 +5448,17 @@ function SpeedMath({ onBack, child }) {
           <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:11,color:C.green}}>✓ {score}</div>
           <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:11,color:C.red}}>✗ {wrong}</div>
         </div>
-        <div style={{marginTop:5,background:"rgba(255,255,255,0.06)",borderRadius:5,height:5,overflow:"hidden"}}>
+        <div style={{marginTop:5,background:isDark()?"rgba(255,255,255,0.06)":"rgba(124,111,224,0.06)",borderRadius:5,height:5,overflow:"hidden"}}>
           <div style={{width:`${(timeLeft/60)*100}%`,height:"100%",background:`linear-gradient(90deg,${timeLeft>20?C.green:C.red},${C.yellow})`,borderRadius:5,transition:"width 1s linear"}}/>
         </div>
       </div>
       <div style={{position:"relative",zIndex:2,padding:"24px 18px"}}>
         <Card color={C.yellow} style={{textAlign:"center",marginBottom:20,padding:"22px"}}>
-          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:28, color:"white"}}>{q}</div>
+          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:28, color:textColor()}}>{q}</div>
         </Card>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
           {opts.map((o,i)=>(
-            <button key={i} onClick={()=>pick(i)} style={{background:C.card,border:`1.5px solid ${C.yellow}28`,borderRadius:14,padding:"20px",fontSize:20,fontFamily:"'Orbitron',sans-serif",color:"white",cursor:"pointer",transition:"transform 0.1s",active:{transform:"scale(0.95)"}}}>
+            <button key={i} onClick={()=>pick(i)} style={{background:C.card,border:`1.5px solid ${C.yellow}28`,borderRadius:14,padding:"20px",fontSize:20,fontFamily:"'Orbitron',sans-serif",color:textColor(),cursor:"pointer",transition:"transform 0.1s",active:{transform:"scale(0.95)"}}}>
               {o}
             </button>
           ))}
@@ -5521,7 +5522,7 @@ function NumberMemory({ onBack, child }) {
       <div style={{position:"relative",zIndex:1,textAlign:"center"}}>
         <div style={{fontSize:64,marginBottom:8}}>{result==="win"?"🧠":"💫"}</div>
         <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:18,color:result==="win"?C.green:C.red,marginBottom:8}}>{result==="win"?"CORRECT!":"WRONG!"}</div>
-        {result==="lose"&&<div style={{color:C.dim,fontSize:13,marginBottom:8}}>The sequence was: <span style={{color:"white",fontWeight:700}}>{sequence.join(", ")}</span></div>}
+        {result==="lose"&&<div style={{color:C.dim,fontSize:13,marginBottom:8}}>The sequence was: <span style={{color:textColor(),fontWeight:700}}>{sequence.join(", ")}</span></div>}
         {result==="lose"&&<div style={{color:C.dim,fontSize:13,marginBottom:12}}>You entered: <span style={{color:C.red}}>{input.join(", ")}</span></div>}
         <div style={{display:"flex",gap:10}}>
           <Btn color={C.dim} style={{flex:1}} onClick={()=>setPhase("ready")}>← BACK</Btn>
@@ -5535,7 +5536,7 @@ function NumberMemory({ onBack, child }) {
   );
 
   return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",position:"relative"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),position:"relative"}}>
       <Starfield n={20}/>
       <div style={{position:"relative",zIndex:2,background:`${C.pink}18`,borderBottom:`1px solid ${C.pink}33`,padding:"12px 18px"}}>
         <div style={{display:"flex",alignItems:"center",gap:12}}>
@@ -5572,7 +5573,7 @@ function NumberMemory({ onBack, child }) {
             </div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
               {[1,2,3,4,5,6,7,8,9].map(n=>(
-                <button key={n} onClick={()=>pickNum(n)} style={{background:C.card,border:`1.5px solid ${C.pink}33`,borderRadius:14,padding:"16px",fontSize:20,fontFamily:"'Orbitron',sans-serif",color:"white",cursor:"pointer"}}>
+                <button key={n} onClick={()=>pickNum(n)} style={{background:C.card,border:`1.5px solid ${C.pink}33`,borderRadius:14,padding:"16px",fontSize:20,fontFamily:"'Orbitron',sans-serif",color:textColor(),cursor:"pointer"}}>
                   {n}
                 </button>
               ))}
@@ -5664,7 +5665,7 @@ function DailyQuiz({ child, onClose }) {
           </div>
         ) : (
           <>
-            <div style={{background:`${C.yellow}10`,border:`1px solid ${C.yellow}22`,borderRadius:14,padding:"16px 18px",marginBottom:18,lineHeight:1.6,fontSize:19,color:"white",fontWeight:800}}>
+            <div style={{background:`${C.yellow}10`,border:`1px solid ${C.yellow}22`,borderRadius:14,padding:"16px 18px",marginBottom:18,lineHeight:1.6,fontSize:19,color:textColor(),fontWeight:800}}>
               📖 {challenge.question}
             </div>
             <div style={{display:"flex",flexDirection:"column",gap:9,marginBottom:16,animation:shake?"shake 0.4s":"none"}}>
@@ -5780,7 +5781,7 @@ function DailyPuzzle({ child, onClose }) {
               <div style={{fontSize:11,color:C.dim}}>+{puzzle.xp_reward||75} XP on solve</div>
             </div>
 
-            <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:14, color:"white",marginBottom:10}}>{puzzle.title}</div>
+            <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:14, color:textColor(),marginBottom:10}}>{puzzle.title}</div>
             <div style={{background:`${C.purple}10`,border:`1px solid ${C.purple}22`,borderRadius:14,padding:"14px 16px",marginBottom:18,lineHeight:1.8,fontSize:14,color:"#ddd"}}>
               🧩 {puzzle.description}
             </div>
@@ -5791,7 +5792,7 @@ function DailyPuzzle({ child, onClose }) {
                   <input value={answer} onChange={e=>setAnswer(e.target.value)}
                     onKeyDown={e=>e.key==="Enter"&&handleSubmit()}
                     placeholder="Type your answer here..."
-                    style={{width:"100%",background:C.card2,border:`2px solid ${C.purple}44`,borderRadius:12,padding:"12px 16px",color:"white",fontSize:14,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",outline:"none"}}
+                    style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`2px solid ${C.purple}44`,borderRadius:12,padding:"12px 16px",color:textColor(),fontSize:14,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",outline:"none"}}
                   />
                 </div>
                 <div style={{display:"flex",gap:10,marginBottom:10}}>
@@ -5879,13 +5880,13 @@ function RatingPrompt({ child, onClose }) {
         </div>
         {rating > 0 && (
           <div style={{marginBottom:14}}>
-            <div style={{color:"white",fontSize:13,fontWeight:700,marginBottom:6,textAlign:"center"}}>
+            <div style={{color:textColor(),fontSize:13,fontWeight:700,marginBottom:6,textAlign:"center"}}>
               {["","😞 Poor","😐 Fair","🙂 Good","😊 Great","🤩 Amazing!"][rating]}
             </div>
             <textarea value={review} onChange={e=>setReview(e.target.value)}
               placeholder="Tell us more (optional)..."
               rows={2}
-              style={{width:"100%",background:C.card2,border:`1.5px solid ${C.yellow}33`,borderRadius:11,padding:"10px 14px",color:"white",fontSize:13,fontFamily:"'Nunito',sans-serif",resize:"none",boxSizing:"border-box",outline:"none"}}
+              style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.yellow}33`,borderRadius:11,padding:"10px 14px",color:textColor(),fontSize:13,fontFamily:"'Nunito',sans-serif",resize:"none",boxSizing:"border-box",outline:"none"}}
             />
           </div>
         )}
@@ -5904,7 +5905,7 @@ function RatingPrompt({ child, onClose }) {
 function TermsOfService({ onBack }) {
   const S = { h:{fontFamily:"'Orbitron',sans-serif",fontSize:12,color:C.cyan,margin:"16px 0 6px"}, p:{color:C.dim,fontSize:12,lineHeight:1.7,marginBottom:8} };
   return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"20px 18px",overflowY:"auto"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),padding:"20px 18px",overflowY:"auto"}}>
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
         <BackBtn onClick={onBack} color={C.cyan}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.cyan}}>TERMS OF SERVICE</div>
       </div>
@@ -5926,7 +5927,7 @@ function TermsOfService({ onBack }) {
 function DataPolicy({ onBack }) {
   const S = { h:{fontFamily:"'Orbitron',sans-serif",fontSize:12,color:C.purple,margin:"16px 0 6px"}, p:{color:C.dim,fontSize:12,lineHeight:1.7,marginBottom:8} };
   return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"20px 18px",overflowY:"auto"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),padding:"20px 18px",overflowY:"auto"}}>
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
         <BackBtn onClick={onBack} color={C.purple}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.purple}}>DATA COMPLIANCE</div>
       </div>
@@ -5971,7 +5972,7 @@ function Settings({ child, user, onBack, onThemeChange, onLogout }) {
   };
 
   if (sec==="theme") return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"20px 18px"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),padding:"20px 18px"}}>
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
         <BackBtn onClick={()=>setSec(null)} color={C.cyan}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.cyan}}>CHOOSE THEME</div>
       </div>
@@ -5990,7 +5991,7 @@ function Settings({ child, user, onBack, onThemeChange, onLogout }) {
   );
 
   if (sec==="profile") return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"20px 18px"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),padding:"20px 18px"}}>
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
         <BackBtn onClick={()=>setSec(null)} color={C.yellow}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.yellow}}>MY PROFILE</div>
       </div>
@@ -6001,7 +6002,7 @@ function Settings({ child, user, onBack, onThemeChange, onLogout }) {
         <Card color={C.purple} style={{textAlign:"left"}}>
           {[["📧","Email",user?.email||"—"],["🏆","XP",`${child?.xp||0} pts`],["🪙","Coins",`${child?.coins||0}`],["🔥","Streak",`${child?.streak_days||0} days`],["💎","Plan",child?.is_premium?"Premium ✓":"Free"]].map(([e,l,v],i)=>(
             <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:i<4?`1px solid ${C.dim}22`:"none"}}>
-              <span style={{color:C.dim,fontSize:13}}>{e} {l}</span><span style={{color:"white",fontSize:13,fontWeight:700}}>{v}</span>
+              <span style={{color:C.dim,fontSize:13}}>{e} {l}</span><span style={{color:textColor(),fontSize:13,fontWeight:700}}>{v}</span>
             </div>
           ))}
         </Card>
@@ -6010,14 +6011,14 @@ function Settings({ child, user, onBack, onThemeChange, onLogout }) {
   );
 
   if (sec==="password") return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"20px 18px"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),padding:"20px 18px"}}>
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
         <BackBtn onClick={()=>setSec(null)} color={C.cyan}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.cyan}}>RESET PASSWORD</div>
       </div>
       <div style={{maxWidth:480,margin:"0 auto"}}>
         <Card color={C.cyan}>
           <div style={{color:C.dim,fontSize:13,marginBottom:12,lineHeight:1.6}}>A reset link will be sent to your email address.</div>
-          <input value={pwEmail} onChange={e=>setPwEmail(e.target.value)} placeholder="Your email" style={{width:"100%",background:C.card2,border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"11px 14px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14,marginBottom:12,display:"block"}}/>
+          <input value={pwEmail} onChange={e=>setPwEmail(e.target.value)} placeholder="Your email" style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"11px 14px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:14,marginBottom:12,display:"block"}}/>
           {msg&&<div style={{fontSize:12,color:pwSent?C.green:C.red,marginBottom:10}}>{msg}</div>}
           {!pwSent?<Btn color={C.cyan} loading={loading} onClick={handleReset}>📧 SEND RESET LINK</Btn>
             :<div style={{textAlign:"center",color:C.green,fontFamily:"'Orbitron',sans-serif",fontSize:12}}>✅ CHECK YOUR EMAIL</div>}
@@ -6027,7 +6028,7 @@ function Settings({ child, user, onBack, onThemeChange, onLogout }) {
   );
 
   return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"20px 18px"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),padding:"20px 18px"}}>
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
         <BackBtn onClick={()=>onBack()} color={C.cyan}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.cyan}}>SETTINGS</div>
       </div>
@@ -6060,9 +6061,9 @@ function Settings({ child, user, onBack, onThemeChange, onLogout }) {
           <Card color={C.red} style={{maxWidth:320,textAlign:"center"}}>
             <div style={{fontSize:36,marginBottom:10}}>⚠️</div>
             <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.red,marginBottom:8}}>DELETE ACCOUNT?</div>
-            <div style={{color:C.dim,fontSize:12,marginBottom:18,lineHeight:1.6}}>Permanently deletes all data for <strong style={{color:"white"}}>{child?.name}</strong>. Cannot be undone.</div>
+            <div style={{color:C.dim,fontSize:12,marginBottom:18,lineHeight:1.6}}>Permanently deletes all data for <strong style={{color:textColor()}}>{child?.name}</strong>. Cannot be undone.</div>
             <div style={{display:"flex",gap:10}}>
-              <button onClick={()=>setDelConf(false)} style={{flex:1,background:C.card2,border:`1px solid ${C.dim}44`,borderRadius:12,padding:"11px",color:"white",cursor:"pointer",fontFamily:"'Nunito',sans-serif",fontWeight:700}}>CANCEL</button>
+              <button onClick={()=>setDelConf(false)} style={{flex:1,background:C.card2,border:`1px solid ${C.dim}44`,borderRadius:12,padding:"11px",color:textColor(),cursor:"pointer",fontFamily:"'Nunito',sans-serif",fontWeight:700}}>CANCEL</button>
               <button onClick={handleDelete} style={{flex:1,background:`${C.red}22`,border:`1px solid ${C.red}44`,borderRadius:12,padding:"11px",color:C.red,cursor:"pointer",fontFamily:"'Nunito',sans-serif",fontWeight:800}}>DELETE</button>
             </div>
           </Card>
@@ -6077,14 +6078,19 @@ function Settings({ child, user, onBack, onThemeChange, onLogout }) {
 // ── EntryScreen ───────────────────────────────────────────────────
 // ── Shared login helpers ─────────────────────────────────────────
 const loginInput = (accent="#7c3aed") => ({
-  width:"100%", background:"rgba(255,255,255,0.06)", border:`2px solid ${accent}44`,
-  borderRadius:14, padding:"14px 18px", color:"white",
+  width:"100%", background:isDark()?"rgba(255,255,255,0.06)":"rgba(124,111,224,0.06)", border:`2px solid ${accent}44`,
+  borderRadius:14, padding:"14px 18px", color:textColor(),
   fontFamily:"'Baloo 2','Nunito',sans-serif", fontSize:16, display:"block", marginBottom:14, outline:"none",
 });
 const loginCard = (accent="#7c3aed") => ({
-  background:`linear-gradient(160deg,${accent}18,rgba(8,8,24,0.97))`,
-  border:`2px solid ${accent}33`, borderRadius:28, padding:"30px 26px",
-  boxShadow:`0 8px 48px ${accent}22`,
+  background: isDark()
+    ? `linear-gradient(160deg,${accent}18,rgba(8,8,24,0.97))`
+    : `linear-gradient(160deg,${accent}10,#ffffff)`,
+  border:`2px solid ${accent}${isDark()?"33":"44"}`,
+  borderRadius:28, padding:"30px 26px",
+  boxShadow: isDark()
+    ? `0 8px 48px ${accent}22`
+    : `0 8px 40px ${accent}18, 0 2px 8px rgba(0,0,0,0.06)`,
 });
 
 function EntryScreen({ onSelect }) {
@@ -6093,14 +6099,14 @@ function EntryScreen({ onSelect }) {
   return (
     <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"0",position:"relative",overflow:"hidden"}}>
       <Starfield n={50}/>
-      <div style={{position:"absolute",top:"8%",left:"5%",width:200,height:200,borderRadius:"50%",background:`radial-gradient(circle,${C.cyan}18,transparent 70%)`,pointerEvents:"none"}}/>
+      <div style={{position:"absolute",top:"8%",left:"5%",width:200,height:200,borderRadius:"50%",background:`radial-gradient(circle,${C.cyan}${isDark()?"18":"28"},transparent 70%)`,pointerEvents:"none"}}/>
       <div style={{position:"absolute",bottom:"10%",right:"5%",width:180,height:180,borderRadius:"50%",background:`radial-gradient(circle,${C.purple}18,transparent 70%)`,pointerEvents:"none"}}/>
       <div style={{position:"relative",zIndex:2,width:"100%",maxWidth:440,padding:"28px 22px",margin:"0 auto"}}>
         <div style={{textAlign:"center",marginBottom:44}}>
           <div style={{fontSize:80,marginBottom:14,animation:"floatUp 3s ease-in-out infinite",filter:`drop-shadow(0 0 36px ${C.cyan}88)`}}>🚀</div>
-          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:32,color:"white",fontWeight:900,letterSpacing:2,marginBottom:4}}>MathMagic</div>
+          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:32,color:textColor(),fontWeight:900,letterSpacing:2,marginBottom:4}}>MathMagic</div>
           <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.cyan,letterSpacing:5,marginBottom:10}}>SPACE ACADEMY</div>
-          <div style={{fontSize:15,color:C.dim}}>Where math meets the cosmos ✨</div>
+          <div style={{fontSize:15,color:text2Color()}}>Where math meets the cosmos ✨</div>
         </div>
         <div style={{display:"flex",flexDirection:"column",gap:14}}>
           {[
@@ -6114,7 +6120,7 @@ function EntryScreen({ onSelect }) {
               style={{background:`linear-gradient(135deg,${r.color}18,${r.color}08)`,border:`2px solid ${hov===i?r.color+"88":r.color+"33"}`,borderRadius:22,padding:"20px 22px",cursor:"pointer",display:"flex",alignItems:"center",gap:16,textAlign:"left",transition:"all 0.2s",boxShadow:hov===i?`0 0 30px ${r.color}33`:"none",transform:hov===i?"translateY(-2px)":"none"}}>
               <div style={{width:58,height:58,borderRadius:18,background:`${r.color}22`,border:`2px solid ${r.color}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,flexShrink:0}}>{r.icon}</div>
               <div style={{flex:1}}>
-                <div style={{fontSize:18,fontWeight:900,color:"white"}}>{r.label}</div>
+                <div style={{fontSize:18,fontWeight:900,color:textColor()}}>{r.label}</div>
                 <div style={{fontSize:13,color:r.color,marginTop:4,fontWeight:600}}>{r.sub}</div>
               </div>
               <div style={{fontSize:28,color:r.color}}>›</div>
@@ -6143,7 +6149,7 @@ function StudentEntry({ onBack, onSelect }) {
           <BackBtn onClick={onBack} color={C.cyan}/>
           <div>
             <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:11,color:C.cyan,letterSpacing:3}}>STUDENT ACCESS</div>
-            <div style={{fontSize:20,fontWeight:900,color:"white",marginTop:3}}>How do you study?</div>
+            <div style={{fontSize:20,fontWeight:900,color:textColor(),marginTop:3}}>How do you study?</div>
           </div>
         </div>
         <div style={{display:"flex",flexDirection:"column",gap:14}}>
@@ -6154,7 +6160,7 @@ function StudentEntry({ onBack, onSelect }) {
               style={{background:r.highlight?`linear-gradient(135deg,${r.color}28,${r.color}10)`:`linear-gradient(135deg,${r.color}18,${r.color}06)`,border:`2px solid ${hov===i?r.color+"88":r.highlight?r.color+"55":r.color+"33"}`,borderRadius:22,padding:"22px 20px",cursor:"pointer",textAlign:"left",display:"flex",gap:16,alignItems:"center",transition:"all 0.2s",boxShadow:hov===i?`0 0 28px ${r.color}33`:"none",transform:hov===i?"translateY(-2px)":"none"}}>
               <div style={{width:56,height:56,borderRadius:18,background:`${r.color}22`,border:`2px solid ${r.color}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,flexShrink:0}}>{r.icon}</div>
               <div style={{flex:1}}>
-                <div style={{fontSize:17,fontWeight:900,color:r.highlight?r.color:"white"}}>{r.label}</div>
+                <div style={{fontSize:17,fontWeight:900,color:r.highlight?r.color:textColor()}}>{r.label}</div>
                 <div style={{fontSize:13,color:C.dim,marginTop:4,fontWeight:600}}>{r.sub}</div>
               </div>
               <div style={{fontSize:28,color:r.color}}>›</div>
@@ -6202,7 +6208,7 @@ function StudentLogin({ onBack, onDone }) {
   };
 
   return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"24px 18px",position:"relative"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),padding:"24px 18px",position:"relative"}}>
       <Starfield n={30}/>
       <div style={{position:"relative",zIndex:2,maxWidth:420,margin:"0 auto"}}>
         <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:32}}>
@@ -6220,7 +6226,7 @@ function StudentLogin({ onBack, onDone }) {
             <div style={{color:C.dim,fontSize:12,marginBottom:8,fontFamily:"'Orbitron',sans-serif"}}>SCHOOL CODE</div>
             <input value={schoolCode} onChange={e=>setSchoolCode(e.target.value.toUpperCase())}
               placeholder="e.g. MATH001" maxLength={20}
-              style={{width:"100%",background:C.card2,border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"12px 14px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:16,letterSpacing:3,textAlign:"center",marginBottom:12,display:"block"}}/>
+              style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"12px 14px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:16,letterSpacing:3,textAlign:"center",marginBottom:12,display:"block"}}/>
             {error&&<div style={{color:C.red,fontSize:12,marginBottom:10}}>{error}</div>}
             <Btn color={C.cyan} onClick={handleSchool}>NEXT →</Btn>
           </Card>
@@ -6229,12 +6235,12 @@ function StudentLogin({ onBack, onDone }) {
             <div style={{color:C.cyan,fontSize:11,fontFamily:"'Orbitron',sans-serif",marginBottom:12}}>🏫 {schoolCode}</div>
             <div style={{color:C.dim,fontSize:12,marginBottom:6,fontFamily:"'Orbitron',sans-serif"}}>USERNAME</div>
             <input value={rollNo} onChange={e=>setRollNo(e.target.value)} placeholder="Enter your username"
-              style={{width:"100%",background:C.card2,border:`1.5px solid ${C.purple}44`,borderRadius:10,padding:"11px 14px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:15,marginBottom:10,display:"block"}}/>
+              style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.purple}44`,borderRadius:10,padding:"11px 14px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:15,marginBottom:10,display:"block"}}/>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
               <div>
                 <div style={{color:C.dim,fontSize:11,marginBottom:4}}>CLASS</div>
                 <select value={classNum} onChange={e=>setClassNum(e.target.value)}
-                  style={{width:"100%",background:C.card2,border:`1.5px solid ${C.purple}44`,borderRadius:10,padding:"10px",color:classNum?"white":C.dim,fontFamily:"'Nunito',sans-serif",fontSize:14}}>
+                  style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.purple}44`,borderRadius:10,padding:"10px",color:classNum?"white":C.dim,fontFamily:"'Nunito',sans-serif",fontSize:14}}>
                   <option value="">Any</option>
                   {[1,2,3,4,5].map(n=><option key={n} value={n}>Class {n}</option>)}
                 </select>
@@ -6242,13 +6248,13 @@ function StudentLogin({ onBack, onDone }) {
               <div>
                 <div style={{color:C.dim,fontSize:11,marginBottom:4}}>SECTION</div>
                 <input value={section} onChange={e=>setSection(e.target.value.toUpperCase())} placeholder="A"
-                  maxLength={3} style={{width:"100%",background:C.card2,border:`1.5px solid ${C.purple}44`,borderRadius:10,padding:"10px 14px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14,display:"block"}}/>
+                  maxLength={3} style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.purple}44`,borderRadius:10,padding:"10px 14px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:14,display:"block"}}/>
               </div>
             </div>
             <div style={{color:C.dim,fontSize:12,marginBottom:6,fontFamily:"'Orbitron',sans-serif"}}>4-DIGIT PIN</div>
             <input value={pin} onChange={e=>setPin(e.target.value.replace(/\D/g,"").slice(0,4))}
               type="password" placeholder="••••" maxLength={4}
-              style={{width:"100%",background:C.card2,border:`1.5px solid ${C.purple}44`,borderRadius:10,padding:"11px 14px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:20,letterSpacing:6,textAlign:"center",marginBottom:12,display:"block"}}/>
+              style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.purple}44`,borderRadius:10,padding:"11px 14px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:20,letterSpacing:6,textAlign:"center",marginBottom:12,display:"block"}}/>
             {error&&<div style={{color:C.red,fontSize:12,marginBottom:10}}>{error}</div>}
             <Btn color={C.purple} loading={loading} onClick={handleLogin}>🚀 ENTER ACADEMY</Btn>
             <button onClick={()=>{setStep("school");setError("");}} style={{background:"none",border:"none",color:C.dim,fontSize:12,cursor:"pointer",marginTop:8,width:"100%",fontFamily:"'Nunito',sans-serif"}}>← Change school code</button>
@@ -6278,7 +6284,7 @@ function TeacherLogin({ onBack, onDone }) {
   };
 
   return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"24px 18px",position:"relative"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),padding:"24px 18px",position:"relative"}}>
       <Starfield n={20}/>
       <div style={{position:"relative",zIndex:2,maxWidth:420,margin:"0 auto"}}>
         <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:32}}>
@@ -6292,11 +6298,11 @@ function TeacherLogin({ onBack, onDone }) {
         <Card color={C.yellow}>
           <div style={{color:C.dim,fontSize:12,marginBottom:6,fontFamily:"'Orbitron',sans-serif"}}>EMAIL</div>
           <input value={email} onChange={e=>setEmail(e.target.value)} placeholder="teacher@school.com" type="email"
-            style={{width:"100%",background:C.card2,border:`1.5px solid ${C.yellow}44`,borderRadius:10,padding:"11px 14px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14,marginBottom:12,display:"block"}}/>
+            style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.yellow}44`,borderRadius:10,padding:"11px 14px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:14,marginBottom:12,display:"block"}}/>
           <div style={{color:C.dim,fontSize:12,marginBottom:6,fontFamily:"'Orbitron',sans-serif"}}>PIN</div>
           <input value={pin} onChange={e=>setPin(e.target.value.replace(/\D/g,"").slice(0,6))}
             type="password" placeholder="••••••" maxLength={6}
-            style={{width:"100%",background:C.card2,border:`1.5px solid ${C.yellow}44`,borderRadius:10,padding:"11px 14px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:20,letterSpacing:6,textAlign:"center",marginBottom:12,display:"block"}}/>
+            style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.yellow}44`,borderRadius:10,padding:"11px 14px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:20,letterSpacing:6,textAlign:"center",marginBottom:12,display:"block"}}/>
           {error&&<div style={{color:C.red,fontSize:12,marginBottom:10}}>{error}</div>}
           <Btn color={C.yellow} loading={loading} onClick={handleLogin}>👨‍🏫 LOGIN</Btn>
         </Card>
@@ -6348,13 +6354,13 @@ function StudentActions({ student, teacher, onRefresh, onClose }) {
         <div key={k} style={{marginBottom:8}}>
           <div style={{color:C.dim,fontSize:10,marginBottom:3}}>{l}</div>
           <input defaultValue={ph} id={`mod_${k}_${student.id}`} type={t} placeholder={ph}
-            style={{width:"100%",background:C.bg,border:`1.5px solid ${C.purple}44`,borderRadius:8,padding:"7px 10px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:13,display:"block"}}/>
+            style={{width:"100%",background:C.bg,border:`1.5px solid ${C.purple}44`,borderRadius:8,padding:"7px 10px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:13,display:"block"}}/>
         </div>
       ))}
       <div style={{marginBottom:8}}>
         <div style={{color:C.dim,fontSize:10,marginBottom:3}}>Class</div>
         <select id={`mod_class_${student.id}`} defaultValue={student.class_num}
-          style={{width:"100%",background:C.bg,border:`1.5px solid ${C.purple}44`,borderRadius:8,padding:"7px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:13}}>
+          style={{width:"100%",background:C.bg,border:`1.5px solid ${C.purple}44`,borderRadius:8,padding:"7px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:13}}>
           {["Nursery","Jr KG","Sr KG","Class 1","Class 2","Class 3","Class 4","Class 5"].map((n,i)=><option key={i} value={i}>{n}</option>)}
         </select>
       </div>
@@ -6379,7 +6385,7 @@ function StudentActions({ student, teacher, onRefresh, onClose }) {
     <div style={{marginTop:10,padding:"10px",background:C.card2,borderRadius:10}}>
       <div style={{color:C.dim,fontSize:11,marginBottom:6}}>New 4-digit PIN for {student.name}</div>
       <input value={newPin} onChange={e=>setNewPin(e.target.value.replace(/\D/g,"").slice(0,4))} type="password" placeholder="••••" maxLength={4}
-        style={{width:"100%",background:C.bg,border:`1.5px solid ${C.cyan}44`,borderRadius:8,padding:"8px 12px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:16,letterSpacing:4,textAlign:"center",display:"block",marginBottom:8}}/>
+        style={{width:"100%",background:C.bg,border:`1.5px solid ${C.cyan}44`,borderRadius:8,padding:"8px 12px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:16,letterSpacing:4,textAlign:"center",display:"block",marginBottom:8}}/>
       {msg&&<div style={{color:msg.startsWith("✅")?C.green:C.red,fontSize:11,marginBottom:6}}>{msg}</div>}
       <div style={{display:"flex",gap:8}}>
         <Btn color={C.cyan} loading={loading} onClick={changePin}>SAVE</Btn>
@@ -6396,7 +6402,7 @@ function StudentActions({ student, teacher, onRefresh, onClose }) {
       {prog&&prog.slice(0,8).map((p,i)=>(
         <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:`1px solid ${C.dim}11`,fontSize:12}}>
           <span style={{color:C.dim}}>{p.lesson_id?.replace("_s",": Set ")}</span>
-          <span style={{color:"white"}}>{"⭐".repeat(p.stars_earned||0)} {p.correct_count||0}/{p.total_questions||20}</span>
+          <span style={{color:textColor()}}>{"⭐".repeat(p.stars_earned||0)} {p.correct_count||0}/{p.total_questions||20}</span>
         </div>
       ))}
       {prog&&prog.length>8&&<div style={{color:C.dim,fontSize:10,marginTop:4}}>+{prog.length-8} more lessons</div>}
@@ -6470,7 +6476,7 @@ function TeacherDashboard({ teacher, onLogout }) {
   const top = students[0];
 
   return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",overflowY:"auto"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),overflowY:"auto"}}>
       {/* Header */}
       <div style={{background:C.card,borderBottom:`1px solid ${C.purple}33`,padding:"14px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:10}}>
         <div>
@@ -6491,7 +6497,7 @@ function TeacherDashboard({ teacher, onLogout }) {
           {[["👥","Students",students.length],[" ⭐","Avg XP",avg],["🏆","Top",top?.name?.split(" ")[0]||"—"]].map(([e,l,v],i)=>(
             <Card key={i} color={C.purple} style={{textAlign:"center",padding:"12px 8px"}}>
               <div style={{fontSize:18}}>{e}</div>
-              <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:16,color:"white",margin:"4px 0"}}>{v}</div>
+              <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:16,color:textColor(),margin:"4px 0"}}>{v}</div>
               <div style={{color:C.dim,fontSize:10}}>{l}</div>
             </Card>
           ))}
@@ -6512,7 +6518,7 @@ function TeacherDashboard({ teacher, onLogout }) {
               return (
                 <button key={k} onClick={()=>loadClass({class_num:parseInt(cn),section:sec})} style={{width:"100%",background:C.card,border:`1px solid ${C.cyan}33`,borderRadius:14,padding:"16px",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,textAlign:"left"}}>
                   <div>
-                    <div style={{fontWeight:800,color:"white",fontSize:15}}>Class {cn} — Section {sec}</div>
+                    <div style={{fontWeight:800,color:textColor(),fontSize:15}}>Class {cn} — Section {sec}</div>
                     <div style={{color:C.dim,fontSize:12,marginTop:2}}>{classMap[k]} students</div>
                   </div>
                   <span style={{color:C.cyan,fontSize:22}}>›</span>
@@ -6531,14 +6537,14 @@ function TeacherDashboard({ teacher, onLogout }) {
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
               <div>
                 <div style={{color:C.dim,fontSize:11,marginBottom:4}}>CLASS</div>
-                <select value={form.class_num} onChange={e=>setForm({...form,class_num:parseInt(e.target.value)})} style={{width:"100%",background:C.card2,border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"10px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14}}>
+                <select value={form.class_num} onChange={e=>setForm({...form,class_num:parseInt(e.target.value)})} style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"10px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:14}}>
                   {[1,2,3,4,5].map(n=><option key={n} value={n}>Class {n}</option>)}
                 </select>
               </div>
               <div>
                 <div style={{color:C.dim,fontSize:11,marginBottom:4}}>SECTION</div>
                 <input value={form.section} onChange={e=>setForm({...form,section:e.target.value.toUpperCase().slice(0,3)})} placeholder="A"
-                  style={{width:"100%",background:C.card2,border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"10px 12px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14,display:"block"}}/>
+                  style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"10px 12px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:14,display:"block"}}/>
               </div>
             </div>
             {[["Name","name","text","Full name"],["Roll No","roll_no","text","01"],["Username","username","text","e.g. arjun123"],["PIN (4 digits)","pin","password","••••"]].map(([l,k,t,ph])=>(
@@ -6546,7 +6552,7 @@ function TeacherDashboard({ teacher, onLogout }) {
                 <div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div>
                 <input value={form[k]} onChange={e=>setForm({...form,[k]:k==="pin"?e.target.value.replace(/[^0-9]/g,"").slice(0,4):e.target.value})}
                   type={t} placeholder={ph}
-                  style={{width:"100%",background:C.card2,border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"10px 12px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14,display:"block"}}/>
+                  style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"10px 12px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:14,display:"block"}}/>
               </div>
             ))}
             {saveMsg&&<div style={{color:saveMsg.startsWith("✅")?C.green:C.red,fontSize:12,marginBottom:8}}>{saveMsg}</div>}
@@ -6565,7 +6571,7 @@ function TeacherDashboard({ teacher, onLogout }) {
                 <div style={{display:"flex",alignItems:"center",gap:12}}>
                   <div style={{background:`${C.purple}33`,borderRadius:10,width:36,height:36,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Orbitron',sans-serif",fontSize:11,color:C.purple,flexShrink:0}}>{String(s.roll_no).padStart(2,"0")}</div>
                   <div style={{flex:1}}>
-                    <div style={{fontWeight:800,fontSize:14,color:"white"}}>{s.name}</div>
+                    <div style={{fontWeight:800,fontSize:14,color:textColor()}}>{s.name}</div>
                     <div style={{fontSize:11,color:C.dim}}>Lv {s.level||1} · {s.xp||0} XP · 🔥{s.streak_days||0}</div>
                   </div>
                   <button onClick={()=>setSelStudent(selStudent?.id===s.id?null:s)} style={{background:"none",border:`1px solid ${C.cyan}44`,borderRadius:8,padding:"5px 8px",color:C.cyan,cursor:"pointer",fontSize:11}}>{selStudent?.id===s.id?"▲":"▼"}</button>
@@ -6609,7 +6615,7 @@ function TeacherLessons({ teacher, classFilter }) {
   };
   useEffect(()=>{ load(); },[]);
 
-  const iStyle = (c) => ({width:"100%",background:C.card2,border:`1.5px solid ${c}44`,borderRadius:10,padding:"10px 12px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14,display:"block",marginBottom:10});
+  const iStyle = (c) => ({width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${c}44`,borderRadius:10,padding:"10px 12px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:14,display:"block",marginBottom:10});
 
   const handleAddLesson = async () => {
     setLoading(true); setMsg("");
@@ -6691,7 +6697,7 @@ function TeacherLessons({ teacher, classFilter }) {
       {lessons.map(l=>(
         <div key={l.id} style={{background:C.card,border:`1px solid ${C.green}33`,borderRadius:14,padding:"12px 14px",marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <div>
-            <div style={{fontWeight:800,color:"white",fontSize:14}}>{l.emoji} {l.title}</div>
+            <div style={{fontWeight:800,color:textColor(),fontSize:14}}>{l.emoji} {l.title}</div>
             <div style={{color:C.dim,fontSize:11}}>Class {l.class_num}</div>
           </div>
           <button onClick={()=>{setSelLesson(l);setView("add_q");}} style={{background:`${C.cyan}22`,border:`1px solid ${C.cyan}44`,borderRadius:10,padding:"7px 12px",color:C.cyan,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:9}}>+ QUESTION</button>
@@ -6759,17 +6765,17 @@ function ExcelImport({ teacher, onDone }) {
     <Card color={C.cyan}>
       <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:11,color:C.cyan,marginBottom:12}}>📥 BULK IMPORT STUDENTS</div>
       <div style={{background:`${C.purple}15`,borderRadius:10,padding:"10px 12px",marginBottom:14,fontSize:12,color:C.dim,lineHeight:1.7}}>
-        Upload a <strong style={{color:"white"}}>CSV file</strong> with columns:<br/>
+        Upload a <strong style={{color:textColor()}}>CSV file</strong> with columns:<br/>
         <code style={{color:C.cyan,fontSize:11}}>name, roll_no, class, section, pin</code><br/>
         <span style={{fontSize:11}}>Example: <code style={{color:C.yellow}}>Arjun Sharma, 01, 1, A, 1234</code></span>
       </div>
       <input type="file" accept=".csv,.txt" onChange={handleFile}
-        style={{width:"100%",background:C.card2,border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"10px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:13,marginBottom:12,display:"block",cursor:"pointer"}}/>
+        style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"10px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:13,marginBottom:12,display:"block",cursor:"pointer"}}/>
       {preview.length>0 && (
         <div style={{marginBottom:12}}>
           <div style={{color:C.dim,fontSize:11,marginBottom:6}}>PREVIEW (first {preview.length} rows):</div>
           {preview.map((s,i)=>(
-            <div key={i} style={{fontSize:12,color:"white",padding:"4px 0",borderBottom:`1px solid ${C.dim}22`}}>
+            <div key={i} style={{fontSize:12,color:textColor(),padding:"4px 0",borderBottom:`1px solid ${C.dim}22`}}>
               {s.roll_no} · {s.name} · Class {s.class_num}-{s.section} · PIN:{s.pin}
             </div>
           ))}
@@ -6837,10 +6843,10 @@ function AdminPanel({ onBack }) {
   const CLASS_NUMS   = [10,11,12,1,2,3,4,5];
 
   const api = (action, body={}) => schoolApi(action, body, key);
-  const iS  = (a) => ({width:"100%",background:C.card2,border:`1.5px solid ${a}44`,borderRadius:10,padding:"10px 12px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14,display:"block",marginBottom:10});
+  const iS  = (a) => ({width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${a}44`,borderRadius:10,padding:"10px 12px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:14,display:"block",marginBottom:10});
   const Hdr = ({title,back,accent,extra}) => (
-    <div style={{background:`linear-gradient(135deg,${accent}1a,rgba(4,4,15,0.98))`,padding:"14px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:10,borderBottom:`1px solid ${accent}33`,backdropFilter:"blur(20px)"}}>
-      <div style={{fontFamily:"'Baloo 2',sans-serif",fontSize:15,fontWeight:900,color:"white",flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{title}</div>
+    <div style={{background:`linear-gradient(135deg,${accent}${isDark()?"1a":"14"},${isDark()?"rgba(4,4,15,0.98)":C.card})`,padding:"14px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:10,borderBottom:`1px solid ${accent}33`,backdropFilter:"blur(20px)"}}>
+      <div style={{fontFamily:"'Baloo 2',sans-serif",fontSize:15,fontWeight:900,color:textColor(),flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{title}</div>
       <div style={{display:"flex",gap:6,alignItems:"center",flexShrink:0}}>
         {extra}
         <button onClick={()=>setView("home")} title="Admin Home" style={{background:`${C.red}22`,border:`1px solid ${C.red}44`,borderRadius:10,padding:"7px 11px",color:C.red,cursor:"pointer",fontSize:14,fontWeight:800}}>🏠</button>
@@ -6852,7 +6858,7 @@ function AdminPanel({ onBack }) {
   const SearchBar = ({val,onChange,placeholder,accent}) => (
     <div style={{position:"relative",marginBottom:12}}>
       <span style={{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",fontSize:15,pointerEvents:"none"}}>🔍</span>
-      <input value={val} onChange={e=>onChange(e.target.value)} placeholder={placeholder||"Search..."} style={{width:"100%",background:"rgba(255,255,255,0.06)",border:`1.5px solid ${accent||C.cyan}33`,borderRadius:14,padding:"12px 14px 12px 40px",color:"white",fontFamily:"'Baloo 2','Nunito',sans-serif",fontSize:14,display:"block",outline:"none"}}/>
+      <input value={val} onChange={e=>onChange(e.target.value)} placeholder={placeholder||"Search..."} style={{width:"100%",background:isDark()?"rgba(255,255,255,0.06)":"rgba(124,111,224,0.06)",border:`1.5px solid ${accent||C.cyan}33`,borderRadius:14,padding:"12px 14px 12px 40px",color:textColor(),fontFamily:"'Baloo 2','Nunito',sans-serif",fontSize:14,display:"block",outline:"none"}}/>
     </div>
   );
   const toast = (m) => { setToastMsg(m); setTimeout(()=>setToastMsg(""),3500); };
@@ -6880,15 +6886,15 @@ function AdminPanel({ onBack }) {
           <BackBtn onClick={onBack} color={C.red}/>
           <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:11,color:C.red,letterSpacing:3}}>ADMIN ACCESS</div>
         </div>
-        <div style={{background:`linear-gradient(160deg,${C.red}18,rgba(8,8,24,0.97))`,border:`2px solid ${C.red}33`,borderRadius:28,padding:"30px 26px",boxShadow:`0 8px 48px ${C.red}22`}}>
+        <div style={{background:`linear-gradient(160deg,${C.red}18,isDark()?"rgba(8,8,24,0.97)":C.card)`,border:`2px solid ${C.red}33`,borderRadius:28,padding:"30px 26px",boxShadow:`0 8px 48px ${C.red}22`}}>
           <div style={{textAlign:"center",marginBottom:26}}>
             <div style={{fontSize:64,marginBottom:10,animation:"floatUp 2s ease-in-out infinite"}}>🔐</div>
-            <div style={{fontSize:22,fontWeight:900,color:"white"}}>Admin Panel</div>
+            <div style={{fontSize:22,fontWeight:900,color:textColor()}}>Admin Panel</div>
             <div style={{fontSize:13,color:C.dim,marginTop:6}}>MathMagic School Management</div>
           </div>
           <div style={{fontSize:14,color:C.dim,marginBottom:6,fontWeight:700}}>Secret Key</div>
           <input value={key} onChange={e=>setKey(e.target.value)} type="password" placeholder="Enter admin secret key"
-            style={{width:"100%",background:"rgba(255,255,255,0.06)",border:`2px solid ${C.red}44`,borderRadius:14,padding:"14px 18px",color:"white",fontFamily:"'Baloo 2',sans-serif",fontSize:16,display:"block",marginBottom:14,outline:"none"}}
+            style={{width:"100%",background:isDark()?"rgba(255,255,255,0.06)":"rgba(124,111,224,0.06)",border:`2px solid ${C.red}44`,borderRadius:14,padding:"14px 18px",color:textColor(),fontFamily:"'Baloo 2',sans-serif",fontSize:16,display:"block",marginBottom:14,outline:"none"}}
             onKeyDown={e=>e.key==="Enter"&&handleAuth()}/>
           <Btn color={C.red} onClick={handleAuth}>🔐 Enter Admin</Btn>
         </div>
@@ -6898,7 +6904,7 @@ function AdminPanel({ onBack }) {
 
   // ── Home Dashboard — 5 Tiles ──────────────────────────────────────
   if (view==="home") return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",overflowY:"auto"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),overflowY:"auto"}}>
       <div style={{background:C.card,padding:"14px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:`1px solid ${C.red}33`}}>
         <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.red}}>🔐 ADMIN PANEL</div>
         <BackBtn onClick={onBack} color={C.dim}/>
@@ -6930,7 +6936,7 @@ function AdminPanel({ onBack }) {
 
   // ── Schools ───────────────────────────────────────────────────────
   if (view==="schools") return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",overflowY:"auto"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),overflowY:"auto"}}>
       <Hdr title="🏫 SCHOOLS" back={()=>setView("home")} accent={C.yellow}
         extra={<button onClick={()=>{setForm({});setMsg("");setView("add_school");}} style={{background:`${C.yellow}22`,border:`1px solid ${C.yellow}44`,borderRadius:10,padding:"7px 12px",color:C.yellow,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:9}}>+ SCHOOL</button>}
       />
@@ -6941,7 +6947,7 @@ function AdminPanel({ onBack }) {
         {schools.filter(s=>!search||s.name?.toLowerCase().includes(search.toLowerCase())||s.school_code?.toLowerCase().includes(search.toLowerCase())).map(s=>(
           <div key={s.id} style={{background:C.card,border:`1px solid ${C.yellow}33`,borderRadius:14,padding:"14px 16px",marginBottom:10,display:"flex",alignItems:"center",gap:10}}>
             <button onClick={()=>loadTeachers(s)} style={{flex:1,background:"none",border:"none",cursor:"pointer",textAlign:"left",padding:0}}>
-              <div style={{fontWeight:800,color:"white",fontSize:14}}>{s.name}</div>
+              <div style={{fontWeight:800,color:textColor(),fontSize:14}}>{s.name}</div>
               <div style={{color:C.dim,fontSize:12}}>{s.city} · {s.school_code}</div>
               <div style={{fontSize:10,color:s.is_active?C.green:C.red,marginTop:2}}>{s.is_active?"● Active":"○ Inactive"}</div>
             </button>
@@ -6955,7 +6961,7 @@ function AdminPanel({ onBack }) {
   );
 
   if (view==="add_school") return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"20px 18px"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),padding:"20px 18px"}}>
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><BackBtn onClick={()=>setView("schools")} color={C.yellow}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.yellow}}>CREATE SCHOOL</div></div>
       <Card color={C.yellow} style={{maxWidth:480,margin:"0 auto"}}>
         {[["School Name","name","text","St. Xavier's School"],["City","city","text","Mumbai"],["School Code","school_code","text","STXAV001"]].map(([l,k,t,ph])=>(
@@ -6968,13 +6974,13 @@ function AdminPanel({ onBack }) {
   );
 
   if (view==="edit_school") return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"20px 18px"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),padding:"20px 18px"}}>
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><BackBtn onClick={()=>setView("schools")} color={C.yellow}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.yellow}}>EDIT SCHOOL</div></div>
       <Card color={C.yellow} style={{maxWidth:480,margin:"0 auto"}}>
         {[["School Name","name","text"],["City","city","text"],["School Code","school_code","text"]].map(([l,k,t])=>(
           <div key={k}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div><input value={form[k]||""} onChange={e=>setForm({...form,[k]:k==="school_code"?e.target.value.toUpperCase():e.target.value})} type={t} style={iS(C.yellow)}/></div>
         ))}
-        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}><input type="checkbox" checked={!!form.is_active} onChange={e=>setForm({...form,is_active:e.target.checked})} style={{width:18,height:18}}/><span style={{color:"white",fontSize:13}}>School is Active</span></div>
+        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}><input type="checkbox" checked={!!form.is_active} onChange={e=>setForm({...form,is_active:e.target.checked})} style={{width:18,height:18}}/><span style={{color:textColor(),fontSize:13}}>School is Active</span></div>
         <MsgBar m={msg}/>
         <Btn color={C.yellow} loading={loading} onClick={async()=>{setLoading(true);setMsg("");const d=await api("admin_update_school",{school_id:selSchool?.id,...form});if(d.ok){toast("✅ School updated: "+form.name);loadSchools();setView("schools");}else setMsg(d.error||"Failed");setLoading(false);}}>SAVE CHANGES</Btn>
       </Card>
@@ -6982,7 +6988,7 @@ function AdminPanel({ onBack }) {
   );
 
   if (view==="school_detail") return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",overflowY:"auto"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),overflowY:"auto"}}>
       <Hdr title={selSchool?.name||""} back={()=>setView("schools")} accent={C.cyan}
         extra={<>
           <button onClick={()=>{setForm({});setMsg("");setView("add_class");}} style={{background:`${C.green}22`,border:`1px solid ${C.green}44`,borderRadius:10,padding:"7px 12px",color:C.green,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:9}}>+ CLASS</button>
@@ -6996,7 +7002,7 @@ function AdminPanel({ onBack }) {
         {teachers.map(t=>(
           <div key={t.id} style={{background:C.card,border:`1px solid ${C.purple}33`,borderRadius:14,padding:"12px 14px",marginBottom:10,display:"flex",alignItems:"center",gap:10}}>
             <button onClick={()=>loadStudents(t)} style={{flex:1,background:"none",border:"none",cursor:"pointer",textAlign:"left",padding:0}}>
-              <div style={{fontWeight:800,color:"white",fontSize:14}}>{t.name}</div>
+              <div style={{fontWeight:800,color:textColor(),fontSize:14}}>{t.name}</div>
               <div style={{color:C.dim,fontSize:12}}>{t.email}</div>
               {(t.permissions||[]).length>0&&<div style={{fontSize:10,color:C.cyan,marginTop:3}}>{(t.permissions||[]).length} permissions</div>}
             </button>
@@ -7014,7 +7020,7 @@ function AdminPanel({ onBack }) {
     const filtered = allTeachers.filter(t=>!search||t.name?.toLowerCase().includes(search.toLowerCase())||t.email?.toLowerCase().includes(search.toLowerCase()));
     const sorted   = [...filtered].sort((a,b)=>sortBy==="name"?a.name?.localeCompare(b.name):0);
     return (
-      <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",overflowY:"auto"}}>
+      <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),overflowY:"auto"}}>
         <Hdr title="👩‍🏫 ALL TEACHERS" back={()=>setView("home")} accent={C.cyan}
           extra={<button onClick={()=>{setMsg("");setView("add_teacher_global");setSelSchool(null);setForm({});}} style={{background:`${C.cyan}22`,border:`1px solid ${C.cyan}44`,borderRadius:10,padding:"7px 12px",color:C.cyan,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:9}}>+ TEACHER</button>}
         />
@@ -7023,7 +7029,7 @@ function AdminPanel({ onBack }) {
             <SearchBar val={search} onChange={setSearch} placeholder="🔍 Search teacher..." accent={C.cyan}/>
           </div>
           <div style={{display:"flex",gap:8,marginBottom:12}}>
-            <select value={sortBy} onChange={e=>setSortBy(e.target.value)} style={{background:C.card2,border:`1px solid ${C.cyan}33`,borderRadius:8,padding:"6px 10px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:12,flex:1}}>
+            <select value={sortBy} onChange={e=>setSortBy(e.target.value)} style={{background:C.card2,border:`1px solid ${C.cyan}33`,borderRadius:8,padding:"6px 10px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:12,flex:1}}>
               <option value="name">Sort: Name A-Z</option>
             </select>
           </div>
@@ -7033,7 +7039,7 @@ function AdminPanel({ onBack }) {
           {sorted.map(t=>(
             <div key={t.id} style={{background:C.card,border:`1px solid ${C.cyan}22`,borderRadius:14,padding:"12px 14px",marginBottom:8,display:"flex",alignItems:"center",gap:10}}>
               <div style={{flex:1}}>
-                <div style={{fontWeight:800,color:"white",fontSize:14}}>{t.name}</div>
+                <div style={{fontWeight:800,color:textColor(),fontSize:14}}>{t.name}</div>
                 <div style={{color:C.dim,fontSize:12}}>{t.email}</div>
                 <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:4}}>
                   {(t.permissions||[]).map(p=>{const pr=PERMS.find(x=>x.id===p);return pr?<span key={p} style={{background:`${C.cyan}18`,border:`1px solid ${C.cyan}33`,borderRadius:6,padding:"2px 6px",fontSize:10,color:C.cyan}}>{pr.icon} {pr.label}</span>:null;})}
@@ -7056,10 +7062,10 @@ function AdminPanel({ onBack }) {
     const grouped  = {};
     for (const c of filtered) { const k=c.school_id||"unknown"; if(!grouped[k])grouped[k]=[]; grouped[k].push(c); }
     return (
-      <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",overflowY:"auto"}}>
+      <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),overflowY:"auto"}}>
         <Hdr title="🏛️ ALL CLASSES" back={()=>setView("home")} accent={C.green}
           extra={<>
-            <select value={filterVal} onChange={e=>{setFilterVal(e.target.value);loadAllClasses(e.target.value||undefined);}} style={{background:C.card2,border:`1px solid ${C.green}33`,borderRadius:8,padding:"6px 8px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:11}}>
+            <select value={filterVal} onChange={e=>{setFilterVal(e.target.value);loadAllClasses(e.target.value||undefined);}} style={{background:C.card2,border:`1px solid ${C.green}33`,borderRadius:8,padding:"6px 8px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:11}}>
               <option value="">All Schools</option>
               {schools.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
@@ -7076,7 +7082,7 @@ function AdminPanel({ onBack }) {
                 <span style={{fontFamily:"'Orbitron',sans-serif",fontSize:11,color:C.green}}>{c.section||"A"}</span>
               </div>
               <div style={{flex:1}}>
-                <div style={{fontWeight:800,color:"white",fontSize:14}}>{CLASS_LABELS[c.class_num]||`Class ${c.class_num}`} — {c.section}</div>
+                <div style={{fontWeight:800,color:textColor(),fontSize:14}}>{CLASS_LABELS[c.class_num]||`Class ${c.class_num}`} — {c.section}</div>
                 <div style={{color:C.dim,fontSize:12}}>{schools.find(s=>s.id===c.school_id)?.name||"Unknown School"}</div>
               </div>
             </div>
@@ -7092,16 +7098,16 @@ function AdminPanel({ onBack }) {
     const filtered = allStudents.filter(s=>!search||s.name?.toLowerCase().includes(search.toLowerCase())||String(s.roll_no).includes(search));
     const sorted   = [...filtered].sort((a,b)=>sortBy==="name"?a.name?.localeCompare(b.name):sortBy==="class"?(a.class_num-b.class_num)||a.section?.localeCompare(b.section):0);
     return (
-      <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",overflowY:"auto"}}>
+      <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),overflowY:"auto"}}>
         <Hdr title="👦 ALL STUDENTS" back={()=>setView("home")} accent={C.purple}/>
         <div style={{padding:"12px 16px",maxWidth:620,margin:"0 auto"}}>
           <SearchBar val={search} onChange={setSearch} placeholder="🔍 Search student or roll no..." accent={C.purple}/>
           <div style={{display:"flex",gap:8,marginBottom:10}}>
-            <select value={sortBy} onChange={e=>setSortBy(e.target.value)} style={{background:C.card2,border:`1px solid ${C.purple}33`,borderRadius:8,padding:"6px 10px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:12,flex:1}}>
+            <select value={sortBy} onChange={e=>setSortBy(e.target.value)} style={{background:C.card2,border:`1px solid ${C.purple}33`,borderRadius:8,padding:"6px 10px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:12,flex:1}}>
               <option value="name">Sort: Name A-Z</option>
               <option value="class">Sort: By Class</option>
             </select>
-            <select value={filterVal} onChange={e=>{setFilterVal(e.target.value);loadAllStudents(undefined,e.target.value?parseInt(e.target.value):undefined);}} style={{background:C.card2,border:`1px solid ${C.purple}33`,borderRadius:8,padding:"6px 10px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:12,flex:1}}>
+            <select value={filterVal} onChange={e=>{setFilterVal(e.target.value);loadAllStudents(undefined,e.target.value?parseInt(e.target.value):undefined);}} style={{background:C.card2,border:`1px solid ${C.purple}33`,borderRadius:8,padding:"6px 10px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:12,flex:1}}>
               <option value="">All Classes</option>
               {CLASS_OPTS.map((n,i)=><option key={i} value={CLASS_NUMS[i]}>{n}</option>)}
             </select>
@@ -7113,7 +7119,7 @@ function AdminPanel({ onBack }) {
             <div key={s.id} style={{background:C.card,border:`1px solid ${C.purple}22`,borderRadius:14,padding:"12px 14px",marginBottom:8,display:"flex",alignItems:"center",gap:10}}>
               <div style={{background:`${C.purple}33`,borderRadius:10,width:36,height:36,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Orbitron',sans-serif",fontSize:11,color:C.purple,flexShrink:0}}>{String(s.roll_no).padStart(2,"0")}</div>
               <div style={{flex:1}}>
-                <div style={{fontWeight:800,fontSize:14,color:"white"}}>{s.name}</div>
+                <div style={{fontWeight:800,fontSize:14,color:textColor()}}>{s.name}</div>
                 <div style={{fontSize:11,color:C.dim}}>{CLASS_LABELS[s.class_num]||`Class ${s.class_num}`}-{s.section} · Lv {s.level||1} · {s.xp||0} XP</div>
               </div>
               <button onClick={()=>{setSelTeacher({id:s.teacher_id});setSelSchool({id:s.school_id});setForm({student_id:s.id,name:s.name,roll_no:s.roll_no,class_num:s.class_num,section:s.section});setMsg("");setView("edit_student");}} style={{background:`${C.cyan}22`,border:`1px solid ${C.cyan}44`,borderRadius:8,padding:"5px 9px",color:C.cyan,cursor:"pointer",fontSize:11}}>✏️</button>
@@ -7128,12 +7134,12 @@ function AdminPanel({ onBack }) {
 
   // ── Add Class ─────────────────────────────────────────────────────
   if (view==="add_class") return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"20px 18px"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),padding:"20px 18px"}}>
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><BackBtn onClick={()=>setView("school_detail")} color={C.green}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.green}}>ADD CLASS — {selSchool?.name}</div></div>
       <Card color={C.green} style={{maxWidth:480,margin:"0 auto"}}>
         <div style={{marginBottom:10}}>
           <div style={{color:C.dim,fontSize:11,marginBottom:4}}>CLASS</div>
-          <select value={form.class_num??1} onChange={e=>setForm({...form,class_num:parseInt(e.target.value)})} style={{width:"100%",background:C.card2,border:`1.5px solid ${C.green}44`,borderRadius:10,padding:"10px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14,marginBottom:10}}>
+          <select value={form.class_num??1} onChange={e=>setForm({...form,class_num:parseInt(e.target.value)})} style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.green}44`,borderRadius:10,padding:"10px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:14,marginBottom:10}}>
             {CLASS_OPTS.map((n,i)=><option key={i} value={CLASS_NUMS[i]}>{n}</option>)}
           </select>
         </div>
@@ -7149,13 +7155,13 @@ function AdminPanel({ onBack }) {
   if (view==="add_teacher"||view==="add_teacher_global") {
     const targetSchool = selSchool;
     return (
-      <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"20px 18px"}}>
+      <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),padding:"20px 18px"}}>
         <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><BackBtn onClick={()=>setView(view==="add_teacher_global"?"all_teachers":"school_detail")} color={C.cyan}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.cyan}}>ADD TEACHER{targetSchool?" — "+targetSchool.name:""}</div></div>
         <Card color={C.cyan} style={{maxWidth:500,margin:"0 auto"}}>
           {view==="add_teacher_global"&&(
             <div style={{marginBottom:12}}>
               <div style={{color:C.dim,fontSize:11,marginBottom:4}}>SCHOOL</div>
-              <select value={form.school_id||""} onChange={e=>setForm({...form,school_id:e.target.value})} style={{width:"100%",background:C.card2,border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"10px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14,marginBottom:10}}>
+              <select value={form.school_id||""} onChange={e=>setForm({...form,school_id:e.target.value})} style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"10px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:14,marginBottom:10}}>
                 <option value="">Select school...</option>
                 {schools.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
@@ -7177,7 +7183,7 @@ function AdminPanel({ onBack }) {
             {PERMS.map(p=>(
               <div key={p.id} onClick={()=>{const cur=form.permissions||[];const has=cur.includes(p.id);setForm({...form,permissions:has?cur.filter(x=>x!==p.id):[...cur,p.id]});}} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 10px",borderRadius:10,background:(form.permissions||[]).includes(p.id)?`${C.cyan}18`:"transparent",border:`1px solid ${(form.permissions||[]).includes(p.id)?C.cyan+"44":"transparent"}`,cursor:"pointer",marginBottom:4}}>
                 <div style={{width:18,height:18,borderRadius:5,border:`2px solid ${C.cyan}66`,background:(form.permissions||[]).includes(p.id)?C.cyan:"transparent",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,flexShrink:0}}>{(form.permissions||[]).includes(p.id)?"✓":""}</div>
-                <span style={{fontSize:13,color:"white"}}>{p.icon} {p.label}</span>
+                <span style={{fontSize:13,color:textColor()}}>{p.icon} {p.label}</span>
               </div>
             ))}
           </div>
@@ -7197,12 +7203,12 @@ function AdminPanel({ onBack }) {
 
   // ── Bulk Teachers ─────────────────────────────────────────────────
   if (view==="bulk_teachers") return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"20px 18px"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),padding:"20px 18px"}}>
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><BackBtn onClick={()=>setView("school_detail")} color={C.purple}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.purple}}>BULK ADD TEACHERS — {selSchool?.name}</div></div>
       <Card color={C.purple} style={{maxWidth:520,margin:"0 auto"}}>
         <div style={{color:C.dim,fontSize:11,marginBottom:8}}>CSV: <b style={{color:C.purple}}>Name, Email, PIN</b></div>
         <div style={{color:C.dim,fontSize:10,marginBottom:10,background:`${C.purple}11`,borderRadius:8,padding:"8px 10px"}}>Mrs. Sharma, sharma@school.com, 1234</div>
-        <textarea value={bulkText} onChange={e=>setBulkText(e.target.value)} rows={8} placeholder="Name, Email, PIN" style={{width:"100%",background:C.card2,border:`1.5px solid ${C.purple}44`,borderRadius:10,padding:"10px 12px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:13,display:"block",marginBottom:10,resize:"vertical"}}/>
+        <textarea value={bulkText} onChange={e=>setBulkText(e.target.value)} rows={8} placeholder="Name, Email, PIN" style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.purple}44`,borderRadius:10,padding:"10px 12px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:13,display:"block",marginBottom:10,resize:"vertical"}}/>
         {bulkResult.length>0&&<div style={{maxHeight:120,overflowY:"auto",marginBottom:10}}>{bulkResult.map((r,i)=><div key={i} style={{fontSize:11,color:r.ok?C.green:C.red}}>{r.ok?"✅":"❌"} {r.name} {r.error||""}</div>)}</div>}
         <MsgBar m={msg}/>
         <Btn color={C.purple} loading={loading} onClick={async()=>{
@@ -7219,12 +7225,12 @@ function AdminPanel({ onBack }) {
 
   // ── Bulk Students ─────────────────────────────────────────────────
   if (view==="bulk_students") return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"20px 18px"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),padding:"20px 18px"}}>
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><BackBtn onClick={()=>setView("teacher_detail")} color={C.purple}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.purple}}>BULK ADD STUDENTS</div></div>
       <Card color={C.purple} style={{maxWidth:520,margin:"0 auto"}}>
         <div style={{color:C.dim,fontSize:11,marginBottom:8}}>CSV: <b style={{color:C.purple}}>Name, Roll No, Class (1-5 or 10/11/12), Section, PIN</b></div>
         <div style={{color:C.dim,fontSize:10,marginBottom:10,background:`${C.purple}11`,borderRadius:8,padding:"8px 10px"}}>Aarav Sharma, 01, 3, A, 1234</div>
-        <textarea value={bulkText} onChange={e=>setBulkText(e.target.value)} rows={10} placeholder="Name, Roll No, Class, Section, PIN" style={{width:"100%",background:C.card2,border:`1.5px solid ${C.purple}44`,borderRadius:10,padding:"10px 12px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:13,display:"block",marginBottom:10,resize:"vertical"}}/>
+        <textarea value={bulkText} onChange={e=>setBulkText(e.target.value)} rows={10} placeholder="Name, Roll No, Class, Section, PIN" style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.purple}44`,borderRadius:10,padding:"10px 12px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:13,display:"block",marginBottom:10,resize:"vertical"}}/>
         {bulkResult.length>0&&<div style={{maxHeight:150,overflowY:"auto",marginBottom:10}}>{bulkResult.map((r,i)=><div key={i} style={{fontSize:11,color:r.ok?C.green:C.red}}>{r.ok?"✅":"❌"} {r.name} {r.error||""}</div>)}</div>}
         <MsgBar m={msg}/>
         <Btn color={C.purple} loading={loading} onClick={async()=>{
@@ -7241,15 +7247,15 @@ function AdminPanel({ onBack }) {
 
   // ── Add Student ───────────────────────────────────────────────────
   if (view==="add_student") return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"20px 18px"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),padding:"20px 18px"}}>
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><BackBtn onClick={()=>setView("teacher_detail")} color={C.cyan}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.cyan}}>ADD STUDENT — {selTeacher?.name}</div></div>
       <Card color={C.cyan} style={{maxWidth:480,margin:"0 auto"}}>
         {[["Name","name","text","Full name"],["Roll No","roll_no","text","01"],["PIN (4 digits)","pin","password","••••"]].map(([l,k,t,ph])=>(
-          <div key={k} style={{marginBottom:10}}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div><input value={form[k]||""} onChange={e=>setForm({...form,[k]:e.target.value})} type={t} placeholder={ph} style={{width:"100%",background:C.card2,border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"10px 12px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14,display:"block"}}/></div>
+          <div key={k} style={{marginBottom:10}}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div><input value={form[k]||""} onChange={e=>setForm({...form,[k]:e.target.value})} type={t} placeholder={ph} style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"10px 12px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:14,display:"block"}}/></div>
         ))}
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
-          <div><div style={{color:C.dim,fontSize:11,marginBottom:4}}>CLASS</div><select value={form.class_num??1} onChange={e=>setForm({...form,class_num:parseInt(e.target.value)})} style={{width:"100%",background:C.card2,border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"10px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14}}>{CLASS_OPTS.map((n,i)=><option key={i} value={CLASS_NUMS[i]}>{n}</option>)}</select></div>
-          <div><div style={{color:C.dim,fontSize:11,marginBottom:4}}>SECTION</div><input value={form.section||"A"} onChange={e=>setForm({...form,section:e.target.value.toUpperCase().slice(0,3)})} placeholder="A" style={{width:"100%",background:C.card2,border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"10px 12px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14,display:"block"}}/></div>
+          <div><div style={{color:C.dim,fontSize:11,marginBottom:4}}>CLASS</div><select value={form.class_num??1} onChange={e=>setForm({...form,class_num:parseInt(e.target.value)})} style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"10px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:14}}>{CLASS_OPTS.map((n,i)=><option key={i} value={CLASS_NUMS[i]}>{n}</option>)}</select></div>
+          <div><div style={{color:C.dim,fontSize:11,marginBottom:4}}>SECTION</div><input value={form.section||"A"} onChange={e=>setForm({...form,section:e.target.value.toUpperCase().slice(0,3)})} placeholder="A" style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"10px 12px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:14,display:"block"}}/></div>
         </div>
         <MsgBar m={msg}/>
         <Btn color={C.cyan} loading={loading} onClick={async()=>{setLoading(true);setMsg("");const d=await api("create_student_admin",{...form,teacher_id:selTeacher?.id,school_id:selSchool?.id});if(d.data){toast("✅ Student added: "+form.name);setForm({});}else setMsg(d.error||"Failed");setLoading(false);}}>ADD STUDENT</Btn>
@@ -7259,7 +7265,7 @@ function AdminPanel({ onBack }) {
 
   // ── Teacher Detail — Student List ─────────────────────────────────
   if (view==="teacher_detail") return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",overflowY:"auto"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),overflowY:"auto"}}>
       <Hdr title={selTeacher?.name||""} back={()=>setView("school_detail")} accent={C.purple}
         extra={<>
           <button onClick={()=>{setForm({});setMsg("");setView("add_student");}} style={{background:`${C.cyan}22`,border:`1px solid ${C.cyan}44`,borderRadius:10,padding:"7px 12px",color:C.cyan,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:9}}>+ STUDENT</button>
@@ -7272,7 +7278,7 @@ function AdminPanel({ onBack }) {
         {students.map(s=>(
           <div key={s.id} style={{background:C.card,border:`1px solid ${C.purple}22`,borderRadius:14,padding:"12px 14px",marginBottom:8,display:"flex",alignItems:"center",gap:10}}>
             <div style={{background:`${C.purple}33`,borderRadius:10,width:36,height:36,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Orbitron',sans-serif",fontSize:11,color:C.purple,flexShrink:0}}>{String(s.roll_no).padStart(2,"0")}</div>
-            <div style={{flex:1}}><div style={{fontWeight:800,fontSize:14,color:"white"}}>{s.name}</div><div style={{fontSize:11,color:C.dim}}>{CLASS_LABELS[s.class_num]||`Class ${s.class_num}`}-{s.section} · Lv {s.level||1} · {s.xp||0} XP</div></div>
+            <div style={{flex:1}}><div style={{fontWeight:800,fontSize:14,color:textColor()}}>{s.name}</div><div style={{fontSize:11,color:C.dim}}>{CLASS_LABELS[s.class_num]||`Class ${s.class_num}`}-{s.section} · Lv {s.level||1} · {s.xp||0} XP</div></div>
             <button onClick={()=>{setForm({student_id:s.id,name:s.name,roll_no:s.roll_no,class_num:s.class_num,section:s.section});setMsg("");setView("edit_student");}} style={{background:`${C.cyan}22`,border:`1px solid ${C.cyan}44`,borderRadius:8,padding:"5px 9px",color:C.cyan,cursor:"pointer",fontSize:11}}>✏️</button>
             <button onClick={async()=>{if(!window.confirm("Delete "+s.name+"?"))return;setLoading(true);const d=await api("admin_delete_student",{student_id:s.id});if(d.data){toast("✅ Student deleted: "+s.name);loadStudents(selTeacher);}else setMsg(d.error||"Failed");setLoading(false);}} style={{background:`${C.red}22`,border:`1px solid ${C.red}44`,borderRadius:8,padding:"5px 9px",color:C.red,cursor:"pointer",fontSize:11}}>🗑️</button>
           </div>
@@ -7284,7 +7290,7 @@ function AdminPanel({ onBack }) {
 
   // ── Edit Teacher (with permissions) ──────────────────────────────
   if (view==="edit_teacher") return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"20px 18px",overflowY:"auto"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),padding:"20px 18px",overflowY:"auto"}}>
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><BackBtn onClick={()=>setView(selSchool?"school_detail":"all_teachers")} color={C.cyan}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.cyan}}>EDIT TEACHER</div></div>
       <Card color={C.cyan} style={{maxWidth:500,margin:"0 auto"}}>
         {[["Name","name","text","Teacher name"],["Email","email","email","teacher@school.com"]].map(([l,k,t,ph])=>(
@@ -7303,7 +7309,7 @@ function AdminPanel({ onBack }) {
           {PERMS.map(p=>(
             <div key={p.id} onClick={()=>{const cur=form.permissions||[];const has=cur.includes(p.id);setForm({...form,permissions:has?cur.filter(x=>x!==p.id):[...cur,p.id]});}} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 10px",borderRadius:10,background:(form.permissions||[]).includes(p.id)?`${C.cyan}18`:"transparent",border:`1px solid ${(form.permissions||[]).includes(p.id)?C.cyan+"44":"transparent"}`,cursor:"pointer",marginBottom:4}}>
               <div style={{width:18,height:18,borderRadius:5,border:`2px solid ${C.cyan}66`,background:(form.permissions||[]).includes(p.id)?C.cyan:"transparent",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,flexShrink:0}}>{(form.permissions||[]).includes(p.id)?"✓":""}</div>
-              <span style={{fontSize:13,color:"white"}}>{p.icon} {p.label}</span>
+              <span style={{fontSize:13,color:textColor()}}>{p.icon} {p.label}</span>
             </div>
           ))}
         </div>
@@ -7320,14 +7326,14 @@ function AdminPanel({ onBack }) {
 
   // ── Edit Student ──────────────────────────────────────────────────
   if (view==="edit_student") return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"20px 18px"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),padding:"20px 18px"}}>
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><BackBtn onClick={()=>setView(selTeacher?.id&&selSchool?.id?"teacher_detail":"all_students")} color={C.purple}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.purple}}>EDIT STUDENT</div></div>
       <Card color={C.purple} style={{maxWidth:480,margin:"0 auto"}}>
         {[["Name","name","text","Full name"],["Roll No","roll_no","text","01"],["New PIN (blank = keep)","pin","password",""]].map(([l,k,t,ph])=>(
           <div key={k}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div><input value={form[k]||""} onChange={e=>setForm({...form,[k]:e.target.value})} type={t} placeholder={ph} style={iS(C.purple)}/></div>
         ))}
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
-          <div><div style={{color:C.dim,fontSize:11,marginBottom:4}}>CLASS</div><select value={form.class_num??1} onChange={e=>setForm({...form,class_num:parseInt(e.target.value)})} style={{width:"100%",background:C.card2,border:`1.5px solid ${C.purple}44`,borderRadius:10,padding:"10px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14}}>{CLASS_OPTS.map((n,i)=><option key={i} value={CLASS_NUMS[i]}>{n}</option>)}</select></div>
+          <div><div style={{color:C.dim,fontSize:11,marginBottom:4}}>CLASS</div><select value={form.class_num??1} onChange={e=>setForm({...form,class_num:parseInt(e.target.value)})} style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.purple}44`,borderRadius:10,padding:"10px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:14}}>{CLASS_OPTS.map((n,i)=><option key={i} value={CLASS_NUMS[i]}>{n}</option>)}</select></div>
           <div><div style={{color:C.dim,fontSize:11,marginBottom:4}}>SECTION</div><input value={form.section||"A"} onChange={e=>setForm({...form,section:e.target.value.toUpperCase().slice(0,3)})} style={iS(C.purple)}/></div>
         </div>
         <MsgBar m={msg}/>
@@ -7345,7 +7351,7 @@ function AdminPanel({ onBack }) {
 
   // ── Questions: Class Selector ─────────────────────────────────────
   if (view==="questions_class") return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",overflowY:"auto"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),overflowY:"auto"}}>
       <Hdr title="📚 QUESTION MANAGER" back={()=>setView("home")} accent={C.orange}/>
       <div style={{padding:"16px 18px",maxWidth:600,margin:"0 auto"}}>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
@@ -7366,7 +7372,7 @@ function AdminPanel({ onBack }) {
 
   // ── Questions: Lessons List ───────────────────────────────────────
   if (view==="questions_lessons") return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",overflowY:"auto"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),overflowY:"auto"}}>
       <Hdr title={`${CLASS_LABELS[qClassNum]||"Class "+qClassNum} — LESSONS`} back={()=>setView("questions_class")} accent={C.orange}
         extra={<button onClick={async()=>{setLoading(true);setMsg("");const d=await api("admin_add_lesson",{class_num:qClassNum});if(d.data){const lid=d.data.lesson_id;toast("✅ New lesson: "+lid);await loadQLessons(qClassNum);}else setMsg(d.error||"Failed");setLoading(false);}} style={{background:`${C.green}22`,border:`1px solid ${C.green}44`,borderRadius:10,padding:"7px 12px",color:C.green,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:9}}>+ LESSON</button>}
       />
@@ -7384,7 +7390,7 @@ function AdminPanel({ onBack }) {
             <button key={lid} onClick={()=>{loadQSets(lid);setView("questions_sets");}} style={{width:"100%",background:C.card,border:`1px solid ${C.orange}33`,borderRadius:14,padding:"16px 18px",cursor:"pointer",display:"flex",alignItems:"center",gap:14,marginBottom:10,textAlign:"left"}}>
               <div style={{width:42,height:42,borderRadius:12,background:`${C.orange}22`,border:`2px solid ${C.orange}44`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.orange,fontWeight:900}}>{lessonNum}</div>
               <div style={{flex:1}}>
-                <div style={{fontWeight:900,color:"white",fontSize:15}}>{className} — Lesson {lessonNum}: {title}</div>
+                <div style={{fontWeight:900,color:textColor(),fontSize:15}}>{className} — Lesson {lessonNum}: {title}</div>
                 <div style={{fontSize:11,color:C.orange,marginTop:3,fontFamily:"monospace"}}>{lid}</div>
               </div>
               <span style={{color:C.orange,fontSize:22}}>›</span>
@@ -7398,7 +7404,7 @@ function AdminPanel({ onBack }) {
 
   // ── Questions: Sets List ──────────────────────────────────────────
   if (view==="questions_sets") return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",overflowY:"auto"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),overflowY:"auto"}}>
       <Hdr title={`${qLesson} — SETS`} back={()=>setView("questions_lessons")} accent={C.purple}
         extra={<button onClick={()=>{setForm({lesson_id:qLesson,set_index:(qSets.length>0?Math.max(...qSets)+1:0)});setMsg("");setView("questions_add_set");}} style={{background:`${C.green}22`,border:`1px solid ${C.green}44`,borderRadius:10,padding:"7px 12px",color:C.green,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:9}}>+ SET</button>}
       />
@@ -7406,7 +7412,7 @@ function AdminPanel({ onBack }) {
         {loading&&<div style={{textAlign:"center",color:C.dim,padding:20}}>Loading...</div>}
         {qSets.map(si=>(
           <button key={si} onClick={()=>{loadQs(qLesson,si);setView("questions_list");}} style={{width:"100%",background:C.card,border:`1px solid ${C.purple}33`,borderRadius:12,padding:"14px 16px",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,textAlign:"left"}}>
-            <div><div style={{fontWeight:800,color:"white",fontSize:14}}>Set {si+1}</div><div style={{fontSize:11,color:C.dim,marginTop:2}}>set_index: {si}</div></div>
+            <div><div style={{fontWeight:800,color:textColor(),fontSize:14}}>Set {si+1}</div><div style={{fontSize:11,color:C.dim,marginTop:2}}>set_index: {si}</div></div>
             <span style={{color:C.purple,fontSize:20}}>›</span>
           </button>
         ))}
@@ -7417,14 +7423,14 @@ function AdminPanel({ onBack }) {
 
   // ── Questions: Add New Set ────────────────────────────────────────
   if (view==="questions_add_set") return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"20px 18px"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),padding:"20px 18px"}}>
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><BackBtn onClick={()=>setView("questions_sets")} color={C.green}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.green}}>NEW SET — {qLesson} · Set {(form.set_index??0)+1}</div></div>
       <Card color={C.green} style={{maxWidth:520,margin:"0 auto"}}>
-        <div style={{color:"white",fontSize:13,marginBottom:12,background:`${C.green}11`,borderRadius:8,padding:"8px 12px"}}>Creates Set {(form.set_index??0)+1} in lesson <b style={{color:C.green}}>{qLesson}</b>. Fill the first question to create the set.</div>
+        <div style={{color:textColor(),fontSize:13,marginBottom:12,background:`${C.green}11`,borderRadius:8,padding:"8px 12px"}}>Creates Set {(form.set_index??0)+1} in lesson <b style={{color:C.green}}>{qLesson}</b>. Fill the first question to create the set.</div>
         {[["Question","question"],["Option A","opt0"],["Option B","opt1"],["Option C","opt2"],["Option D","opt3"],["Hint (optional)","hint"]].map(([l,k])=>(
           <div key={k}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div><input value={form[k]||""} onChange={e=>setForm({...form,[k]:e.target.value})} style={iS(C.green)}/></div>
         ))}
-        <div style={{marginBottom:12}}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>CORRECT ANSWER</div><select value={form.correct||0} onChange={e=>setForm({...form,correct:parseInt(e.target.value)})} style={{width:"100%",background:C.card2,border:`1.5px solid ${C.green}44`,borderRadius:10,padding:"10px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14}}>{["A","B","C","D"].map((l,i)=><option key={i} value={i}>Option {l}</option>)}</select></div>
+        <div style={{marginBottom:12}}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>CORRECT ANSWER</div><select value={form.correct||0} onChange={e=>setForm({...form,correct:parseInt(e.target.value)})} style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.green}44`,borderRadius:10,padding:"10px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:14}}>{["A","B","C","D"].map((l,i)=><option key={i} value={i}>Option {l}</option>)}</select></div>
         <MsgBar m={msg}/>
         <Btn color={C.green} loading={loading} onClick={async()=>{
           if(!form.question||!form.opt0||!form.opt1||!form.opt2||!form.opt3){setMsg("Fill all fields.");return;}
@@ -7439,7 +7445,7 @@ function AdminPanel({ onBack }) {
 
   // ── Questions: List in Set (table) ────────────────────────────────
   if (view==="questions_list") return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",overflowY:"auto"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),overflowY:"auto"}}>
       <Hdr title={`${qLesson} · Set ${(qSet??0)+1}`} back={()=>setView("questions_sets")} accent={C.yellow}
         extra={<>
           <button onClick={()=>{setForm({lesson_id:qLesson,set_index:qSet??0,question_index:questions.length,opt0:"",opt1:"",opt2:"",opt3:"",correct:0});setMsg("");setView("questions_add_q");}} style={{background:`${C.green}22`,border:`1px solid ${C.green}44`,borderRadius:10,padding:"7px 12px",color:C.green,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:9}}>+ QUESTION</button>
@@ -7457,7 +7463,7 @@ function AdminPanel({ onBack }) {
                 {questions.map((q,i)=>(
                   <tr key={q.id} style={{background:i%2===0?C.card:"transparent",borderBottom:`1px solid #ffffff08`}}>
                     <td style={{padding:"8px 10px",color:C.dim}}>{i+1}</td>
-                    <td style={{padding:"8px 10px",color:"white",maxWidth:200,wordBreak:"break-word"}}>{q.question}</td>
+                    <td style={{padding:"8px 10px",color:textColor(),maxWidth:200,wordBreak:"break-word"}}>{q.question}</td>
                     {(q.options||[]).map((o,oi)=><td key={oi} style={{padding:"8px 10px",color:oi===q.correct_answer?C.green:"#aaa",maxWidth:120,wordBreak:"break-word"}}>{o}</td>)}
                     <td style={{padding:"8px 10px",color:C.green,fontWeight:800}}>{"ABCD"[q.correct_answer]}</td>
                     <td style={{padding:"8px 10px",color:C.dim,maxWidth:100,wordBreak:"break-word"}}>{q.hint||"—"}</td>
@@ -7478,13 +7484,13 @@ function AdminPanel({ onBack }) {
 
   // ── Questions: Add Single Question ────────────────────────────────
   if (view==="questions_add_q") return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"20px 18px"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),padding:"20px 18px"}}>
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><BackBtn onClick={()=>setView("questions_list")} color={C.green}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.green}}>ADD QUESTION — {qLesson} Set {(qSet??0)+1}</div></div>
       <Card color={C.green} style={{maxWidth:520,margin:"0 auto"}}>
         {[["Question","question"],["Option A","opt0"],["Option B","opt1"],["Option C","opt2"],["Option D","opt3"],["Hint (optional)","hint"]].map(([l,k])=>(
           <div key={k}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div><input value={form[k]||""} onChange={e=>setForm({...form,[k]:e.target.value})} style={iS(C.green)}/></div>
         ))}
-        <div style={{marginBottom:12}}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>CORRECT ANSWER</div><select value={form.correct??0} onChange={e=>setForm({...form,correct:parseInt(e.target.value)})} style={{width:"100%",background:C.card2,border:`1.5px solid ${C.green}44`,borderRadius:10,padding:"10px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14}}>{["A","B","C","D"].map((l,i)=><option key={i} value={i}>Option {l} — {form["opt"+i]||""}</option>)}</select></div>
+        <div style={{marginBottom:12}}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>CORRECT ANSWER</div><select value={form.correct??0} onChange={e=>setForm({...form,correct:parseInt(e.target.value)})} style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.green}44`,borderRadius:10,padding:"10px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:14}}>{["A","B","C","D"].map((l,i)=><option key={i} value={i}>Option {l} — {form["opt"+i]||""}</option>)}</select></div>
         <MsgBar m={msg}/>
         <Btn color={C.green} loading={loading} onClick={async()=>{
           if(!form.question||!form.opt0||!form.opt1||!form.opt2||!form.opt3){setMsg("Fill question and all 4 options.");return;}
@@ -7499,13 +7505,13 @@ function AdminPanel({ onBack }) {
 
   // ── Questions: Edit Question ──────────────────────────────────────
   if (view==="questions_edit_q") return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"20px 18px"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),padding:"20px 18px"}}>
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><BackBtn onClick={()=>setView("questions_list")} color={C.cyan}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.cyan}}>EDIT QUESTION</div></div>
       <Card color={C.cyan} style={{maxWidth:520,margin:"0 auto"}}>
         {[["Question","question"],["Option A","opt0"],["Option B","opt1"],["Option C","opt2"],["Option D","opt3"],["Hint","hint"]].map(([l,k])=>(
           <div key={k}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div><input value={form[k]||""} onChange={e=>setForm({...form,[k]:e.target.value})} style={iS(C.cyan)}/></div>
         ))}
-        <div style={{marginBottom:12}}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>CORRECT ANSWER</div><select value={form.correct??0} onChange={e=>setForm({...form,correct:parseInt(e.target.value)})} style={{width:"100%",background:C.card2,border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"10px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:14}}>{["A","B","C","D"].map((l,i)=><option key={i} value={i}>Option {l} — {form["opt"+i]||""}</option>)}</select></div>
+        <div style={{marginBottom:12}}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>CORRECT ANSWER</div><select value={form.correct??0} onChange={e=>setForm({...form,correct:parseInt(e.target.value)})} style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"10px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:14}}>{["A","B","C","D"].map((l,i)=><option key={i} value={i}>Option {l} — {form["opt"+i]||""}</option>)}</select></div>
         <MsgBar m={msg}/>
         <Btn color={C.cyan} loading={loading} onClick={async()=>{
           setLoading(true);setMsg("");
@@ -7519,12 +7525,12 @@ function AdminPanel({ onBack }) {
 
   // ── Questions: Bulk Upload ────────────────────────────────────────
   if (view==="questions_bulk") return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",padding:"20px 18px"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),padding:"20px 18px"}}>
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><BackBtn onClick={()=>setView("questions_list")} color={C.purple}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.purple}}>BULK UPLOAD — {qLesson} Set {(qSet??0)+1}</div></div>
       <Card color={C.purple} style={{maxWidth:520,margin:"0 auto"}}>
         <div style={{color:C.dim,fontSize:11,marginBottom:6}}>CSV: <b style={{color:C.purple}}>Question, Option A, Option B, Option C, Option D, Correct (0-3), Hint</b></div>
         <div style={{color:C.dim,fontSize:10,marginBottom:10,background:`${C.purple}11`,borderRadius:8,padding:"8px 10px"}}>What is 2+2?, 3, 4, 5, 6, 1, Add the numbers</div>
-        <textarea value={bulkText} onChange={e=>setBulkText(e.target.value)} rows={10} placeholder="Question, A, B, C, D, correct(0-3), hint" style={{width:"100%",background:C.card2,border:`1.5px solid ${C.purple}44`,borderRadius:10,padding:"10px 12px",color:"white",fontFamily:"'Nunito',sans-serif",fontSize:12,display:"block",marginBottom:10,resize:"vertical"}}/>
+        <textarea value={bulkText} onChange={e=>setBulkText(e.target.value)} rows={10} placeholder="Question, A, B, C, D, correct(0-3), hint" style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.purple}44`,borderRadius:10,padding:"10px 12px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:12,display:"block",marginBottom:10,resize:"vertical"}}/>
         {bulkResult.length>0&&<div style={{maxHeight:150,overflowY:"auto",marginBottom:10}}>{bulkResult.map((r,i)=><div key={i} style={{fontSize:11,color:r.ok?C.green:C.red}}>{r.ok?"✅":"❌"} Row {i+1}: {r.error||"OK"}</div>)}</div>}
         <MsgBar m={msg}/>
         <Btn color={C.purple} loading={loading} onClick={async()=>{
@@ -7545,13 +7551,13 @@ function AdminPanel({ onBack }) {
 
 function PrivacyPolicy({ onBack }) {
   return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",overflowY:"auto"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),overflowY:"auto"}}>
       <div style={{position:"sticky",top:0,background:C.bg,zIndex:10,padding:"14px 18px",borderBottom:`1px solid #181838`,display:"flex",alignItems:"center",gap:12}}>
         <BackBtn onClick={onBack} color={C.cyan}/>
         <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.cyan}}>PRIVACY POLICY</div>
       </div>
       <div style={{padding:"20px 20px 40px",maxWidth:600,margin:"0 auto",color:"#ccc",lineHeight:1.8,fontSize:14}}>
-        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:16, color:"white",marginBottom:6}}>MathMagic Space Academy</div>
+        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:16, color:textColor(),marginBottom:6}}>MathMagic Space Academy</div>
         <div style={{color:C.dim,fontSize:12,marginBottom:24}}>Last updated: {new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"})}</div>
 
         {[
@@ -7569,7 +7575,7 @@ function PrivacyPolicy({ onBack }) {
           {t:"12. Contact & Updates",b:["Privacy Officer: privacy@mathmagicacademy.in","Support: Available via the SOS/Feedback feature in the app","Policy updates: Users notified via in-app notification","Effective date: "+new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"}),"Governing law: Information Technology Act 2000 and DPDP Act 2023 (India)"]},
         ].map(({t,b},i)=>(
           <div key={i} style={{marginBottom:20}}>
-            <div style={{fontWeight:800,color:"white",fontSize:14,marginBottom:6,lineHeight:1.4}}>{t}</div>
+            <div style={{fontWeight:800,color:textColor(),fontSize:14,marginBottom:6,lineHeight:1.4}}>{t}</div>
             <div style={{color:"#bbb"}}>{b.map((line,j)=><div key={j} style={{marginBottom:3,lineHeight:1.6,fontSize:13}}>{line}</div>)}</div>
           </div>
         ))
@@ -7628,7 +7634,7 @@ function MathCardFlip({ onBack, child }) {
 
   const cols = level===1?4:level===2?4:5;
   return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",position:"relative"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),position:"relative"}}>
       <Starfield n={20}/>
       <div style={{position:"relative",zIndex:2,padding:"16px 14px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
@@ -7700,7 +7706,7 @@ function EquationBalance({ onBack, child }) {
   };
 
   return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",position:"relative"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),position:"relative"}}>
       <Starfield n={20}/>
       <div style={{position:"relative",zIndex:2,padding:"16px 14px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
@@ -7710,12 +7716,12 @@ function EquationBalance({ onBack, child }) {
         </div>
         {streak>=3&&<div style={{textAlign:"center",color:C.orange,fontFamily:"'Orbitron',sans-serif",fontSize:11,marginBottom:8}}>🔥 STREAK x{streak}!</div>}
         <div style={{background:flash==="right"?`${C.green}22`:flash==="wrong"?`${C.red}22`:C.card,border:`2px solid ${flash==="right"?C.green:flash==="wrong"?C.red:C.orange+"44"}`,borderRadius:20,padding:"32px 16px",textAlign:"center",marginBottom:20,animation:shake?"shakeX 0.4s ease":"none",transition:"background 0.2s"}}>
-          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:28,color:"white"}}>{q.q}</div>
+          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:28,color:textColor()}}>{q.q}</div>
           {flash&&<div style={{fontSize:20,marginTop:8}}>{flash==="right"?"✅":"❌"}</div>}
         </div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
           {q.opts.map((o,i)=>(
-            <button key={i} onClick={()=>answer(o)} style={{background:C.card,border:`2px solid ${C.orange}44`,borderRadius:16,padding:"18px",fontFamily:"'Orbitron',sans-serif",fontSize:20,color:"white",cursor:"pointer",textAlign:"center"}}>
+            <button key={i} onClick={()=>answer(o)} style={{background:C.card,border:`2px solid ${C.orange}44`,borderRadius:16,padding:"18px",fontFamily:"'Orbitron',sans-serif",fontSize:20,color:textColor(),cursor:"pointer",textAlign:"center"}}>
               {o}
             </button>
           ))}
@@ -7769,7 +7775,7 @@ function SequenceBuilder({ onBack, child }) {
   const typeLabel = {add:"➕ Add",mul:"✖️ Multiply",fib:"🐚 Fibonacci",square:"² Square",odd:"Odd",even:"Even"};
 
   return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",position:"relative"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),position:"relative"}}>
       <Starfield n={20}/>
       <div style={{position:"relative",zIndex:2,padding:"16px 14px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
@@ -7790,7 +7796,7 @@ function SequenceBuilder({ onBack, child }) {
         </div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
           {q.opts.map((o,i)=>(
-            <button key={i} onClick={()=>answer(o)} style={{background:C.card,border:`2px solid ${C.green}44`,borderRadius:16,padding:"18px",fontFamily:"'Orbitron',sans-serif",fontSize:18,color:"white",cursor:"pointer",textAlign:"center"}}>
+            <button key={i} onClick={()=>answer(o)} style={{background:C.card,border:`2px solid ${C.green}44`,borderRadius:16,padding:"18px",fontFamily:"'Orbitron',sans-serif",fontSize:18,color:textColor(),cursor:"pointer",textAlign:"center"}}>
               {o}
             </button>
           ))}
@@ -7821,7 +7827,7 @@ function GamesHub({ child, onBack }) {
   }
 
   return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",position:"relative"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),position:"relative"}}>
       <Starfield n={30}/>
       <div style={{position:"relative",zIndex:2,background:`${C.cyan}18`,borderBottom:`1px solid ${C.cyan}33`,padding:"14px 18px"}}>
         <div style={{display:"flex",alignItems:"center",gap:12}}>
