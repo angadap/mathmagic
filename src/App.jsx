@@ -6672,6 +6672,32 @@ function TeacherDashboard({ teacher, onLogout }) {
   };
 
   const load = () => selClass ? loadClass(selClass) : loadAll();
+
+  // Questions management state (for content managers)
+  const [qClassNum,  setQClassNum]  = useState(parseInt(teacher.class_num||1)||1);
+  const [qLessons,   setQLessonsT]  = useState([]);
+  const [qLesson,    setQLessonT]   = useState(null);
+  const [qSets,      setQSetsT]     = useState([]);
+  const [qSet,       setQSetT]      = useState(null);
+  const [questions,  setQuestionsT] = useState([]);
+  const [qForm,      setQForm]      = useState({});
+  const [qMsg,       setQMsg]       = useState("");
+  const [qLoading,   setQLoading]   = useState(false);
+  const [bulkText,   setBulkText]   = useState("");
+  const [bulkResult, setBulkResult] = useState([]);
+
+  const tApi = (action, body={}) => schoolApi(action, {...body, teacher_id:teacher.id, session_token:teacher.session_token||""});
+  const loadQLessonsT = async(cn) => { setQLoading(true);setQClassNum(cn);setQLessonsT([]);setQLessonT(null);setQSetsT([]);setQSetT(null);setQuestionsT([]); const d=await tApi("admin_list_lessons_for_class",{class_num:cn,_admin_key:teacher.session_token}); setQLessonsT(Array.isArray(d.data)?d.data:[]);setQLoading(false); };
+  const loadQSetsT    = async(lid) => { setQLoading(true);setQLessonT(lid);setQSetsT([]);setQSetT(null);setQuestionsT([]); const d=await tApi("admin_list_sets_for_lesson",{lesson_id_prefix:lid}); setQSetsT(d.data||[]);setQLoading(false); };
+  const loadQsT       = async(lid,si) => { setQLoading(true);setQSetT(si);setQuestionsT([]); const d=await tApi("admin_list_questions",{lesson_id_prefix:lid,set_index:si}); setQuestionsT(d.data||[]);setQLoading(false); };
+
+  // Permission checks
+  const tPerms = Array.isArray(teacher?.permissions)?teacher.permissions:null;
+  const canManageContent = !tPerms || tPerms.includes("add_lesson_set_question") || tPerms.includes("modify_lesson_set_question") || tPerms.includes("delete_lesson_set_question");
+  const canAddQ    = !tPerms || tPerms.includes("add_lesson_set_question");
+  const canModifyQ = !tPerms || tPerms.includes("modify_lesson_set_question");
+  const canDeleteQ = !tPerms || tPerms.includes("delete_lesson_set_question");
+
   useEffect(()=>{ loadAll(); },[]);
 
   // Add student removed — admin only
@@ -6682,16 +6708,17 @@ function TeacherDashboard({ teacher, onLogout }) {
   return (
     <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),overflowY:"auto"}}>
       {/* Header */}
-      <div style={{background:C.card,borderBottom:`1px solid ${C.purple}33`,padding:"14px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:10}}>
-        <div>
-          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:12,color:C.yellow}}>👨‍🏫 {teacher.name}</div>
+      <div style={{background:C.card,borderBottom:`1px solid ${C.purple}33`,padding:"12px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:10}}>
+        <div style={{flex:1}}>
+          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:11,color:C.yellow,letterSpacing:1}}>👩‍🏫 {teacher.name}</div>
           <div style={{fontSize:11,color:C.dim}}>{selClass?`Class ${selClass.class_num}-${selClass.section}`:"All Classes"}</div>
         </div>
-        <div style={{display:"flex",gap:8}}>
-          <button onClick={()=>{setSelStudent(null);}} style={{display:"none"}}>
-            LIST
-          </button>
-          <button onClick={onLogout} style={{background:`${C.red}22`,border:`1px solid ${C.red}44`,borderRadius:10,padding:"8px 12px",color:C.red,cursor:"pointer",fontSize:11,fontFamily:"'Nunito',sans-serif",fontWeight:700}}>LOGOUT</button>
+        {/* Tab switcher */}
+        <div style={{display:"flex",gap:6,alignItems:"center"}}>
+          {[["classes","🏛️ Classes"],["list","👦 Students"],...(canManageContent?[["t_questions","📚 Questions"]]:[])].map(([v,lbl])=>(
+            <button key={v} onClick={()=>{if(v==="classes"){setSelClass(null);setView("classes");}else if(v==="t_questions"){if(qLessons.length===0)loadQLessonsT(qClassNum);setView("t_q_class");}else setView(v);}} style={{background:view.startsWith(v)&&!(v==="classes"&&view!=="classes")||v==="classes"&&view==="classes"||v==="list"&&view==="list"||v==="t_questions"&&view.startsWith("t_q")?C.purple:"transparent",border:`1px solid ${C.purple}33`,borderRadius:10,padding:"6px 10px",color:view.startsWith(v)||v==="classes"&&view==="classes"||v==="t_questions"&&view.startsWith("t_q")?"white":C.dim,cursor:"pointer",fontSize:11,fontWeight:700,transition:"all 0.2s"}}>{lbl}</button>
+          ))}
+          <button onClick={onLogout} style={{background:`${C.red}22`,border:`1px solid ${C.red}44`,borderRadius:10,padding:"6px 10px",color:C.red,cursor:"pointer",fontSize:11,fontWeight:700}}>🚪</button>
         </div>
       </div>
 
@@ -6793,11 +6820,220 @@ function TeacherDashboard({ teacher, onLogout }) {
         {view==="lessons" && (
           <TeacherLessons teacher={teacher} classFilter={selClass}/>
         )}
+
+        {/* ── Questions Management (Content Manager / Full Access) ── */}
+        {view==="t_q_class" && canManageContent && (
+          <TeacherQManager teacher={teacher} tApi={tApi}
+            canAddQ={canAddQ} canModifyQ={canModifyQ} canDeleteQ={canDeleteQ}
+            qClassNum={qClassNum} setQClassNum={setQClassNum}
+            qLessons={qLessons} setQLessonsT={setQLessonsT}
+            qLesson={qLesson} setQLessonT={setQLessonT}
+            qSets={qSets} setQSetsT={setQSetsT}
+            qSet={qSet} setQSetT={setQSetT}
+            questions={questions} setQuestionsT={setQuestionsT}
+            qForm={qForm} setQForm={setQForm}
+            qMsg={qMsg} setQMsg={setQMsg}
+            qLoading={qLoading} setQLoading={setQLoading}
+            bulkText={bulkText} setBulkText={setBulkText}
+            bulkResult={bulkResult} setBulkResult={setBulkResult}
+            loadQLessonsT={loadQLessonsT} loadQSetsT={loadQSetsT} loadQsT={loadQsT}
+            subView="class" setView={setView}/>
+        )}
+        {["t_q_lessons","t_q_sets","t_q_list","t_q_add","t_q_edit"].includes(view) && canManageContent && (
+          <TeacherQManager teacher={teacher} tApi={tApi}
+            canAddQ={canAddQ} canModifyQ={canModifyQ} canDeleteQ={canDeleteQ}
+            qClassNum={qClassNum} setQClassNum={setQClassNum}
+            qLessons={qLessons} setQLessonsT={setQLessonsT}
+            qLesson={qLesson} setQLessonT={setQLessonT}
+            qSets={qSets} setQSetsT={setQSetsT}
+            qSet={qSet} setQSetT={setQSetT}
+            questions={questions} setQuestionsT={setQuestionsT}
+            qForm={qForm} setQForm={setQForm}
+            qMsg={qMsg} setQMsg={setQMsg}
+            qLoading={qLoading} setQLoading={setQLoading}
+            bulkText={bulkText} setBulkText={setBulkText}
+            bulkResult={bulkResult} setBulkResult={setBulkResult}
+            loadQLessonsT={loadQLessonsT} loadQSetsT={loadQSetsT} loadQsT={loadQsT}
+            subView={view} setView={setView}/>
+        )}
       </div>
     </div>
   );
 }
 
+
+// ── TeacherQManager Component ─────────────────────────────────────
+function TeacherQManager({ teacher, tApi, canAddQ, canModifyQ, canDeleteQ,
+  qClassNum, setQClassNum, qLessons, setQLessonsT, qLesson, setQLessonT,
+  qSets, setQSetsT, qSet, setQSetT, questions, setQuestionsT,
+  qForm, setQForm, qMsg, setQMsg, qLoading, setQLoading,
+  bulkText, setBulkText, bulkResult, setBulkResult,
+  loadQLessonsT, loadQSetsT, loadQsT, subView, setView }) {
+
+  const iSQ = (a) => ({width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${a}44`,borderRadius:10,padding:"10px 12px",color:textColor(),fontFamily:"'Baloo 2',sans-serif",fontSize:14,display:"block",marginBottom:10,outline:"none"});
+  const CLASS_LABELS = {10:"Nursery",11:"Jr KG",12:"Sr KG",1:"Class 1",2:"Class 2",3:"Class 3",4:"Class 4",5:"Class 5"};
+  const CLASS_OPTS   = ["Nursery","Jr KG","Sr KG","Class 1","Class 2","Class 3","Class 4","Class 5"];
+  const CLASS_NUMS   = [10,11,12,1,2,3,4,5];
+  const emojis       = ["🌱","🌙","☀️","🌍","🪐","⭐","🔴","🌌"];
+
+  // ── Class selector ───────────────────────────────────────────
+  if (subView==="t_q_class") return (
+    <div style={{padding:"16px 18px",maxWidth:600,margin:"0 auto"}}>
+      <div style={{fontSize:16,fontWeight:900,color:textColor(),marginBottom:14}}>📚 Questions — Select Class</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+        {CLASS_OPTS.map((n,i)=>{
+          const cn=CLASS_NUMS[i];
+          return (
+            <button key={cn} onClick={()=>{loadQLessonsT(cn);setView("t_q_lessons");}}
+              style={{background:C.card,border:`2px solid ${C.orange}33`,borderRadius:16,padding:"18px 14px",cursor:"pointer",textAlign:"center",boxShadow:`0 2px 10px ${C.orange}10`}}>
+              <div style={{fontSize:28}}>{emojis[i]}</div>
+              <div style={{fontSize:13,fontWeight:900,color:C.orange,marginTop:6}}>{n}</div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  // ── Lessons list ─────────────────────────────────────────────
+  if (subView==="t_q_lessons") return (
+    <div style={{padding:"12px 18px",maxWidth:600,margin:"0 auto"}}>
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
+        <button onClick={()=>setView("t_q_class")} style={{background:"none",border:`1px solid ${C.dim}44`,borderRadius:8,padding:"5px 10px",color:C.dim,cursor:"pointer",fontSize:12}}>← Back</button>
+        <div style={{fontSize:15,fontWeight:900,color:textColor()}}>{CLASS_LABELS[qClassNum]||"Class "+qClassNum} — Lessons</div>
+      </div>
+      {qLoading&&<div style={{textAlign:"center",color:C.dim,padding:20}}>Loading...</div>}
+      {qMsg&&<div style={{color:qMsg.startsWith("✅")?C.green:C.red,fontSize:13,marginBottom:10,padding:"8px 12px",borderRadius:10,background:qMsg.startsWith("✅")?`${C.green}12`:`${C.red}12`}}>{qMsg}</div>}
+      {qLessons.map((lesson,idx)=>{
+        const lid=lesson.id||lesson; const title=lesson.title||lid;
+        const num=parseInt((lid.split("-l")[1])||idx+1);
+        return (
+          <button key={lid} onClick={()=>{loadQSetsT(lid);setView("t_q_sets");}}
+            style={{width:"100%",background:C.card,border:`1px solid ${C.orange}33`,borderRadius:14,padding:"14px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:12,marginBottom:8,textAlign:"left"}}>
+            <div style={{width:38,height:38,borderRadius:10,background:`${C.orange}22`,border:`2px solid ${C.orange}44`,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Orbitron',sans-serif",fontSize:12,color:C.orange,fontWeight:900,flexShrink:0}}>{num}</div>
+            <div style={{flex:1}}>
+              <div style={{fontWeight:900,color:textColor(),fontSize:14}}>Lesson {num}: {title}</div>
+              <div style={{fontSize:11,color:C.orange,marginTop:2,fontFamily:"monospace"}}>{lid}</div>
+            </div>
+            <span style={{color:C.orange,fontSize:20}}>›</span>
+          </button>
+        );
+      })}
+      {!qLoading&&qLessons.length===0&&<div style={{textAlign:"center",color:C.dim,padding:30}}>No lessons found.</div>}
+    </div>
+  );
+
+  // ── Sets list ────────────────────────────────────────────────
+  if (subView==="t_q_sets") return (
+    <div style={{padding:"12px 18px",maxWidth:600,margin:"0 auto"}}>
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
+        <button onClick={()=>setView("t_q_lessons")} style={{background:"none",border:`1px solid ${C.dim}44`,borderRadius:8,padding:"5px 10px",color:C.dim,cursor:"pointer",fontSize:12}}>← Back</button>
+        <div style={{fontSize:15,fontWeight:900,color:textColor()}}>{qLesson} — Sets</div>
+      </div>
+      {qLoading&&<div style={{textAlign:"center",color:C.dim,padding:20}}>Loading...</div>}
+      {qSets.map(si=>(
+        <button key={si} onClick={()=>{loadQsT(qLesson,si);setView("t_q_list");}}
+          style={{width:"100%",background:C.card,border:`1px solid ${C.purple}33`,borderRadius:12,padding:"14px 16px",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,textAlign:"left"}}>
+          <div><div style={{fontWeight:900,color:textColor(),fontSize:14}}>Set {si+1}</div><div style={{fontSize:11,color:C.dim}}>set_index: {si}</div></div>
+          <span style={{color:C.purple,fontSize:20}}>›</span>
+        </button>
+      ))}
+      {!qLoading&&qSets.length===0&&<div style={{textAlign:"center",color:C.dim,padding:30}}>No sets yet.</div>}
+    </div>
+  );
+
+  // ── Questions table ──────────────────────────────────────────
+  if (subView==="t_q_list") return (
+    <div style={{padding:"10px 14px",maxWidth:700,margin:"0 auto"}}>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12,flexWrap:"wrap"}}>
+        <button onClick={()=>setView("t_q_sets")} style={{background:"none",border:`1px solid ${C.dim}44`,borderRadius:8,padding:"5px 10px",color:C.dim,cursor:"pointer",fontSize:12}}>← Back</button>
+        <div style={{flex:1,fontSize:14,fontWeight:900,color:textColor()}}>{qLesson} · Set {(qSet??0)+1}</div>
+        {canAddQ&&<button onClick={()=>{setQForm({lesson_id:qLesson,set_index:qSet??0,question_index:questions.length,opt0:"",opt1:"",opt2:"",opt3:"",correct:0});setQMsg("");setView("t_q_add");}} style={{background:`${C.green}22`,border:`1px solid ${C.green}44`,borderRadius:10,padding:"6px 12px",color:C.green,cursor:"pointer",fontSize:12,fontWeight:700}}>+ Question</button>}
+      </div>
+      {qLoading&&<div style={{textAlign:"center",color:C.dim,padding:20}}>Loading...</div>}
+      {qMsg&&<div style={{color:qMsg.startsWith("✅")?C.green:C.red,fontSize:13,marginBottom:10,padding:"8px 12px",borderRadius:10,background:qMsg.startsWith("✅")?`${C.green}12`:`${C.red}12`}}>{qMsg}</div>}
+      {questions.length>0&&(
+        <div style={{overflowX:"auto"}}>
+          <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+            <thead><tr style={{background:C.card2}}>{["#","Question","A","B","C","D","✓","Actions"].map((h,i)=><th key={i} style={{padding:"8px 10px",textAlign:"left",color:C.dim,fontWeight:700,borderBottom:`1px solid ${C.orange}33`}}>{h}</th>)}</tr></thead>
+            <tbody>
+              {questions.map((q,i)=>(
+                <tr key={q.id} style={{background:i%2===0?C.card:"transparent",borderBottom:`1px solid rgba(0,0,0,0.04)`}}>
+                  <td style={{padding:"8px 10px",color:C.dim}}>{i+1}</td>
+                  <td style={{padding:"8px 10px",color:textColor(),maxWidth:180,wordBreak:"break-word"}}>{q.question}</td>
+                  {(q.options||[]).map((o,oi)=><td key={oi} style={{padding:"8px 10px",color:oi===q.correct_answer?C.green:textColor(),maxWidth:80,wordBreak:"break-word",opacity:oi===q.correct_answer?1:0.7}}>{o}</td>)}
+                  <td style={{padding:"8px 10px",color:C.green,fontWeight:900}}>{"ABCD"[q.correct_answer]}</td>
+                  <td style={{padding:"8px 6px",whiteSpace:"nowrap"}}>
+                    {canModifyQ&&<button onClick={()=>{setQForm({id:q.id,question:q.question,opt0:q.options[0],opt1:q.options[1],opt2:q.options[2],opt3:q.options[3],correct:q.correct_answer,hint:q.hint||""});setQMsg("");setView("t_q_edit");}} style={{background:`${C.cyan}22`,border:`1px solid ${C.cyan}44`,borderRadius:6,padding:"4px 8px",color:C.cyan,cursor:"pointer",marginRight:4,fontSize:11}}>✏️</button>}
+                    {canDeleteQ&&<button onClick={async()=>{if(!window.confirm("Delete this question?"))return;setQLoading(true);const d=await tApi("admin_delete_question",{id:q.id});if(d.ok){setQMsg("✅ Deleted");loadQsT(qLesson,qSet);}else setQMsg(d.error||"Failed");setQLoading(false);}} style={{background:`${C.red}22`,border:`1px solid ${C.red}44`,borderRadius:6,padding:"4px 8px",color:C.red,cursor:"pointer",fontSize:11}}>🗑️</button>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {!qLoading&&questions.length===0&&<div style={{textAlign:"center",color:C.dim,padding:30}}>No questions in this set.</div>}
+    </div>
+  );
+
+  // ── Add question ─────────────────────────────────────────────
+  if (subView==="t_q_add" && canAddQ) return (
+    <div style={{padding:"12px 18px",maxWidth:520,margin:"0 auto"}}>
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
+        <button onClick={()=>setView("t_q_list")} style={{background:"none",border:`1px solid ${C.dim}44`,borderRadius:8,padding:"5px 10px",color:C.dim,cursor:"pointer",fontSize:12}}>← Back</button>
+        <div style={{fontSize:14,fontWeight:900,color:textColor()}}>Add Question — {qLesson} Set {(qSet??0)+1}</div>
+      </div>
+      <Card color={C.green}>
+        {[["Question","question"],["Option A","opt0"],["Option B","opt1"],["Option C","opt2"],["Option D","opt3"],["Hint (optional)","hint"]].map(([l,k])=>(
+          <div key={k}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div><input value={qForm[k]||""} onChange={e=>setQForm({...qForm,[k]:e.target.value})} style={iSQ(C.green)}/></div>
+        ))}
+        <div style={{marginBottom:12}}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>CORRECT ANSWER</div>
+          <select value={qForm.correct??0} onChange={e=>setQForm({...qForm,correct:parseInt(e.target.value)})} style={iSQ(C.green)}>
+            {["A","B","C","D"].map((l,i)=><option key={i} value={i}>Option {l} — {qForm["opt"+i]||""}</option>)}
+          </select>
+        </div>
+        {qMsg&&<div style={{color:qMsg.startsWith("✅")?C.green:C.red,fontSize:13,marginBottom:8}}>{qMsg}</div>}
+        <Btn color={C.green} loading={qLoading} onClick={async()=>{
+          if(!qForm.question||!qForm.opt0||!qForm.opt1||!qForm.opt2||!qForm.opt3){setQMsg("Fill question and all 4 options.");return;}
+          setQLoading(true);setQMsg("");
+          const d=await tApi("admin_add_question",{lesson_id:qForm.lesson_id,set_index:qForm.set_index??0,question_index:qForm.question_index??0,question:qForm.question,options:[qForm.opt0,qForm.opt1,qForm.opt2,qForm.opt3],correct_answer:qForm.correct??0,hint:qForm.hint||""});
+          if(d.data){setQMsg("✅ Added!");setQForm(f=>({...f,question:"",opt0:"",opt1:"",opt2:"",opt3:"",hint:"",question_index:(f.question_index??0)+1}));loadQsT(qLesson,qSet);}else setQMsg(d.error||"Failed");
+          setQLoading(false);
+        }}>ADD QUESTION</Btn>
+      </Card>
+    </div>
+  );
+
+  // ── Edit question ─────────────────────────────────────────────
+  if (subView==="t_q_edit" && canModifyQ) return (
+    <div style={{padding:"12px 18px",maxWidth:520,margin:"0 auto"}}>
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
+        <button onClick={()=>setView("t_q_list")} style={{background:"none",border:`1px solid ${C.dim}44`,borderRadius:8,padding:"5px 10px",color:C.dim,cursor:"pointer",fontSize:12}}>← Back</button>
+        <div style={{fontSize:14,fontWeight:900,color:textColor()}}>Edit Question</div>
+      </div>
+      <Card color={C.cyan}>
+        {[["Question","question"],["Option A","opt0"],["Option B","opt1"],["Option C","opt2"],["Option D","opt3"],["Hint","hint"]].map(([l,k])=>(
+          <div key={k}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div><input value={qForm[k]||""} onChange={e=>setQForm({...qForm,[k]:e.target.value})} style={iSQ(C.cyan)}/></div>
+        ))}
+        <div style={{marginBottom:12}}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>CORRECT ANSWER</div>
+          <select value={qForm.correct??0} onChange={e=>setQForm({...qForm,correct:parseInt(e.target.value)})} style={iSQ(C.cyan)}>
+            {["A","B","C","D"].map((l,i)=><option key={i} value={i}>Option {l} — {qForm["opt"+i]||""}</option>)}
+          </select>
+        </div>
+        {qMsg&&<div style={{color:qMsg.startsWith("✅")?C.green:C.red,fontSize:13,marginBottom:8}}>{qMsg}</div>}
+        <Btn color={C.cyan} loading={qLoading} onClick={async()=>{
+          setQLoading(true);setQMsg("");
+          const d=await tApi("admin_update_question",{id:qForm.id,question:qForm.question,options:[qForm.opt0,qForm.opt1,qForm.opt2,qForm.opt3],correct_answer:qForm.correct??0,hint:qForm.hint||""});
+          if(d.ok){setQMsg("✅ Saved!");loadQsT(qLesson,qSet);setView("t_q_list");}else setQMsg(d.error||"Failed");
+          setQLoading(false);
+        }}>SAVE CHANGES</Btn>
+      </Card>
+    </div>
+  );
+
+  return null;
+}
 
 // ── TeacherLessons Component ──────────────────────────────────────
 function TeacherLessons({ teacher, classFilter }) {
@@ -7111,7 +7347,10 @@ function AdminPanel({ onBack }) {
     <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),overflowY:"auto"}}>
       <div style={{background:C.card,padding:"14px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:`1px solid ${C.red}33`}}>
         <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.red}}>🔐 ADMIN PANEL</div>
-        <BackBtn onClick={onBack} color={C.dim}/>
+        <div style={{display:"flex",gap:8,alignItems:"center"}}>
+          <button onClick={()=>{localStorage.removeItem("mm_admin_key");setKey("");setAuthed(false);setView("home");}} style={{background:`${C.red}22`,border:`1px solid ${C.red}44`,borderRadius:12,padding:"8px 14px",color:C.red,cursor:"pointer",fontSize:13,fontWeight:800,display:"flex",alignItems:"center",gap:6}}>🚪 Logout</button>
+          <BackBtn onClick={onBack} color={C.dim}/>
+        </div>
       </div>
       {toastMsg && (
         <div style={{margin:"12px 18px 0",padding:"12px 16px",borderRadius:12,background:toastMsg.startsWith("✅")?`${C.green}20`:`${C.red}20`,color:toastMsg.startsWith("✅")?C.green:C.red,fontSize:13,fontWeight:700,display:"flex",alignItems:"center",gap:8}}>
