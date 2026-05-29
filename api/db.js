@@ -193,9 +193,13 @@ export default async function handler(req, res) {
     }
 
     if (action === "save_progress") {
-      const { child_id, lesson_id, correct_count, total_questions, stars_earned, xp_earned } = req.body;
+      const { child_id, lesson_id, correct_count, total_questions, stars_earned, xp_earned, is_school_student } = req.body;
       if (!isValidUUID(child_id)) return res.status(400).json({ error: "Invalid child_id" });
-      if (!(await childBelongsToUser(child_id, user.id))) return res.status(403).json({ error: "Forbidden" });
+
+      // Allow both parent-owned children AND school students
+      const isOwned = await childBelongsToUser(child_id, user.id);
+      const isSchool = !isOwned && is_school_student === true;
+      if (!isOwned && !isSchool) return res.status(403).json({ error: "Forbidden" });
 
       const lid   = sanitizeStr(lesson_id, 30);
       const xp    = sanitizeInt(xp_earned, 0, 1000);
@@ -209,15 +213,27 @@ export default async function handler(req, res) {
         completed_at: new Date().toISOString(),
       }, "?on_conflict=child_id,lesson_id");
 
-      // Fetch current child to update XP
-      const cur = await sbQuery("children", "GET", null, `?id=eq.${encodeURIComponent(child_id)}&select=xp,coins`);
-      const c = Array.isArray(cur.data) ? cur.data[0] : {};
-      const nx = Math.min((c.xp || 0) + xp, 999999);
-      const nc = Math.min((c.coins || 0) + Math.floor(xp / 10), 999999);
-      await sbQuery("children", "PATCH",
-        { xp: nx, coins: nc, level: Math.floor(nx / 200) + 1, last_active: new Date().toISOString() },
-        `?id=eq.${encodeURIComponent(child_id)}`);
-      return res.status(200).json({ ok: true, xp: nx, coins: nc });
+      // Update XP/coins on the correct table (children or students)
+      if (isOwned) {
+        const cur = await sbQuery("children", "GET", null, `?id=eq.${encodeURIComponent(child_id)}&select=xp,coins`);
+        const c = Array.isArray(cur.data) ? cur.data[0] : {};
+        const nx = Math.min((c.xp || 0) + xp, 999999);
+        const nc = Math.min((c.coins || 0) + Math.floor(xp / 10), 999999);
+        await sbQuery("children", "PATCH",
+          { xp: nx, coins: nc, level: Math.floor(nx / 200) + 1, last_active: new Date().toISOString() },
+          `?id=eq.${encodeURIComponent(child_id)}`);
+        return res.status(200).json({ ok: true, xp: nx, coins: nc });
+      } else {
+        // School student — update students table
+        const cur = await sbQuery("students", "GET", null, `?id=eq.${encodeURIComponent(child_id)}&select=xp,coins`);
+        const c = Array.isArray(cur.data) ? cur.data[0] : {};
+        const nx = Math.min((c.xp || 0) + xp, 999999);
+        const nc = Math.min((c.coins || 0) + Math.floor(xp / 10), 999999);
+        await sbQuery("students", "PATCH",
+          { xp: nx, coins: nc, level: Math.floor(nx / 200) + 1, last_active: new Date().toISOString() },
+          `?id=eq.${encodeURIComponent(child_id)}`);
+        return res.status(200).json({ ok: true, xp: nx, coins: nc });
+      }
     }
 
     if (action === "get_daily_completion") {
@@ -339,6 +355,22 @@ export default async function handler(req, res) {
         headers: { apikey: SB_SERVICE, Authorization: `Bearer ${SB_SERVICE}` },
       }).catch(() => {});
 
+      return res.status(200).json({ ok: true });
+    }
+
+    // ── Update child fields (streak, XP, coins, level, last_active) ──────
+    if (action === "update_children") {
+      const { id: child_id, xp, coins, level, streak_days, last_active } = req.body;
+      if (!isValidUUID(child_id)) return res.status(400).json({ error: "Invalid child_id" });
+      if (!(await childBelongsToUser(child_id, user.id))) return res.status(403).json({ error: "Forbidden" });
+      const patch = {};
+      if (xp          !== undefined) patch.xp           = sanitizeInt(xp, 0, 999999);
+      if (coins       !== undefined) patch.coins         = sanitizeInt(coins, 0, 999999);
+      if (level       !== undefined) patch.level         = sanitizeInt(level, 1, 9999);
+      if (streak_days !== undefined) patch.streak_days   = sanitizeInt(streak_days, 0, 9999);
+      if (last_active !== undefined) patch.last_active   = last_active;
+      if (Object.keys(patch).length === 0) return res.status(400).json({ error: "Nothing to update" });
+      await sbQuery("children", "PATCH", patch, `?id=eq.${encodeURIComponent(child_id)}`);
       return res.status(200).json({ ok: true });
     }
 

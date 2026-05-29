@@ -521,11 +521,30 @@ export default async function handler(req, res) {
       // Find student by name (case-insensitive via ilike) + PIN
       const pin_hash = await hashPin(String(pin).slice(0,4));
       const searchName = nameOrRoll.toLowerCase();
+
+      // ── Shared streak helper ──────────────────────────────────────
+      const calcStreak = (s) => {
+        const now        = new Date();
+        const todayStr   = now.toISOString().slice(0, 10);
+        const last       = s.last_active ? new Date(s.last_active).toISOString().slice(0, 10) : null;
+        const yesterday  = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+        if (last === todayStr) return s.streak_days || 0; // already logged today
+        return last === yesterday ? (s.streak_days || 0) + 1 : 1;
+      };
+      const updateStreak = async (s) => {
+        const newStreak = calcStreak(s);
+        await sb("students", "PATCH",
+          { last_active: new Date().toISOString(), streak_days: newStreak },
+          `?id=eq.${s.id}`).catch(() => {});
+        return newStreak;
+      };
+
       // Try username match first
       const byUser = await sb("students","GET",null,`?school_id=eq.${school_id}&username=eq.${encodeURIComponent(searchName)}&pin_hash=eq.${pin_hash}&limit=1`);
       if (Array.isArray(byUser.data)&&byUser.data[0]) {
-        const s=byUser.data[0]; sb("students","PATCH",{last_active:new Date().toISOString()},`?id=eq.${s.id}`).catch(()=>{});
-        return res.status(200).json({student:{id:s.id,name:s.name,roll_no:s.roll_no,class_num:s.class_num,section:s.section,school_id:s.school_id,xp:s.xp,coins:s.coins,level:s.level,streak_days:s.streak_days}});
+        const s=byUser.data[0];
+        const streak = await updateStreak(s);
+        return res.status(200).json({student:{id:s.id,name:s.name,roll_no:s.roll_no,class_num:s.class_num,section:s.section,school_id:s.school_id,xp:s.xp,coins:s.coins,level:s.level,streak_days:streak}});
       }
       // Fetch all students in school then match name case-insensitively
       let params = `?school_id=eq.${school_id}&pin_hash=eq.${pin_hash}&limit=20`;
@@ -535,9 +554,9 @@ export default async function handler(req, res) {
       if (!Array.isArray(r.data)||!r.data.length) return res.status(401).json({error:"Invalid credentials"});
       const s = r.data.find(st=>st.name.toLowerCase()===searchName)||r.data[0];
       if (!s) return res.status(401).json({error:"Invalid credentials"});
-      // Update last_active
-      sb("students","PATCH",{last_active:new Date().toISOString()},`?id=eq.${s.id}`).catch(()=>{});
-      return res.status(200).json({student:{id:s.id,name:s.name,roll_no:s.roll_no,class_num:s.class_num,section:s.section,school_id:s.school_id,xp:s.xp,coins:s.coins,level:s.level,streak_days:s.streak_days}});
+      // Update streak + last_active
+      const streak = await updateStreak(s);
+      return res.status(200).json({student:{id:s.id,name:s.name,roll_no:s.roll_no,class_num:s.class_num,section:s.section,school_id:s.school_id,xp:s.xp,coins:s.coins,level:s.level,streak_days:streak}});
     }
 
     // Save student progress

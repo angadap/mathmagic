@@ -933,13 +933,21 @@ const db = {
     return c ? { ok:c.pin_hash===pin, child:c } : { ok:false };
   },
 
-  async addXP(cid, xp, coins=0) {
+  async addXP(cid, xp, coins=0, isSchoolStudent=false) {
+    // Optimistic update in memory
     const c = MEM.children.find(x=>x.id===cid);
     if (c) { c.xp=(c.xp||0)+xp; c.coins=(c.coins||0)+coins; c.level=Math.floor(c.xp/200)+1; }
-    const sb = await this.getSb();
-    if (sb && c) {
-      await sb.update("children", { xp:c.xp, coins:c.coins, level:c.level, last_active:new Date().toISOString() }, "id", cid);
-    }
+    // For school students saveProgress already updates the students table — skip double-write
+    if (isSchoolStudent) return { data:c, error:null };
+    // For individual children: call update_children endpoint
+    try {
+      const nx = c ? c.xp : xp;
+      const nc = c ? c.coins : coins;
+      await fetch("/api/db", { method:"POST",
+        headers:{"Content-Type":"application/json","Authorization":`Bearer ${this._token||""}`},
+        body: JSON.stringify({ action:"update_children", id:cid,
+          xp:nx, coins:nc, level:Math.floor(nx/200)+1, last_active:new Date().toISOString() }) });
+    } catch(e) { dbLog("error","addXP failed",e.message); }
     return { data:c, error:null };
   },
 
@@ -952,7 +960,7 @@ const db = {
     return { data:MEM.progress.filter(p=>p.child_id===cid), error:null };
   },
 
-  async saveProgress(cid, lid, { correct, total, stars, xpEarned }) {
+  async saveProgress(cid, lid, { correct, total, stars, xpEarned, isSchoolStudent=false }) {
     const ex = MEM.progress.find(p => p.child_id===cid && p.lesson_id===lid);
     if (ex) { ex.stars_earned=Math.max(ex.stars_earned||0,stars); ex.correct_count=correct; ex.completed_at=new Date().toISOString(); }
     else MEM.progress.push({ id:"p_"+Math.random().toString(36).slice(2), child_id:cid, lesson_id:lid,
@@ -960,14 +968,25 @@ const db = {
       xp_earned:xpEarned, completed_at:new Date().toISOString() });
 
     const payload = { child_id:cid, lesson_id:lid, correct_count:correct, total_questions:total,
-      stars_earned:stars, xp_earned:xpEarned, completed_at:new Date().toISOString() };
+      stars_earned:stars, xp_earned:xpEarned, completed_at:new Date().toISOString(),
+      is_school_student: isSchoolStudent };
 
-    const sb = await this.getSb();
-    if (sb) {
-      const r = await sb.upsert("progress", payload, "child_id,lesson_id");
-      if (!r.error) { dbLog("ok","saveProgress saved to DB ✓", lid); }
-      else dbLog("error","saveProgress DB failed", r.error.message);
-    }
+    try {
+      const res = await fetch("/api/db", { method:"POST",
+        headers:{"Content-Type":"application/json","Authorization":`Bearer ${this._token||""}`},
+        body: JSON.stringify({ action:"save_progress", ...payload }) });
+      const j = await res.json();
+      if (j.ok) {
+        dbLog("ok","saveProgress saved to DB ✓", lid);
+        // Sync returned XP/coins into memory so UI stays consistent
+        if (j.xp !== undefined) {
+          const mc = MEM.children.find(x=>x.id===cid);
+          if (mc) { mc.xp=j.xp; mc.coins=j.coins; mc.level=Math.floor(j.xp/200)+1; }
+        }
+      } else {
+        dbLog("error","saveProgress DB failed", j.error);
+      }
+    } catch(e) { dbLog("error","saveProgress network error", e.message); }
     return { error:null };
   },
 
@@ -3242,14 +3261,17 @@ function Login({ onBack, onDone }) {
           else localStorage.removeItem(attemptKey);
           if (ok && rawChild) {
             // Update daily streak
-            const today = new Date().toDateString();
-            const lastActive = rawChild.last_active ? new Date(rawChild.last_active).toDateString() : null;
-            const yesterday  = new Date(Date.now() - 86400000).toDateString();
+            const today     = new Date().toISOString().slice(0, 10);
+            const lastActive = rawChild.last_active ? new Date(rawChild.last_active).toISOString().slice(0, 10) : null;
+            const yesterday  = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
             let updatedChild = { ...rawChild };
             if (lastActive !== today) {
               const newStreak = lastActive === yesterday ? (rawChild.streak_days||0) + 1 : 1;
-              const sb = await db.getSb();
-              if (sb) await sb.update("children", { streak_days: newStreak, last_active: new Date().toISOString() }, "id", rawChild.id);
+              // Direct API call — works regardless of getSb state
+              fetch("/api/db", { method:"POST",
+                headers:{"Content-Type":"application/json","Authorization":`Bearer ${db._token||""}`},
+                body: JSON.stringify({ action:"update_children", id:rawChild.id,
+                  streak_days: newStreak, last_active: new Date().toISOString() }) }).catch(()=>{});
               updatedChild = { ...rawChild, streak_days: newStreak, last_active: new Date().toISOString() };
             }
             // Save session so next login skips email/pass
@@ -4160,8 +4182,8 @@ function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
     setChild(c => c ? { ...c, xp:(c.xp||0)+xpEarned, coins:(c.coins||0)+fst*10, level:Math.floor(((c.xp||0)+xpEarned)/200)+1 } : c);
 
     // Save to DB in background (non-blocking)
-    db.saveProgress(child.id, lesson.id + "_s" + setIndex, { correct:fs, total:totalQ, stars:fst, xpEarned });
-    db.addXP(child.id, xpEarned, fst * 10);
+    db.saveProgress(child.id, lesson.id + "_s" + setIndex, { correct:fs, total:totalQ, stars:fst, xpEarned, isSchoolStudent:!!(child.is_school_student) });
+    db.addXP(child.id, xpEarned, fst * 10, !!(child.is_school_student));
     if(xpEarned>0) setTimeout(()=>SFX.xpGain(), 300);
   }, [child.id, lesson.id, questions, mode, setChild, setIndex]);
   useEffect(() => { finalizeRef.current = finalize; }, [finalize]);
@@ -4556,7 +4578,7 @@ function Abacus({ onBack, child }) {
                 // unlock next level
                 const nextUnlock = level + 2;
                 setUnlockedLvl(u => Math.max(u, nextUnlock));
-                if (child?.id) db.saveProgress(child.id, `abacus_lvl_${level+1}`, { correct: newCorrect, total: lv.probs.length, stars: newCorrect >= 18 ? 3 : newCorrect >= 14 ? 2 : 1, xpEarned: newCorrect * 5 });
+                if (child?.id) db.saveProgress(child.id, `abacus_lvl_${level+1}`, { correct: newCorrect, total: lv.probs.length, stars: newCorrect >= 18 ? 3 : newCorrect >= 14 ? 2 : 1, xpEarned: newCorrect * 5, isSchoolStudent:!!(child.is_school_student) });
                 setLevelDone(true);
               } else {
                 setQCorrect(newCorrect);
@@ -4625,9 +4647,9 @@ function Olympiad({ child, setChild, onBack }) {
         if (!savedRef.current) {
           savedRef.current = true;
           setSaving(true);
-          db.addXP(child.id, scoreRef.current * 25, scoreRef.current * 5)
+          db.addXP(child.id, scoreRef.current * 25, scoreRef.current * 5, !!(child.is_school_student))
             .then(({data:nc}) => { if (nc) setChild(nc); setSaving(false); });
-          db.saveProgress(child.id, `olympiad_test_${testIdx}`, { correct: scoreRef.current, total: test.length, stars: scoreRef.current >= 20 ? 3 : scoreRef.current >= 15 ? 2 : 1, xpEarned: scoreRef.current * 25 });
+          db.saveProgress(child.id, `olympiad_test_${testIdx}`, { correct: scoreRef.current, total: test.length, stars: scoreRef.current >= 20 ? 3 : scoreRef.current >= 15 ? 2 : 1, xpEarned: scoreRef.current * 25, isSchoolStudent:!!(child.is_school_student) });
         }
         setDoneTests(dt => dt.includes(testIdx) ? dt : [...dt, testIdx]);
         setView("result");
