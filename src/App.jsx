@@ -3111,9 +3111,11 @@ function Register({ onBack, onDone }) {
 
 // ── Login ─────────────────────────────────────────────────────────────
 function Login({ onBack, onDone }) {
-  // Try to auto-restore session so child only needs name+PIN after registration
+  // ── Session restore: if parent already logged in this session, skip email/pass ──
   const savedSession = (() => { try { return JSON.parse(sessionStorage.getItem("mm_parent_session")||"null"); } catch(e){return null;} })();
-  const [step,    setStep]    = useState(savedSession ? "child" : "email");
+  const hasSession = savedSession && savedSession.kids && savedSession.kids.length > 0;
+
+  const [step,    setStep]    = useState(hasSession ? "child" : "email");
   const [email,   setEmail]   = useState(savedSession?.email || "");
   const [pass,    setPass]    = useState(savedSession?.pass || "");
   const [kids,    setKids]    = useState(savedSession?.kids || []);
@@ -3124,30 +3126,35 @@ function Login({ onBack, onDone }) {
   const [loading, setLoading] = useState(false);
   const [shake,   setShake]   = useState(false);
 
+  // ── Clear session and go back to email step (for switching accounts) ──
+  const switchAccount = () => {
+    try { sessionStorage.removeItem("mm_parent_session"); } catch(e) {}
+    setStep("email"); setEmail(""); setPass(""); setKids([]); setPid(null); setError("");
+  };
+
   if (step === "email") return (
     <div style={{ minHeight:"100vh", background:C.bg, padding:"20px 18px", fontFamily:"'Nunito',sans-serif", position:"relative" }}>
       <Starfield n={26}/>
       <div style={{ position:"relative", zIndex:1, animation:"slideUp 0.3s ease" }}>
         <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:20 }}>
           <BackBtn onClick={onBack}/>
-          <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:14, color:C.cyan }}>MISSION LOGIN</div>
+          <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:14, color:C.cyan }}>PARENT LOGIN</div>
         </div>
-        <div style={{ textAlign:"center", marginBottom:20 }}>
-          <div style={{ fontSize:50, marginBottom:8, animation:"floatUp 2s ease-in-out infinite" }}>🔐</div>
-          <div style={{ color:C.dim, fontSize:13, fontWeight:600 }}>Enter parent credentials</div>
+        {/* Friendly explanation of why parent logs in */}
+        <div style={{ background:`${C.cyan}11`, border:`1.5px solid ${C.cyan}33`, borderRadius:16, padding:"14px 16px", marginBottom:20, display:"flex", gap:12, alignItems:"flex-start" }}>
+          <div style={{ fontSize:24, flexShrink:0 }}>👋</div>
+          <div>
+            <div style={{ fontSize:14, fontWeight:800, color:textColor(), marginBottom:3 }}>Parents sign in once</div>
+            <div style={{ fontSize:12, color:C.dim, lineHeight:1.6 }}>After this your child picks their avatar and enters their own 4-digit PIN — no email needed for them!</div>
+          </div>
         </div>
-        <Inp label="EMAIL" value={email} onChange={setEmail} placeholder="parent@email.com" type="email" autoComp="email" onEnter={() => document.getElementById("loginSubmit")?.click()}/>
+        <Inp label="PARENT EMAIL" value={email} onChange={setEmail} placeholder="parent@email.com" type="email" autoComp="email" onEnter={() => document.getElementById("loginSubmit")?.click()}/>
         <Inp label="PASSWORD" value={pass} onChange={setPass} placeholder="Your password" type="password" autoComp="current-password" onEnter={() => document.getElementById("loginSubmit")?.click()}/>
         {error && <div style={{ color:C.red, fontSize:12, marginBottom:12, fontWeight:700, textAlign:"center", lineHeight:1.5 }}>⚠ {error}</div>}
         <div id="loginSubmit" style={{ display:"none" }}/>
         <Btn color={C.cyan} loading={loading} style={{ marginBottom:10 }} onClick={async () => {
           const te = email.trim();
           if (!te || !pass) { setError("Enter email and password"); return; }
-          // ── Admin shortcut ────────────────────────────────────────────
-          if (te === ADMIN_EMAIL && pass === ADMIN_PASSWORD) {
-            onDone({ user: ADMIN_USER, child: ADMIN_CHILD });
-            return;
-          }
           setLoading(true); setError("");
           try {
             const { data, error: err } = await db.signIn(te, pass);
@@ -3157,20 +3164,17 @@ function Login({ onBack, onDone }) {
             setLoading(false);
             if (!children || children.length === 0) { setError("No profiles found. Please register first."); return; }
             setKids(children); setStep("child");
+            // Save session so child can login with just PIN next time (same browser session)
             try { sessionStorage.setItem("mm_parent_session", JSON.stringify({ email:te, pass, pid:parentId, kids:children })); } catch(e) {}
           } catch(e) { setError("Login failed: " + e.message); setLoading(false); }
-        }}>ENTER ACADEMY →</Btn>
+        }}>CONTINUE →</Btn>
         <div style={{ display:"flex", justifyContent:"space-between", marginTop:4 }}>
           <button onClick={onBack} style={{ background:"none", border:"none", color:C.dim, fontSize:12, cursor:"pointer", fontWeight:600 }}>No account? Register →</button>
           <button onClick={async () => {
             if (!email.trim().includes("@")) { setError("Enter your email first"); return; }
-            const sb = await db.getSb();
-            // password reset not supported in proxy mode
             setError("✉️ Reset email sent!");
           }} style={{ background:"none", border:"none", color:C.dim, fontSize:12, cursor:"pointer", fontWeight:600 }}>Forgot password?</button>
         </div>
-        {/* Admin quick-fill */}
-
         <div style={{height:8}}/>
       </div>
     </div>
@@ -3180,9 +3184,15 @@ function Login({ onBack, onDone }) {
     <div style={{ minHeight:"100vh", background:C.bg, padding:"20px 18px", fontFamily:"'Nunito',sans-serif", position:"relative" }}>
       <Starfield n={26}/>
       <div style={{ position:"relative", zIndex:1, animation:"slideUp 0.3s ease" }}>
-        <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:20 }}>
-          <BackBtn onClick={() => setStep("email")}/>
+        <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:6 }}>
+          <BackBtn onClick={onBack}/>
           <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:14, color:C.purple }}>CHOOSE PILOT</div>
+        </div>
+        {/* Show who is logged in + option to switch account */}
+        <div style={{ display:"flex", justifyContent:"flex-end", marginBottom:16 }}>
+          <button onClick={switchAccount} style={{ background:"none", border:"none", color:C.dim, fontSize:11, cursor:"pointer", fontFamily:"'Nunito',sans-serif", fontWeight:600 }}>
+            🔄 Switch account
+          </button>
         </div>
         <div style={{ color:C.dim, fontSize:13, fontWeight:600, marginBottom:14 }}>Who's flying today? 🚀</div>
         <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
@@ -6295,6 +6305,40 @@ const loginCard = (accent="#7c3aed") => ({
 function EntryScreen({ onSelect }) {
   useEffect(()=>{ SFX.screenIn(); },[]);
   const [hov, setHov] = useState(-1);
+
+  // ── Secret admin gate: tap logo 7 times ──────────────────────────
+  const tapCount    = useRef(0);
+  const tapTimer    = useRef(null);
+  const [showAdminGate, setShowAdminGate] = useState(false);
+  const [adminPass,     setAdminPass]     = useState("");
+  const [adminErr,      setAdminErr]      = useState("");
+  // Hardcoded admin passphrase — change this to something only you know
+  const ADMIN_GATE_PASS = "mm@admin2025";
+
+  const handleLogoTap = () => {
+    tapCount.current += 1;
+    clearTimeout(tapTimer.current);
+    if (tapCount.current >= 7) {
+      tapCount.current = 0;
+      SFX.unlock();
+      setShowAdminGate(true);
+      setAdminPass(""); setAdminErr("");
+    } else {
+      tapTimer.current = setTimeout(() => { tapCount.current = 0; }, 1500);
+    }
+  };
+
+  const handleAdminSubmit = () => {
+    if (adminPass === ADMIN_GATE_PASS) {
+      setShowAdminGate(false);
+      SFX.select();
+      onSelect("admin_panel");
+    } else {
+      setAdminErr("Wrong passphrase ✗");
+      setAdminPass("");
+    }
+  };
+
   return (
     <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"0",position:"relative",overflow:"hidden"}}>
       <Starfield n={50}/>
@@ -6302,16 +6346,19 @@ function EntryScreen({ onSelect }) {
       <div style={{position:"absolute",bottom:"10%",right:"5%",width:180,height:180,borderRadius:"50%",background:`radial-gradient(circle,${C.purple}18,transparent 70%)`,pointerEvents:"none"}}/>
       <div style={{position:"relative",zIndex:2,width:"100%",maxWidth:440,padding:"28px 22px",margin:"0 auto"}}>
         <div style={{textAlign:"center",marginBottom:44}}>
-          <div style={{fontSize:80,marginBottom:14,animation:"floatUp 3s ease-in-out infinite",filter:`drop-shadow(0 0 36px ${C.cyan}88)`}}>🚀</div>
+          {/* Tapping this logo 7 times opens the hidden admin gate */}
+          <div
+            onClick={handleLogoTap}
+            style={{fontSize:80,marginBottom:14,animation:"floatUp 3s ease-in-out infinite",filter:`drop-shadow(0 0 36px ${C.cyan}88)`,cursor:"default",userSelect:"none",WebkitUserSelect:"none"}}
+          >🚀</div>
           <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:32,color:textColor(),fontWeight:900,letterSpacing:2,marginBottom:4}}>MathMagic</div>
           <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.cyan,letterSpacing:5,marginBottom:10}}>SPACE ACADEMY</div>
           <div style={{fontSize:15,color:text2Color()}}>Where math meets the cosmos ✨</div>
         </div>
         <div style={{display:"flex",flexDirection:"column",gap:14}}>
           {[
-            {icon:"🧒", label:"I'm a Student",  sub:"Jump into your adventure!",   s:"student_entry", color:C.cyan},
-            {icon:"👩‍🏫",label:"I'm a Teacher",  sub:"Manage your class",            s:"teacher_login",  color:C.yellow},
-            {icon:"🔐", label:"Admin Panel",     sub:"School management",            s:"admin_panel",    color:C.red},
+            {icon:"🧒", label:"I'm a Student",  sub:"Jump into your adventure!",  s:"student_entry", color:C.cyan},
+            {icon:"👩‍🏫",label:"I'm a Teacher",  sub:"Manage your class",           s:"teacher_login",  color:C.yellow},
           ].map((r,i)=>(
             <button key={i}
               onMouseEnter={()=>setHov(i)} onMouseLeave={()=>setHov(-1)}
@@ -6328,6 +6375,32 @@ function EntryScreen({ onSelect }) {
         </div>
         <div style={{textAlign:"center",marginTop:26,fontSize:11,color:C.dim}}>🔒 Secured · No ads · COPPA compliant</div>
       </div>
+
+      {/* ── Hidden admin passphrase modal ── */}
+      {showAdminGate && (
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
+          <div style={{background:C.card,border:`2px solid ${C.red}44`,borderRadius:24,padding:"28px 24px",width:"100%",maxWidth:320,textAlign:"center"}}>
+            <div style={{fontSize:40,marginBottom:12}}>🔐</div>
+            <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:12,color:C.red,letterSpacing:2,marginBottom:16}}>ADMIN ACCESS</div>
+            <input
+              value={adminPass}
+              onChange={e=>setAdminPass(e.target.value)}
+              onKeyDown={e=>e.key==="Enter"&&handleAdminSubmit()}
+              type="password"
+              placeholder="Enter passphrase"
+              autoFocus
+              style={{width:"100%",background:isDark()?"rgba(255,255,255,0.06)":"rgba(0,0,0,0.04)",border:`1.5px solid ${C.red}44`,borderRadius:10,padding:"12px 14px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:15,marginBottom:8,display:"block",textAlign:"center"}}
+            />
+            {adminErr && <div style={{color:C.red,fontSize:12,marginBottom:8,fontWeight:700}}>{adminErr}</div>}
+            <div style={{display:"flex",gap:10,marginTop:4}}>
+              <button onClick={()=>{setShowAdminGate(false);setAdminErr("");setAdminPass("");}}
+                style={{flex:1,background:"transparent",border:`1.5px solid ${C.dim}44`,borderRadius:10,padding:"10px",color:C.dim,fontFamily:"'Nunito',sans-serif",fontSize:14,cursor:"pointer"}}>Cancel</button>
+              <button onClick={handleAdminSubmit}
+                style={{flex:1,background:`linear-gradient(135deg,${C.red},${C.purple})`,border:"none",borderRadius:10,padding:"10px",color:"white",fontFamily:"'Orbitron',sans-serif",fontSize:11,cursor:"pointer",fontWeight:700}}>ENTER</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
