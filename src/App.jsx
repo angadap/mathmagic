@@ -721,7 +721,12 @@ async function loadSb() {
 // ─────────────────────────────────────────────────────────────────────
 // IN-MEMORY STORE — works fully offline; Supabase is optional
 // ─────────────────────────────────────────────────────────────────────
-const MEM = { users:[], children:[], progress:[], n:1 };
+// ── MEM — restored from localStorage on startup (1-hour TTL) ────────────────
+const MEM = (() => {
+  const cachedChildren = lsRestore(CHILDREN_LS_KEY, 60 * 60 * 1000) || [];
+  const cachedProgress = lsRestore(PROGRESS_LS_KEY, 30 * 60 * 1000) || [];
+  return { users: [], children: cachedChildren, progress: cachedProgress, n: 1 };
+})();
 // Session ID for analytics
 if (!window.__sessionId) window.__sessionId = "s_" + Date.now() + "_" + Math.random().toString(36).slice(2,7);
 
@@ -810,14 +815,19 @@ const db = {
   async getDailyChallenge(classNum) {
     const epoch  = new Date("2025-01-01");
     const dayNum = Math.floor((new Date() - epoch) / 86400000) % 250 + 1;
+    const today  = new Date().toISOString().slice(0,10);
+    // Check day-scoped cache
+    const dcKey = `mm_dc_${classNum}_${today}`;
+    const cached = lsRestore(dcKey, 24*60*60*1000);
+    if (cached) return cached;
     try {
       const res = await fetch("/api/db", { method:"POST", headers:{"Content-Type":"application/json","Authorization":`Bearer ${this._token||""}`}, body:JSON.stringify({ action:"get_daily_challenge", class_num:classNum, seq_num:dayNum }) });
       const json = await res.json();
       const d = json.data;
-      if (d && !Array.isArray(d)) return d;
-      if (Array.isArray(d) && d[0]) return d[0];
-    } catch(e) { dbLog("error","getDailyChallenge",e.message); }
-    return null;
+      const challenge = (d && !Array.isArray(d)) ? d : (Array.isArray(d) && d[0]) ? d[0] : null;
+      if (challenge) lsPersist(dcKey, challenge);
+      return challenge;
+    } catch(e) { dbLog("error","getDailyChallenge",e.message); return null; }
   },
 
   async getDailyCompletion(childId) {
@@ -837,10 +847,15 @@ const db = {
   },
 
   async getDailyPuzzle() {
+    const today = new Date().toISOString().slice(0,10);
+    const dpKey = `mm_dp_${today}`;
+    const cached = lsRestore(dpKey, 24*60*60*1000);
+    if (cached) return cached;
     try {
       const res = await fetch("/api/db", { method:"POST", headers:{"Content-Type":"application/json","Authorization":`Bearer ${this._token||""}`}, body:JSON.stringify({ action:"get_daily_puzzle" }) });
       const json = await res.json();
-      return json.data || null;
+      if (json.data) { lsPersist(dpKey, json.data); return json.data; }
+      return null;
     } catch(e) { return null; }
   },
 
@@ -897,7 +912,11 @@ const db = {
     const sb = await this.getSb();
     if (sb) {
       const r = await sb.select("children", { parent_id: pid });
-      if (!r.error) { r.data.forEach(c=>{ if(!MEM.children.find(m=>m.id===c.id)) MEM.children.push(c); }); return { data:r.data, error:null }; }
+      if (!r.error) {
+        r.data.forEach(c=>{ if(!MEM.children.find(m=>m.id===c.id)) MEM.children.push(c); });
+        lsPersist(CHILDREN_LS_KEY, MEM.children); // persist for next session
+        return { data:r.data, error:null };
+      }
     }
     return { data:MEM.children.filter(c=>c.parent_id===pid), error:null };
   },
@@ -913,6 +932,7 @@ const db = {
       const r = await sb.insert("children", payload);
       if (!r.error && r.data) {
         MEM.children.push(r.data);
+        lsPersist(CHILDREN_LS_KEY, MEM.children);
         dbLog("ok","addChild saved to DB ✓", r.data.id);
         return { data:r.data, error:null };
       }
@@ -920,6 +940,7 @@ const db = {
     }
     const c = { ...payload, id:"c_"+Math.random().toString(36).slice(2) };
     MEM.children.push(c);
+    lsPersist(CHILDREN_LS_KEY, MEM.children);
     return { data:c, error:null };
   },
 
@@ -936,7 +957,7 @@ const db = {
   async addXP(cid, xp, coins=0, isSchoolStudent=false) {
     // Optimistic update in memory
     const c = MEM.children.find(x=>x.id===cid);
-    if (c) { c.xp=(c.xp||0)+xp; c.coins=(c.coins||0)+coins; c.level=Math.floor(c.xp/200)+1; }
+    if (c) { c.xp=(c.xp||0)+xp; c.coins=(c.coins||0)+coins; c.level=Math.floor(c.xp/200)+1; lsPersist(CHILDREN_LS_KEY, MEM.children); }
     // For school students saveProgress already updates the students table — skip double-write
     if (isSchoolStudent) return { data:c, error:null };
     // For individual children: call update_children endpoint
@@ -955,7 +976,11 @@ const db = {
     try {
       const res = await fetch("/api/db",{method:"POST",headers:{"Content-Type":"application/json","Authorization":`Bearer ${this._token||""}`},body:JSON.stringify({action:"get_progress",child_id:cid})});
       const j = await res.json();
-      if (j.data) { MEM.progress = [...MEM.progress.filter(p=>p.child_id!==cid), ...j.data]; return {data:j.data,error:null}; }
+      if (j.data) {
+        MEM.progress = [...MEM.progress.filter(p=>p.child_id!==cid), ...j.data];
+        lsPersist(PROGRESS_LS_KEY, MEM.progress);
+        return {data:j.data,error:null};
+      }
     } catch(e) {}
     return { data:MEM.progress.filter(p=>p.child_id===cid), error:null };
   },
@@ -966,6 +991,8 @@ const db = {
     else MEM.progress.push({ id:"p_"+Math.random().toString(36).slice(2), child_id:cid, lesson_id:lid,
       correct_count:correct, total_questions:total, stars_earned:stars,
       xp_earned:xpEarned, completed_at:new Date().toISOString() });
+    // Persist progress immediately — survives page reload
+    lsPersist(PROGRESS_LS_KEY, MEM.progress);
 
     const payload = { child_id:cid, lesson_id:lid, correct_count:correct, total_questions:total,
       stars_earned:stars, xp_earned:xpEarned, completed_at:new Date().toISOString(),
@@ -1054,22 +1081,70 @@ function shuffleOpts(opts, ans) {
   return { opts: shuffled, ans: shuffled.indexOf(correct) };
 }
 
-// Raw question cache — stores DB data, shuffle applied on each serve
-const Q_RAW_CACHE = {};
-const Q_CACHE_MAX = 50; // max cached sets to prevent memory leak
+// ─────────────────────────────────────────────────────────────────────────────
+// PERSISTENT QUESTION CACHE — localStorage-backed, 24h TTL, 50-set LRU
+// On page reload the cache is restored instantly — no DB round-trip needed
+// ─────────────────────────────────────────────────────────────────────────────
+const Q_CACHE_MAX = 50;
+const Q_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+const Q_LS_KEY    = "mm_qcache_v2";
+
+const Q_RAW_CACHE = (() => {
+  try {
+    const raw = localStorage.getItem(Q_LS_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    const now = Date.now();
+    const fresh = {};
+    for (const [k, v] of Object.entries(parsed)) {
+      if (v && v._ts && now - v._ts < Q_CACHE_TTL) fresh[k] = v;
+    }
+    return fresh;
+  } catch(e) { return {}; }
+})();
+
 function cacheSet(key, data) {
-  if (Object.keys(Q_RAW_CACHE).length >= Q_CACHE_MAX) {
-    delete Q_RAW_CACHE[Object.keys(Q_RAW_CACHE)[0]]; // evict oldest
+  const keys = Object.keys(Q_RAW_CACHE);
+  if (keys.length >= Q_CACHE_MAX) {
+    const oldest = keys.sort((a,b)=>(Q_RAW_CACHE[a]._ts||0)-(Q_RAW_CACHE[b]._ts||0))[0];
+    delete Q_RAW_CACHE[oldest];
   }
-  Q_RAW_CACHE[key] = data;
+  Q_RAW_CACHE[key] = { _data: data, _ts: Date.now() };
+  try { localStorage.setItem(Q_LS_KEY, JSON.stringify(Q_RAW_CACHE)); } catch(e) {}
+}
+
+function cacheGet(key) {
+  const entry = Q_RAW_CACHE[key];
+  if (!entry) return null;
+  if (!entry._ts || Date.now() - entry._ts > Q_CACHE_TTL) { delete Q_RAW_CACHE[key]; return null; }
+  return entry._data;
+}
+
+// ── Shared LS helpers (progress + children) ───────────────────────────────────
+const PROGRESS_LS_KEY = "mm_progress_v2";
+const CHILDREN_LS_KEY = "mm_children_v2";
+const DAILY_LS_KEY    = "mm_daily_v2";
+
+function lsPersist(lsKey, data) {
+  try { localStorage.setItem(lsKey, JSON.stringify({ _ts: Date.now(), data })); } catch(e) {}
+}
+function lsRestore(lsKey, maxAgeMs = 60 * 60 * 1000) {
+  try {
+    const raw = localStorage.getItem(lsKey);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || Date.now() - parsed._ts > maxAgeMs) return null;
+    return parsed.data;
+  } catch(e) { return null; }
 }
 
 async function fetchSetQuestions(lessonId, setIndex) {
   const key = lessonId + "_" + setIndex;
 
-  // Serve from cache (shuffle fresh each time — no DB round trip)
-  if (Q_RAW_CACHE[key]) {
-    return shuffle(Q_RAW_CACHE[key].map(r => {
+  // Serve from persistent cache — no DB round trip, works after reload
+  const cached = cacheGet(key);
+  if (cached) {
+    return shuffle(cached.map(r => {
       const { opts, ans } = shuffleOpts(r.opts, r.ans);
       return { q: r.q, opts, ans, h: r.h };
     }));
@@ -1084,13 +1159,14 @@ async function fetchSetQuestions(lessonId, setIndex) {
     const json = await res.json();
     const data = json.data;
     if (Array.isArray(data) && data.length > 0) {
-      cacheSet(key, data.map(r => ({
+      const mapped = data.map(r => ({
         q: r.question,
         opts: Array.isArray(r.options) ? r.options : JSON.parse(r.options),
         ans: r.correct_answer,
         h: r.hint,
-      })));
-      return shuffle(Q_RAW_CACHE[key].map(r => {
+      }));
+      cacheSet(key, mapped);
+      return shuffle(mapped.map(r => {
         const { opts, ans } = shuffleOpts(r.opts, r.ans);
         return { q: r.q, opts, ans, h: r.h };
       }));
@@ -4107,17 +4183,56 @@ function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
   const mode       = lesson.mode || "quiz";
   const [questions, setQuestions] = useState(null); // null = loading
 
+  // ── Session resume key — unique per child + lesson + set ────────
+  const resumeKey = `mm_game_${child.id}_${lesson.id}_s${setIndex}`;
+
   useEffect(() => {
     let cancelled = false;
-    // Reset all game state when lesson or set changes
     setQuestions(null);
-    setQi(0); setChosen(null); setScore(0); setHint(false); setDone(false); setSaving(false); setBurst(false);
-    setLives(mode === "boss" ? 5 : 3); setBossHp(100); setBossCD(mode === "boss" ? 3 : 0); setTimeLeft(mode === "boss" ? 30 : null);
-    scoreRef.current = 0; livesRef.current = mode === "boss" ? 5 : 3; bossHpRef.current = 100; processing.current = false;
+
     fetchSetQuestions(lesson.id, setIndex).then(qs => {
       if (!cancelled) {
-        setQuestions(qs);
-        // Prefetch next set in background so it's instant
+        // Check for a saved mid-session state
+        let savedState = null;
+        try {
+          const raw = localStorage.getItem(resumeKey);
+          if (raw) savedState = JSON.parse(raw);
+        } catch(e) {}
+
+        // Validate saved state — must be for same questions (same count)
+        const valid = savedState
+          && savedState.qi > 0                     // at least 1 question answered
+          && savedState.qi < qs.length             // not already finished
+          && savedState.questionCount === qs.length; // same set size
+
+        if (valid) {
+          // Restore saved question order (we stored the shuffled indices)
+          const orderedQs = savedState.order
+            ? savedState.order.map(i => qs[i]).filter(Boolean)
+            : qs;
+          setQuestions(orderedQs);
+          setQi(savedState.qi);
+          setScore(savedState.score);
+          scoreRef.current = savedState.score;
+          setLives(savedState.lives);
+          livesRef.current = savedState.lives;
+          if (mode === "boss") {
+            setBossHp(savedState.bossHp ?? 100);
+            bossHpRef.current = savedState.bossHp ?? 100;
+          }
+          setResumed(true);
+        } else {
+          // Fresh start — store a shuffled order so resume works
+          const order = qs.map((_, i) => i); // questions already shuffled by fetchSetQuestions
+          setQuestions(qs);
+          setQi(0); setChosen(null); setScore(0); setHint(false); setDone(false); setSaving(false); setBurst(false);
+          setLives(mode === "boss" ? 5 : 3); setBossHp(100); setBossCD(mode === "boss" ? 3 : 0); setTimeLeft(mode === "boss" ? 30 : null);
+          scoreRef.current = 0; livesRef.current = mode === "boss" ? 5 : 3; bossHpRef.current = 100; processing.current = false;
+          setResumed(false);
+          // Persist the order so if interrupted we can restore same question sequence
+          try { localStorage.setItem(resumeKey, JSON.stringify({ qi:0, score:0, lives: mode==="boss"?5:3, bossHp:100, questionCount:qs.length, order })); } catch(e) {}
+        }
+        // Prefetch next set in background
         if (setIndex < 9) fetchSetQuestions(lesson.id, setIndex + 1);
       }
     });
@@ -4140,6 +4255,31 @@ function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
   const [timeLeft, setTimeLeft] = useState(mode === "boss" ? 30 : null);
   const [bossCD,   setBossCD]   = useState(mode === "boss" ? 3 : 0);
   const [bubbles,  setBubbles]  = useState([]);
+  const [resumed,  setResumed]  = useState(false); // true when restored from saved session
+
+  // ── Persist game state after every answered question ───────────
+  const saveGameState = useCallback((newQi, newScore, newLives, newBossHp, qs) => {
+    if (!qs) return;
+    try {
+      const order = qs.map((_, i) => i); // identity — questions already in play order
+      localStorage.setItem(resumeKey, JSON.stringify({
+        qi: newQi, score: newScore, lives: newLives,
+        bossHp: newBossHp, questionCount: qs.length, order
+      }));
+    } catch(e) {}
+  }, [resumeKey]);
+
+  // ── Clear saved state on clean completion ───────────────────────
+  const clearGameState = useCallback(() => {
+    try { localStorage.removeItem(resumeKey); } catch(e) {}
+  }, [resumeKey]);
+
+  // ── Back-button guard — warn if mid-game ─────────────────────────
+  const [showBackConfirm, setShowBackConfirm] = useState(false);
+  const handleBack = useCallback(() => {
+    if (!done && qi > 0) { setShowBackConfirm(true); }
+    else { clearGameState(); onBack(); }
+  }, [done, qi, clearGameState, onBack]);
 
   // Boss countdown
   useEffect(() => {
@@ -4175,6 +4315,9 @@ function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
     const xpEarned = fs * 20 + (mode === "boss" ? 50 : 0);
     const totalQ  = questions ? questions.length : 20;
 
+    // Clear the saved session — set completed cleanly
+    clearGameState();
+
     // Show result immediately — no waiting for DB
     setDone(true);
 
@@ -4185,7 +4328,7 @@ function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
     db.saveProgress(child.id, lesson.id + "_s" + setIndex, { correct:fs, total:totalQ, stars:fst, xpEarned, isSchoolStudent:!!(child.is_school_student) });
     db.addXP(child.id, xpEarned, fst * 10, !!(child.is_school_student));
     if(xpEarned>0) setTimeout(()=>SFX.xpGain(), 300);
-  }, [child.id, lesson.id, questions, mode, setChild, setIndex]);
+  }, [child.id, lesson.id, questions, mode, setChild, setIndex, clearGameState]);
   useEffect(() => { finalizeRef.current = finalize; }, [finalize]);
 
   const advance = useCallback((shouldEnd) => {
@@ -4202,20 +4345,46 @@ function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
     const ok = ansIdx === q.ans;
     if (ok) SFX.correct(); else SFX.wrong();
     setChosen(ansIdx);
+    let newLives = livesRef.current;
+    let newBossHp = bossHpRef.current;
     if (ok) {
       scoreRef.current += 1; setScore(scoreRef.current);
       setBurst(true); setTimeout(() => setBurst(false), 600);
-      if (mode === "boss") { SFX.bossHit(); bossHpRef.current = Math.max(0, bossHpRef.current - 20); setBossHp(bossHpRef.current); }
+      if (mode === "boss") { SFX.bossHit(); newBossHp = Math.max(0, bossHpRef.current - 20); bossHpRef.current = newBossHp; setBossHp(newBossHp); }
     } else {
-      livesRef.current = Math.max(0, livesRef.current - 1); setLives(livesRef.current);
+      newLives = Math.max(0, livesRef.current - 1); livesRef.current = newLives; setLives(newLives);
     }
     const end = qi+1 >= questions.length || (livesRef.current <= 0 && !ok) || (mode === "boss" && bossHpRef.current <= 0);
+    // Persist progress — so if interrupted, student resumes from next question
+    const nextQi = end ? qi : qi + 1;
+    saveGameState(nextQi, scoreRef.current, livesRef.current, bossHpRef.current, questions);
     setTimeout(() => advance(end), 900);
-  }, [chosen, qi, questions, mode, advance]);
+  }, [chosen, qi, questions, mode, advance, saveGameState]);
 
   const fs   = scoreRef.current;
   const fst  = fs >= 16 ? 3 : fs >= 12 ? 2 : fs >= 6 ? 1 : 0;
   // Loading state while fetching from Supabase
+  // ── Back confirm modal (rendered over whichever mode is active) ──
+  const BackConfirmModal = showBackConfirm ? (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.82)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
+      <div style={{background:C.card,border:`2px solid ${C.orange}55`,borderRadius:24,padding:"28px 22px",width:"100%",maxWidth:320,textAlign:"center"}}>
+        <div style={{fontSize:44,marginBottom:10}}>⚠️</div>
+        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.orange,marginBottom:6}}>LEAVE THIS SET?</div>
+        <div style={{fontSize:13,color:C.dim,marginBottom:18,lineHeight:1.6}}>Your progress is saved up to Q{qi}.<br/>You can <strong style={{color:C.cyan}}>resume from here</strong> next time.</div>
+        <div style={{display:"flex",gap:10}}>
+          <button onClick={()=>setShowBackConfirm(false)}
+            style={{flex:1,background:"transparent",border:`1.5px solid ${C.dim}44`,borderRadius:12,padding:"12px",color:C.dim,fontFamily:"'Nunito',sans-serif",fontSize:14,cursor:"pointer",fontWeight:700}}>
+            Keep Playing
+          </button>
+          <button onClick={()=>{setShowBackConfirm(false); onBack();}}
+            style={{flex:1,background:`linear-gradient(135deg,${C.orange},${C.red})`,border:"none",borderRadius:12,padding:"12px",color:"white",fontFamily:"'Orbitron',sans-serif",fontSize:10,cursor:"pointer",fontWeight:700}}>
+            SAVE & EXIT
+          </button>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
   if (questions === null) return (
     <div style={{ minHeight:"100vh", background:C.bg, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Nunito',sans-serif" }}>
       <Starfield n={20}/>
@@ -4300,7 +4469,7 @@ function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
       <Starfield n={25}/>
       <div style={{ position:"relative", zIndex:2, background:`${C.red}18`, borderBottom:`1px solid ${C.red}33`, padding:"12px 18px" }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
-          <BackBtn onClick={onBack} color={C.red}/>
+          <BackBtn onClick={handleBack} color={C.red}/>
           <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:12, color:C.red }}>⚔️ BOSS BATTLE</div>
           <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:16, color: timeLeft<=10 ? C.red : C.yellow }}>{timeLeft}s</div>
         </div>
@@ -4311,6 +4480,12 @@ function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
           </div>
         </div>
         <div style={{ display:"flex", gap:3 }}>{[1,2,3,4,5].map(i => <span key={i} style={{ fontSize:12, opacity: i<=lives ? 1 : 0.15 }}>❤️</span>)}</div>
+        {resumed && qi > 0 && (
+          <div style={{ marginTop:5, background:`${C.orange}22`, border:`1px solid ${C.orange}44`, borderRadius:8, padding:"3px 10px", display:"flex", alignItems:"center", gap:6 }}>
+            <span style={{ fontSize:11 }}>⚡</span>
+            <span style={{ fontSize:9, color:C.orange, fontFamily:"'Orbitron',sans-serif", fontWeight:700 }}>RESUMING — Q{qi+1} · Score: {score}</span>
+          </div>
+        )}
       </div>
       <div style={{ position:"relative", zIndex:2, padding:"14px 18px", textAlign:"center" }}>
         <div style={{ fontSize:58, animation:"bossW 1.5s ease-in-out infinite", marginBottom:10 }}>{lesson.boss||"👾"}</div>
@@ -4327,6 +4502,7 @@ function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
           })}
         </div>
       </div>
+      {BackConfirmModal}
     </div>
   );
 
@@ -4336,10 +4512,16 @@ function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
       <Starfield n={18}/>
       <div style={{ position:"relative", zIndex:2, background:`${world.color}16`, borderBottom:`1px solid ${world.color}2a`, padding:"12px 18px" }}>
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-          <BackBtn onClick={onBack} color={world.color}/>
+          <BackBtn onClick={handleBack} color={world.color}/>
           <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:12, color:world.color }}>🫧 BUBBLE POP · Q{qi+1}/{questions.length}</div>
           <div style={{ display:"flex", gap:3 }}>{[1,2,3].map(i => <span key={i} style={{ fontSize:13, opacity: i<=lives ? 1 : 0.15 }}>❤️</span>)}</div>
         </div>
+        {resumed && qi > 0 && (
+          <div style={{ marginTop:5, background:`${C.orange}22`, border:`1px solid ${C.orange}44`, borderRadius:8, padding:"3px 10px", display:"flex", alignItems:"center", gap:6 }}>
+            <span style={{ fontSize:11 }}>⚡</span>
+            <span style={{ fontSize:9, color:C.orange, fontFamily:"'Orbitron',sans-serif", fontWeight:700 }}>RESUMING — Q{qi+1} · Score: {score}</span>
+          </div>
+        )}
       </div>
       <div style={{ position:"relative", zIndex:2, padding:"18px 18px", textAlign:"center" }}>
         <Card color={world.color} style={{ marginBottom:18, padding:"14px" }}>
@@ -4363,6 +4545,7 @@ function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
         </div>
         <div style={{ marginTop:16, color:C.dim, fontSize:12, fontWeight:700 }}>Score: {score} ⭐</div>
       </div>
+      {BackConfirmModal}
     </div>
   );
 
@@ -4372,7 +4555,7 @@ function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
       <Starfield n={16}/>
       <div style={{ position:"relative", zIndex:2, background:`${world.color}16`, borderBottom:`1px solid ${world.color}2a`, padding:"12px 18px" }}>
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:7 }}>
-          <BackBtn onClick={onBack} color={world.color}/>
+          <BackBtn onClick={handleBack} color={world.color}/>
           <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:11, color:world.color }}>{lesson.emoji} {lesson.title}</div>
           <div style={{ display:"flex", gap:3 }}>{[1,2,3].map(i => <span key={i} style={{ fontSize:13, opacity: i<=lives ? 1 : 0.15 }}>❤️</span>)}</div>
         </div>
@@ -4383,6 +4566,12 @@ function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
           <span style={{ fontSize:9, color:C.dim, fontFamily:"'Orbitron',sans-serif" }}>Q {qi+1}/{questions.length}</span>
           <span style={{ fontSize:9, color:C.yellow, fontFamily:"'Orbitron',sans-serif" }}>SCORE: {score}</span>
         </div>
+        {resumed && qi > 0 && (
+          <div style={{ marginTop:6, background:`${C.orange}22`, border:`1px solid ${C.orange}44`, borderRadius:8, padding:"4px 10px", display:"flex", alignItems:"center", gap:6, animation:"fadeIn 0.4s ease" }}>
+            <span style={{ fontSize:13 }}>⚡</span>
+            <span style={{ fontSize:10, color:C.orange, fontFamily:"'Orbitron',sans-serif", fontWeight:700 }}>RESUMING — Q{qi+1} · Score: {score}</span>
+          </div>
+        )}
       </div>
       {/* ✅ Correct / ❌ Wrong floating emoji */}
       {chosen!==null && chosen===q.ans && (
@@ -4442,6 +4631,7 @@ function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
           </div>
         )}
       </div>
+      {BackConfirmModal}
     </div>
   );
 }
@@ -8425,6 +8615,23 @@ export default function App() {
   // Expose setScreen globally so nested Login component can navigate to school screens
   useEffect(() => { window._setScreen = setScreen; return () => { delete window._setScreen; }; }, [setScreen]);
 
+  // ── SW update detection — show non-intrusive banner ─────────────
+  const [swUpdateReady, setSwUpdateReady] = useState(false);
+  const swRegRef = useRef(null);
+  useEffect(() => {
+    const onUpdate = (e) => {
+      swRegRef.current = e.detail?.reg;
+      setSwUpdateReady(true);
+    };
+    document.addEventListener("mm_sw_update", onUpdate);
+    return () => document.removeEventListener("mm_sw_update", onUpdate);
+  }, []);
+  const applySwUpdate = () => {
+    const reg = swRegRef.current;
+    if (reg?.waiting) reg.waiting.postMessage("SKIP_WAITING");
+    setSwUpdateReady(false);
+  };
+
   const goFeedback = (prefillCat = null) => {
     setPrevScreen(screen);
     setFeedbackPrefill(prefillCat);
@@ -8485,29 +8692,63 @@ export default function App() {
   }, [child]);
 
   if (screen === "splash")   return <><GlobalStyles/><Splash   onDone={() => setScreen("entry")}/></>;
-  if (screen === "entry")         return <><GlobalStyles/><EntryScreen onSelect={(s)=>setScreen(s)}/></>;
-  if (screen === "student_entry") return <><GlobalStyles/><StudentEntry onBack={()=>setScreen("entry")} onSelect={(s)=>setScreen(s)}/></>;
-  if (screen === "welcome")  return <><GlobalStyles/><Welcome  onRegister={() => setScreen("register")} onLogin={() => setScreen("login")} onPrivacy={() => { setPrevScreen("welcome"); setScreen("privacy"); }}/></>;
-  if (screen === "reg_payment") return <><GlobalStyles/><RegPayment onBack={()=>setScreen("student_entry")} onPaid={()=>setScreen("register")}/></>;
-  if (screen === "register") return <><GlobalStyles/><Register onBack={() => setScreen("student_entry")} onDone={({ user: u, child: c, requirePayment }) => { setUser(u); setChild(c); setWorld(WORLDS.find(w=>w.id===parseInt(c?.class_num||1))||WORLDS[0]); setScreen(requirePayment?"paywall":"home"); }}/></>;
-  if (screen === "login")    return <><GlobalStyles/><Login    onBack={() => setScreen("student_entry")} onDone={({ user: u, child: c }) => { setUser(u); setChild(c); setScreen("home"); }}/></>;
-  if (screen === "home")     return <><GlobalStyles/><Home     child={child} isLessonPurchased={isLessonPurchased} onWorld={goWorld} onAbacus={() => setScreen("abacus")} onGames={() => setScreen("games")} onOlympiad={() => setScreen("olympiad")} onParent={() => setScreen("parent")} onRate={() => setShowRating(true)} onLogout={logout} onFeedback={goFeedback} onSettings={()=>setScreen('settings')} onThemeChange={handleThemeChange}/><FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
-  if (screen === "paywall")  return <><GlobalStyles/><Paywall  world={world||WORLDS[(child?.class_num||1)-1]||WORLDS[0]} child={child} onBack={() => setScreen("home")} onUnlock={handleUnlock}/></>;
-  if (screen === "lesson_payment") return <><GlobalStyles/><LessonPayment lessonToBuy={lessonToBuy} child={child} user={user} onBack={()=>setScreen("lessons")} onPaid={(lid)=>{ confirmLessonPurchased(lid); setScreen("lessons"); }}/></>;
-  if (screen === "lessons")  return <><GlobalStyles/><LessonMap world={world} child={child} onBack={() => setScreen("home")} isLessonPurchased={isLessonPurchased} onPurchaseLesson={purchaseLesson} onLesson={l => { setLesson(l); setScreen("game"); }}/></>;
-  if (screen === "game")     return <><GlobalStyles/><Game     lesson={lesson} world={world} child={child} setChild={setChild} onBack={() => { db.track("lesson_exit",child?.id,null,{lesson_id:lesson?.id,set_index:lesson?.setIndex}); setScreen("lessons"); }} onDone={() => { db.track("lesson_complete",child?.id,null,{lesson_id:lesson?.id,set_index:lesson?.setIndex}); setScreen("lessons"); }} onNextSet={(si) => { db.track("set_advance",child?.id,null,{lesson_id:lesson?.id,set_index:si}); setLesson(l => ({...l, setIndex:si})); }}/>{ showSOS && <SOSButton onClick={() => goFeedback("bug")}/>}<FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
-  if (screen === "abacus")   return <><GlobalStyles/><Abacus   onBack={() => setScreen("home")} child={child}/>{ showSOS && <SOSButton onClick={() => goFeedback("bug")}/>}<FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
-  if (screen === "olympiad") return <><GlobalStyles/><Olympiad child={child} setChild={setChild} onBack={() => setScreen("home")}/>{ showSOS && <SOSButton onClick={() => goFeedback("bug")}/>}<FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
-  if (screen === "parent")   return <><GlobalStyles/><ParentDash child={child} onBack={() => setScreen("home")}/></>;
-  if (screen === "feedback") return <><GlobalStyles/><FeedbackScreen child={child} currentScreen={prevScreen} prefillCategory={feedbackPrefill} onBack={() => setScreen(prevScreen)}/></>;
-  if (screen === "games")    return <><GlobalStyles/><GamesHub child={child} onBack={() => setScreen("home")}/></>;
-  if (screen === "student_login") return <><GlobalStyles/><StudentLogin onBack={()=>setScreen("student_entry")} onDone={(s)=>{setSchoolStudent(s);setChild({...s,id:s.id,name:s.name,avatar:"🧒",class_num:s.class_num,xp:s.xp||0,coins:s.coins||0,level:s.level||1,streak_days:s.streak_days||0,is_school_student:true});setScreen("home");}}/></>;
-  if (screen === "teacher_login") return <><GlobalStyles/><TeacherLogin onBack={()=>setScreen("entry")} onDone={(t)=>{ const tObj={...t, permissions:Array.isArray(t.permissions)?t.permissions:[]}; setTeacher(tObj); localStorage.setItem("mm_teacher_session",JSON.stringify(tObj)); setScreen("teacher_dash"); }}/></>;
-  if (screen === "teacher_dash")  return <><GlobalStyles/><TeacherDashboard teacher={teacher} onLogout={()=>{setTeacher(null);setScreen("entry");}}/></>;
-  if (screen === "admin_panel")   return <><GlobalStyles/><AdminPanel onBack={()=>setScreen("entry")}/></>;
-  if (screen === "privacy")    return <><GlobalStyles/><PrivacyPolicy  onBack={()=>setScreen("settings")}/></>;
-  if (screen === "terms")      return <><GlobalStyles/><TermsOfService onBack={()=>setScreen("settings")}/></>;
-  if (screen === "datapolicy") return <><GlobalStyles/><DataPolicy     onBack={()=>setScreen("settings")}/></>;
-  if (screen === "settings")   return <><GlobalStyles/><Settings child={child} user={user} onThemeChange={handleThemeChange} onBack={(dest)=>{if(dest==="rate")setShowRating(true);else if(dest)setScreen(dest);else setScreen("home");}} onLogout={logout}/></>;
-  return <><GlobalStyles/><OfflineBanner/></>;
+  // SW update banner — shown above any screen via fixed positioning
+  const SwUpdatePortal = swUpdateReady ? (
+    <div style={{position:"fixed",bottom:72,left:"50%",transform:"translateX(-50%)",zIndex:9999,
+      background:"linear-gradient(135deg,#7ec8e3,#9b7ede)",borderRadius:14,padding:"10px 18px",
+      display:"flex",alignItems:"center",gap:10,boxShadow:"0 4px 24px rgba(0,0,0,0.4)",
+      fontFamily:"'Nunito',sans-serif",minWidth:260,maxWidth:340,whiteSpace:"nowrap"}}>
+      <span style={{fontSize:18}}>🚀</span>
+      <span style={{flex:1,fontSize:12,color:"#04040f",fontWeight:700}}>New update ready!</span>
+      <button onClick={applySwUpdate}
+        style={{background:"#04040f",border:"none",borderRadius:8,padding:"6px 12px",
+          color:"#7ec8e3",fontSize:11,fontWeight:900,cursor:"pointer",fontFamily:"'Orbitron',sans-serif"}}>UPDATE</button>
+      <button onClick={()=>setSwUpdateReady(false)}
+        style={{background:"none",border:"none",color:"#04040f",fontSize:16,cursor:"pointer",padding:"0 2px"}}>✕</button>
+    </div>
+  ) : null;
+
+  if (screen === "entry")         return <><GlobalStyles/>{SwUpdatePortal}<EntryScreen onSelect={(s)=>setScreen(s)}/></>;
+  if (screen === "student_entry") return <><GlobalStyles/>{SwUpdatePortal}<StudentEntry onBack={()=>setScreen("entry")} onSelect={(s)=>setScreen(s)}/></>;
+  if (screen === "welcome")  return <><GlobalStyles/>{SwUpdatePortal}<Welcome  onRegister={() => setScreen("register")} onLogin={() => setScreen("login")} onPrivacy={() => { setPrevScreen("welcome"); setScreen("privacy"); }}/></>;
+  if (screen === "reg_payment") return <><GlobalStyles/>{SwUpdatePortal}<RegPayment onBack={()=>setScreen("student_entry")} onPaid={()=>setScreen("register")}/></>;
+  if (screen === "register") return <><GlobalStyles/>{SwUpdatePortal}<Register onBack={() => setScreen("student_entry")} onDone={({ user: u, child: c, requirePayment }) => { setUser(u); setChild(c); setWorld(WORLDS.find(w=>w.id===parseInt(c?.class_num||1))||WORLDS[0]); setScreen(requirePayment?"paywall":"home"); }}/></>;
+  if (screen === "login")    return <><GlobalStyles/>{SwUpdatePortal}<Login    onBack={() => setScreen("student_entry")} onDone={({ user: u, child: c }) => { setUser(u); setChild(c); setScreen("home"); }}/></>;
+  if (screen === "home")     return <><GlobalStyles/>{SwUpdatePortal}<Home     child={child} isLessonPurchased={isLessonPurchased} onWorld={goWorld} onAbacus={() => setScreen("abacus")} onGames={() => setScreen("games")} onOlympiad={() => setScreen("olympiad")} onParent={() => setScreen("parent")} onRate={() => setShowRating(true)} onLogout={logout} onFeedback={goFeedback} onSettings={()=>setScreen('settings')} onThemeChange={handleThemeChange}/><FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
+  if (screen === "paywall")  return <><GlobalStyles/>{SwUpdatePortal}<Paywall  world={world||WORLDS[(child?.class_num||1)-1]||WORLDS[0]} child={child} onBack={() => setScreen("home")} onUnlock={handleUnlock}/></>;
+  if (screen === "lesson_payment") return <><GlobalStyles/>{SwUpdatePortal}<LessonPayment lessonToBuy={lessonToBuy} child={child} user={user} onBack={()=>setScreen("lessons")} onPaid={(lid)=>{ confirmLessonPurchased(lid); setScreen("lessons"); }}/></>;
+  if (screen === "lessons")  return <><GlobalStyles/>{SwUpdatePortal}<LessonMap world={world} child={child} onBack={() => setScreen("home")} isLessonPurchased={isLessonPurchased} onPurchaseLesson={purchaseLesson} onLesson={l => { setLesson(l); setScreen("game"); }}/></>;
+  if (screen === "game")     return <><GlobalStyles/>{SwUpdatePortal}<Game     lesson={lesson} world={world} child={child} setChild={setChild} onBack={() => { db.track("lesson_exit",child?.id,null,{lesson_id:lesson?.id,set_index:lesson?.setIndex}); setScreen("lessons"); }} onDone={() => { db.track("lesson_complete",child?.id,null,{lesson_id:lesson?.id,set_index:lesson?.setIndex}); setScreen("lessons"); }} onNextSet={(si) => { db.track("set_advance",child?.id,null,{lesson_id:lesson?.id,set_index:si}); setLesson(l => ({...l, setIndex:si})); }}/>{ showSOS && <SOSButton onClick={() => goFeedback("bug")}/>}<FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
+  if (screen === "abacus")   return <><GlobalStyles/>{SwUpdatePortal}<Abacus   onBack={() => setScreen("home")} child={child}/>{ showSOS && <SOSButton onClick={() => goFeedback("bug")}/>}<FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
+  if (screen === "olympiad") return <><GlobalStyles/>{SwUpdatePortal}<Olympiad child={child} setChild={setChild} onBack={() => setScreen("home")}/>{ showSOS && <SOSButton onClick={() => goFeedback("bug")}/>}<FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
+  if (screen === "parent")   return <><GlobalStyles/>{SwUpdatePortal}<ParentDash child={child} onBack={() => setScreen("home")}/></>;
+  if (screen === "feedback") return <><GlobalStyles/>{SwUpdatePortal}<FeedbackScreen child={child} currentScreen={prevScreen} prefillCategory={feedbackPrefill} onBack={() => setScreen(prevScreen)}/></>;
+  if (screen === "games")    return <><GlobalStyles/>{SwUpdatePortal}<GamesHub child={child} onBack={() => setScreen("home")}/></>;
+  if (screen === "student_login") return <><GlobalStyles/>{SwUpdatePortal}<StudentLogin onBack={()=>setScreen("student_entry")} onDone={(s)=>{setSchoolStudent(s);setChild({...s,id:s.id,name:s.name,avatar:"🧒",class_num:s.class_num,xp:s.xp||0,coins:s.coins||0,level:s.level||1,streak_days:s.streak_days||0,is_school_student:true});setScreen("home");}}/></>;
+  if (screen === "teacher_login") return <><GlobalStyles/>{SwUpdatePortal}<TeacherLogin onBack={()=>setScreen("entry")} onDone={(t)=>{ const tObj={...t, permissions:Array.isArray(t.permissions)?t.permissions:[]}; setTeacher(tObj); localStorage.setItem("mm_teacher_session",JSON.stringify(tObj)); setScreen("teacher_dash"); }}/></>;
+  if (screen === "teacher_dash")  return <><GlobalStyles/>{SwUpdatePortal}<TeacherDashboard teacher={teacher} onLogout={()=>{setTeacher(null);setScreen("entry");}}/></>;
+  if (screen === "admin_panel")   return <><GlobalStyles/>{SwUpdatePortal}<AdminPanel onBack={()=>setScreen("entry")}/></>;
+  if (screen === "privacy")    return <><GlobalStyles/>{SwUpdatePortal}<PrivacyPolicy  onBack={()=>setScreen("settings")}/></>;
+  if (screen === "terms")      return <><GlobalStyles/>{SwUpdatePortal}<TermsOfService onBack={()=>setScreen("settings")}/></>;
+  if (screen === "datapolicy") return <><GlobalStyles/>{SwUpdatePortal}<DataPolicy     onBack={()=>setScreen("settings")}/></>;
+  if (screen === "settings")   return <><GlobalStyles/>{SwUpdatePortal}<Settings child={child} user={user} onThemeChange={handleThemeChange} onBack={(dest)=>{if(dest==="rate")setShowRating(true);else if(dest)setScreen(dest);else setScreen("home");}} onLogout={logout}/></>;
+  // ── SW update banner (floating, non-intrusive) ─────────────────
+  const SwUpdateBanner = swUpdateReady ? (
+    <div style={{position:"fixed",bottom:72,left:"50%",transform:"translateX(-50%)",zIndex:9999,
+      background:"linear-gradient(135deg,#7ec8e3,#9b7ede)",borderRadius:14,padding:"10px 18px",
+      display:"flex",alignItems:"center",gap:10,boxShadow:"0 4px 24px rgba(0,0,0,0.4)",
+      fontFamily:"'Nunito',sans-serif",minWidth:260,maxWidth:340}}>
+      <span style={{fontSize:18}}>🚀</span>
+      <span style={{flex:1,fontSize:12,color:"#04040f",fontWeight:700}}>New update ready!</span>
+      <button onClick={applySwUpdate}
+        style={{background:"#04040f",border:"none",borderRadius:8,padding:"6px 12px",
+          color:"#7ec8e3",fontSize:11,fontWeight:900,cursor:"pointer",fontFamily:"'Orbitron',sans-serif"}}>
+        UPDATE
+      </button>
+      <button onClick={()=>setSwUpdateReady(false)}
+        style={{background:"none",border:"none",color:"#04040f",fontSize:16,cursor:"pointer",padding:2}}>✕</button>
+    </div>
+  ) : null;
+
+  return <><GlobalStyles/>{SwUpdatePortal}<OfflineBanner/>{SwUpdateBanner}</>;
 }
