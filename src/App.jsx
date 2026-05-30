@@ -753,7 +753,7 @@ if ("getBattery" in navigator) {
       if (bat.level < 0.10 && !bat.charging && !SFX.muted) SFX.toggleMute();
     });
   }).catch(()=>{});
-}"s_" + Date.now() + "_" + Math.random().toString(36).slice(2,7);
+}
 
 const db = {
   _sb: undefined,
@@ -8811,6 +8811,7 @@ export default function App() {
 
   // ── SW update detection — show non-intrusive banner ─────────────
   const [swUpdateReady, setSwUpdateReady] = useState(false);
+  const [showRating, setShowRating] = useState(false);
   const swRegRef = useRef(null);
   useEffect(() => {
     const onUpdate = (e) => {
@@ -8908,7 +8909,7 @@ export default function App() {
   if (screen === "reg_payment")   return <><GlobalStyles/>{SwUpdatePortal}<RegPayment onBack={()=>setScreen("student_entry")} onPaid={()=>setScreen("register")}/></>;
   if (screen === "register")      return <><GlobalStyles/>{SwUpdatePortal}<Register onBack={() => setScreen("student_entry")} onDone={({ user: u, child: c, requirePayment }) => { setUser(u); setChild(c); setWorld(WORLDS.find(w=>w.id===parseInt(c?.class_num||1))||WORLDS[0]); setScreen(requirePayment?"paywall":"home"); }}/></>;
   if (screen === "login")         return <><GlobalStyles/>{SwUpdatePortal}<Login    onBack={() => setScreen("student_entry")} onDone={({ user: u, child: c }) => { setUser(u); setChild(c); setScreen("home"); }}/></>;
-  if (screen === "home")          return <><GlobalStyles/>{SwUpdatePortal}<Home     child={child} isLessonPurchased={isLessonPurchased} onWorld={goWorld} onAbacus={() => setScreen("abacus")} onGames={() => setScreen("games")} onOlympiad={() => setScreen("olympiad")} onParent={() => setScreen("parent")} onRate={() => setShowRating(true)} onLogout={logout} onFeedback={goFeedback} onSettings={()=>setScreen('settings')} onThemeChange={handleThemeChange}/><FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
+  if (screen === "home")          return <><GlobalStyles/>{SwUpdatePortal}<Home child={child} isLessonPurchased={isLessonPurchased} onWorld={goWorld} onAbacus={() => setScreen("abacus")} onGames={() => setScreen("games")} onOlympiad={() => setScreen("olympiad")} onParent={() => setScreen("parent")} onRate={() => setShowRating(true)} onLogout={logout} onFeedback={goFeedback} onSettings={()=>setScreen("settings")} onThemeChange={handleThemeChange}/>{showRating && <RatingPrompt child={child} onClose={() => setShowRating(false)}/>}<FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>
   if (screen === "paywall")       return <><GlobalStyles/>{SwUpdatePortal}<Paywall  world={world||WORLDS[(child?.class_num||1)-1]||WORLDS[0]} child={child} onBack={() => setScreen("home")} onUnlock={handleUnlock}/></>;
   if (screen === "lesson_payment") return <><GlobalStyles/>{SwUpdatePortal}<LessonPayment lessonToBuy={lessonToBuy} child={child} user={user} onBack={()=>setScreen("lessons")} onPaid={(lid)=>{ confirmLessonPurchased(lid); setScreen("lessons"); }}/></>;
   if (screen === "lessons")       return <><GlobalStyles/>{SwUpdatePortal}<LessonMap world={world} child={child} onBack={() => setScreen("home")} isLessonPurchased={isLessonPurchased} onPurchaseLesson={purchaseLesson} onLesson={l => { setLesson(l); setScreen("game"); }}/></>;
@@ -8925,7 +8926,7 @@ export default function App() {
   if (screen === "privacy")       return <><GlobalStyles/>{SwUpdatePortal}<PrivacyPolicy  onBack={()=>setScreen("settings")}/></>;
   if (screen === "terms")         return <><GlobalStyles/>{SwUpdatePortal}<TermsOfService onBack={()=>setScreen("settings")}/></>;
   if (screen === "datapolicy")    return <><GlobalStyles/>{SwUpdatePortal}<DataPolicy     onBack={()=>setScreen("settings")}/></>;
-  if (screen === "settings")      return <><GlobalStyles/>{SwUpdatePortal}<Settings child={child} user={user} onThemeChange={handleThemeChange} onBack={(dest)=>{if(dest==="rate")setShowRating(true);else if(dest)setScreen(dest);else setScreen("home");}} onLogout={logout}/></>;
+  if (screen === "settings")      return <><GlobalStyles/>{SwUpdatePortal}<Settings child={child} user={user} onThemeChange={handleThemeChange} onBack={(dest)=>{if(dest==="rate")setShowRating(true);else if(dest)setScreen(dest);else setScreen("home");}} onLogout={logout}/></>
 
   return <><GlobalStyles/>{SwUpdatePortal}<OfflineBanner/></>;
 }
