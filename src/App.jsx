@@ -351,7 +351,7 @@ function ProgressGrid({ lessons, progress }) {
           </div>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:6}}>
-          <div style={{background:open?C.cyan:isDark()?"rgba(255,255,255,0.08)":C.border||"#ece8ff",borderRadius:10,padding:"4px 10px",fontSize:12,fontWeight:800,color:open?"white":C.dim,transition:"all 0.2s"}}>{open?"Hide":"Show"}</div>
+          <div style={{background:open?C.purple:"transparent",border:`1.5px solid ${C.purple}44`,borderRadius:10,padding:"5px 12px",fontSize:13,fontWeight:800,color:open?"white":C.purple,transition:"all 0.2s"}}>{open?"▲":"▼"}</div>
         </div>
       </div>
 
@@ -3699,6 +3699,144 @@ function ThemeSelector({ onClose }) {
   );
 }
 
+function DailyQuestSection({ dqDone, dpDone, todaySets, onOpen }) {
+  const [open, setOpen] = React.useState(true);
+  const doneCnt = [dqDone, dpDone, todaySets>=1].filter(Boolean).length;
+  const allDone = doneCnt === 3;
+  return (
+    <div style={{ position:"relative", zIndex:2, margin:"14px 18px 0" }}>
+      <button onClick={()=>setOpen(o=>!o)}
+        style={{ width:"100%", background:isDark()?`linear-gradient(135deg,${C.purple}18,${C.cyan}0a)`:C.card, border:`1.5px solid ${C.purple}${isDark()?"33":"44"}`, borderRadius:18, padding:"14px 18px", cursor:"pointer", display:"flex", alignItems:"center", gap:12, textAlign:"left", boxShadow:`0 2px 10px ${C.purple}10` }}>
+        <div style={{ fontSize:26 }}>🎯</div>
+        <div style={{ flex:1 }}>
+          <div style={{ fontSize:15, fontWeight:900, color:textColor() }}>Daily Quest</div>
+          <div style={{ fontSize:11, color:C.dim, marginTop:2 }}>{doneCnt}/3 tasks done today</div>
+        </div>
+        {allDone
+          ? <div style={{ background:`${C.green}22`, border:`1px solid ${C.green}44`, borderRadius:10, padding:"5px 12px", fontSize:11, color:C.green, fontWeight:800 }}>✅ DONE</div>
+          : <div style={{ background:open?C.purple:"transparent", border:`1.5px solid ${C.purple}44`, borderRadius:10, padding:"5px 12px", fontSize:13, fontWeight:800, color:open?"white":C.purple, transition:"all 0.2s" }}>{open?"▲":"▼"}</div>
+        }
+      </button>
+      {open && (
+        <div style={{ marginTop:10 }}>
+          {/* Progress bar */}
+          <div style={{ background:isDark()?"rgba(255,255,255,0.06)":"#ece8ff", borderRadius:8, height:7, overflow:"hidden", marginBottom:12 }}>
+            <div style={{ width:`${(doneCnt/3)*100}%`, height:"100%",
+              background:`linear-gradient(90deg,${C.cyan},${C.purple},${C.pink})`, borderRadius:8, transition:"width 0.6s ease",
+              boxShadow:doneCnt===3?`0 0 10px ${C.purple}88`:"none" }}/>
+          </div>
+          {allDone ? (
+            <div style={{ background:`linear-gradient(135deg,${C.green}18,${C.cyan}12)`, border:`2px solid ${C.green}44`,
+              borderRadius:20, padding:"18px 20px", textAlign:"center" }}>
+              <div style={{ fontSize:44, marginBottom:6 }}>🏆</div>
+              <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:13, color:C.green, fontWeight:900, marginBottom:4 }}>QUEST COMPLETE!</div>
+              <div style={{ fontSize:12, color:C.dim }}>You earned all daily rewards. Come back tomorrow!</div>
+            </div>
+          ) : (
+            <button onClick={onOpen}
+              style={{ width:"100%", background:`linear-gradient(135deg,${C.purple}22,${C.cyan}14)`,
+                border:`2px solid ${C.purple}55`, borderRadius:20, padding:"18px 20px",
+                cursor:"pointer", textAlign:"left", position:"relative", overflow:"hidden" }}>
+              <div style={{ position:"absolute", right:-20, top:-20, width:100, height:100, borderRadius:"50%",
+                background:`radial-gradient(circle,${C.purple}44,transparent 70%)`, pointerEvents:"none" }}/>
+              <div style={{ display:"flex", alignItems:"center", gap:16, position:"relative", zIndex:1 }}>
+                <div style={{ fontSize:48 }}>{doneCnt===0?"🚀":doneCnt===1?"⚡":"🔥"}</div>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:11, color:C.purple, fontWeight:700, marginBottom:4 }}>
+                    {doneCnt===0?"START TODAY'S QUEST":"CONTINUE QUEST"}
+                  </div>
+                  <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
+                    {[
+                      { label:"Do a Set",     done:todaySets>=1, color:C.cyan,   icon:"🧮" },
+                      { label:"Word Problem", done:dqDone,       color:C.yellow, icon:"🌟" },
+                      { label:"Brain Puzzle", done:dpDone,       color:C.purple, icon:"🧩" },
+                    ].map((t,i)=>(
+                      <div key={i} style={{ background:t.done?`${C.green}22`:`${t.color}18`,
+                        border:`1px solid ${t.done?C.green+"55":t.color+"33"}`,
+                        borderRadius:10, padding:"3px 9px", display:"flex", alignItems:"center", gap:4 }}>
+                        <span style={{ fontSize:11 }}>{t.done?"✅":t.icon}</span>
+                        <span style={{ fontSize:10, fontWeight:700, color:t.done?C.green:t.color }}>{t.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ fontSize:11, color:C.dim, marginTop:6 }}>
+                    Total reward: <span style={{ color:C.yellow, fontWeight:800 }}>+275 XP</span> · <span style={{ color:C.orange, fontWeight:800 }}>+35 Coins</span>
+                  </div>
+                </div>
+                <div style={{ fontSize:24, color:C.purple }}>›</div>
+              </div>
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MyClassSection({ world: w, child, onWorld, pctDone }) {
+  const [open, setOpen] = React.useState(true);
+  return (
+    <div style={{ position:"relative", zIndex:2, margin:"14px 18px 0" }}>
+      <button onClick={()=>setOpen(o=>!o)}
+        style={{ width:"100%", background:isDark()?`linear-gradient(135deg,${w.color}18,${C.purple}0a)`:C.card, border:`1.5px solid ${w.color}${isDark()?"33":"44"}`, borderRadius:18, padding:"14px 18px", cursor:"pointer", display:"flex", alignItems:"center", gap:12, textAlign:"left", boxShadow:`0 2px 10px ${w.color}10` }}>
+        <div style={{ fontSize:26 }}>{w.planet}</div>
+        <div style={{ flex:1 }}>
+          <div style={{ fontSize:15, fontWeight:900, color:textColor() }}>My Class</div>
+          <div style={{ fontSize:11, color:C.dim, marginTop:2 }}>{w.name} · {pctDone}% complete</div>
+        </div>
+        <div style={{ background:open?w.color:"transparent", border:`1.5px solid ${w.color}44`, borderRadius:10, padding:"5px 12px", fontSize:13, fontWeight:800, color:open?"white":w.color, transition:"all 0.2s" }}>{open?"▲":"▼"}</div>
+      </button>
+      {open && (
+        <div style={{ marginTop:10 }}>
+          <div onClick={()=>onWorld(w)} style={{ background:`linear-gradient(135deg,${w.color}22,${w.color}0a)`, border:`2px solid ${w.color}55`, borderRadius:22, padding:"18px", cursor:"pointer", display:"flex", alignItems:"center", gap:16, boxShadow:`0 0 30px ${w.glow}`, position:"relative", overflow:"hidden" }}>
+            <div style={{ position:"absolute", right:-10, top:-10, fontSize:80, opacity:0.12, animation:"floatUp 3s ease-in-out infinite", pointerEvents:"none" }}>{w.planet}</div>
+            <div style={{ width:64, height:64, borderRadius:20, background:`${w.color}25`, border:`3px solid ${w.color}55`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:36, flexShrink:0 }}>{w.planet}</div>
+            <div style={{ flex:1, position:"relative", zIndex:1 }}>
+              <div style={{ fontSize:20, fontWeight:900, color:textColor() }}>{w.name}</div>
+              <div style={{ fontSize:13, color:w.color, fontWeight:700, marginTop:2 }}>{w.world}</div>
+              <div style={{ fontSize:12, color:C.dim, marginTop:4 }}>{(LESSONS[child.class_num]||LESSONS[1]).length} Lessons · {pctDone}% complete</div>
+            </div>
+            <div style={{ fontSize:32, color:w.color }}>›</div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function QuickLaunch({ onAbacus, onGames, onOlympiad, onParent }) {
+  const [open, setOpen] = React.useState(true);
+  const items = [
+    {i:"🧮",l:"Abacus",    sub:"Train your brain",  c:C.yellow,  a:onAbacus},
+    {i:"🎮",l:"Games Hub", sub:"Fun challenges",     c:C.cyan,    a:onGames},
+    {i:"🎓",l:"Olympiad",  sub:"Compete & win",      c:C.purple,  a:onOlympiad},
+    {i:"📊",l:"Parent",    sub:"Progress report",    c:C.pink,    a:onParent},
+  ];
+  return (
+    <div style={{ position:"relative", zIndex:2, margin:"14px 18px 0" }}>
+      <button onClick={()=>setOpen(o=>!o)}
+        style={{ width:"100%", background:isDark()?`linear-gradient(135deg,${C.cyan}18,${C.yellow}0a)`:C.card, border:`1.5px solid ${C.cyan}${isDark()?"33":"44"}`, borderRadius:18, padding:"14px 18px", cursor:"pointer", display:"flex", alignItems:"center", gap:12, textAlign:"left", boxShadow:`0 2px 10px ${C.cyan}10` }}>
+        <div style={{ fontSize:26 }}>⚡</div>
+        <div style={{ flex:1 }}>
+          <div style={{ fontSize:15, fontWeight:900, color:textColor() }}>Quick Launch</div>
+          <div style={{ fontSize:11, color:C.dim, marginTop:2 }}>Abacus · Games · Olympiad · Parent</div>
+        </div>
+        <div style={{ background:open?C.cyan:"transparent", border:`1.5px solid ${C.cyan}44`, borderRadius:10, padding:"5px 12px", fontSize:13, fontWeight:800, color:open?"white":C.cyan, transition:"all 0.2s" }}>{open?"▲":"▼"}</div>
+      </button>
+      {open && (
+        <div style={{ marginTop:10, display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
+          {items.map((n,i)=>(
+            <button key={i} onClick={n.a} style={{ background:`${n.c}14`, border:`2px solid ${n.c}33`, borderRadius:18, padding:"16px 14px", cursor:"pointer", textAlign:"left", display:"flex", alignItems:"center", gap:12 }}>
+              <div style={{ fontSize:32, flexShrink:0 }}>{n.i}</div>
+              <div><div style={{ fontSize:16, fontWeight:800, color:textColor() }}>{n.l}</div><div style={{ fontSize:11, color:n.c, marginTop:2, fontWeight:600 }}>{n.sub}</div></div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function WorldsSection({ WORLDS, child, onWorld }) {
   const [open, setOpen] = React.useState(false);
   const others = WORLDS.filter(cw => cw.id !== parseInt(child.class_num||1));
@@ -3877,115 +4015,22 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
       </div>
 
       {/* ── Daily Quest ─────────────────────────────────────────────── */}
-      <div style={{ position:"relative", zIndex:2, margin:"14px 18px 0" }}>
-        {/* Header row */}
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
-          <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-            <div style={{ fontSize:20 }}>🎯</div>
-            <div style={{ fontSize:16, fontWeight:900, color:textColor() }}>Daily Quest</div>
-          </div>
-          <div style={{ background:`${C.purple}22`, border:`1px solid ${C.purple}44`, borderRadius:10, padding:"3px 10px", fontSize:11, color:C.purple, fontFamily:"'Orbitron',sans-serif", fontWeight:700 }}>
-            {[dqDone,dpDone,todaySets>=1].filter(Boolean).length}/3 DONE
-          </div>
-        </div>
-
-        {/* Progress bar */}
-        <div style={{ background:isDark()?"rgba(255,255,255,0.06)":"#ece8ff", borderRadius:8, height:7, overflow:"hidden", marginBottom:12 }}>
-          <div style={{ width:`${([dqDone,dpDone,todaySets>=1].filter(Boolean).length/3)*100}%`, height:"100%",
-            background:`linear-gradient(90deg,${C.cyan},${C.purple},${C.pink})`, borderRadius:8, transition:"width 0.6s ease",
-            boxShadow:[dqDone,dpDone,todaySets>=1].filter(Boolean).length===3?`0 0 10px ${C.purple}88`:"none" }}/>
-        </div>
-
-        {/* All-done banner */}
-        {[dqDone,dpDone,todaySets>=1].every(Boolean) ? (
-          <div style={{ background:`linear-gradient(135deg,${C.green}18,${C.cyan}12)`, border:`2px solid ${C.green}44`,
-            borderRadius:20, padding:"18px 20px", textAlign:"center" }}>
-            <div style={{ fontSize:44, marginBottom:6 }}>🏆</div>
-            <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:13, color:C.green, fontWeight:900, marginBottom:4 }}>QUEST COMPLETE!</div>
-            <div style={{ fontSize:12, color:C.dim }}>You earned all daily rewards. Come back tomorrow!</div>
-          </div>
-        ) : (
-          /* Main quest card — single entry point */
-          <button onClick={()=>setShowDailyQuest(true)}
-            style={{ width:"100%", background:`linear-gradient(135deg,${C.purple}22,${C.cyan}14)`,
-              border:`2px solid ${C.purple}55`, borderRadius:20, padding:"18px 20px",
-              cursor:"pointer", textAlign:"left", position:"relative", overflow:"hidden" }}>
-            {/* Glow orb */}
-            <div style={{ position:"absolute", right:-20, top:-20, width:100, height:100, borderRadius:"50%",
-              background:`radial-gradient(circle,${C.purple}44,transparent 70%)`, pointerEvents:"none" }}/>
-            <div style={{ display:"flex", alignItems:"center", gap:16, position:"relative", zIndex:1 }}>
-              <div style={{ fontSize:48 }}>
-                {[dqDone,dpDone,todaySets>=1].filter(Boolean).length === 0 ? "🚀"
-                  : [dqDone,dpDone,todaySets>=1].filter(Boolean).length === 1 ? "⚡"
-                  : "🔥"}
-              </div>
-              <div style={{ flex:1 }}>
-                <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:11, color:C.purple, fontWeight:700, marginBottom:4 }}>
-                  {[dqDone,dpDone,todaySets>=1].filter(Boolean).length === 0 ? "START TODAY'S QUEST" : "CONTINUE QUEST"}
-                </div>
-                {/* 3 task pills */}
-                <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
-                  {[
-                    { label:"Do a Set",      done:todaySets>=1, color:C.cyan,   icon:"🧮" },
-                    { label:"Word Problem",  done:dqDone,       color:C.yellow, icon:"🌟" },
-                    { label:"Brain Puzzle",  done:dpDone,       color:C.purple, icon:"🧩" },
-                  ].map((t,i)=>(
-                    <div key={i} style={{ background:t.done?`${C.green}22`:`${t.color}18`,
-                      border:`1px solid ${t.done?C.green+"55":t.color+"33"}`,
-                      borderRadius:10, padding:"3px 9px", display:"flex", alignItems:"center", gap:4 }}>
-                      <span style={{ fontSize:11 }}>{t.done ? "✅" : t.icon}</span>
-                      <span style={{ fontSize:10, fontWeight:700, color:t.done?C.green:t.color }}>{t.label}</span>
-                    </div>
-                  ))}
-                </div>
-                <div style={{ fontSize:11, color:C.dim, marginTop:6 }}>
-                  Total reward: <span style={{ color:C.yellow, fontWeight:800 }}>+275 XP</span> · <span style={{ color:C.orange, fontWeight:800 }}>+35 Coins</span>
-                </div>
-              </div>
-              <div style={{ fontSize:24, color:C.purple }}>›</div>
-            </div>
-          </button>
-        )}
-      </div>
+      <DailyQuestSection
+        dqDone={dqDone} dpDone={dpDone} todaySets={todaySets}
+        onOpen={()=>setShowDailyQuest(true)}
+      />
 
       {/* Quick Launch */}
-      <div style={{ position:"relative", zIndex:2, margin:"14px 18px 0" }}>
-        <div style={{ fontSize:16, fontWeight:900, color:textColor(), marginBottom:10 }}>⚡ Quick Launch</div>
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
-          {[
-            {i:"🧮",l:"Abacus",    sub:"Train your brain",  c:C.yellow,  a:onAbacus},
-            {i:"🎮",l:"Games Hub", sub:"Fun challenges",     c:C.cyan,    a:onGames},
-            {i:"🎓",l:"Olympiad",  sub:"Compete & win",      c:C.purple,  a:onOlympiad},
-            {i:"📊",l:"Parent",    sub:"Progress report",    c:C.pink,    a:onParent},
-          ].map((n,i)=>(
-            <button key={i} onClick={n.a} style={{ background:`${n.c}14`, border:`2px solid ${n.c}33`, borderRadius:18, padding:"16px 14px", cursor:"pointer", textAlign:"left", display:"flex", alignItems:"center", gap:12 }}>
-              <div style={{ fontSize:32, flexShrink:0 }}>{n.i}</div>
-              <div><div style={{ fontSize:16, fontWeight:800, color:textColor() }}>{n.l}</div><div style={{ fontSize:11, color:n.c, marginTop:2, fontWeight:600 }}>{n.sub}</div></div>
-            </button>
-          ))}
-        </div>
-      </div>
+      <QuickLaunch onAbacus={onAbacus} onGames={onGames} onOlympiad={onOlympiad} onParent={onParent}/>
 
       {/* My Class */}
-      <div style={{ position:"relative", zIndex:2, margin:"14px 18px 0" }}>
-        <div style={{ fontSize:16, fontWeight:900, color:textColor(), marginBottom:10 }}>🌍 My Class</div>
-        <div onClick={()=>onWorld(w)} style={{ background:`linear-gradient(135deg,${w.color}22,${w.color}0a)`, border:`2px solid ${w.color}55`, borderRadius:22, padding:"18px", cursor:"pointer", display:"flex", alignItems:"center", gap:16, boxShadow:`0 0 30px ${w.glow}`, position:"relative", overflow:"hidden" }}>
-          <div style={{ position:"absolute", right:-10, top:-10, fontSize:80, opacity:0.12, animation:"floatUp 3s ease-in-out infinite", pointerEvents:"none" }}>{w.planet}</div>
-          <div style={{ width:64, height:64, borderRadius:20, background:`${w.color}25`, border:`3px solid ${w.color}55`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:36, flexShrink:0 }}>{w.planet}</div>
-          <div style={{ flex:1, position:"relative", zIndex:1 }}>
-            <div style={{ fontSize:20, fontWeight:900, color:textColor() }}>{w.name}</div>
-            <div style={{ fontSize:13, color:w.color, fontWeight:700, marginTop:2 }}>{w.world}</div>
-            <div style={{ fontSize:12, color:C.dim, marginTop:4 }}>{(LESSONS[child.class_num]||LESSONS[1]).length} Lessons · {pctDone}% complete</div>
-          </div>
-          <div style={{ fontSize:32, color:w.color }}>›</div>
-        </div>
-      </div>
+      <MyClassSection world={w} child={child} onWorld={onWorld} pctDone={pctDone}/>
 
       {/* Other Worlds — collapsible */}
       <WorldsSection WORLDS={WORLDS} child={child} onWorld={onWorld}/>
 
       {/* Progress Grid */}
-      <div style={{ position:"relative", zIndex:2, margin:"14px 18px 0" }}>
+      <div style={{ position:"relative", zIndex:2, margin:"14px 18px 14px" }}>
         <ProgressGrid lessons={LESSONS[child.class_num]||LESSONS[1]} progress={progress}/>
       </div>
 
