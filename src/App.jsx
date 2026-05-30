@@ -8885,8 +8885,7 @@ export default function App() {
     setScreen("lessons");
   }, [child]);
 
-  if (screen === "splash")   return <><GlobalStyles/><Splash   onDone={() => setScreen("entry")}/></>;
-  // SW update banner — shown above any screen via fixed positioning
+  // ── SW update banner — defined once, before all conditional returns ──
   const SwUpdatePortal = swUpdateReady ? (
     <div style={{position:"fixed",bottom:72,left:"50%",transform:"translateX(-50%)",zIndex:9999,
       background:"linear-gradient(135deg,#7ec8e3,#9b7ede)",borderRadius:14,padding:"10px 18px",
@@ -8902,47 +8901,31 @@ export default function App() {
     </div>
   ) : null;
 
+  if (screen === "splash")        return <><GlobalStyles/><Splash   onDone={() => setScreen("entry")}/></>;
   if (screen === "entry")         return <><GlobalStyles/>{SwUpdatePortal}<EntryScreen onSelect={(s)=>setScreen(s)}/></>;
   if (screen === "student_entry") return <><GlobalStyles/>{SwUpdatePortal}<StudentEntry onBack={()=>setScreen("entry")} onSelect={(s)=>setScreen(s)}/></>;
-  if (screen === "welcome")  return <><GlobalStyles/>{SwUpdatePortal}<Welcome  onRegister={() => setScreen("register")} onLogin={() => setScreen("login")} onPrivacy={() => { setPrevScreen("welcome"); setScreen("privacy"); }}/></>;
-  if (screen === "reg_payment") return <><GlobalStyles/>{SwUpdatePortal}<RegPayment onBack={()=>setScreen("student_entry")} onPaid={()=>setScreen("register")}/></>;
-  if (screen === "register") return <><GlobalStyles/>{SwUpdatePortal}<Register onBack={() => setScreen("student_entry")} onDone={({ user: u, child: c, requirePayment }) => { setUser(u); setChild(c); setWorld(WORLDS.find(w=>w.id===parseInt(c?.class_num||1))||WORLDS[0]); setScreen(requirePayment?"paywall":"home"); }}/></>;
-  if (screen === "login")    return <><GlobalStyles/>{SwUpdatePortal}<Login    onBack={() => setScreen("student_entry")} onDone={({ user: u, child: c }) => { setUser(u); setChild(c); setScreen("home"); }}/></>;
-  if (screen === "home")     return <><GlobalStyles/>{SwUpdatePortal}<Home     child={child} isLessonPurchased={isLessonPurchased} onWorld={goWorld} onAbacus={() => setScreen("abacus")} onGames={() => setScreen("games")} onOlympiad={() => setScreen("olympiad")} onParent={() => setScreen("parent")} onRate={() => setShowRating(true)} onLogout={logout} onFeedback={goFeedback} onSettings={()=>setScreen('settings')} onThemeChange={handleThemeChange}/><FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
-  if (screen === "paywall")  return <><GlobalStyles/>{SwUpdatePortal}<Paywall  world={world||WORLDS[(child?.class_num||1)-1]||WORLDS[0]} child={child} onBack={() => setScreen("home")} onUnlock={handleUnlock}/></>;
+  if (screen === "welcome")       return <><GlobalStyles/>{SwUpdatePortal}<Welcome  onRegister={() => setScreen("register")} onLogin={() => setScreen("login")} onPrivacy={() => { setPrevScreen("welcome"); setScreen("privacy"); }}/></>;
+  if (screen === "reg_payment")   return <><GlobalStyles/>{SwUpdatePortal}<RegPayment onBack={()=>setScreen("student_entry")} onPaid={()=>setScreen("register")}/></>;
+  if (screen === "register")      return <><GlobalStyles/>{SwUpdatePortal}<Register onBack={() => setScreen("student_entry")} onDone={({ user: u, child: c, requirePayment }) => { setUser(u); setChild(c); setWorld(WORLDS.find(w=>w.id===parseInt(c?.class_num||1))||WORLDS[0]); setScreen(requirePayment?"paywall":"home"); }}/></>;
+  if (screen === "login")         return <><GlobalStyles/>{SwUpdatePortal}<Login    onBack={() => setScreen("student_entry")} onDone={({ user: u, child: c }) => { setUser(u); setChild(c); setScreen("home"); }}/></>;
+  if (screen === "home")          return <><GlobalStyles/>{SwUpdatePortal}<Home     child={child} isLessonPurchased={isLessonPurchased} onWorld={goWorld} onAbacus={() => setScreen("abacus")} onGames={() => setScreen("games")} onOlympiad={() => setScreen("olympiad")} onParent={() => setScreen("parent")} onRate={() => setShowRating(true)} onLogout={logout} onFeedback={goFeedback} onSettings={()=>setScreen('settings')} onThemeChange={handleThemeChange}/><FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
+  if (screen === "paywall")       return <><GlobalStyles/>{SwUpdatePortal}<Paywall  world={world||WORLDS[(child?.class_num||1)-1]||WORLDS[0]} child={child} onBack={() => setScreen("home")} onUnlock={handleUnlock}/></>;
   if (screen === "lesson_payment") return <><GlobalStyles/>{SwUpdatePortal}<LessonPayment lessonToBuy={lessonToBuy} child={child} user={user} onBack={()=>setScreen("lessons")} onPaid={(lid)=>{ confirmLessonPurchased(lid); setScreen("lessons"); }}/></>;
-  if (screen === "lessons")  return <><GlobalStyles/>{SwUpdatePortal}<LessonMap world={world} child={child} onBack={() => setScreen("home")} isLessonPurchased={isLessonPurchased} onPurchaseLesson={purchaseLesson} onLesson={l => { setLesson(l); setScreen("game"); }}/></>;
-  if (screen === "game")     return <><GlobalStyles/>{SwUpdatePortal}<Game     lesson={lesson} world={world} child={child} setChild={setChild} onBack={() => { db.track("lesson_exit",child?.id,null,{lesson_id:lesson?.id,set_index:lesson?.setIndex}); setScreen("lessons"); }} onDone={() => { db.track("lesson_complete",child?.id,null,{lesson_id:lesson?.id,set_index:lesson?.setIndex}); setScreen("lessons"); }} onNextSet={(si) => { db.track("set_advance",child?.id,null,{lesson_id:lesson?.id,set_index:si}); setLesson(l => ({...l, setIndex:si})); }}/>{ showSOS && <SOSButton onClick={() => goFeedback("bug")}/>}<FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
-  if (screen === "abacus")   return <><GlobalStyles/>{SwUpdatePortal}<Abacus   onBack={() => setScreen("home")} child={child}/>{ showSOS && <SOSButton onClick={() => goFeedback("bug")}/>}<FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
-  if (screen === "olympiad") return <><GlobalStyles/>{SwUpdatePortal}<Olympiad child={child} setChild={setChild} onBack={() => setScreen("home")}/>{ showSOS && <SOSButton onClick={() => goFeedback("bug")}/>}<FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
-  if (screen === "parent")   return <><GlobalStyles/>{SwUpdatePortal}<ParentDash child={child} onBack={() => setScreen("home")}/></>;
-  if (screen === "feedback") return <><GlobalStyles/>{SwUpdatePortal}<FeedbackScreen child={child} currentScreen={prevScreen} prefillCategory={feedbackPrefill} onBack={() => setScreen(prevScreen)}/></>;
-  if (screen === "games")    return <><GlobalStyles/>{SwUpdatePortal}<GamesHub child={child} onBack={() => setScreen("home")}/></>;
+  if (screen === "lessons")       return <><GlobalStyles/>{SwUpdatePortal}<LessonMap world={world} child={child} onBack={() => setScreen("home")} isLessonPurchased={isLessonPurchased} onPurchaseLesson={purchaseLesson} onLesson={l => { setLesson(l); setScreen("game"); }}/></>;
+  if (screen === "game")          return <><GlobalStyles/>{SwUpdatePortal}<Game     lesson={lesson} world={world} child={child} setChild={setChild} onBack={() => { db.track("lesson_exit",child?.id,null,{lesson_id:lesson?.id,set_index:lesson?.setIndex}); setScreen("lessons"); }} onDone={() => { db.track("lesson_complete",child?.id,null,{lesson_id:lesson?.id,set_index:lesson?.setIndex}); setScreen("lessons"); }} onNextSet={(si) => { db.track("set_advance",child?.id,null,{lesson_id:lesson?.id,set_index:si}); setLesson(l => ({...l, setIndex:si})); }}/>{ showSOS && <SOSButton onClick={() => goFeedback("bug")}/>}<FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
+  if (screen === "abacus")        return <><GlobalStyles/>{SwUpdatePortal}<Abacus   onBack={() => setScreen("home")} child={child}/>{ showSOS && <SOSButton onClick={() => goFeedback("bug")}/>}<FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
+  if (screen === "olympiad")      return <><GlobalStyles/>{SwUpdatePortal}<Olympiad child={child} setChild={setChild} onBack={() => setScreen("home")}/>{ showSOS && <SOSButton onClick={() => goFeedback("bug")}/>}<FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
+  if (screen === "parent")        return <><GlobalStyles/>{SwUpdatePortal}<ParentDash child={child} onBack={() => setScreen("home")}/></>;
+  if (screen === "feedback")      return <><GlobalStyles/>{SwUpdatePortal}<FeedbackScreen child={child} currentScreen={prevScreen} prefillCategory={feedbackPrefill} onBack={() => setScreen(prevScreen)}/></>;
+  if (screen === "games")         return <><GlobalStyles/>{SwUpdatePortal}<GamesHub child={child} onBack={() => setScreen("home")}/></>;
   if (screen === "student_login") return <><GlobalStyles/>{SwUpdatePortal}<StudentLogin onBack={()=>setScreen("student_entry")} onDone={(s)=>{setSchoolStudent(s);setChild({...s,id:s.id,name:s.name,avatar:"🧒",class_num:s.class_num,xp:s.xp||0,coins:s.coins||0,level:s.level||1,streak_days:s.streak_days||0,is_school_student:true});setScreen("home");}}/></>;
   if (screen === "teacher_login") return <><GlobalStyles/>{SwUpdatePortal}<TeacherLogin onBack={()=>setScreen("entry")} onDone={(t)=>{ const tObj={...t, permissions:Array.isArray(t.permissions)?t.permissions:[]}; setTeacher(tObj); localStorage.setItem("mm_teacher_session",JSON.stringify(tObj)); setScreen("teacher_dash"); }}/></>;
   if (screen === "teacher_dash")  return <><GlobalStyles/>{SwUpdatePortal}<TeacherDashboard teacher={teacher} onLogout={()=>{setTeacher(null);setScreen("entry");}}/></>;
   if (screen === "admin_panel")   return <><GlobalStyles/>{SwUpdatePortal}<AdminPanel onBack={()=>setScreen("entry")}/></>;
-  if (screen === "privacy")    return <><GlobalStyles/>{SwUpdatePortal}<PrivacyPolicy  onBack={()=>setScreen("settings")}/></>;
-  if (screen === "terms")      return <><GlobalStyles/>{SwUpdatePortal}<TermsOfService onBack={()=>setScreen("settings")}/></>;
-  if (screen === "datapolicy") return <><GlobalStyles/>{SwUpdatePortal}<DataPolicy     onBack={()=>setScreen("settings")}/></>;
-  if (screen === "settings")   return <><GlobalStyles/>{SwUpdatePortal}<Settings child={child} user={user} onThemeChange={handleThemeChange} onBack={(dest)=>{if(dest==="rate")setShowRating(true);else if(dest)setScreen(dest);else setScreen("home");}} onLogout={logout}/></>;
-  // ── SW update banner (floating, non-intrusive) ─────────────────
-  const SwUpdateBanner = swUpdateReady ? (
-    <div style={{position:"fixed",bottom:72,left:"50%",transform:"translateX(-50%)",zIndex:9999,
-      background:"linear-gradient(135deg,#7ec8e3,#9b7ede)",borderRadius:14,padding:"10px 18px",
-      display:"flex",alignItems:"center",gap:10,boxShadow:"0 4px 24px rgba(0,0,0,0.4)",
-      fontFamily:"'Nunito',sans-serif",minWidth:260,maxWidth:340}}>
-      <span style={{fontSize:18}}>🚀</span>
-      <span style={{flex:1,fontSize:12,color:"#04040f",fontWeight:700}}>New update ready!</span>
-      <button onClick={applySwUpdate}
-        style={{background:"#04040f",border:"none",borderRadius:8,padding:"6px 12px",
-          color:"#7ec8e3",fontSize:11,fontWeight:900,cursor:"pointer",fontFamily:"'Orbitron',sans-serif"}}>
-        UPDATE
-      </button>
-      <button onClick={()=>setSwUpdateReady(false)}
-        style={{background:"none",border:"none",color:"#04040f",fontSize:16,cursor:"pointer",padding:2}}>✕</button>
-    </div>
-  ) : null;
+  if (screen === "privacy")       return <><GlobalStyles/>{SwUpdatePortal}<PrivacyPolicy  onBack={()=>setScreen("settings")}/></>;
+  if (screen === "terms")         return <><GlobalStyles/>{SwUpdatePortal}<TermsOfService onBack={()=>setScreen("settings")}/></>;
+  if (screen === "datapolicy")    return <><GlobalStyles/>{SwUpdatePortal}<DataPolicy     onBack={()=>setScreen("settings")}/></>;
+  if (screen === "settings")      return <><GlobalStyles/>{SwUpdatePortal}<Settings child={child} user={user} onThemeChange={handleThemeChange} onBack={(dest)=>{if(dest==="rate")setShowRating(true);else if(dest)setScreen(dest);else setScreen("home");}} onLogout={logout}/></>;
 
-  return <><GlobalStyles/>{SwUpdatePortal}<OfflineBanner/>{SwUpdateBanner}</>;
+  return <><GlobalStyles/>{SwUpdatePortal}<OfflineBanner/></>;
 }
