@@ -8,7 +8,7 @@
 //   Offline fallback                  → Serve /offline.html
 // ─────────────────────────────────────────────────────────────────────────────
 
-const CACHE_VERSION  = "mm-v3";
+const CACHE_VERSION  = "mm-v4";
 const STATIC_CACHE   = `${CACHE_VERSION}-static`;
 const QUESTION_CACHE = `${CACHE_VERSION}-questions`;
 const FONT_CACHE     = `${CACHE_VERSION}-fonts`;
@@ -98,12 +98,21 @@ self.addEventListener("fetch", e => {
     return;
   }
 
-  // ── 4. Static assets (JS, CSS, images, icons) ───────────────────────────
-  if (
-    url.pathname.match(/\.(js|css|png|jpg|jpeg|svg|ico|woff2?|webp|gif)$/) ||
-    url.pathname === "/" || url.pathname === "/index.html"
-  ) {
+  // ── 4. JS/CSS assets → network-first (ensures fresh code after deploys) ──
+  if (url.pathname.match(/\.(js|css)$/)) {
+    e.respondWith(networkFirstWithFallback(request));
+    return;
+  }
+
+  // ── 5. Images, fonts, icons → stale-while-revalidate ────────────────────
+  if (url.pathname.match(/\.(png|jpg|jpeg|svg|ico|woff2?|webp|gif)$/)) {
     e.respondWith(staleWhileRevalidate(request));
+    return;
+  }
+
+  // ── 6. HTML shell (index + root) → network-first ────────────────────────
+  if (url.pathname === "/" || url.pathname === "/index.html") {
+    e.respondWith(networkFirstWithFallback(request));
     return;
   }
 
@@ -112,6 +121,21 @@ self.addEventListener("fetch", e => {
     caches.match("/index.html").then(r => r || fetch(request))
   );
 });
+
+// ── Strategy: Network-first with cache fallback (for JS/CSS/HTML) ────────────
+async function networkFirstWithFallback(request) {
+  const cache = await caches.open(STATIC_CACHE);
+  try {
+    const response = await fetch(request);
+    if (response && response.ok && response.type !== "opaque") {
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch(e) {
+    const cached = await cache.match(request);
+    return cached || caches.match("/offline.html");
+  }
+}
 
 // ── Strategy: Stale-while-revalidate for static shell ────────────────────────
 async function staleWhileRevalidate(request) {
