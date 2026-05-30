@@ -3736,8 +3736,9 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
   const [showWelcome, setShowWelcome] = useState(()=>!localStorage.getItem('mm_welcomed_'+(child?.id||"")));
   const dismissWelcome = () => { localStorage.setItem('mm_welcomed_'+(child?.id||""),'1'); setShowWelcome(false); };
   const [progress,   setProgress]   = useState([]);
-  const [showDQ,     setShowDQ]     = useState(false);
-  const [showPuzzle, setShowPuzzle] = useState(false);
+  const [showDQ,         setShowDQ]         = useState(false);
+  const [showPuzzle,     setShowPuzzle]     = useState(false);
+  const [showDailyQuest, setShowDailyQuest] = useState(false);
   const [showRating, setShowRating] = useState(false);
   const [mascotMsg,  setMascotMsg]  = useState(0);
   const w = WORLDS.find(x=>x.id===parseInt(child.class_num||1)) || WORLDS[0];
@@ -3781,6 +3782,14 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
       {showTutorial && <Tutorial onDone={doneTutorial}/>}
       {showDQ     && <DailyQuiz   child={child} onClose={() => setShowDQ(false)}/>}
       {showPuzzle && <DailyPuzzle child={child} onClose={() => setShowPuzzle(false)}/>}
+      {showDailyQuest && (
+        <DailyQuestHub
+          child={child}
+          dqDone={dqDone} dpDone={dpDone} setDone={todaySets>=1}
+          onWorld={onWorld} worldW={w}
+          onClose={() => setShowDailyQuest(false)}
+        />
+      )}
       {showRating && <RatingPrompt child={child} onClose={() => setShowRating(false)}/>}
 
       {showWelcome && (
@@ -3865,32 +3874,76 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onLogou
         ))}
       </div>
 
-      {/* Daily Missions */}
+      {/* ── Daily Quest ─────────────────────────────────────────────── */}
       <div style={{ position:"relative", zIndex:2, margin:"14px 18px 0" }}>
+        {/* Header row */}
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
-          <div style={{ fontSize:16, fontWeight:900, color:textColor() }}>🎯 Today's Missions</div>
-          <div style={{ fontSize:12, color:C.dim }}>{[dqDone,dpDone,todaySets>=1].filter(Boolean).length}/3 done</div>
+          <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+            <div style={{ fontSize:20 }}>🎯</div>
+            <div style={{ fontSize:16, fontWeight:900, color:textColor() }}>Daily Quest</div>
+          </div>
+          <div style={{ background:`${C.purple}22`, border:`1px solid ${C.purple}44`, borderRadius:10, padding:"3px 10px", fontSize:11, color:C.purple, fontFamily:"'Orbitron',sans-serif", fontWeight:700 }}>
+            {[dqDone,dpDone,todaySets>=1].filter(Boolean).length}/3 DONE
+          </div>
         </div>
-        <div style={{ background:isDark()?isDark()?"rgba(255,255,255,0.06)":"rgba(124,111,224,0.06)":C.border||"#ece8ff", borderRadius:8, height:6, overflow:"hidden", marginBottom:14 }}>
-          <div style={{ width:`${([dqDone,dpDone,todaySets>=1].filter(Boolean).length/3)*100}%`, height:"100%", background:`linear-gradient(90deg,${C.cyan},${C.purple})`, borderRadius:8, transition:"width 0.6s ease" }}/>
+
+        {/* Progress bar */}
+        <div style={{ background:isDark()?"rgba(255,255,255,0.06)":"#ece8ff", borderRadius:8, height:7, overflow:"hidden", marginBottom:12 }}>
+          <div style={{ width:`${([dqDone,dpDone,todaySets>=1].filter(Boolean).length/3)*100}%`, height:"100%",
+            background:`linear-gradient(90deg,${C.cyan},${C.purple},${C.pink})`, borderRadius:8, transition:"width 0.6s ease",
+            boxShadow:[dqDone,dpDone,todaySets>=1].filter(Boolean).length===3?`0 0 10px ${C.purple}88`:"none" }}/>
         </div>
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:10 }}>
-          <button onClick={()=>onWorld(w)} style={{ background:todaySets>=1?`${C.green}18`:`${C.cyan}14`, border:`2px solid ${todaySets>=1?C.green+"55":C.cyan+"33"}`, borderRadius:18, padding:"14px 8px", cursor:"pointer", textAlign:"center" }}>
-            <div style={{ fontSize:28, marginBottom:6 }}>{todaySets>=1?"✅":"🧮"}</div>
-            <div style={{ fontSize:12, fontWeight:800, color:todaySets>=1?C.green:C.cyan }}>Do a Set</div>
-            <div style={{ fontSize:11, color:C.dim, marginTop:2 }}>+150 XP</div>
+
+        {/* All-done banner */}
+        {[dqDone,dpDone,todaySets>=1].every(Boolean) ? (
+          <div style={{ background:`linear-gradient(135deg,${C.green}18,${C.cyan}12)`, border:`2px solid ${C.green}44`,
+            borderRadius:20, padding:"18px 20px", textAlign:"center" }}>
+            <div style={{ fontSize:44, marginBottom:6 }}>🏆</div>
+            <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:13, color:C.green, fontWeight:900, marginBottom:4 }}>QUEST COMPLETE!</div>
+            <div style={{ fontSize:12, color:C.dim }}>You earned all daily rewards. Come back tomorrow!</div>
+          </div>
+        ) : (
+          /* Main quest card — single entry point */
+          <button onClick={()=>setShowDailyQuest(true)}
+            style={{ width:"100%", background:`linear-gradient(135deg,${C.purple}22,${C.cyan}14)`,
+              border:`2px solid ${C.purple}55`, borderRadius:20, padding:"18px 20px",
+              cursor:"pointer", textAlign:"left", position:"relative", overflow:"hidden" }}>
+            {/* Glow orb */}
+            <div style={{ position:"absolute", right:-20, top:-20, width:100, height:100, borderRadius:"50%",
+              background:`radial-gradient(circle,${C.purple}44,transparent 70%)`, pointerEvents:"none" }}/>
+            <div style={{ display:"flex", alignItems:"center", gap:16, position:"relative", zIndex:1 }}>
+              <div style={{ fontSize:48 }}>
+                {[dqDone,dpDone,todaySets>=1].filter(Boolean).length === 0 ? "🚀"
+                  : [dqDone,dpDone,todaySets>=1].filter(Boolean).length === 1 ? "⚡"
+                  : "🔥"}
+              </div>
+              <div style={{ flex:1 }}>
+                <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:11, color:C.purple, fontWeight:700, marginBottom:4 }}>
+                  {[dqDone,dpDone,todaySets>=1].filter(Boolean).length === 0 ? "START TODAY'S QUEST" : "CONTINUE QUEST"}
+                </div>
+                {/* 3 task pills */}
+                <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
+                  {[
+                    { label:"Do a Set",      done:todaySets>=1, color:C.cyan,   icon:"🧮" },
+                    { label:"Word Problem",  done:dqDone,       color:C.yellow, icon:"🌟" },
+                    { label:"Brain Puzzle",  done:dpDone,       color:C.purple, icon:"🧩" },
+                  ].map((t,i)=>(
+                    <div key={i} style={{ background:t.done?`${C.green}22`:`${t.color}18`,
+                      border:`1px solid ${t.done?C.green+"55":t.color+"33"}`,
+                      borderRadius:10, padding:"3px 9px", display:"flex", alignItems:"center", gap:4 }}>
+                      <span style={{ fontSize:11 }}>{t.done ? "✅" : t.icon}</span>
+                      <span style={{ fontSize:10, fontWeight:700, color:t.done?C.green:t.color }}>{t.label}</span>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ fontSize:11, color:C.dim, marginTop:6 }}>
+                  Total reward: <span style={{ color:C.yellow, fontWeight:800 }}>+275 XP</span> · <span style={{ color:C.orange, fontWeight:800 }}>+35 Coins</span>
+                </div>
+              </div>
+              <div style={{ fontSize:24, color:C.purple }}>›</div>
+            </div>
           </button>
-          <button onClick={()=>setShowDQ(true)} style={{ background:dqDone?`${C.green}18`:`${C.yellow}14`, border:`2px solid ${dqDone?C.green+"55":C.yellow+"33"}`, borderRadius:18, padding:"14px 8px", cursor:"pointer", textAlign:"center" }}>
-            <div style={{ fontSize:28, marginBottom:6 }}>{dqDone?"🏅":"🌟"}</div>
-            <div style={{ fontSize:12, fontWeight:800, color:dqDone?C.green:C.yellow }}>Word Problem</div>
-            <div style={{ fontSize:11, color:C.dim, marginTop:2 }}>+50 XP</div>
-          </button>
-          <button onClick={()=>setShowPuzzle(true)} style={{ background:dpDone?`${C.green}18`:`${C.purple}14`, border:`2px solid ${dpDone?C.green+"55":C.purple+"33"}`, borderRadius:18, padding:"14px 8px", cursor:"pointer", textAlign:"center" }}>
-            <div style={{ fontSize:28, marginBottom:6 }}>{dpDone?"🏆":"🧩"}</div>
-            <div style={{ fontSize:12, fontWeight:800, color:dpDone?C.green:C.purple }}>Brain Puzzle</div>
-            <div style={{ fontSize:11, color:C.dim, marginTop:2 }}>+75 XP</div>
-          </button>
-        </div>
+        )}
       </div>
 
       {/* Quick Launch */}
@@ -5988,6 +6041,147 @@ function NumberMemory({ onBack, child }) {
       </div>
     </div>
   );
+}
+
+// ── Daily Quest Hub — unified wrapper for all 3 daily tasks ─────────────────
+// Shows a step-through flow: Do a Set → Word Problem → Brain Puzzle
+// Each tab can be done in any order; hub tracks completion and shows summary
+function DailyQuestHub({ child, dqDone, dpDone, setDone, onWorld, worldW, onClose }) {
+  // 0=overview  1=set  2=challenge  3=puzzle  4=allDone
+  const [step,       setStep]       = useState(0);
+  const [localDQ,    setLocalDQ]    = useState(dqDone);
+  const [localDP,    setLocalDP]    = useState(dpDone);
+  const [localSet,   setLocalSet]   = useState(setDone);
+  const allDone = localDQ && localDP && localSet;
+
+  const tasks = [
+    { id:"set",       icon:"🧮", label:"Do a Set",     xp:150, coins:0,  color:C.cyan,   done:localSet,  step:1 },
+    { id:"challenge", icon:"🌟", label:"Word Problem",  xp:50,  coins:10, color:C.yellow, done:localDQ,   step:2 },
+    { id:"puzzle",    icon:"🧩", label:"Brain Puzzle",  xp:75,  coins:15, color:C.purple, done:localDP,   step:3 },
+  ];
+  const doneCount = tasks.filter(t=>t.done).length;
+
+  // ── Overview screen ───────────────────────────────────────────────
+  if (step === 0) return (
+    <div style={{position:"fixed",inset:0,background:isDark()?"rgba(4,4,15,0.96)":"rgba(240,244,255,0.97)",
+      backdropFilter:"blur(16px)",zIndex:998,display:"flex",flexDirection:"column",fontFamily:"'Baloo 2','Nunito',sans-serif",overflowY:"auto"}}>
+      <Starfield n={30}/>
+      <div style={{position:"relative",zIndex:1,flex:1,display:"flex",flexDirection:"column",padding:"20px 18px 32px",maxWidth:480,margin:"0 auto",width:"100%"}}>
+
+        {/* Header */}
+        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
+          <BackBtn onClick={onClose}/>
+          <div style={{flex:1}}>
+            <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:14,color:C.purple,fontWeight:700}}>DAILY QUEST</div>
+            <div style={{fontSize:11,color:C.dim}}>{new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long"})}</div>
+          </div>
+          <div style={{background:`${C.purple}22`,border:`1px solid ${C.purple}44`,borderRadius:12,padding:"4px 12px",
+            fontFamily:"'Orbitron',sans-serif",fontSize:11,color:C.purple,fontWeight:700}}>{doneCount}/3</div>
+        </div>
+
+        {/* Hero banner */}
+        <div style={{background:`linear-gradient(135deg,${C.purple}28,${C.cyan}18)`,border:`2px solid ${C.purple}44`,
+          borderRadius:24,padding:"22px 20px",marginBottom:18,textAlign:"center",position:"relative",overflow:"hidden"}}>
+          <div style={{position:"absolute",right:-20,top:-20,width:120,height:120,borderRadius:"50%",
+            background:`radial-gradient(circle,${C.yellow}22,transparent 70%)`,pointerEvents:"none"}}/>
+          <div style={{fontSize:56,marginBottom:8,animation:"floatUp 2.5s ease-in-out infinite"}}>
+            {allDone?"🏆":doneCount===0?"🚀":doneCount===1?"⚡":"🔥"}
+          </div>
+          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:15,color:textColor(),fontWeight:900,marginBottom:4}}>
+            {allDone?"QUEST COMPLETE!":doneCount===0?"YOUR DAILY QUEST":"KEEP GOING!"}
+          </div>
+          <div style={{fontSize:12,color:C.dim,lineHeight:1.6}}>
+            {allDone?"Amazing! You finished all 3 tasks today! 🌟"
+              :`Complete all 3 tasks to earn `}<span style={{color:C.yellow,fontWeight:800}}>+275 XP</span>
+            {!allDone && <span> & </span>}{!allDone && <span style={{color:C.orange,fontWeight:800}}>+35 Coins</span>}
+          </div>
+          {/* Overall progress bar */}
+          <div style={{background:"rgba(255,255,255,0.1)",borderRadius:8,height:6,overflow:"hidden",marginTop:14}}>
+            <div style={{width:`${(doneCount/3)*100}%`,height:"100%",
+              background:`linear-gradient(90deg,${C.cyan},${C.purple},${C.pink})`,borderRadius:8,transition:"width 0.6s ease"}}/>
+          </div>
+        </div>
+
+        {/* Task cards */}
+        <div style={{display:"flex",flexDirection:"column",gap:12,marginBottom:20}}>
+          {tasks.map((t,i)=>(
+            <button key={t.id} onClick={()=>{ if(!t.done) setStep(t.step); }}
+              disabled={t.done}
+              style={{background:t.done?`${C.green}14`:`${t.color}12`,
+                border:`2px solid ${t.done?C.green+"55":t.color+"44"}`,
+                borderRadius:18,padding:"16px 18px",cursor:t.done?"default":"pointer",
+                display:"flex",alignItems:"center",gap:14,textAlign:"left",
+                transition:"all 0.2s",opacity:t.done?0.85:1}}>
+              <div style={{width:52,height:52,borderRadius:16,
+                background:t.done?`${C.green}22`:`${t.color}22`,
+                border:`2px solid ${t.done?C.green+"44":t.color+"44"}`,
+                display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,flexShrink:0}}>
+                {t.done?"✅":t.icon}
+              </div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:15,fontWeight:900,color:t.done?C.green:textColor(),marginBottom:3}}>{t.label}</div>
+                <div style={{display:"flex",gap:8}}>
+                  <span style={{fontSize:11,color:C.yellow,fontWeight:700}}>+{t.xp} XP</span>
+                  {t.coins>0&&<span style={{fontSize:11,color:C.orange,fontWeight:700}}>+{t.coins} Coins</span>}
+                </div>
+              </div>
+              {t.done
+                ? <div style={{fontSize:13,color:C.green,fontFamily:"'Orbitron',sans-serif",fontWeight:700}}>DONE</div>
+                : <div style={{fontSize:24,color:t.color}}>›</div>
+              }
+            </button>
+          ))}
+        </div>
+
+        {allDone && (
+          <div style={{textAlign:"center"}}>
+            <Btn color={C.green} onClick={onClose}>🏆 BACK TO HOME</Btn>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  // ── Step 1: Do a Set — just close hub and open lessons ───────────
+  if (step === 1) {
+    // Mark as done optimistically and go back to overview, user navigates to lessons
+    return (
+      <div style={{position:"fixed",inset:0,background:isDark()?"rgba(4,4,15,0.96)":"rgba(240,244,255,0.97)",
+        backdropFilter:"blur(16px)",zIndex:998,display:"flex",flexDirection:"column",alignItems:"center",
+        justifyContent:"center",padding:24,fontFamily:"'Nunito',sans-serif",gap:16}}>
+        <div style={{fontSize:60,animation:"floatUp 2s ease-in-out infinite"}}>🧮</div>
+        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:14,color:C.cyan,textAlign:"center",marginBottom:4}}>DO A SET</div>
+        <div style={{fontSize:14,color:C.dim,textAlign:"center",lineHeight:1.7,maxWidth:300}}>
+          Complete any set from any lesson to earn <span style={{color:C.yellow,fontWeight:800}}>+150 XP</span>. Come back here after!
+        </div>
+        <div style={{display:"flex",gap:10,marginTop:8,width:"100%",maxWidth:300}}>
+          <button onClick={()=>setStep(0)}
+            style={{flex:1,background:"transparent",border:`1.5px solid ${C.dim}44`,borderRadius:12,
+              padding:12,color:C.dim,fontFamily:"'Nunito',sans-serif",fontSize:14,cursor:"pointer",fontWeight:700}}>
+            Back
+          </button>
+          <button onClick={()=>{ onClose(); onWorld(worldW); }}
+            style={{flex:2,background:`linear-gradient(135deg,${C.cyan},${C.purple})`,border:"none",
+              borderRadius:12,padding:12,color:"white",fontFamily:"'Orbitron',sans-serif",
+              fontSize:11,cursor:"pointer",fontWeight:900}}>
+            GO TO LESSONS →
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Step 2: Word Problem (DailyQuiz inline) ───────────────────────
+  if (step === 2) return (
+    <DailyQuiz child={child} onClose={()=>{ setLocalDQ(!!localStorage.getItem(`dq_done_${child.id}_${new Date().toISOString().slice(0,10)}`)); setStep(0); }}/>
+  );
+
+  // ── Step 3: Brain Puzzle (DailyPuzzle inline) ─────────────────────
+  if (step === 3) return (
+    <DailyPuzzle child={child} onClose={()=>{ setLocalDP(!!localStorage.getItem(`dp_done_${child.id}_${new Date().toISOString().slice(0,10)}`)); setStep(0); }}/>
+  );
+
+  return null;
 }
 
 // ── Daily Quiz ────────────────────────────────────────────────────────
