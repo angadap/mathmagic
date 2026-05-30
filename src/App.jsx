@@ -722,6 +722,89 @@ async function loadSb() {
 // ─────────────────────────────────────────────────────────────────────
 // IN-MEMORY STORE — works fully offline; Supabase is optional
 // ─────────────────────────────────────────────────────────────────────
+const PROGRESS_LS_KEY = "mm_progress_v2";
+const CHILDREN_LS_KEY = "mm_children_v2";
+const DAILY_LS_KEY    = "mm_daily_v2";
+
+function lsPersist(lsKey, data) {
+  try { localStorage.setItem(lsKey, JSON.stringify({ _ts: Date.now(), data })); } catch(e) {}
+}
+function lsRestore(lsKey, maxAgeMs = 60 * 60 * 1000) {
+  try {
+    const raw = localStorage.getItem(lsKey);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || Date.now() - parsed._ts > maxAgeMs) return null;
+    return parsed.data;
+  } catch(e) { return null; }
+}
+
+async function fetchSetQuestions(lessonId, setIndex) {
+  const key = lessonId + "_" + setIndex;
+
+  // Serve from persistent cache — no DB round trip, works after reload
+  const cached = cacheGet(key);
+  if (cached) {
+    return shuffle(cached.map(r => {
+      const { opts, ans } = shuffleOpts(r.opts, r.ans);
+      return { q: r.q, opts, ans, h: r.h };
+    }));
+  }
+
+  try {
+    const res = await fetch("/api/db", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "get_questions", lesson_id: lessonId + "_s" + setIndex, set_index: setIndex })
+    });
+    const json = await res.json();
+    const data = json.data;
+    if (Array.isArray(data) && data.length > 0) {
+      const mapped = data.map(r => ({
+        q: r.question,
+        opts: Array.isArray(r.options) ? r.options : JSON.parse(r.options),
+        ans: r.correct_answer,
+        h: r.hint,
+      }));
+      cacheSet(key, mapped);
+      return shuffle(mapped.map(r => {
+        const { opts, ans } = shuffleOpts(r.opts, r.ans);
+        return { q: r.q, opts, ans, h: r.h };
+      }));
+    }
+  } catch(e) { console.warn("fetchSetQuestions failed:", e.message); }
+  // Questions are stored in the Supabase 'questions' table.
+  // This minimal fallback only triggers if DB fetch fails AND no cache exists.
+  const FALLBACK_Q = [
+    {q:"What is 5 + 3?",  opts:["6","7","8","9"],    ans:2, h:"Count on from 5!"},
+    {q:"What is 9 - 4?",  opts:["3","4","5","6"],    ans:2, h:"Take away 4 from 9!"},
+    {q:"What is 3 x 4?",  opts:["10","11","12","13"],ans:2, h:"3 groups of 4!"},
+    {q:"What is 20 / 4?", opts:["3","4","5","6"],    ans:2, h:"20 shared into 4 groups!"},
+    {q:"What is 7 + 8?",  opts:["13","14","15","16"],ans:2, h:"7+8=15!"},
+    {q:"What is 15 - 6?", opts:["7","8","9","10"],   ans:2, h:"15-6=9!"},
+    {q:"What is 6 x 5?",  opts:["28","29","30","31"],ans:2, h:"6x5=30!"},
+    {q:"What is 36 / 6?", opts:["4","5","6","7"],    ans:2, h:"36÷6=6!"},
+    {q:"What is 13 + 9?", opts:["20","21","22","23"],ans:2, h:"13+9=22!"},
+    {q:"What is 25 - 8?", opts:["15","16","17","18"],ans:2, h:"25-8=17!"},
+    {q:"What is 8 x 7?",  opts:["54","55","56","57"],ans:2, h:"8x7=56!"},
+    {q:"What is 45 / 9?", opts:["3","4","5","6"],    ans:2, h:"45÷9=5!"},
+    {q:"What is 14 + 7?", opts:["19","20","21","22"],ans:2, h:"14+7=21!"},
+    {q:"What is 32 - 14?",opts:["16","17","18","19"],ans:2, h:"32-14=18!"},
+    {q:"What is 9 x 6?",  opts:["52","53","54","55"],ans:2, h:"9x6=54!"},
+    {q:"What is 48 / 8?", opts:["4","5","6","7"],    ans:2, h:"48÷8=6!"},
+    {q:"What is 16 + 8?", opts:["22","23","24","25"],ans:2, h:"16+8=24!"},
+    {q:"What is 40 - 13?",opts:["25","26","27","28"],ans:2, h:"40-13=27!"},
+    {q:"What is 7 x 8?",  opts:["54","55","56","57"],ans:2, h:"7x8=56!"},
+    {q:"What is 63 / 7?", opts:["7","8","9","10"],   ans:2, h:"63÷7=9!"},
+  ];
+    // Pick questions for this lesson (or graceful fallback)
+  // Primary source: Supabase questions table (fetched above)
+  // Fallback: FALLBACK_Q (only if DB fetch failed)
+  return shuffle(FALLBACK_Q.map(q => { const r = shuffleOpts(q.opts, q.ans); return {...q, ...r}; }));
+}
+
+
+
 // ── MEM — restored from localStorage on startup (1-hour TTL) ────────────────
 const MEM = (() => {
   const cachedChildren = lsRestore(CHILDREN_LS_KEY, 60 * 60 * 1000) || [];
@@ -1122,88 +1205,6 @@ function cacheGet(key) {
 }
 
 // ── Shared LS helpers (progress + children) ───────────────────────────────────
-const PROGRESS_LS_KEY = "mm_progress_v2";
-const CHILDREN_LS_KEY = "mm_children_v2";
-const DAILY_LS_KEY    = "mm_daily_v2";
-
-function lsPersist(lsKey, data) {
-  try { localStorage.setItem(lsKey, JSON.stringify({ _ts: Date.now(), data })); } catch(e) {}
-}
-function lsRestore(lsKey, maxAgeMs = 60 * 60 * 1000) {
-  try {
-    const raw = localStorage.getItem(lsKey);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (!parsed || Date.now() - parsed._ts > maxAgeMs) return null;
-    return parsed.data;
-  } catch(e) { return null; }
-}
-
-async function fetchSetQuestions(lessonId, setIndex) {
-  const key = lessonId + "_" + setIndex;
-
-  // Serve from persistent cache — no DB round trip, works after reload
-  const cached = cacheGet(key);
-  if (cached) {
-    return shuffle(cached.map(r => {
-      const { opts, ans } = shuffleOpts(r.opts, r.ans);
-      return { q: r.q, opts, ans, h: r.h };
-    }));
-  }
-
-  try {
-    const res = await fetch("/api/db", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "get_questions", lesson_id: lessonId + "_s" + setIndex, set_index: setIndex })
-    });
-    const json = await res.json();
-    const data = json.data;
-    if (Array.isArray(data) && data.length > 0) {
-      const mapped = data.map(r => ({
-        q: r.question,
-        opts: Array.isArray(r.options) ? r.options : JSON.parse(r.options),
-        ans: r.correct_answer,
-        h: r.hint,
-      }));
-      cacheSet(key, mapped);
-      return shuffle(mapped.map(r => {
-        const { opts, ans } = shuffleOpts(r.opts, r.ans);
-        return { q: r.q, opts, ans, h: r.h };
-      }));
-    }
-  } catch(e) { console.warn("fetchSetQuestions failed:", e.message); }
-  // Questions are stored in the Supabase 'questions' table.
-  // This minimal fallback only triggers if DB fetch fails AND no cache exists.
-  const FALLBACK_Q = [
-    {q:"What is 5 + 3?",  opts:["6","7","8","9"],    ans:2, h:"Count on from 5!"},
-    {q:"What is 9 - 4?",  opts:["3","4","5","6"],    ans:2, h:"Take away 4 from 9!"},
-    {q:"What is 3 x 4?",  opts:["10","11","12","13"],ans:2, h:"3 groups of 4!"},
-    {q:"What is 20 / 4?", opts:["3","4","5","6"],    ans:2, h:"20 shared into 4 groups!"},
-    {q:"What is 7 + 8?",  opts:["13","14","15","16"],ans:2, h:"7+8=15!"},
-    {q:"What is 15 - 6?", opts:["7","8","9","10"],   ans:2, h:"15-6=9!"},
-    {q:"What is 6 x 5?",  opts:["28","29","30","31"],ans:2, h:"6x5=30!"},
-    {q:"What is 36 / 6?", opts:["4","5","6","7"],    ans:2, h:"36÷6=6!"},
-    {q:"What is 13 + 9?", opts:["20","21","22","23"],ans:2, h:"13+9=22!"},
-    {q:"What is 25 - 8?", opts:["15","16","17","18"],ans:2, h:"25-8=17!"},
-    {q:"What is 8 x 7?",  opts:["54","55","56","57"],ans:2, h:"8x7=56!"},
-    {q:"What is 45 / 9?", opts:["3","4","5","6"],    ans:2, h:"45÷9=5!"},
-    {q:"What is 14 + 7?", opts:["19","20","21","22"],ans:2, h:"14+7=21!"},
-    {q:"What is 32 - 14?",opts:["16","17","18","19"],ans:2, h:"32-14=18!"},
-    {q:"What is 9 x 6?",  opts:["52","53","54","55"],ans:2, h:"9x6=54!"},
-    {q:"What is 48 / 8?", opts:["4","5","6","7"],    ans:2, h:"48÷8=6!"},
-    {q:"What is 16 + 8?", opts:["22","23","24","25"],ans:2, h:"16+8=24!"},
-    {q:"What is 40 - 13?",opts:["25","26","27","28"],ans:2, h:"40-13=27!"},
-    {q:"What is 7 x 8?",  opts:["54","55","56","57"],ans:2, h:"7x8=56!"},
-    {q:"What is 63 / 7?", opts:["7","8","9","10"],   ans:2, h:"63÷7=9!"},
-  ];
-    // Pick questions for this lesson (or graceful fallback)
-  // Primary source: Supabase questions table (fetched above)
-  // Fallback: FALLBACK_Q (only if DB fetch failed)
-  return shuffle(FALLBACK_Q.map(q => { const r = shuffleOpts(q.opts, q.ans); return {...q, ...r}; }));
-}
-
-
 const OLYMPIAD_TESTS = [
   /* Test 1 */ [
     {q:"A train has 5 coaches. Each coach has 8 seats. Total seats?",opts:["30", "35", "40", "45"],ans:2,h:"5x8=40!",time:45},
