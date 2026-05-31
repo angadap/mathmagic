@@ -3838,87 +3838,78 @@ function QuickLaunch({ onAbacus, onGames, onOlympiad, onBazaar }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-//  🛒  BAZAAR MATHS — Phase 1: Daily Challenge + Reputation + Boss
+//  🛒  BAZAAR MATHS — Phase 2: Passport · Festivals · Speed Round · League
 // ═══════════════════════════════════════════════════════════════════════
 
-// ── Market catalogue ─────────────────────────────────────────────────
+// ─── Market catalogue ────────────────────────────────────────────────
 const BAZAAR_MARKETS = [
-  {
-    id:"fruits", name:"Fruit Market", emoji:"🍎", color:"#f97316",
-    keeper:"Ramu Kaka", keeperEmoji:"👴", desc:"Buy & sell fresh fruits!",
-    mood:["😊","😐","😠"], bgPattern:"🍎🍌🥭🍊🍇🍉",
-    isPaid:false,
-    items:[
-      {name:"Apple",      emoji:"🍎", price:120, unit:"per kg"},
-      {name:"Banana",     emoji:"🍌", price:5,   unit:"each"},
-      {name:"Mango",      emoji:"🥭", price:80,  unit:"per kg"},
-      {name:"Orange",     emoji:"🍊", price:15,  unit:"each"},
-      {name:"Grapes",     emoji:"🍇", price:90,  unit:"per kg"},
-      {name:"Watermelon", emoji:"🍉", price:30,  unit:"per kg"},
-    ],
-  },
-  {
-    id:"veggies", name:"Veggie Shop", emoji:"🥦", color:"#22c55e",
-    keeper:"Savitri Bai", keeperEmoji:"👩", desc:"Fresh veggies from the farm!",
-    mood:["😊","😐","😠"], bgPattern:"🥦🥔🍅🧅🥕🍆",
-    isPaid:false,
-    items:[
-      {name:"Potato",   emoji:"🥔", price:30, unit:"per kg"},
-      {name:"Tomato",   emoji:"🍅", price:40, unit:"per kg"},
-      {name:"Onion",    emoji:"🧅", price:50, unit:"per kg"},
-      {name:"Carrot",   emoji:"🥕", price:60, unit:"per kg"},
-      {name:"Brinjal",  emoji:"🍆", price:35, unit:"per kg"},
-      {name:"Capsicum", emoji:"🫑", price:20, unit:"each"},
-    ],
-  },
-  {
-    id:"grocery", name:"Kirana Store", emoji:"🛒", color:"#a855f7",
-    keeper:"Sharma Ji", keeperEmoji:"🧔", desc:"Daily grocery needs!",
-    mood:["😊","😐","😠"], bgPattern:"🛒🍚🫘🍪🥛🍬",
-    isPaid:true,
-    items:[
-      {name:"Rice",     emoji:"🍚", price:60,  unit:"per kg"},
-      {name:"Dal",      emoji:"🫘", price:100, unit:"per kg"},
-      {name:"Biscuits", emoji:"🍪", price:10,  unit:"each"},
-      {name:"Milk",     emoji:"🥛", price:25,  unit:"each"},
-      {name:"Sugar",    emoji:"🍬", price:45,  unit:"per kg"},
-      {name:"Oil",      emoji:"🫙", price:150, unit:"each"},
-    ],
-  },
-  {
-    id:"sweets", name:"Mithai Shop", emoji:"🍮", color:"#ec4899",
-    keeper:"Halwai Ji", keeperEmoji:"👨‍🍳", desc:"Yummy Indian sweets!",
-    mood:["😊","😐","😠"], bgPattern:"🍮🟡🟩🟤🟠🟨",
-    isPaid:true,
-    items:[
-      {name:"Ladoo",       emoji:"🟡", price:15,  unit:"each"},
-      {name:"Barfi",       emoji:"🟩", price:400, unit:"per kg"},
-      {name:"Gulab Jamun", emoji:"🟤", price:10,  unit:"each"},
-      {name:"Jalebi",      emoji:"🟠", price:200, unit:"per kg"},
-      {name:"Kheer",       emoji:"⬜", price:120, unit:"per kg"},
-      {name:"Halwa",       emoji:"🟨", price:160, unit:"per kg"},
-    ],
-  },
+  { id:"fruits",  name:"Fruit Market",  emoji:"🍎", color:"#f97316", keeper:"Ramu Kaka",  keeperEmoji:"👴", desc:"Buy & sell fresh fruits!",       mood:["😊","😐","😠"], isPaid:false,
+    city:"Mumbai", cityEmoji:"🏙️",
+    items:[{name:"Apple",emoji:"🍎",price:120,unit:"per kg"},{name:"Banana",emoji:"🍌",price:5,unit:"each"},{name:"Mango",emoji:"🥭",price:80,unit:"per kg"},{name:"Orange",emoji:"🍊",price:15,unit:"each"},{name:"Grapes",emoji:"🍇",price:90,unit:"per kg"},{name:"Watermelon",emoji:"🍉",price:30,unit:"per kg"}] },
+  { id:"veggies", name:"Veggie Shop",   emoji:"🥦", color:"#22c55e", keeper:"Savitri Bai",keeperEmoji:"👩", desc:"Fresh veggies from the farm!",     mood:["😊","😐","😠"], isPaid:false,
+    city:"Pune",   cityEmoji:"🏘️",
+    items:[{name:"Potato",emoji:"🥔",price:30,unit:"per kg"},{name:"Tomato",emoji:"🍅",price:40,unit:"per kg"},{name:"Onion",emoji:"🧅",price:50,unit:"per kg"},{name:"Carrot",emoji:"🥕",price:60,unit:"per kg"},{name:"Brinjal",emoji:"🍆",price:35,unit:"per kg"},{name:"Capsicum",emoji:"🫑",price:20,unit:"each"}] },
+  { id:"grocery", name:"Kirana Store",  emoji:"🛒", color:"#a855f7", keeper:"Sharma Ji",  keeperEmoji:"🧔", desc:"Daily grocery needs!",              mood:["😊","😐","😠"], isPaid:true,
+    city:"Delhi",  cityEmoji:"🕌",
+    items:[{name:"Rice",emoji:"🍚",price:60,unit:"per kg"},{name:"Dal",emoji:"🫘",price:100,unit:"per kg"},{name:"Biscuits",emoji:"🍪",price:10,unit:"each"},{name:"Milk",emoji:"🥛",price:25,unit:"each"},{name:"Sugar",emoji:"🍬",price:45,unit:"per kg"},{name:"Oil",emoji:"🫙",price:150,unit:"each"}] },
+  { id:"sweets",  name:"Mithai Shop",   emoji:"🍮", color:"#ec4899", keeper:"Halwai Ji",  keeperEmoji:"👨‍🍳",desc:"Yummy Indian sweets!",               mood:["😊","😐","😠"], isPaid:true,
+    city:"Jaipur", cityEmoji:"🏯",
+    items:[{name:"Ladoo",emoji:"🟡",price:15,unit:"each"},{name:"Barfi",emoji:"🟩",price:400,unit:"per kg"},{name:"Gulab Jamun",emoji:"🟤",price:10,unit:"each"},{name:"Jalebi",emoji:"🟠",price:200,unit:"per kg"},{name:"Kheer",emoji:"⬜",price:120,unit:"per kg"},{name:"Halwa",emoji:"🟨",price:160,unit:"per kg"}] },
 ];
 
-// ── Daily challenge catalogue (rotates by day-of-year) ───────────────
+// ─── Bazaar Passport cities (unlock order) ───────────────────────────
+const BAZAAR_PASSPORT = [
+  { id:"mumbai",   name:"Mumbai",        emoji:"🏙️",  unlockCoins:0,    marketId:"fruits",  desc:"Start your Bazaar journey!",           color:"#f97316" },
+  { id:"pune",     name:"Pune",          emoji:"🏘️",  unlockCoins:50,   marketId:"veggies", desc:"Earn 50 coins to unlock",              color:"#22c55e" },
+  { id:"delhi",    name:"Delhi",         emoji:"🕌",   unlockCoins:150,  marketId:"grocery", desc:"Earn 150 coins to unlock",             color:"#a855f7" },
+  { id:"jaipur",   name:"Jaipur",        emoji:"🏯",   unlockCoins:300,  marketId:"sweets",  desc:"Earn 300 coins to unlock",             color:"#ec4899" },
+  { id:"chennai",  name:"Chennai",       emoji:"🌊",   unlockCoins:500,  marketId:null,      desc:"Coming Soon — Sea market!",            color:"#06b6d4", comingSoon:true },
+  { id:"kolkata",  name:"Kolkata",       emoji:"🎨",   unlockCoins:750,  marketId:null,      desc:"Coming Soon — Street food market!",    color:"#fbbf24", comingSoon:true },
+  { id:"kerala",   name:"Kerala",        emoji:"🌴",   unlockCoins:1000, marketId:null,      desc:"Coming Soon — Spice & fish market!",   color:"#34d399", comingSoon:true },
+  { id:"varanasi", name:"Varanasi",      emoji:"🪔",   unlockCoins:1500, marketId:null,      desc:"Coming Soon — Festival mega-market!",  color:"#fb923c", comingSoon:true },
+];
+
+// ─── Festival events (active based on real date ranges) ───────────────
+const BAZAAR_FESTIVALS = [
+  { id:"diwali",  name:"Diwali Mela 🪔",     emoji:"🪔",  color:"#fbbf24", bonus:3,
+    months:[10],  days:[1,31],
+    desc:"Festival of lights! Special sweets & decoration orders everywhere.",
+    badge:"🪔 Diwali Hero",  items:["Ladoo","Barfi","Jalebi","Diyas","Sparklers"] },
+  { id:"holi",    name:"Holi Bazaar 🎨",      emoji:"🎨",  color:"#ec4899", bonus:3,
+    months:[2,3], days:[1,31],
+    desc:"Festival of colours! Sell gulal, thandai & sweets.",
+    badge:"🎨 Holi Champ",   items:["Thandai","Ladoo","Gulal","Gujiya","Milk"] },
+  { id:"eid",     name:"Eid Special 🌙",      emoji:"🌙",  color:"#a855f7", bonus:3,
+    months:[3,4], days:[1,31],
+    desc:"Eid Mubarak! Seviyan, dates and special biryani orders.",
+    badge:"🌙 Eid Star",     items:["Dates","Seviyan","Biryani Rice","Cream","Sugar"] },
+  { id:"harvest", name:"Harvest Festival 🌾", emoji:"🌾",  color:"#22c55e", bonus:2,
+    months:[1,4,10,11], days:[1,31],
+    desc:"Fresh crop season! Bumper stock, special prices, big orders.",
+    badge:"🌾 Harvest Hero",  items:["Rice","Wheat","Corn","Sugarcane","Millet"] },
+  { id:"weekend", name:"Weekend Bazaar 🎪",   emoji:"🎪",  color:"#06b6d4", bonus:2,
+    weekdays:[0,6], // Sun, Sat
+    desc:"Weekend rush! Every Saturday & Sunday all day.",
+    badge:"🎪 Weekend Trader",items:[] },
+];
+
+// ─── Daily challenges ─────────────────────────────────────────────────
 const BAZAAR_DAILY_CHALLENGES = [
-  { title:"Dadi Ji's Monday Order 👵",  emoji:"👵", desc:"Dadi needs 3 items for dinner. Can you help her?", bonus:2, color:"#f97316" },
-  { title:"School Tiffin Rush 🎒",      emoji:"🎒", desc:"50 kids need tiffin items. Big order alert!", bonus:2, color:"#22c55e" },
-  { title:"Festival Special 🪔",         emoji:"🪔", desc:"Diwali prep — help the family buy sweets & decor!", bonus:3, color:"#fbbf24" },
-  { title:"Rainy Day Sale ☔",           emoji:"☔", desc:"It's raining! Prices have changed. Adjust fast!", bonus:2, color:"#3b82f6" },
-  { title:"Cricket Match Snacks 🏏",    emoji:"🏏", desc:"Match day! Serve 10 customers before the first over!", bonus:2, color:"#a855f7" },
-  { title:"Wedding Season 💍",          emoji:"💍", desc:"Big wedding order — lots of mithai and fruit!", bonus:3, color:"#ec4899" },
-  { title:"Sunday Bazaar 🎪",           emoji:"🎪", desc:"Busiest day of the week. Handle the rush!", bonus:2, color:"#06b6d4" },
+  { title:"Dadi Ji's Order 👵",       emoji:"👵", desc:"Dadi needs 3 items for dinner tonight!",           bonus:2, color:"#f97316" },
+  { title:"School Tiffin Rush 🎒",    emoji:"🎒", desc:"50 kids need tiffin items. Big order alert!",      bonus:2, color:"#22c55e" },
+  { title:"Festival Special 🪔",      emoji:"🪔", desc:"Diwali prep — help the family stock up!",          bonus:3, color:"#fbbf24" },
+  { title:"Rainy Day Sale ☔",         emoji:"☔", desc:"It's raining! Prices have changed. Adjust fast!",  bonus:2, color:"#3b82f6" },
+  { title:"Cricket Match Snacks 🏏",  emoji:"🏏", desc:"Match day! Serve customers before the over ends!", bonus:2, color:"#a855f7" },
+  { title:"Wedding Season 💍",        emoji:"💍", desc:"Big wedding order — mithai, fruit & more!",        bonus:3, color:"#ec4899" },
+  { title:"Sunday Bazaar 🎪",         emoji:"🎪", desc:"Busiest day! Handle the rush like a pro!",         bonus:2, color:"#06b6d4" },
 ];
 
-const BAZAAR_CUSTOMER_NAMES = ["Priya","Ravi","Sunita","Arjun","Meena","Vikram","Ananya","Rahul","Kavya","Deepak","Lalita","Suresh","Pinki","Mohan","Geeta"];
+const BAZAAR_CUSTOMER_NAMES  = ["Priya","Ravi","Sunita","Arjun","Meena","Vikram","Ananya","Rahul","Kavya","Deepak","Lalita","Suresh","Pinki","Mohan","Geeta"];
 const BAZAAR_CUSTOMER_EMOJIS = ["🧒","👦","👧","🧑","👩","👨","👴","👵","🧔","💁"];
-
 const BAZAAR_REACTIONS_CORRECT = ["शाबाश! 🎉","Wah! Bilkul sahi! ✅","Perfect! 👏","Bahut acha! 🌟","Excellent! 🏆","Ek dum sahi! 💯","Kya baat hai! 🔥"];
 const BAZAAR_REACTIONS_WRONG   = ["Arre nahi...😅","Phir se socho! 🤔","Sochke dekho...💭","Galat hai beta...😬","Dhyan se! 👀"];
 
-// ── Reputation helpers ───────────────────────────────────────────────
+// ─── localStorage helpers ─────────────────────────────────────────────
 function getBazaarReputation(marketId) {
   try { return JSON.parse(localStorage.getItem(`bz_rep_${marketId}`) || "null") || { stars:3.0, happy:0, angry:0 }; }
   catch { return { stars:3.0, happy:0, angry:0 }; }
@@ -3931,37 +3922,54 @@ function updateBazaarReputation(marketId, correct) {
   localStorage.setItem(`bz_rep_${marketId}`, JSON.stringify(rep));
   return rep;
 }
-
-// ── Daily challenge helpers ──────────────────────────────────────────
 function getTodayDailyChallenge() {
-  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(),0,0)) / 86400000);
-  return BAZAAR_DAILY_CHALLENGES[dayOfYear % BAZAAR_DAILY_CHALLENGES.length];
+  const doy = Math.floor((Date.now() - new Date(new Date().getFullYear(),0,0)) / 86400000);
+  return BAZAAR_DAILY_CHALLENGES[doy % BAZAAR_DAILY_CHALLENGES.length];
 }
 function isDailyChallengeCompletedToday(childId) {
-  const today = new Date().toISOString().slice(0,10);
-  return localStorage.getItem(`bz_daily_${childId}_${today}`) === "1";
+  return localStorage.getItem(`bz_daily_${childId}_${new Date().toISOString().slice(0,10)}`) === "1";
 }
 function markDailyChallengeComplete(childId) {
-  const today = new Date().toISOString().slice(0,10);
-  localStorage.setItem(`bz_daily_${childId}_${today}`, "1");
+  localStorage.setItem(`bz_daily_${childId}_${new Date().toISOString().slice(0,10)}`, "1");
 }
-
-// ── Total coins across all time ───────────────────────────────────────
-function getBazaarTotalCoins(childId) {
-  return parseInt(localStorage.getItem(`bz_coins_${childId}`) || "0");
-}
+function getBazaarTotalCoins(childId) { return parseInt(localStorage.getItem(`bz_coins_${childId}`) || "0"); }
 function addBazaarCoins(childId, n) {
-  const cur = getBazaarTotalCoins(childId);
-  localStorage.setItem(`bz_coins_${childId}`, String(cur + n));
-  return cur + n;
+  const c = getBazaarTotalCoins(childId) + n;
+  localStorage.setItem(`bz_coins_${childId}`, String(c));
+  return c;
+}
+function getWeeklyLeague(childId) {
+  const key = `bz_wk_${childId}_${getWeekKey()}`;
+  try { return JSON.parse(localStorage.getItem(key) || "null") || { coins:0, sessions:0, streak:0 }; }
+  catch { return { coins:0, sessions:0, streak:0 }; }
+}
+function updateWeeklyLeague(childId, coins) {
+  const key = `bz_wk_${childId}_${getWeekKey()}`;
+  const wk  = getWeeklyLeague(childId);
+  wk.coins    += coins;
+  wk.sessions += 1;
+  localStorage.setItem(key, JSON.stringify(wk));
+  return wk;
+}
+function getWeekKey() {
+  const d = new Date(); const jan1 = new Date(d.getFullYear(),0,1);
+  return `${d.getFullYear()}_w${Math.ceil((((d-jan1)/86400000)+jan1.getDay()+1)/7)}`;
+}
+function getActiveFestival() {
+  const now  = new Date();
+  const mon  = now.getMonth()+1;
+  const wday = now.getDay();
+  return BAZAAR_FESTIVALS.find(f => {
+    if (f.weekdays) return f.weekdays.includes(wday);
+    return f.months.includes(mon);
+  }) || null;
 }
 
-// ── Supabase fetch ───────────────────────────────────────────────────
+// ─── Supabase fetch ───────────────────────────────────────────────────
 async function fetchBazaarQuestions(marketId, role, isDaily) {
   try {
     const res = await fetch("/api/db", {
-      method:"POST",
-      headers:{"Content-Type":"application/json","Authorization":`Bearer ${db._token||""}`},
+      method:"POST", headers:{"Content-Type":"application/json","Authorization":`Bearer ${db._token||""}`},
       body: JSON.stringify({ action:"get_bazaar_questions", market_id:marketId, role, is_daily:isDaily }),
     });
     const json = await res.json();
@@ -3970,210 +3978,555 @@ async function fetchBazaarQuestions(marketId, role, isDaily) {
   return null;
 }
 
-// ── Inline fallback question builder ─────────────────────────────────
-function getBazaarFallback(market, role, isBoss) {
+// ─── Fallback inline questions ────────────────────────────────────────
+function getBazaarFallback(market, role) {
   const items = market.items;
-  const pick = arr => arr[Math.floor(Math.random()*arr.length)];
-  const questions = [];
-
+  const pick  = arr => arr[Math.floor(Math.random()*arr.length)];
+  const qs    = [];
   if (role === "buyer") {
-    const i0=items[0], i1=items[1], i2=items[2], i3=items[3]||items[0], i4=items[4]||items[1];
-    // Q1 total
-    const qty1=3, ans1=i0.price*qty1;
-    questions.push({ scenario:`You want to buy ${qty1} kg of ${i0.name}.`, question:`What is the total cost? (₹${i0.price} per kg)`, hint:`${qty1} × ₹${i0.price}`, options:[ans1-30,ans1,ans1+30,ans1+15].map(String), correct_answer:String(ans1), customer_name:pick(BAZAAR_CUSTOMER_NAMES), customer_emoji:pick(BAZAAR_CUSTOMER_EMOJIS) });
-    // Q2 change
-    const cost2=i1.price*2, paid2=cost2+20, ans2=paid2-cost2;
-    questions.push({ scenario:`You buy 2 ${i1.name}s (₹${i1.price} each). You give ₹${paid2}.`, question:`How much change should you get back?`, hint:`₹${paid2} − ₹${cost2}`, options:[ans2-5,ans2+5,ans2,ans2+10].map(String), correct_answer:String(ans2), customer_name:pick(BAZAAR_CUSTOMER_NAMES), customer_emoji:pick(BAZAAR_CUSTOMER_EMOJIS) });
-    // Q3 budget yes/no
-    const total3=i2.price*2, budget3=total3+30;
-    questions.push({ scenario:`You have ₹${budget3}. ${i2.name} costs ₹${i2.price}. You need 2.`, question:`Do you have enough money?`, hint:`Need ₹${total3}, have ₹${budget3}`, options:["Yes, I have enough","No, need more","Exactly enough","Not sure"], correct_answer:"Yes, I have enough", customer_name:pick(BAZAAR_CUSTOMER_NAMES), customer_emoji:pick(BAZAAR_CUSTOMER_EMOJIS) });
-    // Q4 compare
-    const cheaper=i0.price<=i3.price?i0.name:i3.name;
-    questions.push({ scenario:`${i0.emoji} ${i0.name}: ₹${i0.price}  vs  ${i3.emoji} ${i3.name}: ₹${i3.price}`, question:`Which one is cheaper?`, hint:`Compare ₹${i0.price} and ₹${i3.price}`, options:[i0.name,i3.name,"Both same","Can't tell"], correct_answer:cheaper, customer_name:pick(BAZAAR_CUSTOMER_NAMES), customer_emoji:pick(BAZAAR_CUSTOMER_EMOJIS) });
-    // Q5 multi-item
-    const q5a=2,q5b=3,ans5=i0.price*q5a+i1.price*q5b;
-    questions.push({ scenario:`Buying ${q5a} ${i0.name} (₹${i0.price} each) + ${q5b} ${i1.name} (₹${i1.price} each).`, question:`What is your total bill?`, hint:`(${q5a}×₹${i0.price}) + (${q5b}×₹${i1.price})`, options:[ans5-20,ans5,ans5+20,ans5+10].map(String), correct_answer:String(ans5), customer_name:pick(BAZAAR_CUSTOMER_NAMES), customer_emoji:pick(BAZAAR_CUSTOMER_EMOJIS) });
+    const [i0,i1,i2,i3,i4] = items;
+    const q1=3, a1=i0.price*q1;
+    qs.push({ scenario:`You want to buy ${q1} kg of ${i0.name}.`, question:`What is the total cost? (₹${i0.price}/kg)`, hint:`${q1} × ₹${i0.price}`, options:[a1-30,a1,a1+30,a1+15].map(String), correct_answer:String(a1), customer_name:pick(BAZAAR_CUSTOMER_NAMES), customer_emoji:pick(BAZAAR_CUSTOMER_EMOJIS) });
+    const cost2=i1.price*2, paid2=cost2+20, a2=paid2-cost2;
+    qs.push({ scenario:`You buy 2 ${i1.name}s (₹${i1.price} each). You give ₹${paid2}.`, question:`How much change should you get back?`, hint:`₹${paid2} − ₹${cost2}`, options:[a2-5,a2+5,a2,a2+10].map(String), correct_answer:String(a2), customer_name:pick(BAZAAR_CUSTOMER_NAMES), customer_emoji:pick(BAZAAR_CUSTOMER_EMOJIS) });
+    const t3=i2.price*2, b3=t3+30;
+    qs.push({ scenario:`You have ₹${b3}. ${i2.name} costs ₹${i2.price}. You need 2.`, question:`Do you have enough money?`, hint:`Need ₹${t3}, have ₹${b3}`, options:["Yes, enough money","No, need more money","Exactly enough","Not sure"], correct_answer:"Yes, enough money", customer_name:pick(BAZAAR_CUSTOMER_NAMES), customer_emoji:pick(BAZAAR_CUSTOMER_EMOJIS) });
+    const ch=i0.price<=i3.price?i0.name:i3.name;
+    qs.push({ scenario:`${i0.emoji} ${i0.name}: ₹${i0.price}  vs  ${i3.emoji} ${i3.name}: ₹${i3.price}`, question:`Which one is cheaper?`, hint:`Compare ₹${i0.price} and ₹${i3.price}`, options:[i0.name,i3.name,"Both same","Can't tell"], correct_answer:ch, customer_name:pick(BAZAAR_CUSTOMER_NAMES), customer_emoji:pick(BAZAAR_CUSTOMER_EMOJIS) });
+    const a5=i0.price*2+i1.price*3;
+    qs.push({ scenario:`Buying 2 ${i0.name} (₹${i0.price} ea) + 3 ${i1.name} (₹${i1.price} ea).`, question:`What is your total bill?`, hint:`(2×₹${i0.price}) + (3×₹${i1.price})`, options:[a5-20,a5,a5+20,a5+10].map(String), correct_answer:String(a5), customer_name:pick(BAZAAR_CUSTOMER_NAMES), customer_emoji:pick(BAZAAR_CUSTOMER_EMOJIS) });
   } else {
-    const i0=items[0], i1=items[1], i2=items[2], i3=items[3]||items[0];
-    // Q1 charge
-    const sold1=4,ans1=i0.price*sold1;
-    questions.push({ scenario:`A customer wants ${sold1} kg of ${i0.name}. You charge ₹${i0.price}/kg.`, question:`How much do you charge in total?`, hint:`${sold1} × ₹${i0.price}`, options:[ans1-20,ans1,ans1+20,ans1+10].map(String), correct_answer:String(ans1), customer_name:pick(BAZAAR_CUSTOMER_NAMES), customer_emoji:pick(BAZAAR_CUSTOMER_EMOJIS) });
-    // Q2 give change
-    const charge2=i1.price*3, given2=charge2+50, change2=given2-charge2;
-    questions.push({ scenario:`Customer buys 3 ${i1.name}s (₹${charge2}). They give you ₹${given2}.`, question:`How much change do you return?`, hint:`₹${given2} − ₹${charge2}`, options:[change2-10,change2,change2+10,change2+20].map(String), correct_answer:String(change2), customer_name:pick(BAZAAR_CUSTOMER_NAMES), customer_emoji:pick(BAZAAR_CUSTOMER_EMOJIS) });
-    // Q3 stock left
-    const stock3=50,sold3=18,left3=stock3-sold3;
-    questions.push({ scenario:`You started with ${stock3} kg of ${i2.name}. Sold ${sold3} kg today.`, question:`How much ${i2.name} is left?`, hint:`${stock3} − ${sold3}`, options:[left3-5,left3,left3+5,left3+10].map(String), correct_answer:String(left3), customer_name:pick(BAZAAR_CUSTOMER_NAMES), customer_emoji:pick(BAZAAR_CUSTOMER_EMOJIS) });
-    // Q4 profit
-    const cost4=i3.price-20,profit4=i3.price-cost4;
-    questions.push({ scenario:`You bought ${i3.name} at ₹${cost4} and sell at ₹${i3.price}.`, question:`What is your profit per unit?`, hint:`₹${i3.price} − ₹${cost4}`, options:[profit4-5,profit4,profit4+5,profit4+10].map(String), correct_answer:String(profit4), customer_name:pick(BAZAAR_CUSTOMER_NAMES), customer_emoji:pick(BAZAAR_CUSTOMER_EMOJIS) });
-    // Q5 total earnings
-    const qty5=10,earn5=i0.price*qty5;
-    questions.push({ scenario:`You sold ${qty5} units of ${i0.name} at ₹${i0.price} each.`, question:`What are your total earnings?`, hint:`${qty5} × ₹${i0.price}`, options:[earn5-100,earn5,earn5+100,earn5+50].map(String), correct_answer:String(earn5), customer_name:pick(BAZAAR_CUSTOMER_NAMES), customer_emoji:pick(BAZAAR_CUSTOMER_EMOJIS) });
+    const [i0,i1,i2,i3] = items;
+    const a1=i0.price*4;
+    qs.push({ scenario:`A customer wants 4 kg of ${i0.name}. You charge ₹${i0.price}/kg.`, question:`How much do you charge?`, hint:`4 × ₹${i0.price}`, options:[a1-20,a1,a1+20,a1+10].map(String), correct_answer:String(a1), customer_name:pick(BAZAAR_CUSTOMER_NAMES), customer_emoji:pick(BAZAAR_CUSTOMER_EMOJIS) });
+    const c2=i1.price*3, g2=c2+50, a2=g2-c2;
+    qs.push({ scenario:`Customer buys 3 ${i1.name}s (₹${c2} total). They give ₹${g2}.`, question:`How much change do you return?`, hint:`₹${g2} − ₹${c2}`, options:[a2-10,a2,a2+10,a2+20].map(String), correct_answer:String(a2), customer_name:pick(BAZAAR_CUSTOMER_NAMES), customer_emoji:pick(BAZAAR_CUSTOMER_EMOJIS) });
+    const a3=50-18;
+    qs.push({ scenario:`You started with 50 kg of ${i2.name}. Sold 18 kg today.`, question:`How much is left?`, hint:`50 − 18`, options:[a3-5,a3,a3+5,a3+10].map(String), correct_answer:String(a3), customer_name:pick(BAZAAR_CUSTOMER_NAMES), customer_emoji:pick(BAZAAR_CUSTOMER_EMOJIS) });
+    const a4=i3.price-20;
+    qs.push({ scenario:`You buy ${i3.name} at ₹${a4} and sell at ₹${i3.price}.`, question:`What is your profit per unit?`, hint:`₹${i3.price} − ₹${a4}`, options:[a4-5,20,a4+5,a4+10].map(String), correct_answer:String(20), customer_name:pick(BAZAAR_CUSTOMER_NAMES), customer_emoji:pick(BAZAAR_CUSTOMER_EMOJIS) });
+    const a5=i0.price*10;
+    qs.push({ scenario:`You sold 10 units of ${i0.name} at ₹${i0.price} each.`, question:`What are your total earnings?`, hint:`10 × ₹${i0.price}`, options:[a5-100,a5,a5+100,a5+50].map(String), correct_answer:String(a5), customer_name:pick(BAZAAR_CUSTOMER_NAMES), customer_emoji:pick(BAZAAR_CUSTOMER_EMOJIS) });
   }
-
-  // Boss question (harder, always last)
-  if (isBoss) {
-    const i0=items[0],i1=items[1];
-    const q1=3,q2=2,total=i0.price*q1+i1.price*q2,paid=total+100,change=paid-total;
-    questions.push({
-      isBoss:true,
-      scenario:`⚡ BOSS CUSTOMER! A very picky customer wants ${q1} kg ${i0.name} + ${q2} ${i1.name}. They pay ₹${paid}.`,
-      question:`What change should you give? (Total = ₹${total})`,
-      hint:`₹${paid} − ₹${total}`,
-      options:[change-20,change,change+20,change+15].map(String),
-      correct_answer:String(change),
-      customer_name:"Khadoos Lala 😤",
-      customer_emoji:"😤",
-    });
-  }
-  return questions;
+  // Boss question
+  const [i0,i1] = items;
+  const tot=i0.price*3+i1.price*2, paid=tot+100, chg=paid-tot;
+  qs.push({ isBoss:true, scenario:`⚡ BOSS! A tough customer wants 3 kg ${i0.name} + 2 ${i1.name}. They pay ₹${paid}.`, question:`What change do you give? (Total = ₹${tot})`, hint:`₹${paid} − ₹${tot}`, options:[chg-20,chg,chg+20,chg+15].map(String), correct_answer:String(chg), customer_name:"Khadoos Lala 😤", customer_emoji:"😤" });
+  return qs;
 }
 
-// ── Coin shower animation component ──────────────────────────────────
+// ─── Speed Round question generator (fast maths, single numbers) ─────
+function getSpeedRoundQuestions(market) {
+  const items = market.items;
+  const qs = [];
+  for (let i=0; i<12; i++) {
+    const item = items[i % items.length];
+    const qty  = 1 + (i % 4);
+    const ans  = item.price * qty;
+    const wrongs = [ans - 10, ans + 10, ans + 20].filter(v=>v>0);
+    qs.push({
+      scenario: `${item.emoji} ${qty} × ${item.name}`,
+      question: `= ₹?`,
+      hint: `${qty} × ₹${item.price}`,
+      options: [String(wrongs[0]), String(ans), String(wrongs[1]), String(wrongs[2])].sort(()=>Math.random()-0.5),
+      correct_answer: String(ans),
+      customer_name: "",
+      customer_emoji: BAZAAR_CUSTOMER_EMOJIS[i % BAZAAR_CUSTOMER_EMOJIS.length],
+    });
+  }
+  return qs;
+}
+
+// ─── Shared UI components ─────────────────────────────────────────────
 function CoinShower({ active }) {
   if (!active) return null;
   return (
     <div style={{ position:"fixed", inset:0, zIndex:200, pointerEvents:"none" }}>
-      {Array.from({length:18}).map((_,i)=>(
-        <div key={i} style={{
-          position:"absolute",
-          left:`${5 + (i*5.5)%90}%`,
-          top:"-20px",
-          fontSize: i%3===0 ? 24 : 18,
-          animation:`confettiFall ${0.8 + (i%4)*0.25}s ease-in ${(i%6)*0.08}s forwards`,
-          "--dx":"0px", "--dy":"0px",
-        }}>{i%4===0?"🪙":i%4===1?"⭐":i%4===2?"✨":"💰"}</div>
+      {Array.from({length:20}).map((_,i) => (
+        <div key={i} style={{ position:"absolute", left:`${4+(i*4.7)%90}%`, top:"-20px", fontSize:i%4===0?26:18, animation:`confettiFall ${0.8+(i%4)*0.25}s ease-in ${(i%7)*0.07}s forwards` }}>
+          {i%5===0?"🪙":i%5===1?"⭐":i%5===2?"✨":i%5===3?"💰":"🎉"}
+        </div>
       ))}
     </div>
   );
 }
 
-// ── Star rating display ───────────────────────────────────────────────
 function StarRating({ stars, size=14, showNum=true }) {
-  const full  = Math.floor(stars);
-  const half  = stars - full >= 0.5;
-  const empty = 5 - full - (half?1:0);
+  const full=Math.floor(stars), half=stars-full>=0.5, empty=5-full-(half?1:0);
   return (
-    <span style={{ display:"inline-flex", alignItems:"center", gap:2 }}>
+    <span style={{ display:"inline-flex", alignItems:"center", gap:1 }}>
       {Array.from({length:full}).map((_,i)=><span key={`f${i}`} style={{fontSize:size}}>⭐</span>)}
       {half && <span style={{fontSize:size,filter:"grayscale(0.5)"}}>⭐</span>}
-      {Array.from({length:empty}).map((_,i)=><span key={`e${i}`} style={{fontSize:size,filter:"grayscale(1) opacity(0.3)"}}>⭐</span>)}
-      {showNum && <span style={{fontSize:size-2,fontWeight:900,color:C.yellow,marginLeft:3}}>{stars}</span>}
+      {Array.from({length:empty}).map((_,i)=><span key={`e${i}`} style={{fontSize:size,filter:"grayscale(1) opacity(0.25)"}}>⭐</span>)}
+      {showNum && <span style={{fontSize:size-2,fontWeight:900,color:"#fbbf24",marginLeft:2}}>{stars}</span>}
     </span>
   );
 }
 
-// ── Keeper reaction face ──────────────────────────────────────────────
-function KeeperFace({ market, reputation, animate, size=52 }) {
-  const moodIdx = reputation.stars >= 4 ? 0 : reputation.stars >= 2.5 ? 1 : 2;
-  const face = market.mood[moodIdx];
+function KeeperFace({ market, reputation, animate, size=50 }) {
+  const face = market.mood[reputation.stars>=4?0:reputation.stars>=2.5?1:2];
   return (
-    <div style={{ width:size, height:size, borderRadius:size*0.3, background:`${market.color}22`, border:`2.5px solid ${market.color}66`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:size*0.55, flexShrink:0, animation:animate==="happy"?"correctBounce 0.6s ease":animate==="sad"?"wrongWiggle 0.5s ease":"floatUp 3s ease-in-out infinite", position:"relative" }}>
+    <div style={{ width:size, height:size, borderRadius:size*0.3, background:`${market.color}22`, border:`2.5px solid ${market.color}55`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:size*0.52, flexShrink:0, animation:animate==="happy"?"correctBounce 0.6s ease":animate==="sad"?"wrongWiggle 0.5s ease":"floatUp 3s ease-in-out infinite", position:"relative" }}>
       {market.keeperEmoji}
-      <div style={{ position:"absolute", top:-8, right:-8, fontSize:size*0.3, animation:animate?"popIn 0.3s ease":"none" }}>{face}</div>
+      <div style={{ position:"absolute", top:-8, right:-8, fontSize:size*0.3 }}>{face}</div>
     </div>
   );
 }
 
-// ── Customer queue strip ──────────────────────────────────────────────
 function CustomerQueue({ total, current, customerEmojis }) {
   return (
-    <div style={{ display:"flex", gap:6, alignItems:"center", justifyContent:"center", padding:"6px 0" }}>
-      {Array.from({length:total}).map((_,i)=>(
+    <div style={{ display:"flex", gap:5, alignItems:"center", justifyContent:"center", padding:"5px 0" }}>
+      {Array.from({length:Math.min(total,8)}).map((_,i) => (
         <div key={i} style={{ position:"relative" }}>
-          <div style={{ fontSize:22, filter:i<current?"grayscale(1) opacity(0.3)":i===current?"none":"opacity(0.7)", transition:"all 0.3s", transform:i===current?"scale(1.2)":"scale(1)" }}>{customerEmojis[i%customerEmojis.length]}</div>
-          {i===current && <div style={{ position:"absolute", bottom:-4, left:"50%", transform:"translateX(-50%)", width:6, height:6, borderRadius:"50%", background:C.cyan, boxShadow:`0 0 6px ${C.cyan}` }}/>}
-          {i<current && <div style={{ position:"absolute", top:0, left:0, right:0, bottom:0, display:"flex", alignItems:"center", justifyContent:"center", fontSize:12 }}>✅</div>}
+          <div style={{ fontSize:20, filter:i<current?"grayscale(1) opacity(0.3)":i===current?"none":"opacity(0.65)", transform:i===current?"scale(1.22)":"scale(1)", transition:"all 0.3s" }}>
+            {customerEmojis[i % customerEmojis.length]}
+          </div>
+          {i===current && <div style={{ position:"absolute", bottom:-3, left:"50%", transform:"translateX(-50%)", width:5, height:5, borderRadius:"50%", background:C.cyan, boxShadow:`0 0 5px ${C.cyan}` }}/>}
+          {i<current   && <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", fontSize:10 }}>✅</div>}
         </div>
       ))}
     </div>
   );
 }
 
-// ════════════════════════════════════════════════
-//  Screen 1: BazaarHub
-// ════════════════════════════════════════════════
-function BazaarHub({ child, onBack, onMarket, onDaily }) {
-  const todayChallenge = getTodayDailyChallenge();
-  const dailyDone      = isDailyChallengeCompletedToday(child.id);
-  const totalCoins     = getBazaarTotalCoins(child.id);
-
+// ─── Weekly League rank badge ─────────────────────────────────────────
+function LeagueBadge({ coins }) {
+  const rank = coins>=500?"👑 Bazaar King":coins>=300?"🏆 Champion":coins>=150?"⭐ Star Trader":coins>=50?"🥈 Rising Star":"🌱 Newcomer";
+  const col  = coins>=500?"#fbbf24":coins>=300?"#f97316":coins>=150?"#a855f7":coins>=50?"#22c55e":"#6b7280";
   return (
-    <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Baloo 2','Nunito',sans-serif", paddingBottom:50, position:"relative", overflowX:"hidden" }}>
-      <Starfield n={18}/>
+    <div style={{ background:`${col}18`, border:`1.5px solid ${col}44`, borderRadius:12, padding:"4px 10px", display:"inline-flex", alignItems:"center", gap:5 }}>
+      <span style={{ fontSize:14 }}>{rank.split(" ")[0]}</span>
+      <span style={{ fontSize:11, fontWeight:800, color:col }}>{rank.split(" ").slice(1).join(" ")}</span>
+    </div>
+  );
+}
 
-      {/* Header */}
-      <div style={{ background:`linear-gradient(135deg,#f9731622,#ec489914)`, borderBottom:`2px solid #f9731633`, padding:"18px 18px 14px", position:"relative", zIndex:2 }}>
-        <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:10 }}>
-          <BackBtn onClick={onBack} color="#f97316"/>
+// ═══════════════════════════════════════════════════════════════════════
+//  BAZAAR PASSPORT — India Map
+// ═══════════════════════════════════════════════════════════════════════
+function BazaarPassport({ child, onClose, onMarket }) {
+  const totalCoins = getBazaarTotalCoins(child.id);
+  // Approximate positions on a 340×380 India map (% of container)
+  const positions = {
+    mumbai:  { x:22, y:60 }, pune:    { x:25, y:65 },
+    delhi:   { x:38, y:28 }, jaipur:  { x:32, y:35 },
+    chennai: { x:50, y:78 }, kolkata: { x:68, y:48 },
+    kerala:  { x:43, y:86 }, varanasi:{ x:55, y:40 },
+  };
+  return (
+    <div style={{ position:"fixed", inset:0, zIndex:300, background:"rgba(0,0,0,0.85)", display:"flex", alignItems:"flex-end", justifyContent:"center" }} onClick={onClose}>
+      <div onClick={e=>e.stopPropagation()} style={{ width:"100%", maxWidth:480, background:C.bg, borderRadius:"24px 24px 0 0", padding:"20px 16px 36px", maxHeight:"92vh", overflowY:"auto", animation:"slideUp 0.4s ease" }}>
+
+        {/* Header */}
+        <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:16 }}>
+          <div style={{ fontSize:28 }}>🗺️</div>
           <div style={{ flex:1 }}>
-            <div style={{ fontSize:10, color:"#f97316", fontWeight:900, letterSpacing:2, fontFamily:"'Orbitron',sans-serif" }}>REAL-LIFE MATHS</div>
-            <div style={{ fontSize:22, fontWeight:900, color:textColor() }}>🛒 Bazaar Maths</div>
+            <div style={{ fontSize:10, color:C.cyan, fontWeight:900, letterSpacing:2, fontFamily:"'Orbitron',sans-serif" }}>BAZAAR MATHS</div>
+            <div style={{ fontSize:20, fontWeight:900, color:textColor() }}>Bazaar Passport</div>
           </div>
-          <div style={{ background:"#fbbf2422", border:"1.5px solid #fbbf2455", borderRadius:14, padding:"8px 12px", textAlign:"center" }}>
-            <div style={{ fontSize:18, fontWeight:900, color:"#fbbf24" }}>🪙{totalCoins}</div>
-            <div style={{ fontSize:9, color:C.dim, fontFamily:"'Orbitron',sans-serif" }}>COINS</div>
+          <div style={{ textAlign:"right" }}>
+            <div style={{ fontSize:16, fontWeight:900, color:"#fbbf24" }}>🪙 {totalCoins}</div>
+            <LeagueBadge coins={totalCoins}/>
           </div>
         </div>
 
-        {/* Mascot strip */}
-        <div style={{ background:isDark()?"rgba(255,255,255,0.05)":"rgba(0,0,0,0.04)", borderRadius:16, padding:"10px 14px", display:"flex", gap:10, alignItems:"center" }}>
-          <div style={{ fontSize:38, animation:"floatUp 2.5s ease-in-out infinite", flexShrink:0 }}>🧑‍🛒</div>
+        {/* Progress bar to next city */}
+        {(() => {
+          const next = BAZAAR_PASSPORT.find(c=>c.unlockCoins>totalCoins);
+          if (!next) return <div style={{ textAlign:"center", padding:"8px", fontSize:13, color:C.green, fontWeight:800 }}>🏆 All cities unlocked!</div>;
+          const prev = [...BAZAAR_PASSPORT].reverse().find(c=>c.unlockCoins<=totalCoins);
+          const base = prev?.unlockCoins||0;
+          const pct  = Math.min(100, Math.round(((totalCoins-base)/(next.unlockCoins-base))*100));
+          return (
+            <div style={{ background:C.card, border:`1.5px solid ${next.color}44`, borderRadius:14, padding:"10px 14px", marginBottom:14 }}>
+              <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6, fontSize:12 }}>
+                <span style={{ fontWeight:800, color:textColor() }}>Next: {next.emoji} {next.name}</span>
+                <span style={{ color:next.color, fontWeight:900 }}>{totalCoins}/{next.unlockCoins} 🪙</span>
+              </div>
+              <div style={{ background:isDark()?"rgba(255,255,255,0.08)":"rgba(0,0,0,0.07)", borderRadius:20, height:8, overflow:"hidden" }}>
+                <div style={{ width:`${pct}%`, height:"100%", background:`linear-gradient(90deg,${next.color},${next.color}aa)`, borderRadius:20, transition:"width 0.8s ease", boxShadow:`0 0 8px ${next.color}66` }}/>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* City list */}
+        <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+          {BAZAAR_PASSPORT.map((city, i) => {
+            const unlocked  = totalCoins >= city.unlockCoins;
+            const market    = BAZAAR_MARKETS.find(m=>m.id===city.marketId);
+            const rep       = market ? getBazaarReputation(market.id) : null;
+            const isComingSoon = !!city.comingSoon;
+            return (
+              <button key={city.id}
+                onClick={()=> unlocked && market && !isComingSoon && onMarket(market)}
+                disabled={!unlocked || isComingSoon}
+                style={{ background:unlocked?`linear-gradient(135deg,${city.color}18,${city.color}08)`:isDark()?"rgba(255,255,255,0.03)":"rgba(0,0,0,0.03)", border:`2px solid ${unlocked?city.color+"55":city.color+"22"}`, borderRadius:18, padding:"13px 14px", cursor:unlocked&&!isComingSoon?"pointer":"not-allowed", textAlign:"left", display:"flex", alignItems:"center", gap:12, opacity:unlocked?1:0.55, transition:"all 0.2s", animation:`slideUp 0.35s ease ${i*0.05}s both` }}>
+                {/* City emoji */}
+                <div style={{ width:46, height:46, borderRadius:14, background:unlocked?`${city.color}22`:isDark()?"rgba(255,255,255,0.05)":"rgba(0,0,0,0.06)", border:`2px solid ${unlocked?city.color+"44":city.color+"22"}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:26, flexShrink:0 }}>
+                  {unlocked ? city.emoji : "🔒"}
+                </div>
+                <div style={{ flex:1 }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:7, marginBottom:2 }}>
+                    <span style={{ fontSize:14, fontWeight:900, color:unlocked?textColor():C.dim }}>{city.name}</span>
+                    {isComingSoon && <span style={{ fontSize:9, background:"#fbbf2422", border:"1px solid #fbbf2444", borderRadius:8, padding:"2px 7px", color:"#fbbf24", fontWeight:800 }}>SOON</span>}
+                  </div>
+                  <div style={{ fontSize:11, color:C.dim, lineHeight:1.4 }}>
+                    {unlocked ? (market ? `${market.name} · ${market.keeper}` : city.desc) : city.desc}
+                  </div>
+                  {unlocked && rep && <div style={{ marginTop:3 }}><StarRating stars={rep.stars} size={11}/></div>}
+                </div>
+                {/* Unlock indicator */}
+                {!unlocked && (
+                  <div style={{ textAlign:"center", flexShrink:0 }}>
+                    <div style={{ fontSize:13, fontWeight:900, color:city.color }}>🪙{city.unlockCoins}</div>
+                    <div style={{ fontSize:9, color:C.dim }}>needed</div>
+                  </div>
+                )}
+                {unlocked && !isComingSoon && <div style={{ fontSize:20, color:city.color }}>›</div>}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  WEEKLY LEAGUE — bottom sheet
+// ═══════════════════════════════════════════════════════════════════════
+function WeeklyLeague({ child, onClose }) {
+  const wk         = getWeeklyLeague(child.id);
+  const totalCoins = getBazaarTotalCoins(child.id);
+  const weekLabel  = (() => { const d=new Date(); const mon=new Date(d); mon.setDate(d.getDate()-d.getDay()+1); const sun=new Date(mon); sun.setDate(mon.getDate()+6); return `${mon.getDate()} – ${sun.getDate()} ${mon.toLocaleString("default",{month:"short"})}`; })();
+
+  const tiers = [
+    { label:"🌱 Newcomer",    min:0,   max:49,  col:"#6b7280" },
+    { label:"🥈 Rising Star", min:50,  max:149, col:"#22c55e" },
+    { label:"⭐ Star Trader", min:150, max:299, col:"#a855f7" },
+    { label:"🏆 Champion",    min:300, max:499, col:"#f97316" },
+    { label:"👑 Bazaar King", min:500, max:Infinity, col:"#fbbf24" },
+  ];
+  const curTier = tiers.find(t=>wk.coins>=t.min && wk.coins<=t.max) || tiers[0];
+  const nextTier= tiers[tiers.indexOf(curTier)+1];
+
+  return (
+    <div style={{ position:"fixed", inset:0, zIndex:300, background:"rgba(0,0,0,0.82)", display:"flex", alignItems:"flex-end", justifyContent:"center" }} onClick={onClose}>
+      <div onClick={e=>e.stopPropagation()} style={{ width:"100%", maxWidth:480, background:C.bg, borderRadius:"24px 24px 0 0", padding:"20px 16px 36px", animation:"slideUp 0.4s ease" }}>
+
+        <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:14 }}>
+          <div style={{ fontSize:28 }}>🏆</div>
+          <div style={{ flex:1 }}>
+            <div style={{ fontSize:10, color:C.yellow, fontWeight:900, letterSpacing:2, fontFamily:"'Orbitron',sans-serif" }}>THIS WEEK</div>
+            <div style={{ fontSize:19, fontWeight:900, color:textColor() }}>Weekly League</div>
+            <div style={{ fontSize:11, color:C.dim }}>{weekLabel}</div>
+          </div>
+          <button onClick={onClose} style={{ background:"none", border:`1px solid ${C.dim}33`, borderRadius:10, padding:"6px 12px", color:C.dim, cursor:"pointer", fontSize:13, fontWeight:700 }}>✕</button>
+        </div>
+
+        {/* Current rank */}
+        <div style={{ background:`linear-gradient(135deg,${curTier.col}22,${curTier.col}0a)`, border:`2.5px solid ${curTier.col}55`, borderRadius:20, padding:"18px 16px", marginBottom:14, textAlign:"center" }}>
+          <div style={{ fontSize:48, marginBottom:4, animation:"floatUp 2s ease-in-out infinite" }}>{curTier.label.split(" ")[0]}</div>
+          <div style={{ fontSize:18, fontWeight:900, color:curTier.col }}>{curTier.label.split(" ").slice(1).join(" ")}</div>
+          <div style={{ fontSize:26, fontWeight:900, color:"#fbbf24", marginTop:6 }}>🪙 {wk.coins}</div>
+          <div style={{ fontSize:11, color:C.dim, marginTop:2 }}>{wk.sessions} session{wk.sessions!==1?"s":""} this week</div>
+          {nextTier && (
+            <div style={{ marginTop:10 }}>
+              <div style={{ fontSize:11, color:C.dim, marginBottom:4 }}>{nextTier.min - wk.coins} more coins to reach {nextTier.label}</div>
+              <div style={{ background:isDark()?"rgba(255,255,255,0.08)":"rgba(0,0,0,0.07)", borderRadius:20, height:7, overflow:"hidden" }}>
+                <div style={{ width:`${Math.min(100,Math.round((wk.coins/nextTier.min)*100))}%`, height:"100%", background:`linear-gradient(90deg,${curTier.col},${nextTier.col})`, borderRadius:20, transition:"width 0.8s ease" }}/>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* All tiers */}
+        <div style={{ fontSize:11, color:C.dim, fontWeight:900, fontFamily:"'Orbitron',sans-serif", letterSpacing:1, marginBottom:8 }}>RANK TIERS</div>
+        <div style={{ display:"flex", flexDirection:"column", gap:7 }}>
+          {tiers.map((t,i) => {
+            const active = t.label === curTier.label;
+            return (
+              <div key={i} style={{ display:"flex", alignItems:"center", gap:12, padding:"10px 14px", background:active?`${t.col}18`:isDark()?"rgba(255,255,255,0.03)":"rgba(0,0,0,0.02)", border:`1.5px solid ${active?t.col+"55":t.col+"22"}`, borderRadius:14, transition:"all 0.2s" }}>
+                <span style={{ fontSize:22, width:28, textAlign:"center" }}>{t.label.split(" ")[0]}</span>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:13, fontWeight:800, color:active?t.col:textColor() }}>{t.label.split(" ").slice(1).join(" ")}</div>
+                  <div style={{ fontSize:10, color:C.dim }}>{t.max===Infinity?`${t.min}+ coins`:`${t.min}–${t.max} coins`}</div>
+                </div>
+                {active && <div style={{ background:t.col, borderRadius:10, padding:"3px 9px", fontSize:10, color:"white", fontWeight:900 }}>YOU</div>}
+                {wk.coins > t.max && <div style={{ fontSize:16 }}>✅</div>}
+              </div>
+            );
+          })}
+        </div>
+
+        <div style={{ marginTop:14, fontSize:11, color:C.dim, textAlign:"center", lineHeight:1.6 }}>
+          League resets every Monday. Top rank holders get special titles next week! 👑
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  SPEED ROUND — 60-second blitz
+// ═══════════════════════════════════════════════════════════════════════
+function SpeedRound({ market, child, onBack, onDone }) {
+  const TOTAL_TIME = 60;
+  const [timeLeft,  setTimeLeft]  = useState(TOTAL_TIME);
+  const [questions, setQuestions] = useState(()=>getSpeedRoundQuestions(market));
+  const [qIdx,      setQIdx]      = useState(0);
+  const [score,     setScore]     = useState(0);
+  const [coins,     setCoins]     = useState(0);
+  const [streak,    setStreak]    = useState(0);
+  const [feedback,  setFeedback]  = useState(null);
+  const [showCoins, setShowCoins] = useState(false);
+  const [frozen,    setFrozen]    = useState(false); // wrong answer penalty
+  const timerRef = useRef(null);
+
+  useEffect(()=>{
+    timerRef.current = setInterval(()=>{
+      setTimeLeft(t=>{
+        if (t<=1) { clearInterval(timerRef.current); onDone({ score, coins, total:qIdx, role:"speed", market, isSpeed:true }); return 0; }
+        if (t<=10) SFX.timerTick();
+        return t-1;
+      });
+    },1000);
+    return ()=>clearInterval(timerRef.current);
+  },[]);
+
+  const q = questions[qIdx % questions.length];
+  const shuffled = useRef([]);
+  useEffect(()=>{ shuffled.current = [...(q?.options||[])].sort(()=>Math.random()-0.5); },[qIdx]);
+
+  function handleAnswer(opt) {
+    if (feedback || frozen) return;
+    const correct = opt.trim()===String(q.correct_answer).trim();
+    if (correct) {
+      SFX.correct();
+      const earned = 1 + Math.floor(streak/2);
+      setScore(s=>s+1); setCoins(c=>c+earned); setStreak(s=>s+1);
+      setFeedback("correct"); setShowCoins(true);
+      setTimeLeft(t=>Math.min(TOTAL_TIME, t+3)); // +3s bonus
+      setTimeout(()=>{ setShowCoins(false); setFeedback(null); setQIdx(i=>i+1); },600);
+    } else {
+      SFX.wrong();
+      setStreak(0); setFeedback("wrong"); setFrozen(true);
+      setTimeout(()=>{ setFeedback(null); setFrozen(false); },2000); // -2s freeze
+    }
+  }
+
+  const pct = (timeLeft/TOTAL_TIME)*100;
+  const urgentColor = timeLeft<=10?"#ef4444":timeLeft<=20?C.yellow:C.green;
+
+  return (
+    <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Baloo 2','Nunito',sans-serif", paddingBottom:20, position:"relative", overflow:"hidden" }}>
+      <CoinShower active={showCoins}/>
+      {frozen && <div style={{ position:"fixed", inset:0, zIndex:50, background:"rgba(59,130,246,0.12)", pointerEvents:"none", animation:"fadeIn 0.2s ease" }}/>}
+
+      {/* Timer header */}
+      <div style={{ background:`linear-gradient(135deg,${market.color}22,${market.color}08)`, borderBottom:`2px solid ${market.color}44`, padding:"13px 15px" }}>
+        <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+          <BackBtn onClick={onBack} color={market.color}/>
+          <div style={{ flex:1 }}>
+            <div style={{ fontSize:11, fontWeight:900, color:market.color }}>⚡ SPEED ROUND · {market.emoji} {market.name}</div>
+          </div>
+          <div style={{ display:"flex", gap:6 }}>
+            <div style={{ background:`${market.color}22`, borderRadius:10, padding:"4px 8px", fontSize:13, fontWeight:900, color:market.color }}>{score} ✅</div>
+            {streak>1 && <div style={{ background:"#fb923c22", borderRadius:10, padding:"4px 8px", fontSize:12, fontWeight:900, color:"#fb923c" }}>🔥{streak}</div>}
+          </div>
+        </div>
+        {/* Countdown bar */}
+        <div style={{ background:isDark()?"rgba(255,255,255,0.1)":"rgba(0,0,0,0.08)", borderRadius:20, height:10, overflow:"hidden", marginBottom:4 }}>
+          <div style={{ width:`${pct}%`, height:"100%", background:`linear-gradient(90deg,${urgentColor},${urgentColor}bb)`, borderRadius:20, transition:"width 1s linear", boxShadow:`0 0 8px ${urgentColor}88` }}/>
+        </div>
+        <div style={{ display:"flex", justifyContent:"space-between", fontSize:10 }}>
+          <span style={{ color:urgentColor, fontWeight:900, fontFamily:"'Orbitron',sans-serif", fontSize:14 }}>⏱ {timeLeft}s</span>
+          <span style={{ color:C.dim }}>+3s per correct · freeze 2s on wrong</span>
+          <span style={{ color:"#fbbf24", fontWeight:900 }}>🪙{coins}</span>
+        </div>
+      </div>
+
+      {/* Question */}
+      <div style={{ padding:"16px 15px" }}>
+        {frozen && (
+          <div style={{ background:"#3b82f622", border:"2px solid #3b82f655", borderRadius:14, padding:"10px 14px", marginBottom:12, textAlign:"center", animation:"popIn 0.3s ease" }}>
+            <div style={{ fontSize:16, fontWeight:900, color:"#3b82f6" }}>❄️ Frozen for 2 seconds!</div>
+            <div style={{ fontSize:11, color:C.dim }}>Wrong answer penalty</div>
+          </div>
+        )}
+
+        <div style={{ background:`${market.color}14`, border:`2px solid ${market.color}44`, borderRadius:20, padding:"20px 16px", marginBottom:14, textAlign:"center", animation:"slideUp 0.25s ease" }}>
+          <div style={{ fontSize:32, marginBottom:6 }}>{q.customer_emoji}</div>
+          <div style={{ fontSize:22, fontWeight:900, color:textColor(), lineHeight:1.3 }}>{q.scenario}</div>
+          <div style={{ fontSize:18, fontWeight:900, color:market.color, marginTop:4 }}>{q.question}</div>
+        </div>
+
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
+          {(shuffled.current.length?shuffled.current:q.options).map((opt,i)=>{
+            const isAns  = String(opt)===String(q.correct_answer);
+            const wasWrong = feedback==="wrong" && !isAns;
+            const bg = isAns&&feedback==="correct"?`linear-gradient(135deg,#22c55e,#16a34a)`:wasWrong?`${C.red}20`:`${market.color}0d`;
+            const brd= isAns&&feedback==="correct"?"2.5px solid #22c55e":wasWrong?`2.5px solid ${C.red}`:`2px solid ${market.color}33`;
+            return (
+              <button key={i} onClick={()=>handleAnswer(opt)} disabled={!!feedback||frozen}
+                style={{ background:bg, border:brd, borderRadius:18, padding:"16px 8px", cursor:(feedback||frozen)?"not-allowed":"pointer", textAlign:"center", fontSize:18, fontWeight:900, color:isAns&&feedback==="correct"?"white":textColor(), transition:"all 0.15s", animation:`popIn 0.25s ease ${i*0.04}s both`, boxShadow:isAns&&feedback==="correct"?"0 4px 16px #22c55e55":`0 2px 8px ${market.color}12` }}>
+                {opt}
+              </button>
+            );
+          })}
+        </div>
+
+        {feedback && (
+          <div style={{ textAlign:"center", marginTop:12, padding:"10px", borderRadius:14, background:feedback==="correct"?"#22c55e14":"#ef444414", animation:"popIn 0.3s ease" }}>
+            <span style={{ fontSize:16, fontWeight:900, color:feedback==="correct"?"#22c55e":C.red }}>
+              {feedback==="correct"?"⚡ +3 seconds bonus!":"❄️ Brr! 2 second freeze!"}
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  BazaarHub — main landing screen
+// ═══════════════════════════════════════════════════════════════════════
+function BazaarHub({ child, onBack, onMarket, onDaily, onSpeed }) {
+  const [showPassport, setShowPassport] = useState(false);
+  const [showLeague,   setShowLeague]   = useState(false);
+  const todayChallenge = getTodayDailyChallenge();
+  const dailyDone      = isDailyChallengeCompletedToday(child.id);
+  const totalCoins     = getBazaarTotalCoins(child.id);
+  const weeklyCoins    = getWeeklyLeague(child.id).coins;
+  const festival       = getActiveFestival();
+
+  return (
+    <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Baloo 2','Nunito',sans-serif", paddingBottom:50, position:"relative", overflowX:"hidden" }}>
+      {showPassport && <BazaarPassport child={child} onClose={()=>setShowPassport(false)} onMarket={m=>{setShowPassport(false);onMarket(m);}}/>}
+      {showLeague   && <WeeklyLeague   child={child} onClose={()=>setShowLeague(false)}/>}
+      <Starfield n={15}/>
+
+      {/* ── Header ── */}
+      <div style={{ background:`linear-gradient(135deg,#f9731622,#ec489914)`, borderBottom:`2px solid #f9731633`, padding:"16px 16px 12px", position:"relative", zIndex:2 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:10 }}>
+          <BackBtn onClick={onBack} color="#f97316"/>
+          <div style={{ flex:1 }}>
+            <div style={{ fontSize:9, color:"#f97316", fontWeight:900, letterSpacing:2, fontFamily:"'Orbitron',sans-serif" }}>REAL-LIFE MATHS</div>
+            <div style={{ fontSize:21, fontWeight:900, color:textColor() }}>🛒 Bazaar Maths</div>
+          </div>
+          <div style={{ display:"flex", gap:6 }}>
+            <button onClick={()=>setShowLeague(true)} style={{ background:"#fbbf2418", border:"1.5px solid #fbbf2444", borderRadius:12, padding:"6px 10px", cursor:"pointer", textAlign:"center" }}>
+              <div style={{ fontSize:14, fontWeight:900, color:"#fbbf24" }}>🪙{totalCoins}</div>
+              <div style={{ fontSize:8, color:C.dim }}>COINS</div>
+            </button>
+          </div>
+        </div>
+
+        {/* Festival active banner */}
+        {festival && (
+          <div style={{ background:`linear-gradient(135deg,${festival.color}28,${festival.color}10)`, border:`2px solid ${festival.color}66`, borderRadius:14, padding:"9px 13px", marginBottom:8, display:"flex", alignItems:"center", gap:10, animation:"heartbeat 2s ease-in-out infinite" }}>
+            <span style={{ fontSize:26 }}>{festival.emoji}</span>
+            <div style={{ flex:1 }}>
+              <div style={{ fontSize:13, fontWeight:900, color:festival.color }}>{festival.name}</div>
+              <div style={{ fontSize:11, color:C.dim }}>{festival.desc}</div>
+            </div>
+            <div style={{ background:festival.color, borderRadius:10, padding:"3px 9px", fontSize:11, fontWeight:900, color:"white" }}>{festival.bonus}× 🪙</div>
+          </div>
+        )}
+
+        {/* Mascot */}
+        <div style={{ background:isDark()?"rgba(255,255,255,0.05)":"rgba(0,0,0,0.04)", borderRadius:14, padding:"10px 14px", display:"flex", gap:10, alignItems:"center" }}>
+          <div style={{ fontSize:36, animation:"floatUp 2.5s ease-in-out infinite", flexShrink:0 }}>🧑‍🛒</div>
           <div style={{ flex:1 }}>
             <div style={{ fontSize:13, fontWeight:900, color:textColor() }}>Welcome to the Bazaar!</div>
-            <div style={{ fontSize:11, color:C.dim, marginTop:2, lineHeight:1.5 }}>Choose a market, be a Buyer or Seller, earn coins! 🪙</div>
+            <div style={{ fontSize:11, color:C.dim, lineHeight:1.5 }}>Choose a market, be Buyer or Seller, earn coins! 🪙</div>
           </div>
         </div>
       </div>
 
-      <div style={{ padding:"14px 16px", position:"relative", zIndex:2 }}>
+      <div style={{ padding:"12px 15px", position:"relative", zIndex:2 }}>
 
-        {/* ── Daily Challenge Card ── */}
-        <div style={{ marginBottom:16 }}>
-          <div style={{ fontSize:11, color:C.dim, fontWeight:900, fontFamily:"'Orbitron',sans-serif", letterSpacing:1, marginBottom:8 }}>🌟 TODAY'S SPECIAL CHALLENGE</div>
-          <button onClick={()=>!dailyDone&&onDaily(todayChallenge)}
-            disabled={dailyDone}
-            style={{ width:"100%", background:dailyDone?`${C.dim}10`:`linear-gradient(135deg,${todayChallenge.color}28,${todayChallenge.color}10)`, border:`2.5px solid ${dailyDone?C.dim+"33":todayChallenge.color+"66"}`, borderRadius:22, padding:"16px 18px", cursor:dailyDone?"not-allowed":"pointer", textAlign:"left", display:"flex", alignItems:"center", gap:14, boxShadow:dailyDone?"":`0 4px 24px ${todayChallenge.color}22`, transition:"all 0.2s", animation:"slideUp 0.3s ease", position:"relative", overflow:"hidden" }}>
-            {!dailyDone && <div style={{ position:"absolute", top:8, right:12, background:`linear-gradient(135deg,${todayChallenge.color},${todayChallenge.color}aa)`, borderRadius:10, padding:"3px 10px", fontSize:10, fontWeight:900, color:"white", fontFamily:"'Orbitron',sans-serif", animation:"heartbeat 1.5s ease-in-out infinite" }}>NEW</div>}
-            {dailyDone  && <div style={{ position:"absolute", top:8, right:12, background:"#22c55e22", border:"1px solid #22c55e55", borderRadius:10, padding:"3px 10px", fontSize:10, fontWeight:900, color:"#22c55e" }}>✅ DONE</div>}
-            <div style={{ fontSize:46, animation:dailyDone?"none":"floatUp 2s ease-in-out infinite", filter:dailyDone?"grayscale(1) opacity(0.5)":"none" }}>{todayChallenge.emoji}</div>
+        {/* ── Passport + League quick row ── */}
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:14 }}>
+          <button onClick={()=>setShowPassport(true)}
+            style={{ background:`linear-gradient(135deg,${C.cyan}18,${C.cyan}08)`, border:`1.5px solid ${C.cyan}44`, borderRadius:18, padding:"12px 12px", cursor:"pointer", textAlign:"left" }}>
+            <div style={{ fontSize:26 }}>🗺️</div>
+            <div style={{ fontSize:13, fontWeight:900, color:textColor(), marginTop:4 }}>Bazaar Passport</div>
+            <div style={{ fontSize:10, color:C.dim, marginTop:2 }}>
+              {BAZAAR_PASSPORT.filter(c=>totalCoins>=c.unlockCoins&&!c.comingSoon).length}/{BAZAAR_PASSPORT.filter(c=>!c.comingSoon).length} cities unlocked
+            </div>
+            <div style={{ marginTop:5 }}>
+              {BAZAAR_PASSPORT.filter(c=>!c.comingSoon).map(c=>(
+                <span key={c.id} style={{ fontSize:14, filter:totalCoins>=c.unlockCoins?"none":"grayscale(1) opacity(0.25)", marginRight:2 }}>{c.emoji}</span>
+              ))}
+            </div>
+          </button>
+          <button onClick={()=>setShowLeague(true)}
+            style={{ background:`linear-gradient(135deg,${C.yellow}18,${C.yellow}08)`, border:`1.5px solid ${C.yellow}44`, borderRadius:18, padding:"12px 12px", cursor:"pointer", textAlign:"left" }}>
+            <div style={{ fontSize:26 }}>🏆</div>
+            <div style={{ fontSize:13, fontWeight:900, color:textColor(), marginTop:4 }}>Weekly League</div>
+            <div style={{ fontSize:10, color:C.dim, marginTop:2 }}>{weeklyCoins} coins this week</div>
+            <div style={{ marginTop:5 }}><LeagueBadge coins={weeklyCoins}/></div>
+          </button>
+        </div>
+
+        {/* ── Daily Challenge ── */}
+        <div style={{ marginBottom:12 }}>
+          <div style={{ fontSize:10, color:C.dim, fontWeight:900, fontFamily:"'Orbitron',sans-serif", letterSpacing:1, marginBottom:7 }}>🌟 TODAY'S SPECIAL CHALLENGE</div>
+          <button onClick={()=>!dailyDone&&onDaily(todayChallenge)} disabled={dailyDone}
+            style={{ width:"100%", background:dailyDone?`${C.dim}0a`:`linear-gradient(135deg,${todayChallenge.color}26,${todayChallenge.color}0c)`, border:`2.5px solid ${dailyDone?C.dim+"22":todayChallenge.color+"66"}`, borderRadius:20, padding:"14px 16px", cursor:dailyDone?"not-allowed":"pointer", textAlign:"left", display:"flex", alignItems:"center", gap:13, boxShadow:dailyDone?"":`0 3px 20px ${todayChallenge.color}1a`, position:"relative", overflow:"hidden" }}>
+            {!dailyDone && <div style={{ position:"absolute", top:8, right:12, background:`${todayChallenge.color}`, borderRadius:9, padding:"2px 9px", fontSize:9, fontWeight:900, color:"white", animation:"heartbeat 1.8s ease-in-out infinite" }}>NEW</div>}
+            {dailyDone  && <div style={{ position:"absolute", top:8, right:12, background:"#22c55e22", border:"1px solid #22c55e44", borderRadius:9, padding:"2px 9px", fontSize:9, fontWeight:900, color:"#22c55e" }}>✅ DONE</div>}
+            <div style={{ fontSize:42, animation:dailyDone?"none":"floatUp 2s ease-in-out infinite", filter:dailyDone?"grayscale(1) opacity(0.5)":"none" }}>{todayChallenge.emoji}</div>
             <div style={{ flex:1 }}>
-              <div style={{ fontSize:15, fontWeight:900, color:dailyDone?C.dim:textColor(), lineHeight:1.3 }}>{todayChallenge.title}</div>
-              <div style={{ fontSize:11, color:C.dim, marginTop:3, lineHeight:1.5 }}>{todayChallenge.desc}</div>
+              <div style={{ fontSize:14, fontWeight:900, color:dailyDone?C.dim:textColor() }}>{todayChallenge.title}</div>
+              <div style={{ fontSize:11, color:C.dim, marginTop:2, lineHeight:1.5 }}>{todayChallenge.desc}</div>
               {!dailyDone && (
-                <div style={{ display:"flex", alignItems:"center", gap:6, marginTop:6 }}>
-                  <span style={{ background:"#fbbf2422", border:"1px solid #fbbf2444", borderRadius:8, padding:"2px 8px", fontSize:11, fontWeight:900, color:"#fbbf24" }}>+{todayChallenge.bonus}× coins</span>
-                  <span style={{ background:"#22c55e22", border:"1px solid #22c55e44", borderRadius:8, padding:"2px 8px", fontSize:10, fontWeight:700, color:"#22c55e" }}>Unique badge 🏅</span>
+                <div style={{ display:"flex", gap:6, marginTop:5 }}>
+                  <span style={{ background:"#fbbf2420", border:"1px solid #fbbf2440", borderRadius:8, padding:"2px 8px", fontSize:10, fontWeight:900, color:"#fbbf24" }}>+{todayChallenge.bonus}× coins</span>
+                  <span style={{ background:"#22c55e20", border:"1px solid #22c55e40", borderRadius:8, padding:"2px 8px", fontSize:9, fontWeight:700, color:"#22c55e" }}>🏅 Badge</span>
                 </div>
               )}
-              {dailyDone && <div style={{ fontSize:11, color:C.dim, marginTop:4 }}>Come back tomorrow for a new challenge!</div>}
+              {dailyDone && <div style={{ fontSize:10, color:C.dim, marginTop:4 }}>Come back tomorrow for a fresh challenge!</div>}
             </div>
           </button>
         </div>
 
+        {/* ── Speed Round banner ── */}
+        <div style={{ marginBottom:12 }}>
+          <button onClick={()=>onSpeed(BAZAAR_MARKETS.find(m=>!m.isPaid))}
+            style={{ width:"100%", background:`linear-gradient(135deg,#ef444418,#f9731610)`, border:`2px solid #ef444444`, borderRadius:18, padding:"13px 16px", cursor:"pointer", display:"flex", alignItems:"center", gap:12, textAlign:"left" }}>
+            <div style={{ width:46, height:46, borderRadius:14, background:`linear-gradient(135deg,#ef4444,#f97316)`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:24, flexShrink:0, boxShadow:"0 3px 12px #ef444444" }}>⚡</div>
+            <div style={{ flex:1 }}>
+              <div style={{ fontSize:14, fontWeight:900, color:textColor() }}>Speed Round</div>
+              <div style={{ fontSize:11, color:C.dim, lineHeight:1.5 }}>60 seconds · answer as many as you can!</div>
+              <div style={{ fontSize:10, color:"#ef4444", fontWeight:700, marginTop:2 }}>+3s correct · −2s freeze on wrong</div>
+            </div>
+            <div style={{ background:"#ef444422", border:"1px solid #ef444444", borderRadius:10, padding:"4px 10px", fontSize:11, fontWeight:900, color:"#ef4444" }}>▶ PLAY</div>
+          </button>
+        </div>
+
         {/* ── Market grid ── */}
-        <div style={{ fontSize:11, color:C.dim, fontWeight:900, fontFamily:"'Orbitron',sans-serif", letterSpacing:1, marginBottom:10 }}>🏪 CHOOSE YOUR MARKET</div>
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:14 }}>
-          {BAZAAR_MARKETS.map((m,i)=>{
+        <div style={{ fontSize:10, color:C.dim, fontWeight:900, fontFamily:"'Orbitron',sans-serif", letterSpacing:1, marginBottom:8 }}>🏪 CHOOSE YOUR MARKET</div>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:12 }}>
+          {BAZAAR_MARKETS.map((m,i) => {
             const rep = getBazaarReputation(m.id);
             return (
-              <button key={m.id} onClick={()=>!m.isPaid && onMarket(m)}
-                style={{ background:`linear-gradient(135deg,${m.color}18,${m.color}06)`, border:`2px solid ${m.color}${m.isPaid?"2a":"55"}`, borderRadius:22, padding:"16px 12px", cursor:m.isPaid?"not-allowed":"pointer", textAlign:"left", display:"flex", flexDirection:"column", gap:7, opacity:m.isPaid?0.6:1, animation:`slideUp 0.4s ease ${i*0.07}s both`, position:"relative", overflow:"hidden", transition:"all 0.15s" }}>
-                {m.isPaid && <div style={{ position:"absolute", top:8, right:8, background:"#fbbf24", borderRadius:8, padding:"3px 8px", fontSize:9, fontWeight:900, color:"#000", fontFamily:"'Orbitron',sans-serif" }}>🔒 SOON</div>}
-                <div style={{ fontSize:44, lineHeight:1 }}>{m.emoji}</div>
-                <div style={{ fontSize:15, fontWeight:900, color:textColor() }}>{m.name}</div>
-                <div style={{ fontSize:11, color:C.dim, lineHeight:1.3 }}>{m.desc}</div>
+              <button key={m.id} onClick={()=>!m.isPaid&&onMarket(m)}
+                style={{ background:`linear-gradient(135deg,${m.color}16,${m.color}06)`, border:`2px solid ${m.color}${m.isPaid?"22":"55"}`, borderRadius:20, padding:"14px 11px", cursor:m.isPaid?"not-allowed":"pointer", textAlign:"left", display:"flex", flexDirection:"column", gap:6, opacity:m.isPaid?.6:1, animation:`slideUp 0.4s ease ${i*0.07}s both`, position:"relative", overflow:"hidden" }}>
+                {m.isPaid && <div style={{ position:"absolute", top:7, right:7, background:"#fbbf24", borderRadius:7, padding:"2px 7px", fontSize:8, fontWeight:900, color:"#000", fontFamily:"'Orbitron',sans-serif" }}>🔒 SOON</div>}
+                <div style={{ fontSize:42 }}>{m.emoji}</div>
+                <div style={{ fontSize:14, fontWeight:900, color:textColor() }}>{m.name}</div>
+                <div style={{ fontSize:10, color:C.dim, lineHeight:1.3 }}>{m.desc}</div>
                 {!m.isPaid && (
                   <>
-                    <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-                      <span style={{ fontSize:13 }}>{m.keeperEmoji}</span>
+                    <div style={{ display:"flex", alignItems:"center", gap:5 }}>
+                      <span style={{ fontSize:12 }}>{m.keeperEmoji}</span>
                       <span style={{ fontSize:10, color:m.color, fontWeight:700 }}>{m.keeper}</span>
                     </div>
-                    <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-                      <StarRating stars={rep.stars} size={11} showNum={true}/>
-                    </div>
-                    <div style={{ background:`${m.color}22`, border:`1px solid ${m.color}44`, borderRadius:10, padding:"4px 10px", textAlign:"center", fontSize:11, fontWeight:800, color:m.color }}>▶ Play</div>
+                    <StarRating stars={rep.stars} size={11}/>
+                    <div style={{ background:`${m.color}20`, border:`1px solid ${m.color}44`, borderRadius:9, padding:"3px 10px", textAlign:"center", fontSize:11, fontWeight:800, color:m.color }}>▶ Play</div>
                   </>
                 )}
               </button>
@@ -4181,12 +4534,12 @@ function BazaarHub({ child, onBack, onMarket, onDaily }) {
           })}
         </div>
 
-        {/* Learning chips */}
-        <div style={{ background:C.card, border:`1.5px solid ${C.cyan}33`, borderRadius:18, padding:"12px 14px" }}>
-          <div style={{ fontSize:10, color:C.cyan, fontWeight:900, fontFamily:"'Orbitron',sans-serif", letterSpacing:1, marginBottom:8 }}>📚 WHAT YOU LEARN</div>
-          <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+        {/* Concepts strip */}
+        <div style={{ background:C.card, border:`1.5px solid ${C.cyan}2a`, borderRadius:16, padding:"11px 13px" }}>
+          <div style={{ fontSize:10, color:C.cyan, fontWeight:900, fontFamily:"'Orbitron',sans-serif", letterSpacing:1, marginBottom:7 }}>📚 WHAT YOU LEARN</div>
+          <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
             {["➕ Addition","➖ Change","✖️ Multiply","💰 Money","⚖️ Weight","📊 Compare","💡 Budget","🔢 Estimation"].map(t=>(
-              <div key={t} style={{ background:`${C.purple}10`, border:`1px solid ${C.purple}22`, borderRadius:20, padding:"4px 10px", fontSize:11, color:C.purple, fontWeight:700 }}>{t}</div>
+              <div key={t} style={{ background:`${C.purple}10`, border:`1px solid ${C.purple}20`, borderRadius:20, padding:"3px 9px", fontSize:10, color:C.purple, fontWeight:700 }}>{t}</div>
             ))}
           </div>
         </div>
@@ -4195,107 +4548,93 @@ function BazaarHub({ child, onBack, onMarket, onDaily }) {
   );
 }
 
-// ════════════════════════════════════════════════
-//  Screen 2: BazaarMarket — price board + role pick
-// ════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════
+//  BazaarMarket — price board + role pick
+// ═══════════════════════════════════════════════════════════════════════
 function BazaarMarket({ market, child, onBack, onRole, isDaily, dailyChallenge }) {
   const [role, setRole] = useState(null);
-  const rep = getBazaarReputation(market.id);
+  const rep      = getBazaarReputation(market.id);
 
   return (
     <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Baloo 2','Nunito',sans-serif", paddingBottom:40, overflowX:"hidden" }}>
-      {/* Header */}
-      <div style={{ background:`linear-gradient(135deg,${market.color}22,${market.color}0a)`, borderBottom:`2px solid ${market.color}44`, padding:"16px 16px 12px" }}>
+      <div style={{ background:`linear-gradient(135deg,${market.color}22,${market.color}0a)`, borderBottom:`2px solid ${market.color}44`, padding:"15px 15px 12px" }}>
         <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:10 }}>
           <BackBtn onClick={onBack} color={market.color}/>
-          <div style={{ fontSize:32 }}>{market.emoji}</div>
+          <div style={{ fontSize:30 }}>{market.emoji}</div>
           <div style={{ flex:1 }}>
-            <div style={{ fontSize:10, color:market.color, fontWeight:900, letterSpacing:2, fontFamily:"'Orbitron',sans-serif" }}>{isDaily?"🌟 DAILY CHALLENGE":"BAZAAR MATHS"}</div>
+            <div style={{ fontSize:9, color:market.color, fontWeight:900, letterSpacing:2, fontFamily:"'Orbitron',sans-serif" }}>{isDaily?"🌟 DAILY CHALLENGE":"BAZAAR MATHS"}</div>
             <div style={{ fontSize:19, fontWeight:900, color:textColor() }}>{market.name}</div>
           </div>
           <div style={{ textAlign:"right" }}>
-            <StarRating stars={rep.stars} size={13} showNum={true}/>
-            <div style={{ fontSize:9, color:C.dim, marginTop:2 }}>Reputation</div>
+            <StarRating stars={rep.stars} size={12}/>
+            <div style={{ fontSize:8, color:C.dim, marginTop:2 }}>Reputation</div>
           </div>
         </div>
-
-        {/* Daily challenge banner */}
         {isDaily && dailyChallenge && (
-          <div style={{ background:`${dailyChallenge.color}22`, border:`1.5px solid ${dailyChallenge.color}55`, borderRadius:14, padding:"10px 14px", display:"flex", gap:10, alignItems:"center" }}>
-            <span style={{ fontSize:26 }}>{dailyChallenge.emoji}</span>
-            <div>
-              <div style={{ fontSize:13, fontWeight:900, color:dailyChallenge.color }}>{dailyChallenge.title}</div>
-              <div style={{ fontSize:11, color:C.dim }}>{dailyChallenge.desc}</div>
-            </div>
+          <div style={{ background:`${dailyChallenge.color}20`, border:`1.5px solid ${dailyChallenge.color}55`, borderRadius:13, padding:"9px 13px", display:"flex", gap:10, alignItems:"center" }}>
+            <span style={{ fontSize:24 }}>{dailyChallenge.emoji}</span>
+            <div><div style={{ fontSize:12, fontWeight:900, color:dailyChallenge.color }}>{dailyChallenge.title}</div><div style={{ fontSize:11, color:C.dim }}>{dailyChallenge.desc}</div></div>
           </div>
         )}
-
-        {/* Keeper greeting */}
         {!isDaily && (
-          <div style={{ background:isDark()?"rgba(255,255,255,0.05)":"rgba(0,0,0,0.04)", borderRadius:14, padding:"10px 14px", display:"flex", gap:10, alignItems:"center" }}>
-            <div style={{ fontSize:30, animation:"floatUp 2s ease-in-out infinite", flexShrink:0 }}>{market.keeperEmoji}</div>
-            <div>
-              <div style={{ fontSize:12, fontWeight:900, color:market.color }}>{market.keeper}</div>
-              <div style={{ fontSize:11, color:C.dim }}>Namaste! Welcome to my {market.name}! 🙏</div>
-            </div>
+          <div style={{ background:isDark()?"rgba(255,255,255,0.05)":"rgba(0,0,0,0.04)", borderRadius:13, padding:"9px 13px", display:"flex", gap:10, alignItems:"center" }}>
+            <div style={{ fontSize:28, animation:"floatUp 2s ease-in-out infinite" }}>{market.keeperEmoji}</div>
+            <div><div style={{ fontSize:12, fontWeight:900, color:market.color }}>{market.keeper}</div><div style={{ fontSize:11, color:C.dim }}>Namaste! Welcome to my {market.name}! 🙏</div></div>
           </div>
         )}
       </div>
 
-      <div style={{ padding:"12px 16px" }}>
+      <div style={{ padding:"12px 15px" }}>
         {/* Price board */}
-        <div style={{ background:C.card, border:`2px solid ${market.color}44`, borderRadius:20, overflow:"hidden", marginBottom:14 }}>
-          <div style={{ background:`linear-gradient(135deg,${market.color}22,${market.color}0a)`, padding:"10px 16px", borderBottom:`1px solid ${market.color}33`, display:"flex", alignItems:"center", gap:8 }}>
-            <span style={{ fontSize:18 }}>📋</span>
-            <span style={{ fontSize:13, fontWeight:900, color:market.color, fontFamily:"'Orbitron',sans-serif", letterSpacing:1 }}>TODAY'S PRICE LIST</span>
+        <div style={{ background:C.card, border:`2px solid ${market.color}44`, borderRadius:18, overflow:"hidden", marginBottom:13 }}>
+          <div style={{ background:`${market.color}18`, padding:"9px 15px", borderBottom:`1px solid ${market.color}33`, display:"flex", gap:8, alignItems:"center" }}>
+            <span style={{ fontSize:16 }}>📋</span>
+            <span style={{ fontSize:12, fontWeight:900, color:market.color, fontFamily:"'Orbitron',sans-serif" }}>TODAY'S PRICE LIST</span>
           </div>
-          <div>
-            {market.items.map((item,i)=>(
-              <div key={i} style={{ display:"flex", alignItems:"center", gap:10, padding:"9px 16px", borderBottom:i<market.items.length-1?`1px solid ${isDark()?"rgba(255,255,255,0.05)":"rgba(0,0,0,0.05)"}`:undefined }}>
-                <div style={{ fontSize:26, width:32, textAlign:"center", flexShrink:0 }}>{item.emoji}</div>
-                <div style={{ flex:1 }}>
-                  <div style={{ fontSize:13, fontWeight:800, color:textColor() }}>{item.name}</div>
-                  <div style={{ fontSize:10, color:C.dim }}>{item.unit}</div>
-                </div>
-                <div style={{ background:`${market.color}18`, border:`1px solid ${market.color}44`, borderRadius:10, padding:"4px 12px" }}>
-                  <div style={{ fontSize:15, fontWeight:900, color:market.color }}>₹{item.price}</div>
-                </div>
+          {market.items.map((item,i)=>(
+            <div key={i} style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 15px", borderBottom:i<market.items.length-1?`1px solid ${isDark()?"rgba(255,255,255,0.05)":"rgba(0,0,0,0.05)"}`:undefined }}>
+              <div style={{ fontSize:24, width:30, textAlign:"center", flexShrink:0 }}>{item.emoji}</div>
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize:13, fontWeight:800, color:textColor() }}>{item.name}</div>
+                <div style={{ fontSize:10, color:C.dim }}>{item.unit}</div>
               </div>
-            ))}
-          </div>
+              <div style={{ background:`${market.color}16`, border:`1px solid ${market.color}44`, borderRadius:9, padding:"4px 11px" }}>
+                <div style={{ fontSize:14, fontWeight:900, color:market.color }}>₹{item.price}</div>
+              </div>
+            </div>
+          ))}
         </div>
 
-        {/* Role selection */}
-        <div style={{ fontSize:11, color:C.dim, fontWeight:900, fontFamily:"'Orbitron',sans-serif", letterSpacing:1, marginBottom:10, textAlign:"center" }}>👇 WHO ARE YOU TODAY?</div>
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:14 }}>
+        {/* Role pick */}
+        <div style={{ fontSize:10, color:C.dim, fontWeight:900, fontFamily:"'Orbitron',sans-serif", letterSpacing:1, marginBottom:9, textAlign:"center" }}>👇 WHO ARE YOU TODAY?</div>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:11, marginBottom:13 }}>
           {[
-            {r:"buyer",  e:"🧺", title:"I'm a BUYER",  sub:"Shop smart, manage your budget, get correct change!", c:C.cyan },
-            {r:"seller", e:"🏪", title:"I'm a SELLER", sub:"Run the shop, charge right, give change, track stock!", c:"#f97316" },
+            {r:"buyer",  e:"🧺", title:"I'm a BUYER",  sub:"Shop smart, manage budget, get correct change!", c:C.cyan},
+            {r:"seller", e:"🏪", title:"I'm a SELLER", sub:"Run the shop, charge right, give change & track stock!", c:"#f97316"},
           ].map(opt=>(
             <button key={opt.r} onClick={()=>setRole(opt.r)}
-              style={{ background:role===opt.r?`linear-gradient(135deg,${opt.c}33,${opt.c}16)`:isDark()?"rgba(255,255,255,0.04)":C.card, border:`2.5px solid ${role===opt.r?opt.c:opt.c+"44"}`, borderRadius:20, padding:"16px 10px", cursor:"pointer", textAlign:"center", display:"flex", flexDirection:"column", alignItems:"center", gap:7, transition:"all 0.2s", boxShadow:role===opt.r?`0 4px 20px ${opt.c}33`:"none" }}>
-              <div style={{ fontSize:40, animation:role===opt.r?"floatUp 1.5s ease-in-out infinite":"none" }}>{opt.e}</div>
+              style={{ background:role===opt.r?`linear-gradient(135deg,${opt.c}30,${opt.c}14)`:isDark()?"rgba(255,255,255,0.04)":C.card, border:`2.5px solid ${role===opt.r?opt.c:opt.c+"44"}`, borderRadius:18, padding:"15px 10px", cursor:"pointer", textAlign:"center", display:"flex", flexDirection:"column", alignItems:"center", gap:7, transition:"all 0.2s", boxShadow:role===opt.r?`0 4px 18px ${opt.c}30`:"none" }}>
+              <div style={{ fontSize:38, animation:role===opt.r?"floatUp 1.5s ease-in-out infinite":"none" }}>{opt.e}</div>
               <div style={{ fontSize:13, fontWeight:900, color:opt.c }}>{opt.title}</div>
-              <div style={{ fontSize:11, color:C.dim, lineHeight:1.5 }}>{opt.sub}</div>
-              {role===opt.r && <div style={{ background:opt.c, borderRadius:20, padding:"4px 14px", fontSize:11, color:"white", fontWeight:800 }}>✓ Selected</div>}
+              <div style={{ fontSize:10, color:C.dim, lineHeight:1.5 }}>{opt.sub}</div>
+              {role===opt.r && <div style={{ background:opt.c, borderRadius:18, padding:"3px 13px", fontSize:11, color:"white", fontWeight:800 }}>✓ Selected</div>}
             </button>
           ))}
         </div>
 
-        {/* Start button */}
         <button disabled={!role} onClick={()=>role&&onRole(role)}
-          style={{ width:"100%", background:role?`linear-gradient(135deg,${market.color},${market.color}bb)`:`${C.dim}22`, border:"none", borderRadius:20, padding:"17px", color:role?"white":C.dim, fontSize:16, fontWeight:900, cursor:role?"pointer":"not-allowed", boxShadow:role?`0 4px 24px ${market.color}44`:"none", transition:"all 0.3s", display:"flex", alignItems:"center", justifyContent:"center", gap:10 }}>
-          <span style={{ fontSize:22 }}>🚀</span>
-          {role ? `Start as ${role==="buyer"?"Buyer 🧺":"Seller 🏪"}!` : "Choose your role above"}
+          style={{ width:"100%", background:role?`linear-gradient(135deg,${market.color},${market.color}bb)`:`${C.dim}20`, border:"none", borderRadius:18, padding:"16px", color:role?"white":C.dim, fontSize:15, fontWeight:900, cursor:role?"pointer":"not-allowed", boxShadow:role?`0 4px 22px ${market.color}44`:"none", transition:"all 0.3s", display:"flex", alignItems:"center", justifyContent:"center", gap:10 }}>
+          <span style={{ fontSize:20 }}>🚀</span>
+          {role?`Start as ${role==="buyer"?"Buyer 🧺":"Seller 🏪"}!`:"Choose your role above"}
         </button>
       </div>
     </div>
   );
 }
 
-// ════════════════════════════════════════════════
-//  Screen 3: BazaarGame — questions
-// ════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════
+//  BazaarGame — questions screen
+// ═══════════════════════════════════════════════════════════════════════
 function BazaarGame({ market, role, child, onBack, onDone, isDaily, dailyChallenge }) {
   const [questions, setQuestions] = useState([]);
   const [loading,   setLoading]   = useState(true);
@@ -4305,23 +4644,22 @@ function BazaarGame({ market, role, child, onBack, onDone, isDaily, dailyChallen
   const [streak,    setStreak]    = useState(0);
   const [feedback,  setFeedback]  = useState(null);
   const [shuffled,  setShuffled]  = useState([]);
-  const [keeperAnim, setKeeperAnim] = useState(null);
-  const [showCoins, setShowCoins]   = useState(false);
-  const [rep,       setRep]         = useState(()=>getBazaarReputation(market.id));
-  const [customerEmojis] = useState(()=> Array.from({length:8},()=>BAZAAR_CUSTOMER_EMOJIS[Math.floor(Math.random()*BAZAAR_CUSTOMER_EMOJIS.length)]));
+  const [keeperAnim,setKeeperAnim]= useState(null);
+  const [showCoins, setShowCoins] = useState(false);
+  const [rep,       setRep]       = useState(()=>getBazaarReputation(market.id));
+  const [custEmojis]= useState(()=>Array.from({length:8},()=>BAZAAR_CUSTOMER_EMOJIS[Math.floor(Math.random()*BAZAAR_CUSTOMER_EMOJIS.length)]));
+  const festival   = getActiveFestival();
+  const coinMult   = (isDaily?(dailyChallenge?.bonus||1):1) * (festival?festival.bonus:1);
 
   useEffect(()=>{
     fetchBazaarQuestions(market.id, role, isDaily).then(data=>{
-      const qs = data || getBazaarFallback(market, role, true);
-      setQuestions(qs);
-      setLoading(false);
+      const qs = data || getBazaarFallback(market, role);
+      setQuestions(qs); setLoading(false);
     });
   },[market.id, role]);
 
   useEffect(()=>{
-    if (questions.length>0 && questions[qIdx]) {
-      setShuffled([...(questions[qIdx].options||[])].sort(()=>Math.random()-0.5));
-    }
+    if (questions.length>0 && questions[qIdx]) setShuffled([...(questions[qIdx].options||[])].sort(()=>Math.random()-0.5));
     setFeedback(null);
   },[qIdx, questions]);
 
@@ -4329,120 +4667,106 @@ function BazaarGame({ market, role, child, onBack, onDone, isDaily, dailyChallen
     <div style={{ minHeight:"100vh", background:C.bg, display:"flex", alignItems:"center", justifyContent:"center" }}>
       <Starfield n={10}/>
       <div style={{ textAlign:"center", position:"relative", zIndex:2 }}>
-        <div style={{ fontSize:48, animation:"floatUp 1s ease-in-out infinite", marginBottom:12 }}>{market.emoji}</div>
+        <div style={{ fontSize:46, animation:"floatUp 1s ease-in-out infinite", marginBottom:12 }}>{market.emoji}</div>
         <div style={{ fontSize:13, color:C.dim, fontFamily:"'Orbitron',sans-serif" }}>Setting up your market…</div>
       </div>
     </div>
   );
 
-  if (questions.length===0) return (
+  if (!questions.length) return (
     <div style={{ minHeight:"100vh", background:C.bg, display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
       <div style={{ textAlign:"center" }}>
-        <div style={{ fontSize:48, marginBottom:12 }}>🔧</div>
+        <div style={{ fontSize:46, marginBottom:12 }}>🔧</div>
         <div style={{ fontSize:15, fontWeight:800, color:textColor(), marginBottom:8 }}>Questions coming soon!</div>
         <div style={{ fontSize:12, color:C.dim, marginBottom:20 }}>Being added to Supabase — check back tomorrow!</div>
-        <button onClick={onBack} style={{ background:`${market.color}22`, border:`2px solid ${market.color}44`, borderRadius:14, padding:"12px 24px", color:market.color, fontWeight:800, cursor:"pointer" }}>← Go Back</button>
+        <button onClick={onBack} style={{ background:`${market.color}20`, border:`2px solid ${market.color}44`, borderRadius:13, padding:"11px 22px", color:market.color, fontWeight:800, cursor:"pointer" }}>← Go Back</button>
       </div>
     </div>
   );
 
-  const q      = questions[qIdx];
-  const total  = questions.length;
-  const pct    = Math.round((qIdx/total)*100);
-  const isBoss = !!q.isBoss;
-  const isCorrect = feedback==="correct";
-  const isWrong   = feedback==="wrong";
-  const coinMulti = isDaily ? (dailyChallenge?.bonus||1) : 1;
+  const q        = questions[qIdx];
+  const total    = questions.length;
+  const pct      = Math.round((qIdx/total)*100);
+  const isBoss   = !!q.isBoss;
+  const isCorrect= feedback==="correct";
+  const isWrong  = feedback==="wrong";
 
   function handleAnswer(opt) {
     if (feedback) return;
     const correct = opt.trim()===String(q.correct_answer).trim();
     if (correct) {
-      SFX.correct();
-      if (isBoss) { setTimeout(()=>SFX.bossDefeat(), 200); }
-      const earned = (1+streak) * coinMulti * (isBoss?3:1);
+      SFX.correct(); if(isBoss) setTimeout(()=>SFX.bossDefeat(),200);
+      const earned = (1+streak)*coinMult*(isBoss?3:1);
       const newRep = updateBazaarReputation(market.id, true);
-      setRep(newRep);
-      setScore(s=>s+1); setStreak(s=>s+1); setCoins(c=>c+earned);
-      setFeedback("correct");
-      setKeeperAnim("happy");
-      setShowCoins(true);
-      setTimeout(()=>{setShowCoins(false);setKeeperAnim(null);},1400);
+      setRep(newRep); setScore(s=>s+1); setStreak(s=>s+1); setCoins(c=>c+earned);
+      setFeedback("correct"); setKeeperAnim("happy"); setShowCoins(true);
+      setTimeout(()=>{setShowCoins(false);setKeeperAnim(null);},1350);
       setTimeout(()=>{
-        if (qIdx+1>=total) {
-          addBazaarCoins(child.id, coins+earned);
-          onDone({ score:score+1, total, coins:coins+earned, role, market, isDaily });
-        } else setQIdx(i=>i+1);
-      }, 1400);
+        if (qIdx+1>=total){ addBazaarCoins(child.id, coins+earned); updateWeeklyLeague(child.id, coins+earned); onDone({score:score+1,total,coins:coins+earned,role,market,isDaily,streak:streak+1}); }
+        else setQIdx(i=>i+1);
+      },1350);
     } else {
       SFX.wrong();
       const newRep = updateBazaarReputation(market.id, false);
-      setRep(newRep);
-      setStreak(0);
-      setFeedback("wrong");
-      setKeeperAnim("sad");
+      setRep(newRep); setStreak(0); setFeedback("wrong"); setKeeperAnim("sad");
       setTimeout(()=>{setFeedback(null);setKeeperAnim(null);},1700);
     }
   }
 
   return (
-    <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Baloo 2','Nunito',sans-serif", paddingBottom:30, position:"relative", overflow:"hidden" }}>
+    <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Baloo 2','Nunito',sans-serif", paddingBottom:28, position:"relative", overflow:"hidden" }}>
       <CoinShower active={showCoins}/>
-      {feedback && <div style={{ position:"fixed", inset:0, zIndex:49, background:isCorrect?"rgba(34,197,94,0.09)":"rgba(239,68,68,0.09)", pointerEvents:"none", transition:"background 0.2s" }}/>}
-
-      {/* Boss glow overlay */}
-      {isBoss && <div style={{ position:"fixed", inset:0, zIndex:1, background:"radial-gradient(ellipse at 50% 0%, #f9731622 0%, transparent 70%)", pointerEvents:"none" }}/>}
+      {feedback && <div style={{ position:"fixed", inset:0, zIndex:49, background:isCorrect?"rgba(34,197,94,0.09)":"rgba(239,68,68,0.09)", pointerEvents:"none" }}/>}
+      {isBoss && <div style={{ position:"fixed", inset:0, zIndex:1, background:"radial-gradient(ellipse at 50% 0%,#f9731620,transparent 70%)", pointerEvents:"none" }}/>}
 
       {/* Header */}
-      <div style={{ background:isBoss?`linear-gradient(135deg,#f9731628,#ec489918)`:`linear-gradient(135deg,${market.color}20,${market.color}08)`, borderBottom:`2px solid ${isBoss?"#f97316":""+market.color}44`, padding:"13px 15px", position:"relative", zIndex:2 }}>
+      <div style={{ background:isBoss?"linear-gradient(135deg,#f9731626,#ec489916)":`linear-gradient(135deg,${market.color}20,${market.color}08)`, borderBottom:`2px solid ${isBoss?"#f97316":market.color}44`, padding:"12px 14px" }}>
         <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6 }}>
           <BackBtn onClick={onBack} color={market.color}/>
-          <div style={{ flex:1 }}>
-            <div style={{ fontSize:11, fontWeight:900, color:market.color }}>{market.emoji} {market.name} · {role==="buyer"?"🧺 Buyer":"🏪 Seller"}{isDaily?" · 🌟 Daily":""}</div>
-          </div>
+          <div style={{ flex:1, fontSize:11, fontWeight:900, color:market.color }}>{market.emoji} {market.name} · {role==="buyer"?"🧺 Buyer":"🏪 Seller"}{isDaily?" · 🌟 Daily":""}{festival?` · ${festival.emoji}`:""}</div>
           <div style={{ display:"flex", gap:5 }}>
-            <div style={{ background:`${market.color}22`, borderRadius:10, padding:"4px 8px", fontSize:12, fontWeight:900, color:market.color }}>{score}/{total} ✅</div>
-            {streak>1 && <div style={{ background:"#fb923c22", borderRadius:10, padding:"4px 8px", fontSize:12, fontWeight:900, color:"#fb923c" }}>🔥{streak}</div>}
+            <div style={{ background:`${market.color}20`, borderRadius:9, padding:"3px 8px", fontSize:12, fontWeight:900, color:market.color }}>{score}/{total} ✅</div>
+            {streak>1 && <div style={{ background:"#fb923c20", borderRadius:9, padding:"3px 8px", fontSize:12, fontWeight:900, color:"#fb923c" }}>🔥{streak}</div>}
           </div>
         </div>
-        {/* Progress bar */}
-        <div style={{ background:isDark()?"rgba(255,255,255,0.08)":"rgba(0,0,0,0.07)", borderRadius:20, height:8, overflow:"hidden" }}>
-          <div style={{ width:`${pct}%`, height:"100%", background:`linear-gradient(90deg,${market.color},${C.yellow})`, borderRadius:20, transition:"width 0.5s ease", boxShadow:`0 0 8px ${market.color}88` }}/>
+        <div style={{ background:isDark()?"rgba(255,255,255,0.08)":"rgba(0,0,0,0.07)", borderRadius:20, height:7, overflow:"hidden" }}>
+          <div style={{ width:`${pct}%`, height:"100%", background:`linear-gradient(90deg,${market.color},${C.yellow})`, borderRadius:20, transition:"width 0.5s ease", boxShadow:`0 0 7px ${market.color}88` }}/>
         </div>
         <div style={{ display:"flex", justifyContent:"space-between", marginTop:3, fontSize:10, color:C.dim }}>
-          <span>Q {qIdx+1} of {total}</span>
-          <span>🪙 {coins} coins{isDaily?` (${coinMulti}×)`:""}  ·  <StarRating stars={rep.stars} size={10} showNum={true}/></span>
+          <span>Q {qIdx+1}/{total}</span>
+          <span>🪙{coins}{coinMult>1?` (${coinMult}×)`:""} · <StarRating stars={rep.stars} size={10}/></span>
         </div>
       </div>
 
       {/* Customer queue */}
-      <div style={{ background:isDark()?"rgba(255,255,255,0.03)":"rgba(0,0,0,0.03)", borderBottom:`1px solid ${isDark()?"rgba(255,255,255,0.06)":"rgba(0,0,0,0.05)"}`, padding:"6px 16px", position:"relative", zIndex:2 }}>
-        <CustomerQueue total={Math.min(total,7)} current={qIdx} customerEmojis={customerEmojis}/>
+      <div style={{ background:isDark()?"rgba(255,255,255,0.03)":"rgba(0,0,0,0.03)", borderBottom:`1px solid ${isDark()?"rgba(255,255,255,0.06)":"rgba(0,0,0,0.05)"}`, padding:"5px 15px" }}>
+        <CustomerQueue total={Math.min(total,7)} current={qIdx} customerEmojis={custEmojis}/>
       </div>
 
-      <div style={{ padding:"12px 15px", position:"relative", zIndex:2 }}>
-
-        {/* Boss alert banner */}
+      <div style={{ padding:"11px 14px" }}>
         {isBoss && (
-          <div style={{ background:`linear-gradient(135deg,#f9731622,#ec489918)`, border:`2px solid #f9731688`, borderRadius:16, padding:"10px 14px", marginBottom:10, display:"flex", alignItems:"center", gap:10, animation:"heartbeat 1s ease-in-out infinite" }}>
-            <span style={{ fontSize:28 }}>⚡</span>
-            <div>
-              <div style={{ fontSize:13, fontWeight:900, color:"#f97316" }}>BOSS CUSTOMER ALERT!</div>
-              <div style={{ fontSize:11, color:C.dim }}>Solve this for 3× coins! 🪙🪙🪙</div>
-            </div>
-            <span style={{ fontSize:28 }}>⚡</span>
+          <div style={{ background:"linear-gradient(135deg,#f9731620,#ec489916)", border:"2px solid #f9731688", borderRadius:15, padding:"9px 13px", marginBottom:9, display:"flex", alignItems:"center", gap:10, animation:"heartbeat 1s ease-in-out infinite" }}>
+            <span style={{ fontSize:26 }}>⚡</span>
+            <div style={{ flex:1 }}><div style={{ fontSize:13, fontWeight:900, color:"#f97316" }}>BOSS CUSTOMER!</div><div style={{ fontSize:11, color:C.dim }}>Solve for 3× coins!</div></div>
+            <span style={{ fontSize:26 }}>⚡</span>
+          </div>
+        )}
+        {festival && (
+          <div style={{ background:`${festival.color}16`, border:`1.5px solid ${festival.color}44`, borderRadius:13, padding:"7px 12px", marginBottom:9, display:"flex", alignItems:"center", gap:8 }}>
+            <span style={{ fontSize:18 }}>{festival.emoji}</span>
+            <span style={{ fontSize:11, fontWeight:800, color:festival.color }}>{festival.name} — {festival.bonus}× coins active!</span>
           </div>
         )}
 
-        {/* Keeper + customer scenario card */}
-        <div style={{ background:`linear-gradient(135deg,${market.color}14,${market.color}05)`, border:`2px solid ${market.color}44`, borderRadius:20, padding:"13px 12px", marginBottom:11, animation:"slideUp 0.38s ease", position:"relative", overflow:"hidden" }}>
-          <div style={{ position:"absolute", right:-8, top:-8, fontSize:55, opacity:0.07, pointerEvents:"none" }}>{market.emoji}</div>
+        {/* Scenario */}
+        <div style={{ background:`${market.color}12`, border:`2px solid ${market.color}44`, borderRadius:19, padding:"12px 12px", marginBottom:10, animation:"slideUp 0.35s ease", position:"relative", overflow:"hidden" }}>
+          <div style={{ position:"absolute", right:-6, top:-6, fontSize:52, opacity:0.07, pointerEvents:"none" }}>{market.emoji}</div>
           <div style={{ display:"flex", gap:10, alignItems:"flex-start" }}>
-            <KeeperFace market={market} reputation={rep} animate={keeperAnim} size={48}/>
+            <KeeperFace market={market} reputation={rep} animate={keeperAnim} size={46}/>
             <div style={{ flex:1 }}>
               {q.customer_name && (
-                <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:4 }}>
-                  <span style={{ fontSize:18 }}>{q.customer_emoji||"🧑"}</span>
+                <div style={{ display:"flex", alignItems:"center", gap:5, marginBottom:3 }}>
+                  <span style={{ fontSize:16 }}>{q.customer_emoji||"🧑"}</span>
                   <span style={{ fontSize:11, color:market.color, fontWeight:900 }}>{q.customer_name}</span>
                 </div>
               )}
@@ -4452,38 +4776,34 @@ function BazaarGame({ market, role, child, onBack, onDone, isDaily, dailyChallen
         </div>
 
         {/* Question */}
-        <div style={{ background:C.card, border:`2px solid ${C.cyan}44`, borderRadius:18, padding:"13px 15px", marginBottom:12, textAlign:"center", animation:"slideUp 0.44s ease" }}>
-          <div style={{ fontSize:16, fontWeight:900, color:textColor(), lineHeight:1.5 }}>❓ {q.question}</div>
+        <div style={{ background:C.card, border:`2px solid ${C.cyan}44`, borderRadius:17, padding:"12px 14px", marginBottom:11, textAlign:"center", animation:"slideUp 0.42s ease" }}>
+          <div style={{ fontSize:15, fontWeight:900, color:textColor(), lineHeight:1.5 }}>❓ {q.question}</div>
         </div>
 
-        {/* Options grid */}
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
+        {/* Options */}
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:9 }}>
           {shuffled.map((opt,i)=>{
-            const isAns = String(opt).trim()===String(q.correct_answer).trim();
+            const isAns  = String(opt).trim()===String(q.correct_answer).trim();
             const wasWrong = isWrong && !isAns;
-            const bg = isAns&&feedback?`linear-gradient(135deg,#22c55e,#16a34a)`:wasWrong?`${C.red}20`:`${market.color}0d`;
-            const border = isAns&&feedback?"2.5px solid #22c55e":wasWrong?`2.5px solid ${C.red}`:`2px solid ${market.color}33`;
+            const bg  = isAns&&feedback?`linear-gradient(135deg,#22c55e,#16a34a)`:wasWrong?`${C.red}1e`:`${market.color}0d`;
+            const brd = isAns&&feedback?"2.5px solid #22c55e":wasWrong?`2.5px solid ${C.red}`:`2px solid ${market.color}30`;
             return (
               <button key={i} onClick={()=>handleAnswer(opt)} disabled={!!feedback}
-                style={{ background:bg, border, borderRadius:18, padding:"15px 8px", cursor:feedback?"not-allowed":"pointer", textAlign:"center", fontSize:14, fontWeight:900, color:isAns&&feedback?"white":textColor(), transition:"all 0.18s", animation:`popIn 0.3s ease ${i*0.06}s both`, boxShadow:isAns&&feedback?"0 4px 16px #22c55e55":`0 2px 8px ${market.color}12`, lineHeight:1.3 }}>
-                {opt}
-                {isAns&&feedback && <div style={{ fontSize:14, marginTop:3 }}>✅</div>}
+                style={{ background:bg, border:brd, borderRadius:17, padding:"14px 8px", cursor:feedback?"not-allowed":"pointer", textAlign:"center", fontSize:14, fontWeight:900, color:isAns&&feedback?"white":textColor(), transition:"all 0.18s", animation:`popIn 0.3s ease ${i*0.06}s both`, boxShadow:isAns&&feedback?"0 4px 14px #22c55e55":`0 2px 7px ${market.color}10`, lineHeight:1.3 }}>
+                {opt}{isAns&&feedback&&<div style={{ fontSize:13, marginTop:2 }}>✅</div>}
               </button>
             );
           })}
         </div>
 
-        {/* Feedback message */}
         {feedback && (
-          <div style={{ textAlign:"center", marginTop:12, padding:"11px 16px", borderRadius:16, background:isCorrect?"#22c55e14":"#ef444414", border:`2px solid ${isCorrect?"#22c55e":"#ef4444"}44`, animation:"popIn 0.35s ease" }}>
-            <div style={{ fontSize:18, fontWeight:900, color:isCorrect?"#22c55e":C.red }}>
-              {isCorrect
-                ? BAZAAR_REACTIONS_CORRECT[Math.floor(Math.random()*BAZAAR_REACTIONS_CORRECT.length)]
-                : BAZAAR_REACTIONS_WRONG[Math.floor(Math.random()*BAZAAR_REACTIONS_WRONG.length)]}
+          <div style={{ textAlign:"center", marginTop:11, padding:"10px 14px", borderRadius:15, background:isCorrect?"#22c55e12":"#ef444412", border:`2px solid ${isCorrect?"#22c55e":"#ef4444"}44`, animation:"popIn 0.35s ease" }}>
+            <div style={{ fontSize:17, fontWeight:900, color:isCorrect?"#22c55e":C.red }}>
+              {isCorrect?BAZAAR_REACTIONS_CORRECT[Math.floor(Math.random()*BAZAAR_REACTIONS_CORRECT.length)]:BAZAAR_REACTIONS_WRONG[Math.floor(Math.random()*BAZAAR_REACTIONS_WRONG.length)]}
             </div>
-            {isCorrect && <div style={{ fontSize:12, color:C.dim, marginTop:3 }}>+{(1+streak)*coinMulti*(isBoss?3:1)} 🪙 {isBoss?"BOSS BONUS!":isDaily?"(daily bonus!)":""}</div>}
-            {isWrong   && q.hint && <div style={{ fontSize:12, color:C.dim, marginTop:3 }}>💡 {q.hint}</div>}
-            {isWrong && <div style={{ fontSize:11, color:C.dim, marginTop:2 }}>Shop rating dropped slightly — fix it with correct answers! {rep.stars}⭐</div>}
+            {isCorrect && <div style={{ fontSize:11, color:C.dim, marginTop:2 }}>+{Math.round((1+streak)*coinMult*(isBoss?3:1))} 🪙{isBoss?" BOSS BONUS!":festival?` (${festival.emoji} festival!)`:isDaily?" (daily bonus!)":""}</div>}
+            {isWrong   && q.hint && <div style={{ fontSize:11, color:C.dim, marginTop:2 }}>💡 {q.hint}</div>}
+            {isWrong   && <div style={{ fontSize:10, color:C.dim, marginTop:2 }}>Shop rating: {rep.stars}⭐ — earn it back with correct answers!</div>}
           </div>
         )}
       </div>
@@ -4491,100 +4811,105 @@ function BazaarGame({ market, role, child, onBack, onDone, isDaily, dailyChallen
   );
 }
 
-// ════════════════════════════════════════════════
-//  Screen 4: BazaarResult
-// ════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════
+//  BazaarResult
+// ═══════════════════════════════════════════════════════════════════════
 function BazaarResult({ result, market, onReplay, onHub, onHome }) {
-  const { score, total, coins, role, isDaily } = result;
-  const stars  = score===total?3:score>=Math.ceil(total*0.7)?2:score>0?1:0;
-  const perfect= score===total;
-  const rep    = getBazaarReputation(market.id);
+  const { score, total, coins, role, isDaily, isSpeed, streak } = result;
+  const stars    = score===total?3:score>=Math.ceil(total*0.7)?2:score>0?1:0;
+  const perfect  = score===total;
+  const rep      = getBazaarReputation(market.id);
   const totalCoins = getBazaarTotalCoins(result.child?.id||"");
+  const wk       = getWeeklyLeague(result.child?.id||"");
+  const festival = getActiveFestival();
+  const nextCity = BAZAAR_PASSPORT.find(c=>c.unlockCoins>totalCoins);
 
-  // Achievement unlocks
   const badges = [];
-  if (perfect)      badges.push({e:"🏆",l:"Perfect Score!",  c:"#fbbf24"});
-  if (isDaily)      badges.push({e:"🌟",l:"Daily Hero!",      c:"#f97316"});
-  if (rep.stars>=4) badges.push({e:"⭐",l:"Top Rated Shop!",  c:"#22c55e"});
-  if (result.streak>2) badges.push({e:"🔥",l:`${result.streak} Streak!`, c:"#fb923c"});
+  if (perfect)      badges.push({e:"🏆",l:"Perfect Score!",    c:"#fbbf24"});
+  if (isDaily)      badges.push({e:"🌟",l:"Daily Hero!",        c:"#f97316"});
+  if (isSpeed)      badges.push({e:"⚡",l:"Speed Racer!",       c:"#ef4444"});
+  if (festival)     badges.push({e:festival.emoji, l:festival.badge, c:festival.color});
+  if (rep.stars>=4) badges.push({e:"⭐",l:"Top Rated Shop!",    c:"#22c55e"});
+  if ((streak||0)>2) badges.push({e:"🔥",l:`${streak} Streak!`, c:"#fb923c"});
 
   return (
     <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Baloo 2','Nunito',sans-serif", paddingBottom:50, position:"relative", overflow:"hidden" }}>
       <CoinShower active={true}/>
-      <Starfield n={20}/>
-      <div style={{ position:"relative", zIndex:2, padding:"30px 20px 20px", display:"flex", flexDirection:"column", alignItems:"center" }}>
-        <div style={{ width:"100%", maxWidth:380 }}>
+      <Starfield n={18}/>
+      <div style={{ position:"relative", zIndex:2, padding:"28px 18px 20px", display:"flex", flexDirection:"column", alignItems:"center" }}>
+        <div style={{ width:"100%", maxWidth:390 }}>
 
-          {/* Main result card */}
-          <div style={{ background:`linear-gradient(135deg,${market.color}22,${market.color}08)`, border:`2.5px solid ${market.color}55`, borderRadius:28, padding:"28px 22px", textAlign:"center", boxShadow:`0 8px 40px ${market.color}22`, marginBottom:14, animation:"popIn 0.5s ease" }}>
-            <div style={{ fontSize:68, marginBottom:6, animation:"coinBounce 0.8s ease" }}>{perfect?"🏆":stars>=2?"🎉":"👏"}</div>
-            <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:17, fontWeight:900, color:market.color, marginBottom:3 }}>
-              {perfect?"PERFECT SCORE!":stars>=2?"GREAT JOB!":"KEEP GOING!"}
-            </div>
-            <div style={{ fontSize:12, color:C.dim, marginBottom:14 }}>{market.keeper} is {perfect?"so proud":"happy"} of you! {market.keeperEmoji}</div>
+          {/* Main card */}
+          <div style={{ background:`linear-gradient(135deg,${market.color}22,${market.color}08)`, border:`2.5px solid ${market.color}55`, borderRadius:26, padding:"26px 20px", textAlign:"center", boxShadow:`0 8px 40px ${market.color}20`, marginBottom:13, animation:"popIn 0.5s ease" }}>
+            <div style={{ fontSize:66, marginBottom:6, animation:"coinBounce 0.8s ease" }}>{perfect?"🏆":stars>=2?"🎉":"👏"}</div>
+            <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:17, fontWeight:900, color:market.color, marginBottom:3 }}>{perfect?"PERFECT SCORE!":stars>=2?"GREAT JOB!":"KEEP GOING!"}</div>
+            <div style={{ fontSize:12, color:C.dim, marginBottom:13 }}>{market.keeper} is {perfect?"so proud of":"proud of"} you! {market.keeperEmoji}</div>
 
             {/* Stars */}
-            <div style={{ display:"flex", justifyContent:"center", gap:8, marginBottom:14 }}>
-              {[1,2,3].map(s=><span key={s} style={{ fontSize:38, filter:s<=stars?"none":"grayscale(1) opacity(0.2)", animation:s<=stars?`starPop 0.4s ease ${(s-1)*0.15}s both`:"none" }}>⭐</span>)}
+            <div style={{ display:"flex", justifyContent:"center", gap:8, marginBottom:13 }}>
+              {[1,2,3].map(s=><span key={s} style={{ fontSize:36, filter:s<=stars?"none":"grayscale(1) opacity(0.2)", animation:s<=stars?`starPop 0.4s ease ${(s-1)*0.15}s both`:"none" }}>⭐</span>)}
             </div>
 
-            {/* Stats grid */}
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, marginBottom:14 }}>
+            {/* Stats */}
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, marginBottom:13 }}>
               {[
-                {e:"✅",v:`${score}/${total}`, l:"Correct",    c:"#22c55e"},
-                {e:"🪙",v:coins,               l:"Coins",      c:"#fbbf24"},
-                {e:"⭐",v:rep.stars,            l:"Shop Stars", c:"#f97316"},
+                {e:"✅",v:`${score}/${total}`,l:"Correct",  c:"#22c55e"},
+                {e:"🪙",v:coins,              l:"Coins",    c:"#fbbf24"},
+                {e:"⭐",v:rep.stars,           l:"Shop ⭐",  c:"#f97316"},
               ].map((s,i)=>(
-                <div key={i} style={{ background:`${s.c}14`, border:`1.5px solid ${s.c}44`, borderRadius:14, padding:"10px 6px" }}>
-                  <div style={{ fontSize:22 }}>{s.e}</div>
-                  <div style={{ fontSize:18, fontWeight:900, color:s.c }}>{s.v}</div>
+                <div key={i} style={{ background:`${s.c}12`, border:`1.5px solid ${s.c}44`, borderRadius:13, padding:"9px 5px" }}>
+                  <div style={{ fontSize:20 }}>{s.e}</div>
+                  <div style={{ fontSize:17, fontWeight:900, color:s.c }}>{s.v}</div>
                   <div style={{ fontSize:9, color:C.dim }}>{s.l}</div>
                 </div>
               ))}
             </div>
 
-            {/* Daily badge */}
-            {isDaily && (
-              <div style={{ background:`linear-gradient(135deg,#fbbf2428,#f9731618)`, border:`2px solid #fbbf2466`, borderRadius:16, padding:"10px 14px", marginBottom:10, display:"flex", alignItems:"center", gap:10 }}>
-                <span style={{ fontSize:28 }}>🏅</span>
-                <div style={{ textAlign:"left" }}>
-                  <div style={{ fontSize:13, fontWeight:900, color:"#fbbf24" }}>Daily Challenge Complete!</div>
-                  <div style={{ fontSize:11, color:C.dim }}>Come back tomorrow for a new one! 🎯</div>
-                </div>
-              </div>
-            )}
-
-            {/* Badges earned */}
+            {/* Badges */}
             {badges.length>0 && (
-              <div style={{ display:"flex", gap:7, flexWrap:"wrap", justifyContent:"center" }}>
+              <div style={{ display:"flex", gap:6, flexWrap:"wrap", justifyContent:"center", marginBottom:10 }}>
                 {badges.map((b,i)=>(
-                  <div key={i} style={{ background:`${b.c}18`, border:`1.5px solid ${b.c}55`, borderRadius:12, padding:"5px 10px", display:"flex", alignItems:"center", gap:5, animation:`popIn 0.4s ease ${i*0.12}s both` }}>
-                    <span style={{ fontSize:16 }}>{b.e}</span>
-                    <span style={{ fontSize:11, fontWeight:800, color:b.c }}>{b.l}</span>
+                  <div key={i} style={{ background:`${b.c}16`, border:`1.5px solid ${b.c}50`, borderRadius:11, padding:"4px 9px", display:"flex", alignItems:"center", gap:4, animation:`popIn 0.4s ease ${i*0.1}s both` }}>
+                    <span style={{ fontSize:15 }}>{b.e}</span>
+                    <span style={{ fontSize:10, fontWeight:800, color:b.c }}>{b.l}</span>
                   </div>
                 ))}
               </div>
             )}
+
+            {/* Next city unlock teaser */}
+            {nextCity && (
+              <div style={{ background:`${nextCity.color}14`, border:`1.5px solid ${nextCity.color}44`, borderRadius:13, padding:"8px 13px", display:"flex", alignItems:"center", gap:10 }}>
+                <span style={{ fontSize:22, filter:totalCoins>=nextCity.unlockCoins?"none":"grayscale(1) opacity(0.4)" }}>{totalCoins>=nextCity.unlockCoins?"🎉":nextCity.emoji}</span>
+                <div style={{ flex:1, textAlign:"left" }}>
+                  <div style={{ fontSize:11, fontWeight:800, color:nextCity.color }}>
+                    {totalCoins>=nextCity.unlockCoins?`🎉 ${nextCity.name} unlocked!`:`${nextCity.unlockCoins-totalCoins} more coins → ${nextCity.name} ${nextCity.emoji}`}
+                  </div>
+                  {totalCoins<nextCity.unlockCoins && (
+                    <div style={{ background:isDark()?"rgba(255,255,255,0.1)":"rgba(0,0,0,0.08)", borderRadius:10, height:5, marginTop:4, overflow:"hidden" }}>
+                      <div style={{ width:`${Math.min(100,Math.round((totalCoins/nextCity.unlockCoins)*100))}%`, height:"100%", background:nextCity.color, borderRadius:10 }}/>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Total coins lifetime */}
-          <div style={{ background:C.card, border:`1.5px solid #fbbf2444`, borderRadius:18, padding:"12px 16px", marginBottom:14, display:"flex", alignItems:"center", gap:12 }}>
-            <span style={{ fontSize:28 }}>🪙</span>
+          {/* Weekly league recap */}
+          <div style={{ background:C.card, border:`1.5px solid ${C.yellow}40`, borderRadius:17, padding:"11px 14px", marginBottom:13, display:"flex", alignItems:"center", gap:12 }}>
+            <span style={{ fontSize:26 }}>🏆</span>
             <div style={{ flex:1 }}>
-              <div style={{ fontSize:12, color:C.dim }}>All-time Bazaar coins</div>
-              <div style={{ fontSize:20, fontWeight:900, color:"#fbbf24" }}>{getBazaarTotalCoins(result.child?.id||"")}</div>
+              <div style={{ fontSize:11, color:C.dim }}>This week's coins</div>
+              <div style={{ fontSize:18, fontWeight:900, color:"#fbbf24" }}>🪙 {wk.coins}</div>
             </div>
-            <div style={{ textAlign:"right" }}>
-              <StarRating stars={rep.stars} size={13}/>
-              <div style={{ fontSize:9, color:C.dim, marginTop:3 }}>{market.name} rating</div>
-            </div>
+            <LeagueBadge coins={wk.coins}/>
           </div>
 
           {/* Action buttons */}
-          <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-            <button onClick={onReplay} style={{ background:`linear-gradient(135deg,${market.color},${market.color}aa)`, border:"none", borderRadius:20, padding:"15px", color:"white", fontSize:15, fontWeight:900, cursor:"pointer", boxShadow:`0 4px 18px ${market.color}44` }}>🔄 Play Again</button>
-            <button onClick={onHub}    style={{ background:C.card, border:`2px solid ${market.color}44`, borderRadius:20, padding:"13px", color:textColor(), fontSize:14, fontWeight:800, cursor:"pointer" }}>🏪 Choose Another Market</button>
-            <button onClick={onHome}   style={{ background:"transparent", border:`1.5px solid ${C.dim}33`, borderRadius:20, padding:"12px", color:C.dim, fontSize:13, fontWeight:700, cursor:"pointer" }}>← Back to Home</button>
+          <div style={{ display:"flex", flexDirection:"column", gap:9 }}>
+            <button onClick={onReplay} style={{ background:`linear-gradient(135deg,${market.color},${market.color}aa)`, border:"none", borderRadius:19, padding:"14px", color:"white", fontSize:14, fontWeight:900, cursor:"pointer", boxShadow:`0 4px 18px ${market.color}44` }}>🔄 Play Again</button>
+            <button onClick={onHub}   style={{ background:C.card, border:`2px solid ${market.color}44`, borderRadius:19, padding:"12px", color:textColor(), fontSize:13, fontWeight:800, cursor:"pointer" }}>🏪 Choose Another Market</button>
+            <button onClick={onHome}  style={{ background:"transparent", border:`1.5px solid ${C.dim}30`, borderRadius:19, padding:"11px", color:C.dim, fontSize:12, fontWeight:700, cursor:"pointer" }}>← Back to Home</button>
           </div>
         </div>
       </div>
@@ -4592,9 +4917,9 @@ function BazaarResult({ result, market, onReplay, onHub, onHome }) {
   );
 }
 
-// ════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════
 //  BazaarScreen — master orchestrator
-// ════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════
 function BazaarScreen({ child, onBack }) {
   const [step,           setStep]           = useState("hub");
   const [market,         setMarket]         = useState(null);
@@ -4602,36 +4927,27 @@ function BazaarScreen({ child, onBack }) {
   const [result,         setResult]         = useState(null);
   const [isDaily,        setIsDaily]        = useState(false);
   const [dailyChallenge, setDailyChallenge] = useState(null);
+  const [isSpeed,        setIsSpeed]        = useState(false);
 
   function startMarket(m, daily=false, dc=null) {
-    setMarket(m);
-    setIsDaily(daily);
-    setDailyChallenge(dc);
-    setStep("market");
+    setMarket(m); setIsDaily(daily); setDailyChallenge(dc); setIsSpeed(false); setStep("market");
   }
-
+  function startSpeed(m) {
+    setMarket(m); setIsSpeed(true); setIsDaily(false); setStep("speed");
+  }
   function handleDailyPick(dc) {
-    // For daily challenge, pick first free market
-    const freeMarket = BAZAAR_MARKETS.find(m=>!m.isPaid);
-    startMarket(freeMarket, true, dc);
+    startMarket(BAZAAR_MARKETS.find(m=>!m.isPaid), true, dc);
   }
 
-  if (step==="hub")    return <BazaarHub    child={child} onBack={onBack} onMarket={m=>startMarket(m)} onDaily={handleDailyPick}/>;
+  if (step==="hub")    return <BazaarHub    child={child} onBack={onBack} onMarket={startMarket} onDaily={handleDailyPick} onSpeed={startSpeed}/>;
   if (step==="market") return <BazaarMarket market={market} child={child} isDaily={isDaily} dailyChallenge={dailyChallenge} onBack={()=>setStep("hub")} onRole={r=>{setRole(r);setStep("game");}}/>;
+  if (step==="speed")  return <SpeedRound   market={market} child={child} onBack={()=>setStep("hub")} onDone={r=>{ addBazaarCoins(child.id,r.coins); updateWeeklyLeague(child.id,r.coins); setResult({...r,child,isSpeed:true}); setStep("result"); }}/>;
   if (step==="game")   return <BazaarGame   market={market} role={role} child={child} isDaily={isDaily} dailyChallenge={dailyChallenge}
     onBack={()=>setStep("market")}
-    onDone={r=>{
-      if(isDaily) markDailyChallengeComplete(child.id);
-      setResult({...r,child});
-      setStep("result");
-    }}/>;
-  if (step==="result") return <BazaarResult result={result} market={market}
-    onReplay={()=>setStep("game")}
-    onHub={()=>setStep("hub")}
-    onHome={onBack}/>;
+    onDone={r=>{ if(isDaily) markDailyChallengeComplete(child.id); setResult({...r,child}); setStep("result"); }}/>;
+  if (step==="result") return <BazaarResult result={result} market={market} onReplay={()=>isSpeed?setStep("speed"):setStep("game")} onHub={()=>setStep("hub")} onHome={onBack}/>;
   return null;
 }
-
 
 function WorldsSection({ WORLDS, child, onWorld }) {
   const [open, setOpen] = React.useState(false);
