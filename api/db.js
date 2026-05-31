@@ -135,28 +135,40 @@ export default async function handler(req, res) {
 
     if (action === "get_bazaar_questions") {
       const market_id = sanitizeStr(req.body.market_id, 40);
-      const role      = sanitizeStr(req.body.role, 10); // "buyer" | "seller"
+      const role      = sanitizeStr(req.body.role, 10);
+      const is_daily  = !!req.body.is_daily;
       if (!market_id || !role) return res.status(400).json({ error: "market_id and role required" });
-      const r = await sbQuery("bazaar_questions", "GET", null,
-        `?market_id=eq.${encodeURIComponent(market_id)}&role=eq.${encodeURIComponent(role)}&order=sort_order&limit=10`);
+      const params = is_daily
+        ? `?market_id=eq.${encodeURIComponent(market_id)}&role=eq.${encodeURIComponent(role)}&is_daily=eq.true&order=sort_order&limit=10`
+        : `?market_id=eq.${encodeURIComponent(market_id)}&role=eq.${encodeURIComponent(role)}&order=sort_order&limit=10`;
+      const r = await sbQuery("bazaar_questions", "GET", null, params);
       return res.status(200).json({ data: Array.isArray(r.data) && r.data.length > 0 ? r.data : [] });
     }
 
     if (action === "save_bazaar_result") {
-      const { child_id, market_id, role, score, total, coins } = req.body;
+      const { child_id, market_id, role, score, total, coins, is_daily } = req.body;
       if (!isValidUUID(child_id)) return res.status(400).json({ error: "Invalid child_id" });
       const user2 = await verifyToken(token);
       if (!user2?.id) return res.status(401).json({ error: "Unauthorized" });
       await sbQuery("bazaar_results", "POST", {
         child_id,
-        market_id:  sanitizeStr(market_id, 40),
-        role:       sanitizeStr(role, 10),
-        score:      sanitizeInt(score, 0, 100),
-        total:      sanitizeInt(total, 1, 100),
+        market_id:    sanitizeStr(market_id, 40),
+        role:         sanitizeStr(role, 10),
+        score:        sanitizeInt(score, 0, 100),
+        total:        sanitizeInt(total, 1, 100),
         coins_earned: sanitizeInt(coins, 0, 9999),
-        played_at:  new Date().toISOString(),
+        is_daily:     !!is_daily,
+        played_at:    new Date().toISOString(),
       });
       return res.status(200).json({ ok: true });
+    }
+
+    if (action === "get_bazaar_reputation") {
+      const { child_id, market_id } = req.body;
+      if (!isValidUUID(child_id)) return res.status(400).json({ error: "Invalid child_id" });
+      const r = await sbQuery("bazaar_reputation", "GET", null,
+        `?child_id=eq.${encodeURIComponent(child_id)}&market_id=eq.${encodeURIComponent(sanitizeStr(market_id,40))}&limit=1`);
+      return res.status(200).json({ data: Array.isArray(r.data) ? r.data[0] || null : null });
     }
 
     if (action === "get_daily_challenge") {
