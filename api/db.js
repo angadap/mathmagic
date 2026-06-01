@@ -233,6 +233,112 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true });
     }
 
+    // ── Phase 3: Outfit sync ──────────────────────────────────────────
+    if (action === "save_bazaar_outfit") {
+      const { child_id, hat, outfit, accessory, shop_sign } = req.body;
+      if (!isValidUUID(child_id)) return res.status(400).json({ error: "Invalid child_id" });
+      const user2 = await verifyToken(token);
+      if (!user2?.id) return res.status(401).json({ error: "Unauthorized" });
+      await sbQuery("bazaar_outfits", "POST", {
+        child_id,
+        hat:       sanitizeStr(hat, 30),
+        outfit:    sanitizeStr(outfit, 30),
+        accessory: sanitizeStr(accessory, 30),
+        shop_sign: sanitizeStr(shop_sign, 30),
+        updated_at: new Date().toISOString(),
+      }, "?on_conflict=child_id");
+      return res.status(200).json({ ok: true });
+    }
+
+    if (action === "save_bazaar_purchase") {
+      const { child_id, item_id, coins_spent } = req.body;
+      if (!isValidUUID(child_id)) return res.status(400).json({ error: "Invalid child_id" });
+      const user2 = await verifyToken(token);
+      if (!user2?.id) return res.status(401).json({ error: "Unauthorized" });
+      await sbQuery("bazaar_purchases", "POST", {
+        child_id,
+        item_id:     sanitizeStr(item_id, 40),
+        coins_spent: sanitizeInt(coins_spent, 0, 9999),
+        bought_at:   new Date().toISOString(),
+      });
+      return res.status(200).json({ ok: true });
+    }
+
+    // ── Phase 4: Achievements sync ────────────────────────────────────
+    if (action === "save_bazaar_achievement") {
+      const { child_id, achievement_id } = req.body;
+      if (!isValidUUID(child_id)) return res.status(400).json({ error: "Invalid child_id" });
+      const user2 = await verifyToken(token);
+      if (!user2?.id) return res.status(401).json({ error: "Unauthorized" });
+      await sbQuery("bazaar_achievements", "POST", {
+        child_id,
+        achievement_id: sanitizeStr(achievement_id, 60),
+        earned_at:      new Date().toISOString(),
+      }, "?on_conflict=child_id,achievement_id");
+      return res.status(200).json({ ok: true });
+    }
+
+    if (action === "get_bazaar_achievements") {
+      const { child_id } = req.body;
+      if (!isValidUUID(child_id)) return res.status(400).json({ error: "Invalid child_id" });
+      const r = await sbQuery("bazaar_achievements", "GET", null,
+        `?child_id=eq.${encodeURIComponent(child_id)}&order=earned_at`);
+      return res.status(200).json({ data: Array.isArray(r.data) ? r.data : [] });
+    }
+
+    if (action === "save_bazaar_stats") {
+      const { child_id, stats } = req.body;
+      if (!isValidUUID(child_id)) return res.status(400).json({ error: "Invalid child_id" });
+      const user2 = await verifyToken(token);
+      if (!user2?.id) return res.status(401).json({ error: "Unauthorized" });
+      const safe = {};
+      const allowed = ["totalCorrect","perfectRounds","bestStreak","buyerSessions","sellerSessions","marketsPlayed","bestReputation","speedRounds","speedBestScore","bossesBeaten","challengesSent","challengesWon","festivalSessions","dailyStreak"];
+      allowed.forEach(k=>{ if(typeof stats[k]==="number") safe[k]=sanitizeInt(stats[k],0,999999); });
+      await sbQuery("bazaar_stats", "POST", { child_id, ...safe, updated_at: new Date().toISOString() },
+        "?on_conflict=child_id");
+      return res.status(200).json({ ok: true });
+    }
+
+    // ── Phase 5: Challenge sync ───────────────────────────────────────
+    if (action === "save_bazaar_challenge") {
+      const { child_id, challenge_id, market_id, score, total, child_name } = req.body;
+      if (!isValidUUID(child_id)) return res.status(400).json({ error: "Invalid child_id" });
+      const user2 = await verifyToken(token);
+      if (!user2?.id) return res.status(401).json({ error: "Unauthorized" });
+      await sbQuery("bazaar_challenges", "POST", {
+        child_id,
+        challenge_id: sanitizeStr(challenge_id, 20),
+        market_id:    sanitizeStr(market_id, 40),
+        score:        sanitizeInt(score, 0, 100),
+        total:        sanitizeInt(total, 1, 100),
+        child_name:   sanitizeStr(child_name, 60),
+        created_at:   new Date().toISOString(),
+      });
+      return res.status(200).json({ ok: true });
+    }
+
+    if (action === "get_bazaar_challenge") {
+      const { challenge_id } = req.body;
+      if (!challenge_id) return res.status(400).json({ error: "challenge_id required" });
+      const r = await sbQuery("bazaar_challenges", "GET", null,
+        `?challenge_id=eq.${encodeURIComponent(sanitizeStr(challenge_id,20))}&limit=1`);
+      return res.status(200).json({ data: Array.isArray(r.data) ? r.data[0] || null : null });
+    }
+
+    if (action === "save_bazaar_challenge_result") {
+      const { challenge_id, challenger_id, score, total, won } = req.body;
+      if (!isValidUUID(challenger_id)) return res.status(400).json({ error: "Invalid challenger_id" });
+      await sbQuery("bazaar_challenge_results", "POST", {
+        challenge_id:  sanitizeStr(challenge_id, 20),
+        challenger_id,
+        score:         sanitizeInt(score, 0, 100),
+        total:         sanitizeInt(total, 1, 100),
+        won:           !!won,
+        played_at:     new Date().toISOString(),
+      });
+      return res.status(200).json({ ok: true });
+    }
+
     if (action === "get_daily_challenge") {
       const class_num = sanitizeInt(req.body.class_num, 1, 5);
       const seq_num   = req.body.seq_num ? sanitizeInt(req.body.seq_num, 1, 250) : null;
