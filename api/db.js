@@ -124,6 +124,11 @@ export default async function handler(req, res) {
   const token = req.headers.authorization?.replace("Bearer ", "").trim();
 
   try {
+    // ── PING (health check, no auth) ───────────────────────────
+    if (action === "ping") {
+      return res.status(200).json({ ok: true });
+    }
+
     // ── PUBLIC READS (no auth) ─────────────────────────────────
     if (action === "get_questions") {
       const lesson_id = sanitizeStr(req.body.lesson_id, 20);
@@ -566,15 +571,27 @@ export default async function handler(req, res) {
 
     // ── Update child fields (streak, XP, coins, level, last_active) ──────
     if (action === "update_children") {
-      const { id: child_id, xp, coins, level, streak_days, last_active } = req.body;
+      const { id: child_id, xp, coins, gems, level, streak_days, last_active,
+              shop_items, badge_ids, selected_avatar, avatar, is_premium } = req.body;
       if (!isValidUUID(child_id)) return res.status(400).json({ error: "Invalid child_id" });
       if (!(await childBelongsToUser(child_id, user.id))) return res.status(403).json({ error: "Forbidden" });
       const patch = {};
-      if (xp          !== undefined) patch.xp           = sanitizeInt(xp, 0, 999999);
-      if (coins       !== undefined) patch.coins         = sanitizeInt(coins, 0, 999999);
-      if (level       !== undefined) patch.level         = sanitizeInt(level, 1, 9999);
-      if (streak_days !== undefined) patch.streak_days   = sanitizeInt(streak_days, 0, 9999);
-      if (last_active !== undefined) patch.last_active   = last_active;
+      if (xp              !== undefined) patch.xp              = sanitizeInt(xp, 0, 999999);
+      if (coins           !== undefined) patch.coins            = sanitizeInt(coins, 0, 999999);
+      if (gems            !== undefined) patch.gems             = sanitizeInt(gems, 0, 999999);
+      if (level           !== undefined) patch.level            = sanitizeInt(level, 1, 9999);
+      if (streak_days     !== undefined) patch.streak_days      = sanitizeInt(streak_days, 0, 9999);
+      if (last_active     !== undefined) patch.last_active      = last_active;
+      if (is_premium      !== undefined) patch.is_premium       = !!is_premium;
+      if (selected_avatar !== undefined) patch.selected_avatar  = sanitizeStr(selected_avatar, 20);
+      if (avatar          !== undefined) patch.avatar           = sanitizeStr(avatar, 20);
+      // Arrays — validate and sanitize each element
+      if (shop_items !== undefined && Array.isArray(shop_items)) {
+        patch.shop_items = shop_items.map(s => sanitizeStr(s, 60)).filter(Boolean).slice(0, 100);
+      }
+      if (badge_ids !== undefined && Array.isArray(badge_ids)) {
+        patch.badge_ids = badge_ids.map(s => sanitizeStr(s, 60)).filter(Boolean).slice(0, 100);
+      }
       if (Object.keys(patch).length === 0) return res.status(400).json({ error: "Nothing to update" });
       await sbQuery("children", "PATCH", patch, `?id=eq.${encodeURIComponent(child_id)}`);
       return res.status(200).json({ ok: true });

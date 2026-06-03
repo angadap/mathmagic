@@ -885,11 +885,41 @@ if ("getBattery" in navigator) {
 
 const db = {
   _sb: undefined,
+  _token: null,   // mirrors sbRest._token so all fetch calls carry a valid JWT
 
   async getSb() {
     if (this._sb !== undefined) return this._sb;
     this._sb = await loadSb();
     return this._sb;
+  },
+
+  // -- Fetch child record (memory-first, then DB) ----------------
+  async getChild(cid) {
+    const mem = MEM.children.find(x => x.id === cid);
+    if (mem) return { data: mem, error: null };
+    try {
+      const res = await fetch("/api/db", { method:"POST",
+        headers:{"Content-Type":"application/json","Authorization":`Bearer ${this._token||""}`},
+        body: JSON.stringify({ action:"get_children", id:cid }) });
+      const j = await res.json();
+      const c = Array.isArray(j.data) ? j.data[0] : j.data;
+      if (c) { MEM.children.push(c); lsPersist(CHILDREN_LS_KEY, MEM.children); }
+      return { data: c || null, error: null };
+    } catch(e) { return { data: null, error: e.message }; }
+  },
+
+  // -- Persist arbitrary child fields to DB + memory (optimistic) -
+  async updateChildFields(cid, fields) {
+    const c = MEM.children.find(x => x.id === cid);
+    if (c) { Object.assign(c, fields); lsPersist(CHILDREN_LS_KEY, MEM.children); }
+    try {
+      const res = await fetch("/api/db", { method:"POST",
+        headers:{"Content-Type":"application/json","Authorization":`Bearer ${this._token||""}`},
+        body: JSON.stringify({ action:"update_children", id:cid, ...fields }) });
+      const j = await res.json();
+      if (!j.ok) dbLog("error", "updateChildFields failed", j.error);
+    } catch(e) { dbLog("error", "updateChildFields network error", e.message); }
+    return { error: null };
   },
 
   async signUp(email, pass) {
@@ -900,6 +930,7 @@ const db = {
         const uid = r.data.user.id;
         dbLog("ok","signUp success",uid.slice(0,8));
         if (!MEM.users.find(u=>u.id===uid)) MEM.users.push({ id:uid, email, pass });
+        if (sb._token) this._token = sb._token;
         return { data:{ user:{ id:uid, email } }, error:null };
       }
       if (r.error) {
@@ -922,6 +953,8 @@ const db = {
       if (!r.error && r.data?.user?.id) {
         dbLog("ok","signIn success","uid="+r.data.user.id.slice(0,8));
         if (!MEM.users.find(u=>u.id===r.data.user.id)) MEM.users.push({ id:r.data.user.id, email, pass });
+        // Sync JWT token so db.updateChildFields and other fetch calls are authenticated
+        if (sb._token) this._token = sb._token;
         return { data:{ user:{ id:r.data.user.id, email } }, error:null };
       }
       if (r.error) {
@@ -1159,7 +1192,7 @@ const db = {
     const { data: c } = await this.getChild(cid);
     if (!c) return;
     const newGems = (c.gems||0) + amount;
-    await sb.update("children", { gems: newGems }, "id", cid);
+    await this.updateChildFields(cid, { gems: newGems });
     return newGems;
   },
   async unlockBadge(cid, badgeId) {
@@ -1167,7 +1200,7 @@ const db = {
     if (!c) return false;
     const ids = Array.isArray(c.badge_ids) ? c.badge_ids : [];
     if (ids.includes(badgeId)) return false;
-    await sb.update("children", { badge_ids: [...ids, badgeId] }, "id", cid);
+    await this.updateChildFields(cid, { badge_ids: [...ids, badgeId] });
     return true;
   },
   async checkAndUnlockBadges(cid, child) {
@@ -1207,15 +1240,12 @@ const db = {
       if ((c.coins||0) < amount) return { ok: false, error: "Not enough coins" };
       updates.coins = (c.coins||0) - amount;
     }
-    await sb.update("children", updates, "id", cid);
+    await this.updateChildFields(cid, updates);
     return { ok: true };
   },
 
   async setPremium(cid) {
-    const sb = await this.getSb();
-    if (sb) await sb.update("children", { is_premium:true }, "id", cid);
-    const c = MEM.children.find(x=>x.id===cid);
-    if (c) c.is_premium = true;
+    await this.updateChildFields(cid, { is_premium: true });
     return { error:null };
   },
 
@@ -11115,7 +11145,7 @@ function CharacterScreen({ child, setChild, onBack }) {
   const isUnlocked = (c) => c.free || (c.item && owned.includes(c.item));
 
   const handleSave = async () => {
-    await db.update?.("children",{selected_avatar:sel,avatar:sel},"id",child.id).catch(()=>{});
+    await db.updateChildFields(child.id, { selected_avatar:sel, avatar:sel });
     setChild(c=>({...c,selected_avatar:sel,avatar:sel}));
     setMsg("✅ Character saved!");
     SFX.correct();
