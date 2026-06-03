@@ -616,6 +616,50 @@ const LESSONS = {
   ],
 };
 
+// ── Badges ────────────────────────────────────────────────────────
+const BADGES = [
+  {id:"first_lesson",   name:"First Step",     icon:"👣", desc:"Complete your first set",           cat:"general"},
+  {id:"streak_3",       name:"On a Roll",      icon:"🔥", desc:"3-day streak",                      cat:"streak"},
+  {id:"streak_7",       name:"On Fire",        icon:"🔥", desc:"7-day streak",                      cat:"streak"},
+  {id:"streak_30",      name:"Unstoppable",    icon:"⚡", desc:"30-day streak",                     cat:"streak"},
+  {id:"perfect_score",  name:"Perfectionist",  icon:"🎯", desc:"Get 3 stars on any set",            cat:"master"},
+  {id:"speed_solver",   name:"Speed Solver",   icon:"⚡", desc:"Answer correctly in under 5s",      cat:"speed"},
+  {id:"correct_100",    name:"Century",        icon:"💯", desc:"100 correct answers",               cat:"general"},
+  {id:"correct_500",    name:"Math Machine",   icon:"🤖", desc:"500 correct answers",               cat:"general"},
+  {id:"stars_50",       name:"Star Collector", icon:"⭐", desc:"Earn 50 stars total",               cat:"general"},
+  {id:"stars_200",      name:"Star Hoarder",   icon:"🌟", desc:"Earn 200 stars total",              cat:"general"},
+  {id:"xp_500",         name:"XP Hunter",      icon:"💎", desc:"Earn 500 XP",                       cat:"general"},
+  {id:"boss_first",     name:"Monster Slayer", icon:"⚔️", desc:"Defeat your first boss",            cat:"master"},
+  {id:"boss_5",         name:"Boss Crusher",   icon:"🏆", desc:"Defeat 5 bosses",                   cat:"master"},
+  {id:"daily_7",        name:"Daily Devotee",  icon:"🗓️", desc:"Complete 7 daily challenges",      cat:"streak"},
+  {id:"accuracy_90",    name:"Sharpshooter",   icon:"🎯", desc:"90%+ accuracy over 50+ questions", cat:"speed"},
+  {id:"lesson_master",  name:"Lesson Master",  icon:"📚", desc:"Complete all sets in a lesson",     cat:"master"},
+];
+
+// ── Shop Items ────────────────────────────────────────────────────
+const SHOP_ITEMS = [
+  // Avatars
+  {id:"avatar_wizard",  name:"Math Wizard",  icon:"🧙‍♂️", desc:"Legendary wizard",     cat:"avatar",  stars:null, gems:50,   coins:null, lvl:5},
+  {id:"avatar_unicorn", name:"Unicorn",      icon:"🦄",   desc:"Magical unicorn",      cat:"avatar",  stars:null, gems:null, coins:300,  lvl:3},
+  {id:"avatar_robot",   name:"Robot",        icon:"🤖",   desc:"Futuristic robot",     cat:"avatar",  stars:null, gems:30,   coins:null, lvl:4},
+  {id:"avatar_dragon",  name:"Dragon",       icon:"🐉",   desc:"Mighty dragon",        cat:"avatar",  stars:null, gems:80,   coins:null, lvl:8},
+  {id:"avatar_hero",    name:"Superhero",    icon:"🦸",   desc:"Hero avatar",          cat:"avatar",  stars:50,   gems:null, coins:null, lvl:6},
+  {id:"avatar_knight",  name:"Knight",       icon:"⚔️",   desc:"Brave knight",         cat:"avatar",  stars:null, gems:40,   coins:null, lvl:5},
+  // Themes
+  {id:"theme_dark",     name:"Space Dark",   icon:"🌙",   desc:"Original dark theme",  cat:"theme",   stars:null, gems:30,   coins:null, lvl:1},
+  {id:"theme_candy",    name:"Candy Pop",    icon:"🍭",   desc:"Sweet candy theme",    cat:"theme",   stars:null, gems:25,   coins:null, lvl:2},
+  {id:"theme_sunset",   name:"Sunset Blaze", icon:"🌅",   desc:"Warm sunset theme",    cat:"theme",   stars:null, gems:20,   coins:null, lvl:2},
+  // Power-ups
+  {id:"powerup_hint",   name:"Hint Pack",    icon:"💡",   desc:"3 extra hints",        cat:"powerup", stars:20,   gems:null, coins:null, lvl:1},
+  {id:"powerup_shield", name:"Shield Pack",  icon:"🛡️",   desc:"Extra 2 lives",        cat:"powerup", stars:null, gems:null, coins:150,  lvl:2},
+  {id:"powerup_time",   name:"Time Freeze",  icon:"⏰",   desc:"+10s per question",    cat:"powerup", stars:15,   gems:null, coins:null, lvl:1},
+  {id:"powerup_double", name:"Double XP",    icon:"⚡",   desc:"2× XP for 3 sets",     cat:"powerup", stars:null, gems:20,   coins:null, lvl:3},
+];
+
+// ── Avatar options (free built-in) ────────────────────────────────
+const FREE_AVATARS = ["🧒","👧","👦","🧑","🧒‍♀️"];
+const ALL_AVATARS  = ["🧒","👧","👦","🧑","🧒‍♀️","🧙‍♂️","🦄","🤖","🐉","🦸","⚔️"];
+
 // ── Secure API Client — all auth/DB calls go through /api/* routes ──
 // The Supabase service key NEVER reaches the browser
 // JWT token stored in memory only (not localStorage)
@@ -1109,6 +1153,62 @@ const db = {
     if (r && !r.error) return r.data;
     dbLog("error",`RPC ${fn} failed`, r?.error?.message);
     return null;
+  },
+
+  async addGems(cid, amount) {
+    const { data: c } = await this.getChild(cid);
+    if (!c) return;
+    const newGems = (c.gems||0) + amount;
+    await sb.update("children", { gems: newGems }, "id", cid);
+    return newGems;
+  },
+  async unlockBadge(cid, badgeId) {
+    const { data: c } = await this.getChild(cid);
+    if (!c) return false;
+    const ids = Array.isArray(c.badge_ids) ? c.badge_ids : [];
+    if (ids.includes(badgeId)) return false;
+    await sb.update("children", { badge_ids: [...ids, badgeId] }, "id", cid);
+    return true;
+  },
+  async checkAndUnlockBadges(cid, child) {
+    const unlocked = [];
+    const ids = Array.isArray(child.badge_ids) ? child.badge_ids : [];
+    const checks = [
+      { id:"streak_3",    pass: (child.streak_days||0) >= 3 },
+      { id:"streak_7",    pass: (child.streak_days||0) >= 7 },
+      { id:"streak_30",   pass: (child.streak_days||0) >= 30 },
+      { id:"correct_100", pass: (child.total_correct||0) >= 100 },
+      { id:"correct_500", pass: (child.total_correct||0) >= 500 },
+      { id:"xp_500",      pass: (child.xp||0) >= 500 },
+      { id:"boss_first",  pass: (child.bosses_defeated||0) >= 1 },
+      { id:"boss_5",      pass: (child.bosses_defeated||0) >= 5 },
+      { id:"daily_7",     pass: (child.daily_challenges_done||0) >= 7 },
+    ];
+    for (const { id, pass } of checks) {
+      if (pass && !ids.includes(id)) {
+        const isNew = await this.unlockBadge(cid, id);
+        if (isNew) unlocked.push(id);
+      }
+    }
+    return unlocked;
+  },
+  async purchaseShopItem(cid, itemId, costType, amount) {
+    const { data: c } = await this.getChild(cid);
+    if (!c) return { ok: false, error: "Child not found" };
+    const owned = Array.isArray(c.shop_items) ? c.shop_items : [];
+    if (owned.includes(itemId)) return { ok: false, error: "Already owned" };
+    const updates = { shop_items: [...owned, itemId] };
+    if (costType === "stars") {
+      if ((c.xp||0)/20 < amount) return { ok: false, error: "Not enough stars" };
+    } else if (costType === "gems") {
+      if ((c.gems||0) < amount) return { ok: false, error: "Not enough gems" };
+      updates.gems = (c.gems||0) - amount;
+    } else if (costType === "coins") {
+      if ((c.coins||0) < amount) return { ok: false, error: "Not enough coins" };
+      updates.coins = (c.coins||0) - amount;
+    }
+    await sb.update("children", updates, "id", cid);
+    return { ok: true };
   },
 
   async setPremium(cid) {
@@ -5164,7 +5264,7 @@ function WorldsSection({ WORLDS, child, onWorld }) {
   );
 }
 
-function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onBazaar, onLogout, onFeedback, onRate, onSettings, isLessonPurchased }) {
+function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onBazaar, onLogout, onFeedback, onRate, onSettings, isLessonPurchased, onShop, onBadges, onCharacter, onThemeChange }) {
   const [showTutorial, setShowTutorial] = useState(()=>!localStorage.getItem('mm_tutorial_done'));
   const doneTutorial = () => { localStorage.setItem('mm_tutorial_done','1'); setShowTutorial(false); };
   const [showWelcome, setShowWelcome] = useState(()=>!localStorage.getItem('mm_welcomed_'+(child?.id||"")));
@@ -5297,7 +5397,7 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onBazaa
         {[
           {e:"⭐",v:totalStars,      l:"Stars",   c:C.yellow},
           {e:"🪙",v:child.coins||0,  l:"Coins",   c:C.orange},
-          {e:"📚",v:progress.filter(p=>myLessons.some(l=>p.lesson_id?.startsWith(l.id))).length, l:"Sets Done", c:C.purple},
+          {e:"💎",v:child.gems||0,   l:"Gems",    c:C.purple},
           {e:"🗓️",v:todaySets,       l:"Today",   c:C.cyan},
         ].map((s,i)=>(
           <div key={i} style={{ flex:1, background:C.card, borderRadius:16, padding:"10px 6px", textAlign:"center", border:`1.5px solid ${s.c}${isDark()?"28":"44"}` }}>
@@ -5329,6 +5429,24 @@ function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onBazaa
 
       {/* Quick Launch */}
       <QuickLaunch onAbacus={onAbacus} onGames={onGames} onOlympiad={onOlympiad} onBazaar={onBazaar}/>
+
+      {/* Shop · Badges · Character */}
+      {(onShop || onBadges || onCharacter) && (
+        <div style={{ position:"relative", zIndex:2, display:"flex", gap:10, padding:"12px 18px 0" }}>
+          {[{icon:"🛒",label:"Shop",    act:onShop,      color:C.green},
+            {icon:"🏅",label:"Badges",  act:onBadges,    color:C.yellow},
+            {icon:"🎭",label:"Me",      act:onCharacter, color:C.purple},
+          ].map((b,i)=> b.act ? (
+            <button key={i} onClick={b.act}
+              style={{ flex:1, background:C.card, border:`2px solid ${b.color}44`, borderRadius:18,
+                padding:"12px 6px", cursor:"pointer", textAlign:"center",
+                boxShadow:`0 2px 10px ${b.color}18`, transition:"all 0.2s" }}>
+              <div style={{ fontSize:24, marginBottom:4 }}>{b.icon}</div>
+              <div style={{ fontSize:11, fontWeight:800, color:textColor() }}>{b.label}</div>
+            </button>
+          ) : null)}
+        </div>
+      )}
 
       {/* My Class */}
       <MyClassSection world={w} child={child} onWorld={onWorld} pctDone={pctDone}/>
@@ -5583,7 +5701,7 @@ function LessonMap({ world, child, onBack, onLesson, isLessonPurchased, onPurcha
 }
 
 // ── Game ──────────────────────────────────────────────────────────────
-function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
+function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet, newBadges, setNewBadges }) {
   const setIndex   = lesson.setIndex || 0;
   const difficulty = getDifficulty(lesson._progress||[], lesson.id);
   const [showCert, setShowCert] = useState(false);
@@ -5728,12 +5846,30 @@ function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
     // Show result immediately — no waiting for DB
     setDone(true);
 
-    // Optimistic XP update in UI
-    setChild(c => c ? { ...c, xp:(c.xp||0)+xpEarned, coins:(c.coins||0)+fst*10, level:Math.floor(((c.xp||0)+xpEarned)/200)+1 } : c);
+    const gemGain = fst >= 3 ? 5 : fst >= 2 ? 2 : 0;
+    // Optimistic XP + gems update in UI
+    setChild(c => c ? { ...c, xp:(c.xp||0)+xpEarned, coins:(c.coins||0)+fst*10, gems:(c.gems||0)+gemGain, level:Math.floor(((c.xp||0)+xpEarned)/200)+1, total_correct:(c.total_correct||0)+fs, bosses_defeated: mode==="boss"?(c.bosses_defeated||0)+1:(c.bosses_defeated||0) } : c);
 
     // Save to DB in background (non-blocking)
     db.saveProgress(child.id, lesson.id + "_s" + setIndex, { correct:fs, total:totalQ, stars:fst, xpEarned, isSchoolStudent:!!(child.is_school_student) });
     db.addXP(child.id, xpEarned, fst * 10, !!(child.is_school_student));
+    if (gemGain > 0) db.addGems(child.id, gemGain);
+    // First lesson badge
+    if (!Array.isArray(child.badge_ids) || !child.badge_ids.includes("first_lesson")) {
+      db.unlockBadge(child.id, "first_lesson");
+    }
+    // Perfect score badge
+    if (fst >= 3 && (!Array.isArray(child.badge_ids) || !child.badge_ids.includes("perfect_score"))) {
+      db.unlockBadge(child.id, "perfect_score");
+    }
+    // Check & unlock other badges async
+    if (typeof setNewBadges === "function") {
+      (async () => {
+        const updChild = { ...child, xp:(child.xp||0)+xpEarned, streak_days:child.streak_days||0, total_correct:(child.total_correct||0)+fs, bosses_defeated:mode==="boss"?(child.bosses_defeated||0)+1:(child.bosses_defeated||0), badge_ids:child.badge_ids||[] };
+        const newBadgeIds = await db.checkAndUnlockBadges(child.id, updChild);
+        if (newBadgeIds.length > 0 && fst >= 1) setNewBadges(newBadgeIds);
+      })();
+    }
     if(xpEarned>0) setTimeout(()=>SFX.xpGain(), 300);
   }, [child.id, lesson.id, questions, mode, setChild, setIndex, clearGameState]);
   useEffect(() => { finalizeRef.current = finalize; }, [finalize]);
@@ -5815,6 +5951,8 @@ function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
   const q    = questions[qi % questions.length];
 
   if (done) return (
+    <>
+    {newBadges && newBadges.length > 0 && <BadgeUnlockToast badges={newBadges} onDone={()=>setNewBadges && setNewBadges([])}/>}
     <div style={{ minHeight:"100vh", background: fst>=2 ? "linear-gradient(160deg,#0a0a1f,#05161a,#0a0a1f)" : C.bg, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", fontFamily:"'Baloo 2','Nunito',sans-serif", padding:22, position:"relative", overflow:"hidden" }}>
       {showCert && <Certificate child={child} lesson={lesson} stars={fst} onClose={()=>setShowCert(false)}/>}
       <Confetti active={fst>=2}/>
@@ -5857,6 +5995,7 @@ function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet }) {
         </div>
       </div>
     </div>
+    </>
   );
 
   if (mode === "boss" && bossCD > 0) return (
@@ -10807,6 +10946,248 @@ function GamesHub({ child, onBack }) {
     </div>
   );
 }
+// ══════════════════════════════════════════════════════════════════
+// SHOP, BADGES, CHARACTER & BADGE TOAST SCREENS
+// ══════════════════════════════════════════════════════════════════
+
+function ShopScreen({ child, setChild, onBack }) {
+  const [tab,     setTab]     = useState("avatar");
+  const [msg,     setMsg]     = useState("");
+  const [loading, setLoading] = useState(false);
+  const owned   = Array.isArray(child.shop_items) ? child.shop_items : [];
+  const totalStars = Math.floor((child.xp||0)/20);
+  const iS = (a) => ({width:"100%",background:isDark()?"rgba(255,255,255,0.06)":"rgba(124,111,224,0.06)",border:`1.5px solid ${a}44`,borderRadius:12,padding:"10px 14px",color:textColor(),fontFamily:"'Baloo 2',sans-serif",fontSize:14,display:"block",marginBottom:10,outline:"none"});
+
+  const handleBuy = async (item) => {
+    if (owned.includes(item.id)) { setMsg("Already owned!"); return; }
+    const costType = item.gems?"gems":item.coins?"coins":"stars";
+    const amount   = item.gems||item.coins||item.stars;
+    const bal = costType==="gems"?(child.gems||0):costType==="coins"?(child.coins||0):totalStars;
+    if (bal < amount) { setMsg(`Not enough ${costType}!`); return; }
+    setLoading(true); setMsg("");
+    const result = await db.purchaseShopItem(child.id, item.id, costType, amount);
+    if (result.ok) {
+      const updates = { shop_items:[...owned,item.id] };
+      if (costType==="gems")   updates.gems  = (child.gems||0)  - amount;
+      if (costType==="coins")  updates.coins = (child.coins||0) - amount;
+      setChild(c=>({...c,...updates}));
+      setMsg("✅ Purchased! "+item.icon);
+      SFX.correct();
+    } else {
+      setMsg(result.error||"Failed");
+    }
+    setLoading(false);
+  };
+
+  const tabs = [{k:"avatar",l:"🎭 Avatars"},{k:"powerup",l:"⚡ Power-ups"},{k:"theme",l:"🎨 Themes"}];
+  const items = SHOP_ITEMS.filter(i=>i.cat===tab);
+
+  return (
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",paddingBottom:20}}>
+      {/* Header */}
+      <div style={{background:`linear-gradient(135deg,${C.green},${C.cyan})`,padding:"16px 18px"}}>
+        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
+          <BackBtn onClick={onBack} color="white"/>
+          <div style={{fontSize:18,fontWeight:900,color:"white",flex:1}}>🛒 Reward Shop</div>
+        </div>
+        {/* Currency balances */}
+        <div style={{display:"flex",gap:8}}>
+          {[{e:"⭐",v:totalStars,l:"Stars"},{e:"💎",v:child.gems||0,l:"Gems"},{e:"🪙",v:child.coins||0,l:"Coins"}].map((c,i)=>(
+            <div key={i} style={{flex:1,background:"rgba(255,255,255,0.2)",borderRadius:14,padding:"8px 6px",textAlign:"center"}}>
+              <div style={{fontSize:20}}>{c.e}</div>
+              <div style={{fontSize:16,fontWeight:900,color:"white"}}>{c.v}</div>
+              <div style={{fontSize:9,color:"rgba(255,255,255,0.7)",fontWeight:700}}>{c.l}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      {/* Tab bar */}
+      <div style={{display:"flex",background:C.card,borderBottom:`1.5px solid ${C.border||"#ece8ff"}`}}>
+        {tabs.map(t=>(
+          <button key={t.k} onClick={()=>{setTab(t.k);setMsg("");}} style={{flex:1,background:"none",border:"none",padding:"11px 4px",fontSize:12,fontWeight:800,color:tab===t.k?C.green:C.dim,cursor:"pointer",borderBottom:`3px solid ${tab===t.k?C.green:"transparent"}`,transition:"all 0.2s"}}>{t.l}</button>
+        ))}
+      </div>
+      {msg&&<div style={{margin:"10px 16px 0",padding:"8px 14px",borderRadius:12,background:msg.startsWith("✅")?`${C.green}18`:`${C.red}18`,color:msg.startsWith("✅")?C.green:C.red,fontSize:13,fontWeight:700}}>{msg}</div>}
+      {/* Items grid */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,padding:"14px 16px"}}>
+        {items.map(item=>{
+          const isOwned = owned.includes(item.id);
+          const lockedByLevel = (child.level||1) < item.lvl;
+          const costType = item.gems?"gems":item.coins?"coins":"stars";
+          const costAmt  = item.gems||item.coins||item.stars;
+          const costIcon = item.gems?"💎":item.coins?"🪙":"⭐";
+          return (
+            <div key={item.id} style={{background:C.card,border:`2px solid ${isOwned?C.green+"55":C.border||"#ece8ff"}`,borderRadius:20,padding:"16px 12px",textAlign:"center",boxShadow:isOwned?`0 2px 12px ${C.green}22`:`0 2px 8px ${C.purple}10`,opacity:lockedByLevel?0.5:1}}>
+              <div style={{fontSize:42,marginBottom:8,filter:lockedByLevel?"grayscale(1)":"none"}}>{item.icon}</div>
+              <div style={{fontSize:13,fontWeight:900,color:textColor(),marginBottom:4}}>{item.name}</div>
+              <div style={{fontSize:11,color:C.dim,marginBottom:10,lineHeight:1.4}}>{item.desc}</div>
+              {lockedByLevel ? (
+                <div style={{background:`${C.dim}22`,borderRadius:10,padding:"6px 12px",fontSize:11,color:C.dim,fontWeight:700}}>🔒 Level {item.lvl}</div>
+              ) : isOwned ? (
+                <div style={{background:`${C.green}22`,borderRadius:10,padding:"6px 12px",fontSize:12,color:C.green,fontWeight:800}}>✅ Owned</div>
+              ) : (
+                <button onClick={()=>handleBuy(item)} disabled={loading} style={{background:`linear-gradient(135deg,${C.purple},${C.cyan})`,border:"none",borderRadius:12,padding:"8px 16px",fontSize:13,fontWeight:900,color:"white",cursor:"pointer",boxShadow:`0 3px 12px ${C.purple}44`,width:"100%"}}>
+                  {costIcon} {costAmt}
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 🏅 BADGES SCREEN
+// ══════════════════════════════════════════════════════════════════
+function BadgesScreen({ child, badgeTab, setBadgeTab, onBack }) {
+  const earned  = Array.isArray(child.badge_ids) ? child.badge_ids : [];
+  const cats    = ["all","general","streak","speed","master"];
+  const catLabels = {all:"All",general:"General",streak:"Streak",speed:"Speed",master:"Master"};
+  const shown   = BADGES.filter(b=> badgeTab==="all" || b.cat===badgeTab);
+  const earnedCount = BADGES.filter(b=>earned.includes(b.id)).length;
+
+  return (
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",paddingBottom:20}}>
+      <div style={{background:`linear-gradient(135deg,${C.yellow},${C.orange})`,padding:"16px 18px"}}>
+        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:10}}>
+          <BackBtn onClick={onBack} color="white"/>
+          <div style={{flex:1}}>
+            <div style={{fontSize:18,fontWeight:900,color:"white"}}>🏅 Achievements</div>
+            <div style={{fontSize:12,color:"rgba(255,255,255,0.8)",marginTop:2}}>{earnedCount} / {BADGES.length} badges unlocked</div>
+          </div>
+        </div>
+        {/* Progress bar */}
+        <div style={{background:"rgba(255,255,255,0.2)",borderRadius:20,height:10,overflow:"hidden"}}>
+          <div style={{width:`${(earnedCount/BADGES.length)*100}%`,height:"100%",background:"white",borderRadius:20,transition:"width 1s ease"}}/>
+        </div>
+      </div>
+      {/* Category tabs */}
+      <div style={{display:"flex",gap:0,background:C.card,borderBottom:`1.5px solid ${C.border||"#ece8ff"}`,overflowX:"auto"}}>
+        {cats.map(c=>(
+          <button key={c} onClick={()=>setBadgeTab(c)} style={{flex:"0 0 auto",background:"none",border:"none",padding:"10px 14px",fontSize:12,fontWeight:800,color:badgeTab===c?C.orange:C.dim,cursor:"pointer",borderBottom:`3px solid ${badgeTab===c?C.orange:"transparent"}`,whiteSpace:"nowrap"}}>{catLabels[c]}</button>
+        ))}
+      </div>
+      {/* Badge grid */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,padding:"14px 14px"}}>
+        {shown.map(badge=>{
+          const isEarned = earned.includes(badge.id);
+          return (
+            <div key={badge.id} style={{background:C.card,border:`2px solid ${isEarned?C.yellow+"55":C.border||"#ece8ff"}`,borderRadius:18,padding:"14px 8px",textAlign:"center",boxShadow:isEarned?`0 3px 14px ${C.yellow}33`:"none",opacity:isEarned?1:0.45,transition:"all 0.3s"}}>
+              <div style={{fontSize:34,marginBottom:6,filter:isEarned?"none":"grayscale(1)"}}>{badge.icon}</div>
+              <div style={{fontSize:11,fontWeight:900,color:isEarned?textColor():C.dim,marginBottom:3,lineHeight:1.2}}>{badge.name}</div>
+              <div style={{fontSize:9,color:C.dim,lineHeight:1.3}}>{badge.desc}</div>
+              {isEarned && <div style={{marginTop:6,background:`${C.yellow}22`,borderRadius:8,padding:"2px 6px",fontSize:9,color:C.yellow,fontWeight:800}}>EARNED ✓</div>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 🎭 CHARACTER / AVATAR SCREEN
+// ══════════════════════════════════════════════════════════════════
+function CharacterScreen({ child, setChild, onBack }) {
+  const [sel,     setSel]     = useState(child.selected_avatar||child.avatar||"🧒");
+  const [msg,     setMsg]     = useState("");
+  const [tab,     setTab]     = useState("heroes");
+  const owned    = Array.isArray(child.shop_items) ? child.shop_items : [];
+  const totalStars = Math.floor((child.xp||0)/20);
+
+  const HERO_CHARS = [
+    {emoji:"🧒",name:"Explorer",  free:true},
+    {emoji:"👧",name:"Scholar",   free:true},
+    {emoji:"👦",name:"Cadet",     free:true},
+    {emoji:"🧑",name:"Adventurer",free:true},
+    {emoji:"🧙‍♂️",name:"Wizard",  free:false, item:"avatar_wizard"},
+    {emoji:"🤖",name:"Robot",     free:false, item:"avatar_robot"},
+    {emoji:"🐉",name:"Dragon",    free:false, item:"avatar_dragon"},
+    {emoji:"🦸",name:"Hero",      free:false, item:"avatar_hero"},
+    {emoji:"🦄",name:"Unicorn",   free:false, item:"avatar_unicorn"},
+    {emoji:"⚔️",name:"Knight",    free:false, item:"avatar_knight"},
+    {emoji:"🧝",name:"Elf",       free:false, item:null},
+    {emoji:"👑",name:"King",       free:false, item:null},
+  ];
+
+  const isUnlocked = (c) => c.free || (c.item && owned.includes(c.item));
+
+  const handleSave = async () => {
+    await db.update?.("children",{selected_avatar:sel,avatar:sel},"id",child.id).catch(()=>{});
+    setChild(c=>({...c,selected_avatar:sel,avatar:sel}));
+    setMsg("✅ Character saved!");
+    SFX.correct();
+  };
+
+  return (
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",paddingBottom:20}}>
+      <div style={{background:`linear-gradient(135deg,${C.purple},${C.pink})`,padding:"14px 18px"}}>
+        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:10}}>
+          <BackBtn onClick={onBack} color="white"/>
+          <div style={{fontSize:18,fontWeight:900,color:"white"}}>🎭 My Character</div>
+        </div>
+      </div>
+      {/* Stage — preview selected char */}
+      <div style={{textAlign:"center",padding:"20px 0 12px",background:isDark()?`${C.purple}14`:`linear-gradient(180deg,${C.purple}0a,transparent)`}}>
+        <div style={{fontSize:88,marginBottom:8,animation:"floatUp 2.5s ease-in-out infinite",filter:`drop-shadow(0 8px 20px ${C.purple}44)`}}>{sel}</div>
+        <div style={{fontSize:18,fontWeight:900,color:textColor()}}>{child.name}</div>
+        <div style={{fontSize:12,color:C.dim,marginTop:2}}>Level {child.level||1} · {HERO_CHARS.find(c=>c.emoji===sel)?.name||"Explorer"}</div>
+      </div>
+      {/* Tabs */}
+      <div style={{display:"flex",gap:8,justifyContent:"center",padding:"0 16px 12px"}}>
+        {[["heroes","🧒 Heroes"],["pets","🐾 Pets (soon)"],["skins","🎨 Skins (soon)"]].map(([k,l])=>(
+          <button key={k} onClick={()=>setTab(k)} style={{background:tab===k?`linear-gradient(135deg,${C.purple},${C.pink})`:"transparent",border:`2px solid ${tab===k?C.purple:C.border||"#ece8ff"}`,borderRadius:50,padding:"7px 16px",fontSize:12,fontWeight:800,color:tab===k?"white":C.dim,cursor:"pointer",transition:"all 0.2s"}}>{l}</button>
+        ))}
+      </div>
+      {/* Character grid */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,padding:"0 14px 14px"}}>
+        {HERO_CHARS.map(c=>{
+          const unlocked = isUnlocked(c);
+          const isSelected = sel===c.emoji;
+          return (
+            <div key={c.emoji} onClick={()=>unlocked&&setSel(c.emoji)} style={{background:isSelected?`linear-gradient(135deg,${C.purple}22,${C.pink}14)`:C.card,border:`2.5px solid ${isSelected?C.purple:C.border||"#ece8ff"}`,borderRadius:18,padding:"12px 6px",textAlign:"center",cursor:unlocked?"pointer":"not-allowed",opacity:unlocked?1:0.4,transition:"all 0.2s",boxShadow:isSelected?`0 4px 16px ${C.purple}44`:"none",transform:isSelected?"scale(1.06)":"none"}}>
+              <div style={{fontSize:32,marginBottom:4}}>{c.emoji}</div>
+              <div style={{fontSize:10,fontWeight:900,color:isSelected?C.purple:textColor()}}>{c.name}</div>
+              {!unlocked && <div style={{fontSize:9,color:C.dim,marginTop:2}}>🔒 Shop</div>}
+              {isSelected && <div style={{width:6,height:6,borderRadius:"50%",background:C.purple,margin:"4px auto 0"}}/>}
+            </div>
+          );
+        })}
+      </div>
+      {msg&&<div style={{margin:"0 16px 10px",padding:"8px 14px",borderRadius:12,background:`${C.green}18`,color:C.green,fontSize:13,fontWeight:700}}>{msg}</div>}
+      <div style={{padding:"0 16px"}}>
+        <Btn color={C.purple} onClick={handleSave}>✨ Save Character</Btn>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 🏅 BADGE UNLOCK TOAST (shown after game results)
+// ══════════════════════════════════════════════════════════════════
+function BadgeUnlockToast({ badges, onDone }) {
+  const [idx, setIdx] = useState(0);
+  if (!badges?.length) return null;
+  const badge = BADGES.find(b=>b.id===badges[idx]);
+  if (!badge) return null;
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>{ if(idx<badges.length-1) setIdx(i=>i+1); else onDone(); }}>
+      <div style={{background:C.card,border:`3px solid ${C.yellow}88`,borderRadius:28,padding:"32px 28px",textAlign:"center",maxWidth:320,width:"100%",animation:"popIn 0.4s ease",boxShadow:`0 0 60px ${C.yellow}44`}}>
+        <div style={{fontSize:72,marginBottom:12,animation:"heartbeat 1s ease-in-out infinite"}}>{badge.icon}</div>
+        <div style={{fontSize:13,color:C.yellow,fontWeight:900,letterSpacing:2,marginBottom:6}}>BADGE UNLOCKED!</div>
+        <div style={{fontSize:24,fontWeight:900,color:textColor(),marginBottom:8}}>{badge.name}</div>
+        <div style={{fontSize:14,color:C.dim,lineHeight:1.5,marginBottom:20}}>{badge.desc}</div>
+        <div style={{background:`${C.yellow}22`,borderRadius:16,padding:"10px 16px",fontSize:12,color:C.yellow,fontWeight:700}}>
+          {idx<badges.length-1 ? `Tap to see next (${idx+1}/${badges.length})` : "Tap to continue"}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 // ─────────────────────────────────────────────────────────────────────
 // ROOT APP
 // ─────────────────────────────────────────────────────────────────────
@@ -10815,6 +11196,10 @@ export default function App() {
   const [schoolStudent, setSchoolStudent] = useState(null);
   const [purchasedLessons, setPurchasedLessons] = useState(()=>{ try{return JSON.parse(localStorage.getItem('mm_purchased')||'[]')}catch{return []} });
   const [lessonToBuy,      setLessonToBuy]      = useState(null);
+  // Badge & Shop feature states
+  const [newBadges,        setNewBadges]         = useState([]);
+  const [shopTab,          setShopTab]           = useState("avatar");
+  const [badgeTab,         setBadgeTab]          = useState("all");
   const [teacher,       setTeacher]       = useState(null);
   const handleThemeChange=(key)=>{C=THEMES[key]||THEMES.royal;setThemeKey(key);};
   useEffect(() => {
@@ -10932,11 +11317,11 @@ export default function App() {
   if (screen === "reg_payment")   return <><GlobalStyles/>{SwUpdatePortal}<RegPayment onBack={()=>setScreen("student_entry")} onPaid={()=>setScreen("register")}/></>;
   if (screen === "register")      return <><GlobalStyles/>{SwUpdatePortal}<Register onBack={() => setScreen("student_entry")} onDone={({ user: u, child: c, requirePayment }) => { setUser(u); setChild(c); setWorld(WORLDS.find(w=>w.id===parseInt(c?.class_num||1))||WORLDS[0]); setScreen(requirePayment?"paywall":"home"); }}/></>;
   if (screen === "login")         return <><GlobalStyles/>{SwUpdatePortal}<Login    onBack={() => setScreen("student_entry")} onDone={({ user: u, child: c }) => { setUser(u); setChild(c); setScreen("home"); }}/></>;
-  if (screen === "home")          return <><GlobalStyles/>{SwUpdatePortal}<Home child={child} isLessonPurchased={isLessonPurchased} onWorld={goWorld} onAbacus={() => setScreen("abacus")} onGames={() => setScreen("games")} onOlympiad={() => setScreen("olympiad")} onParent={() => setScreen("parent")} onBazaar={() => setScreen("bazaar")} onRate={() => setShowRating(true)} onLogout={logout} onFeedback={goFeedback} onSettings={()=>setScreen("settings")} onThemeChange={handleThemeChange}/>{showRating && <RatingPrompt child={child} onClose={() => setShowRating(false)}/>}<FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>
+  if (screen === "home")          return <><GlobalStyles/>{SwUpdatePortal}<Home child={child} isLessonPurchased={isLessonPurchased} onWorld={goWorld} onAbacus={() => setScreen("abacus")} onGames={() => setScreen("games")} onOlympiad={() => setScreen("olympiad")} onParent={() => setScreen("parent")} onBazaar={() => setScreen("bazaar")} onRate={() => setShowRating(true)} onLogout={logout} onFeedback={goFeedback} onSettings={()=>setScreen("settings")} onThemeChange={handleThemeChange} onShop={()=>setScreen("shop")} onBadges={()=>setScreen("badges")} onCharacter={()=>setScreen("character")}/>{showRating && <RatingPrompt child={child} onClose={() => setShowRating(false)}/>}<FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>
   if (screen === "paywall")       return <><GlobalStyles/>{SwUpdatePortal}<Paywall  world={world||WORLDS[(child?.class_num||1)-1]||WORLDS[0]} child={child} onBack={() => setScreen("home")} onUnlock={handleUnlock}/></>;
   if (screen === "lesson_payment") return <><GlobalStyles/>{SwUpdatePortal}<LessonPayment lessonToBuy={lessonToBuy} child={child} user={user} onBack={()=>setScreen("lessons")} onPaid={(lid)=>{ confirmLessonPurchased(lid); setScreen("lessons"); }}/></>;
   if (screen === "lessons")       return <><GlobalStyles/>{SwUpdatePortal}<LessonMap world={world} child={child} onBack={() => setScreen("home")} isLessonPurchased={isLessonPurchased} onPurchaseLesson={purchaseLesson} onLesson={l => { setLesson(l); setScreen("game"); }}/></>;
-  if (screen === "game")          return <><GlobalStyles/>{SwUpdatePortal}<Game     lesson={lesson} world={world} child={child} setChild={setChild} onBack={() => { db.track("lesson_exit",child?.id,null,{lesson_id:lesson?.id,set_index:lesson?.setIndex}); setScreen("lessons"); }} onDone={() => { db.track("lesson_complete",child?.id,null,{lesson_id:lesson?.id,set_index:lesson?.setIndex}); setScreen("lessons"); }} onNextSet={(si) => { db.track("set_advance",child?.id,null,{lesson_id:lesson?.id,set_index:si}); setLesson(l => ({...l, setIndex:si})); }}/>{ showSOS && <SOSButton onClick={() => goFeedback("bug")}/>}<FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
+  if (screen === "game")          return <><GlobalStyles/>{SwUpdatePortal}<Game     lesson={lesson} world={world} child={child} setChild={setChild} newBadges={newBadges} setNewBadges={setNewBadges} onBack={() => { db.track("lesson_exit",child?.id,null,{lesson_id:lesson?.id,set_index:lesson?.setIndex}); setScreen("lessons"); }} onDone={() => { db.track("lesson_complete",child?.id,null,{lesson_id:lesson?.id,set_index:lesson?.setIndex}); setScreen("lessons"); }} onNextSet={(si) => { db.track("set_advance",child?.id,null,{lesson_id:lesson?.id,set_index:si}); setLesson(l => ({...l, setIndex:si})); }}/>{ showSOS && <SOSButton onClick={() => goFeedback("bug")}/>}<FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
   if (screen === "abacus")        return <><GlobalStyles/>{SwUpdatePortal}<Abacus   onBack={() => setScreen("home")} child={child}/>{ showSOS && <SOSButton onClick={() => goFeedback("bug")}/>}<FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
   if (screen === "olympiad")      return <><GlobalStyles/>{SwUpdatePortal}<Olympiad child={child} setChild={setChild} onBack={() => setScreen("home")}/>{ showSOS && <SOSButton onClick={() => goFeedback("bug")}/>}<FreezeDetector currentScreen={screen} child={child} onReport={goFeedback}/></>;
   if (screen === "parent")        return <><GlobalStyles/>{SwUpdatePortal}<ParentDash child={child} onBack={() => setScreen("home")}/></>;
@@ -10951,6 +11336,9 @@ export default function App() {
   if (screen === "terms")         return <><GlobalStyles/>{SwUpdatePortal}<TermsOfService onBack={()=>setScreen("settings")}/></>;
   if (screen === "datapolicy")    return <><GlobalStyles/>{SwUpdatePortal}<DataPolicy     onBack={()=>setScreen("settings")}/></>;
   if (screen === "settings")      return <><GlobalStyles/>{SwUpdatePortal}<Settings child={child} user={user} onThemeChange={handleThemeChange} onBack={(dest)=>{if(dest==="rate")setShowRating(true);else if(dest)setScreen(dest);else setScreen("home");}} onLogout={logout}/></>
+  if (screen === "shop")          return <><GlobalStyles/>{SwUpdatePortal}<ShopScreen      child={child} setChild={setChild} onBack={()=>setScreen("home")}/></>;
+  if (screen === "badges")        return <><GlobalStyles/>{SwUpdatePortal}<BadgesScreen    child={child} badgeTab={badgeTab} setBadgeTab={setBadgeTab} onBack={()=>setScreen("home")}/></>;
+  if (screen === "character")     return <><GlobalStyles/>{SwUpdatePortal}<CharacterScreen child={child} setChild={setChild} onBack={()=>setScreen("home")}/></>;  
 
   return <><GlobalStyles/>{SwUpdatePortal}<OfflineBanner/></>;
 }
