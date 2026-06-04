@@ -7,8 +7,8 @@ import { Btn, Inp, Card, BackBtn, XPBar } from '../ui/primitives.jsx';
 import { Starfield, Confetti, Mascot } from '../layout/layout.jsx';
 import { WORLDS, LESSONS, BADGES } from '../../constants/gameData.js';
 import { ProgressGrid } from '../shared/shared.jsx';
-import { fetchSetQuestions } from '../../lib/db.js';
-import { getDifficulty } from '../../lib/db.js';
+import { fetchSetQuestions, shuffle } from '../../lib/db.js';
+import { getDifficulty } from '../../lib/utils.js';
 import { BadgeUnlockToast } from '../shared/shared.jsx';
 
 

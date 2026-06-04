@@ -4,6 +4,7 @@ import { C, textColor, text2Color, isDark } from '../../constants/themes.js';
 import { db } from '../../lib/db.js';
 import { SFX } from '../../lib/sfx.js';
 import { Btn, Inp, BackBtn, Card } from '../ui/primitives.jsx';
+import { LESSONS } from '../../constants/gameData.js';
 
 export function TeacherLogin({ onBack, onDone }) {
   const [email,   setEmail]   = useState("");

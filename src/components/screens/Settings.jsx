@@ -1,6 +1,6 @@
 // src/components/screens/Settings.jsx — Settings, TermsOfService, DataPolicy, PrivacyPolicy
 import React, { useState, useEffect, useRef } from 'react';
-import { C, textColor, text2Color, isDark } from '../../constants/themes.js';
+import { C, updateC, THEMES, textColor, text2Color, isDark } from '../../constants/themes.js';
 import { db } from '../../lib/db.js';
 import { SFX } from '../../lib/sfx.js';
 import { Btn, Inp, BackBtn, Card } from '../ui/primitives.jsx';
@@ -83,7 +83,7 @@ export function Settings({ child, user, onBack, onThemeChange, onLogout }) {
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,maxWidth:480,margin:"0 auto"}}>
         {Object.entries(THEMES).map(([key,t])=>{
           const cur=localStorage.getItem("mm_theme")||"light";
-          return(<button key={key} onClick={()=>{localStorage.setItem("mm_theme",key);C=THEMES[key];if(onThemeChange)onThemeChange(key);SFX.tap();setSec(null);}} style={{background:cur===key?`${t.cyan}22`:t.card,border:`2px solid ${cur===key?t.cyan:t.dim+"44"}`,borderRadius:16,padding:"14px 10px",cursor:"pointer",textAlign:"center",boxShadow:cur===key?`0 0 14px ${t.cyan}44`:"none"}}>
+          return(<button key={key} onClick={()=>{localStorage.setItem("mm_theme",key);updateC(key);if(onThemeChange)onThemeChange(key);SFX.tap();setSec(null);}} style={{background:cur===key?`${t.cyan}22`:t.card,border:`2px solid ${cur===key?t.cyan:t.dim+"44"}`,borderRadius:16,padding:"14px 10px",cursor:"pointer",textAlign:"center",boxShadow:cur===key?`0 0 14px ${t.cyan}44`:"none"}}>
             <div style={{fontSize:24,marginBottom:4}}>{t.icon}</div>
             <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:9,color:cur===key?t.cyan:t.dim}}>{t.name}</div>
             <div style={{display:"flex",gap:3,justifyContent:"center",marginTop:6}}>{[t.purple,t.cyan,t.green,t.orange].map((cl,i)=><div key={i} style={{width:10,height:10,borderRadius:"50%",background:cl}}/>)}</div>

@@ -1,4 +1,5 @@
 // src/components/ui/primitives.jsx — Base UI: Btn, Inp, Card, XPBar, PinPad, etc.
+import { SFX } from '../../lib/sfx.js';
 import React, { useState, useRef } from 'react';
 import { C, textColor, text2Color, isDark } from '../../constants/themes.js';
 

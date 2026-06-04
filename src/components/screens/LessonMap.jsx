@@ -1,7 +1,7 @@
 // src/components/screens/LessonMap.jsx — SetPathMap, LessonMap
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { C, textColor, text2Color, isDark } from '../../constants/themes.js';
-import { db } from '../../lib/db.js';
+import { db, fetchSetQuestions } from '../../lib/db.js';
 import { SFX } from '../../lib/sfx.js';
 import { Btn, Inp, Card, BackBtn, XPBar } from '../ui/primitives.jsx';
 import { Starfield, Confetti, Mascot } from '../layout/layout.jsx';

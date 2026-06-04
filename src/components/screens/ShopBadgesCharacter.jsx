@@ -5,6 +5,7 @@ import { db } from '../../lib/db.js';
 import { SFX } from '../../lib/sfx.js';
 import { Btn, Inp, BackBtn, Card } from '../ui/primitives.jsx';
 import { SHOP_ITEMS, BADGES } from '../../constants/gameData.js';
+import { updateC, THEMES } from '../../constants/themes.js';
 
 
 export function ShopScreen({ child, setChild, onBack }) {

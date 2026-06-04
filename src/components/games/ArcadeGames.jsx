@@ -4,6 +4,7 @@ import { C, textColor, text2Color, isDark } from '../../constants/themes.js';
 import { db } from '../../lib/db.js';
 import { SFX } from '../../lib/sfx.js';
 import { Btn, BackBtn } from '../ui/primitives.jsx';
+import { shuffle } from '../../lib/db.js';
 
 
 export function NumberRocket({ onBack, child }) {

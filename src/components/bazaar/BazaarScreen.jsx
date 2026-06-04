@@ -5,6 +5,8 @@ import { db } from '../../lib/db.js';
 import { SFX } from '../../lib/sfx.js';
 import { Btn, Inp, BackBtn, Card } from '../ui/primitives.jsx';
 import { BAZAAR_MARKETS, BAZAAR_PASSPORTS, BAZAAR_FESTIVALS } from '../../constants/bazaarData.js';
+import { BADGES } from '../../constants/gameData.js';
+import { shuffle } from '../../lib/db.js';
 
 
 // ─── Fallback questions ───────────────────────────────────────────────

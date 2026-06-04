@@ -1,6 +1,6 @@
 // src/components/screens/Home.jsx — ThemeSelector, DailyQuestSection, QuickLaunch, WorldsSection, Home
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { C, textColor, text2Color, isDark } from '../../constants/themes.js';
+import { C, updateC, THEMES, textColor, text2Color, isDark } from '../../constants/themes.js';
 import { db } from '../../lib/db.js';
 import { SFX } from '../../lib/sfx.js';
 import { Btn, Inp, Card, BackBtn, XPBar } from '../ui/primitives.jsx';
@@ -21,7 +21,7 @@ export function ThemeSelector({ onClose }) {
             <button key={key} onClick={() => {
               localStorage.setItem("mm_theme",""); // force
               localStorage.setItem("mm_theme", key);
-              setCur(key); C = THEMES[key] || THEMES.space;
+              setCur(key); updateC(key);
               window.location.reload(); // reload to apply theme everywhere
             }} style={{
               background: cur===key ? `${t.cyan}22` : t.bg,

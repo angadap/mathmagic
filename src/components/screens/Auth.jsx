@@ -4,6 +4,7 @@ import { C, textColor, text2Color, isDark } from '../../constants/themes.js';
 import { db } from '../../lib/db.js';
 import { SFX } from '../../lib/sfx.js';
 import { Btn, Inp, Card, BackBtn, PinPad, StepDots, RegPage } from '../ui/primitives.jsx';
+import { WORLDS } from '../../constants/gameData.js';
 import { Starfield } from '../layout/layout.jsx';
 
 

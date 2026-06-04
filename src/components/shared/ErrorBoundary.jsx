@@ -1,5 +1,6 @@
 // src/components/shared/ErrorBoundary.jsx — ErrorBoundary, NetworkStatus, UpdatePrompt
 import React from 'react';
+import { SFX } from '../../lib/sfx.js';
 import { C, textColor } from '../../constants/themes.js';
 import { Btn } from '../ui/primitives.jsx';
 

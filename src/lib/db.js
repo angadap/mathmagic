@@ -332,7 +332,7 @@ export function lsRestore(lsKey, maxAgeMs = 60 * 60 * 1000) {
   } catch(e) { return null; }
 }
 
-async function fetchSetQuestions(lessonId, setIndex) {
+export async function fetchSetQuestions(lessonId, setIndex) {
   const key = lessonId + "_" + setIndex;
 
   // Serve from persistent cache — no DB round trip, works after reload
