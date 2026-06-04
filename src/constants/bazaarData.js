@@ -1,4 +1,5 @@
 // src/constants/bazaarData.js — Bazaar: markets, passport, festivals, avatars, achievements, helpers
+import { db } from '../lib/db.js';
 
 // ─── Market catalogue ────────────────────────────────────────────────
 export const BAZAAR_MARKETS = [
@@ -242,4 +243,3 @@ async function fetchBazaarQuestions(marketId, role, isDaily) {
   } catch(e) { console.warn("fetchBazaarQuestions:",e.message); }
   return null;
 }
-

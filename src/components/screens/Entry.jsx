@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { C, textColor, isDark } from '../../constants/themes.js';
 import { SFX } from '../../lib/sfx.js';
+import { db } from '../../lib/db.js';
 import { Btn, BackBtn } from '../ui/primitives.jsx';
 import { Starfield } from '../layout/layout.jsx';
 
@@ -195,5 +196,3 @@ const schoolApi = async (action, body={}, adminKey=null) => {
   const r = await fetch("/api/school", {method:"POST", headers, body:JSON.stringify({action,...body})});
   return r.json();
 };
-
-// ── StudentLogin Screen ───────────────────────────────────────────
