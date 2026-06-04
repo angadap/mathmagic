@@ -28,7 +28,7 @@ async function sb(table, method, body, params="") {
     Prefer: method==="POST"?"return=representation":"return=minimal",
   };
   // For GET requests, request up to 10000 rows (overrides PostgREST default of 1000)
-  if (method==="GET") headers["Range-Unit"] = "items", headers["Range"] = "0-9999";
+  if (method==="GET") headers["Range-Unit"] = "items", headers["Range"] = "0-99999", headers["Prefer"] = "count=none";
   const r = await fetch(`${SB_URL}/rest/v1/${table}${params}`, {
     method, headers, body: body?JSON.stringify(body):undefined
   });
@@ -124,7 +124,7 @@ export default async function handler(req, res) {
       // List ALL teachers across all schools (for dashboard tiles)
       if (action==="admin_list_all_teachers") {
         const {search, school_id} = req.body;
-        let params = "?order=created_at.desc";
+        let params = "?order=created_at.desc&limit=10000";
         if (school_id && isUUID(school_id)) params += `&school_id=eq.${school_id}`;
         const r = await sb("teachers","GET",null,params);
         let data = r.data||[];
@@ -135,7 +135,7 @@ export default async function handler(req, res) {
       // List ALL students across all schools
       if (action==="admin_list_all_students") {
         const {search, school_id, class_num, section} = req.body;
-        let params = "?order=class_num,section,roll_no";
+        let params = "?order=class_num,section,roll_no&limit=10000";
         if (school_id && isUUID(school_id)) params += `&school_id=eq.${school_id}`;
         if (class_num !== undefined) params += `&class_num=eq.${cleanInt(class_num,0,12)}`;
         if (section) params += `&section=eq.${clean(section,5).toUpperCase()}`;
@@ -343,7 +343,7 @@ export default async function handler(req, res) {
       if (action==="admin_list_sets_for_lesson") {
         const {lesson_id_prefix} = req.body;
         const safe = clean(lesson_id_prefix,30);
-        const r = await sb("questions","GET",null,`?lesson_id=like.${safe}%25&select=set_index&order=set_index`);
+        const r = await sb("questions","GET",null,`?lesson_id=like.${safe}_s%25&select=lesson_id,set_index&order=set_index&limit=50000`);
         if (!r.ok) return res.status(400).json({error:"Failed"});
         const seen = new Set(); const sets = [];
         for (const q of (r.data||[])) { if (!seen.has(q.set_index)) { seen.add(q.set_index); sets.push(q.set_index); } }
@@ -355,7 +355,7 @@ export default async function handler(req, res) {
         const {lesson_id_prefix, set_index} = req.body;
         const safe = clean(lesson_id_prefix,30);
         const si = cleanInt(set_index,0,99);
-        const r = await sb("questions","GET",null,`?lesson_id=like.${safe}%25&set_index=eq.${si}&order=question_index`);
+        const r = await sb("questions","GET",null,`?lesson_id=like.${safe}_s%25&set_index=eq.${si}&order=question_index&limit=200`);
         return res.status(200).json({data:r.data||[]});
       }
 
@@ -424,7 +424,7 @@ export default async function handler(req, res) {
       // ── Non-school (home) students via children table ─────────────
       if (action==="admin_list_home_students") {
         const {search, class_num} = req.body;
-        let params = "?order=created_at.desc&limit=200";
+        let params = "?order=created_at.desc&limit=10000";
         if (class_num!==undefined) params += `&class_num=eq.${cleanInt(class_num,0,12)}`;
         if (search) params += `&name=ilike.*${encodeURIComponent(clean(search,50))}*`;
         const r = await sb("children","GET",null,params);

@@ -396,7 +396,7 @@ export function AdminPanel({ onBack }) {
   const loadStudents  = async (sid,tid) => { setLoading(true); const body={}; if(sid)body.school_id=sid; if(tid)body.teacher_id=tid; const d=await api("admin_list_all_students",body); setStudents(d.data||[]); setLoading(false); };
   const loadHomeStudents = async () => { setLoading(true); const d=await api("admin_list_home_students"); setHomeStudents(d.data||[]); setLoading(false); };
   const loadQLessons  = async (cn) => { setLoading(true); setQClassNum(cn); setQLessons([]); setQLesson(null); setQSets([]); setQSet(null); setQuestions([]); const d=await api("admin_list_lessons_for_class",{class_num:cn}); setQLessons(Array.isArray(d.data)?d.data:[]); setLoading(false); };
-  const loadQSets     = async (lid) => { setLoading(true); setQLesson(lid); setQSets([]); setQSet(null); setQuestions([]); const d=await api("admin_list_sets_for_lesson",{lesson_id_prefix:lid}); setQSets(d.data||[]); setLoading(false); };
+  const loadQSets     = async (lid) => { setLoading(true); setQLesson(lid); setQSets([]); setQSet(null); setQuestions([]); const d=await api("admin_list_sets_for_lesson",{lesson_id_prefix:lid}); const rows=d.data||[]; const seen=new Set(); const sets=[]; for(const r of rows){if(!seen.has(r.set_index)){seen.add(r.set_index);sets.push(r.set_index);}} setQSets(sets.sort((a,b)=>a-b)); setLoading(false); };
   const loadQs        = async (lid,si) => { setLoading(true); setQSet(si); setQuestions([]); const d=await api("admin_list_questions",{lesson_id_prefix:lid,set_index:si}); setQuestions(d.data||[]); setLoading(false); };
 
   useEffect(()=>{ loadSchools(); loadTeachers(); loadStudents(); loadHomeStudents(); },[]);
@@ -409,6 +409,7 @@ export function AdminPanel({ onBack }) {
     {id:"teachers", icon:"👩‍🏫",label:"Teachers",  color:C.cyan,    count:teachers.length},
     {id:"students", icon:"🎒", label:"Students",  color:C.purple,  count:students.length},
     {id:"home",     icon:"🏠", label:"Home Users",color:C.green,   count:homeStudents.length},
+    {id:"classes",  icon:"🏛️", label:"Classes",   color:C.pink||"#e879f9", count:null},
     {id:"questions",icon:"📚", label:"Questions", color:C.orange,  count:null},
   ];
 
@@ -719,6 +720,75 @@ export function AdminPanel({ onBack }) {
               ]}/>
           ))}
           {!loading&&filtered.length===0&&<div style={{textAlign:"center",color:C.dim,padding:30}}>No home students.</div>}
+        </div>
+      </div>
+    );
+  }
+
+  // ── CLASSES tab ───────────────────────────────────────────────────
+  if (tab==="classes") {
+    const PINK = "#e879f9";
+    const [classes,    setClasses]    = useState([]);
+    const [selClass,   setSelClass]   = useState(null); // {school_id,class_num,section}
+    const [classStudents, setClassStudents] = useState([]);
+
+    useEffect(()=>{
+      (async()=>{
+        setLoading(true);
+        const d = await api("admin_list_all_classes",{});
+        // Enrich with school name
+        const rows = (d.data||[]).map(c=>({...c, school_name: schools.find(s=>s.id===c.school_id)?.name||"—"}));
+        setClasses(rows);
+        setLoading(false);
+      })();
+    },[]);
+
+    const loadClassStudents = async(c)=>{
+      setLoading(true); setSelClass(c);
+      const d = await api("admin_list_all_students",{school_id:c.school_id, class_num:c.class_num, section:c.section});
+      setClassStudents(d.data||[]); setLoading(false);
+    };
+
+    if (selClass) {
+      const filtered = classStudents.filter(s=>!search||s.name?.toLowerCase().includes(search.toLowerCase())||String(s.roll_no).includes(search));
+      return (
+        <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),display:"flex",flexDirection:"column"}}>
+          {renderTopBar()}
+          <Shell title={`${CLASS_LABELS[selClass.class_num]||"Class "+selClass.class_num} — ${selClass.section} · ${schools.find(s=>s.id===selClass.school_id)?.name||""}`} accent={PINK}
+            backTo={()=>{setSelClass(null);setSearch("");}}>
+            <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search students..." style={{...iS(PINK),marginBottom:12}}/>
+            {loading&&<div style={{textAlign:"center",color:C.dim,padding:20}}>Loading...</div>}
+            <div style={{fontSize:11,color:C.dim,marginBottom:8}}>{filtered.length} students</div>
+            {filtered.map(s=>(
+              <Row key={s.id} accent={PINK}
+                left={<><div style={{fontWeight:800,fontSize:14,color:textColor()}}>{s.name} <span style={{fontFamily:"monospace",fontSize:10,color:C.dim}}>#{String(s.roll_no||"").padStart(2,"0")}</span></div><div style={{fontSize:11,color:C.dim}}>Lv {s.level||1} · {s.xp||0} XP · {s.coins||0}🪙</div></>}
+                actions={[
+                  <button onClick={()=>{setForm({student_id:s.id,name:s.name,roll_no:s.roll_no,class_num:s.class_num,section:s.section});setMsg("");setTab("students");setView("edit");}} style={{background:`${C.cyan}22`,border:`1px solid ${C.cyan}44`,borderRadius:8,padding:"5px 9px",color:C.cyan,cursor:"pointer",fontSize:12}}>✏️</button>,
+                  <button onClick={async()=>{if(!window.confirm("Delete "+s.name+"?"))return;setLoading(true);const d=await api("admin_delete_student",{student_id:s.id});if(d.data){showToast("✅ Deleted");loadClassStudents(selClass);}else setMsg(d.error||"Failed");setLoading(false);}} style={{background:`${C.red}22`,border:`1px solid ${C.red}44`,borderRadius:8,padding:"5px 9px",color:C.red,cursor:"pointer",fontSize:12}}>🗑️</button>
+                ]}/>
+            ))}
+            {!loading&&filtered.length===0&&<div style={{textAlign:"center",color:C.dim,padding:30}}>No students.</div>}
+          </Shell>
+        </div>
+      );
+    }
+
+    const filtered = classes.filter(c=>!search||c.school_name?.toLowerCase().includes(search.toLowerCase())||CLASS_LABELS[c.class_num]?.toLowerCase().includes(search.toLowerCase())||c.section?.toLowerCase().includes(search.toLowerCase()));
+    return (
+      <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),display:"flex",flexDirection:"column"}}>
+        {renderTopBar()}
+        <div style={{flex:1,overflowY:"auto",padding:"12px 14px"}}>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search classes..." style={{...iS(PINK),marginBottom:12}}/>
+          {loading&&<div style={{textAlign:"center",color:C.dim,padding:20}}>Loading...</div>}
+          <MsgBar m={msg}/>
+          <div style={{fontSize:11,color:C.dim,marginBottom:8}}>{filtered.length} classes</div>
+          {filtered.map((c,i)=>(
+            <Row key={i} accent={PINK}
+              onClick={()=>loadClassStudents(c)}
+              left={<><div style={{fontWeight:800,fontSize:14,color:textColor(),cursor:"pointer"}}>{CLASS_LABELS[c.class_num]||"Class "+c.class_num} — Section {c.section}</div><div style={{fontSize:11,color:C.dim}}>{c.school_name}</div></>}
+              actions={[<span style={{color:PINK,fontSize:18}}>›</span>]}/>
+          ))}
+          {!loading&&filtered.length===0&&<div style={{textAlign:"center",color:C.dim,padding:30}}>No classes found.</div>}
         </div>
       </div>
     );
