@@ -1,5 +1,5 @@
 // src/components/layout/layout.jsx — GlobalStyles, Starfield, MuteBtn, Mascot, Confetti, Tutorial, Skeleton, OfflineBanner
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { C, textColor, isDark } from '../../constants/themes.js';
 import { SFX } from '../../lib/sfx.js';
 
