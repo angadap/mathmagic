@@ -233,3 +233,65 @@ export function BadgeUnlockToast({ badges, onDone }) {
 
 // ─────────────────────────────────────────────────────────────────────
 // ROOT APP
+
+export function FreezeDetector({ currentScreen, child, onReport }) {
+  const lastInteraction = useRef(Date.now());
+  const [showPrompt, setShowPrompt] = useState(false);
+
+  // Update on any user interaction
+  useEffect(() => {
+    const update = () => { lastInteraction.current = Date.now(); setShowPrompt(false); };
+    window.addEventListener("touchstart", update);
+    window.addEventListener("click", update);
+    window.addEventListener("keydown", update);
+    return () => {
+      window.removeEventListener("touchstart", update);
+      window.removeEventListener("click", update);
+      window.removeEventListener("keydown", update);
+    };
+  }, []);
+
+  // Check every 45 seconds — if no interaction for 60s on game/abacus screen, prompt
+  useEffect(() => {
+    const activeScreens = ["game", "abacus", "olympiad"];
+    if (!activeScreens.includes(currentScreen)) return;
+    const t = setInterval(() => {
+      const idle = Date.now() - lastInteraction.current;
+      if (idle > 60000) setShowPrompt(true);
+    }, 45000);
+    return () => clearInterval(t);
+  }, [currentScreen]);
+
+  if (!showPrompt) return null;
+
+  return (
+    <div style={{
+      position:"fixed", inset:0, zIndex:9999,
+      background:"rgba(0,0,0,0.85)", display:"flex", alignItems:"center",
+      justifyContent:"center", padding:24,
+    }}>
+      <Card color={C.orange} style={{ maxWidth:300, width:"100%", textAlign:"center", padding:22, animation:"popIn 0.4s ease" }}>
+        <div style={{ fontSize:44, marginBottom:10 }}>😴</div>
+        <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:14, color:C.orange, marginBottom:8 }}>IS THE APP STUCK?</div>
+        <div style={{ color:C.dim, fontSize:12, lineHeight:1.6, marginBottom:18 }}>
+          We noticed no activity for a while. Is the app not responding?
+        </div>
+        <div style={{ display:"flex", gap:10 }}>
+          <Btn color={C.dim} style={{ flex:1, padding:"10px", fontSize:11 }} onClick={() => { lastInteraction.current = Date.now(); setShowPrompt(false); }}>
+            ALL GOOD
+          </Btn>
+          <Btn color={C.orange} style={{ flex:1, padding:"10px", fontSize:11 }} onClick={() => { setShowPrompt(false); onReport("freeze"); }}>
+            REPORT ISSUE
+          </Btn>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+
+// ═════════════════════════════════════════════════════════════════════
+// GAMES SECTION — 5 Mini Games
+// ═════════════════════════════════════════════════════════════════════
+
+// ── Game 1: Number Rocket — tap correct answer before rocket launches ─

@@ -8,6 +8,36 @@ import { Btn } from '../ui/primitives.jsx';
 // ── Games Hub ─────────────────────────────────────────────────────────
 
 // ── Math Card Flip (Memory Match) ────────────────────────────────
+
+export class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { hasError:false, error:null }; }
+  static getDerivedStateFromError(error) { return { hasError:true, error }; }
+  componentDidCatch(error, info) {
+    console.error("[ErrorBoundary]", error, info);
+    try {
+      const sb = window.__mmSb;
+      if (sb) sb.from("analytics").insert({
+        event_type:"app_crash", event_data:{ message:error?.message, stack:error?.stack?.slice(0,300) },
+        created_at:new Date().toISOString()
+      }).catch(()=>{});
+    } catch(e) {}
+  }
+  render() {
+    if (!this.state.hasError) return this.props.children;
+    return (
+      <div style={{minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"'Nunito',sans-serif"}}>
+        <div style={{background:"#0d0d2b",border:"1px solid #ef444433",borderRadius:20,padding:28,maxWidth:360,width:"100%",textAlign:"center"}}>
+          <div style={{fontSize:52,marginBottom:12}}>🚀💥</div>
+          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:14,color:"#00f5ff",marginBottom:8}}>Oops! Something went wrong 🚀</div>
+          <div style={{color:"#6b7db3",fontSize:13,lineHeight:1.7,marginBottom:20}}>The app encountered an unexpected error. Your progress is saved. Please refresh to continue your mission!</div>
+          <button onClick={()=>window.location.reload()} style={{background:"linear-gradient(135deg,#00f5ff,#a855f7)",border:"none",borderRadius:12,padding:"12px 24px",color:"white",fontFamily:"'Orbitron',sans-serif",fontSize:12,cursor:"pointer",fontWeight:700}}>🔄 RELAUNCH APP</button>
+          {process.env.NODE_ENV==="development" && <pre style={{marginTop:14,color:"#f87171",fontSize:9,textAlign:"left",overflow:"auto",maxHeight:100}}>{this.state.error?.message}</pre>}
+        </div>
+      </div>
+    );
+  }
+}
+
 function MathCardFlip({ onBack, child }) {
   const genCards = (lvl) => {
     const count = 4 + lvl * 2; // 6,8,10 pairs
