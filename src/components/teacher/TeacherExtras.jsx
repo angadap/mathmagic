@@ -7,6 +7,14 @@ import { Btn, Inp, BackBtn, Card } from '../ui/primitives.jsx';
 import { LESSONS } from '../../constants/gameData.js';
 import { Starfield } from '../layout/layout.jsx';
 
+// ── School API helper ─────────────────────────────────────────────
+const schoolApi = async (action, body = {}, adminKey = null) => {
+  const headers = { "Content-Type": "application/json" };
+  if (adminKey) headers["Authorization"] = `Bearer ${adminKey}`;
+  const r = await fetch("/api/school", { method: "POST", headers, body: JSON.stringify({ action, ...body }) });
+  return r.json();
+};
+
 export function StudentLogin({ onBack, onDone }) {
   const [step,      setStep]      = useState("school"); // school|student
   const [schoolCode,setSchoolCode]= useState("");
