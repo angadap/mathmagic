@@ -4,6 +4,8 @@ import { C, textColor, text2Color, isDark } from '../../constants/themes.js';
 import { db } from '../../lib/db.js';
 import { SFX } from '../../lib/sfx.js';
 import { Btn, BackBtn } from '../ui/primitives.jsx';
+import { NumberRocket, StarCatcher, MathMaze, SpeedMath, NumberMemory } from './ArcadeGames.jsx';
+import { Starfield } from '../layout/layout.jsx';
 
 
 export function MathCardFlip({ onBack, child }) {

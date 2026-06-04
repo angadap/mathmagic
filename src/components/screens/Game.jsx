@@ -6,7 +6,7 @@ import { SFX } from '../../lib/sfx.js';
 import { Btn, Inp, Card, BackBtn, XPBar } from '../ui/primitives.jsx';
 import { Starfield, Confetti, Mascot } from '../layout/layout.jsx';
 import { WORLDS, LESSONS, BADGES } from '../../constants/gameData.js';
-import { ProgressGrid } from '../shared/shared.jsx';
+import { ProgressGrid, Certificate } from '../shared/shared.jsx';
 import { fetchSetQuestions, shuffle } from '../../lib/db.js';
 import { getDifficulty } from '../../lib/utils.js';
 import { BadgeUnlockToast } from '../shared/shared.jsx';

@@ -5,6 +5,7 @@ import { db } from '../../lib/db.js';
 import { SFX } from '../../lib/sfx.js';
 import { Btn, Inp, BackBtn, Card } from '../ui/primitives.jsx';
 import { LESSONS } from '../../constants/gameData.js';
+import { Starfield } from '../layout/layout.jsx';
 
 export function StudentLogin({ onBack, onDone }) {
   const [step,      setStep]      = useState("school"); // school|student

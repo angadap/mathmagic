@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { C, textColor, isDark } from '../../constants/themes.js';
 import { BADGES } from '../../constants/gameData.js';
 import { Btn } from '../ui/primitives.jsx';
+import { Card } from '../ui/primitives.jsx';
 
 export function Certificate({ child, lesson, stars, onClose }) {
   const canvasRef = useRef(null);

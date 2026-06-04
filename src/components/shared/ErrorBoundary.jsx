@@ -1,5 +1,8 @@
 // src/components/shared/ErrorBoundary.jsx — ErrorBoundary, NetworkStatus, UpdatePrompt
 import React from 'react';
+import { Starfield } from '../layout/layout.jsx';
+import { BackBtn } from '../ui/primitives.jsx';
+import { NumberRocket, StarCatcher, MathMaze, SpeedMath, NumberMemory } from '../games/ArcadeGames.jsx';
 import { SFX } from '../../lib/sfx.js';
 import { C, textColor } from '../../constants/themes.js';
 import { Btn } from '../ui/primitives.jsx';

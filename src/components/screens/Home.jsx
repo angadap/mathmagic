@@ -4,9 +4,11 @@ import { C, updateC, THEMES, textColor, text2Color, isDark } from '../../constan
 import { db } from '../../lib/db.js';
 import { SFX } from '../../lib/sfx.js';
 import { Btn, Inp, Card, BackBtn, XPBar } from '../ui/primitives.jsx';
-import { Starfield, Confetti, Mascot } from '../layout/layout.jsx';
+import { Starfield, Confetti, Mascot, Tutorial, MuteBtn } from '../layout/layout.jsx';
 import { WORLDS, LESSONS, BADGES } from '../../constants/gameData.js';
-import { ProgressGrid } from '../shared/shared.jsx';
+import { DailyQuestHub, DailyQuiz, DailyPuzzle } from './Daily.jsx';
+import { ProgressGrid, SOSButton } from '../shared/shared.jsx';
+import { RatingPrompt } from './Feedback.jsx';
 
 
 export function ThemeSelector({ onClose }) {

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { C, textColor, isDark } from '../../constants/themes.js';
 import { SFX } from '../../lib/sfx.js';
-import { Btn } from '../ui/primitives.jsx';
+import { Btn, BackBtn } from '../ui/primitives.jsx';
 import { Starfield } from '../layout/layout.jsx';
 
 export function Splash({ onDone }) {

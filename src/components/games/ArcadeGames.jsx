@@ -5,6 +5,8 @@ import { db } from '../../lib/db.js';
 import { SFX } from '../../lib/sfx.js';
 import { Btn, BackBtn } from '../ui/primitives.jsx';
 import { shuffle } from '../../lib/db.js';
+import { Starfield } from '../layout/layout.jsx';
+import { Card } from '../ui/primitives.jsx';
 
 
 export function NumberRocket({ onBack, child }) {

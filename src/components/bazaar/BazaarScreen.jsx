@@ -7,6 +7,7 @@ import { Btn, Inp, BackBtn, Card } from '../ui/primitives.jsx';
 import { BAZAAR_MARKETS, BAZAAR_PASSPORT, BAZAAR_FESTIVALS } from '../../constants/bazaarData.js';
 import { BADGES } from '../../constants/gameData.js';
 import { shuffle } from '../../lib/db.js';
+import { Starfield } from '../layout/layout.jsx';
 
 
 // ─── Fallback questions ───────────────────────────────────────────────
