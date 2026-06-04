@@ -615,7 +615,3 @@ export function NumberMemory({ onBack, child }) {
   );
 }
 
-// ── Daily Quest Hub — unified wrapper for all 3 daily tasks ─────────────────
-// Shows a step-through flow: Do a Set → Word Problem → Brain Puzzle
-// Each tab can be done in any order; hub tracks completion and shows summary
-function DailyQuestHub({ child, dqDone, dpDone, setDone, onWorld, worldW, onClose }) {

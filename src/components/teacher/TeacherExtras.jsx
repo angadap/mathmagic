@@ -3,8 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { C, textColor, text2Color, isDark } from '../../constants/themes.js';
 import { db } from '../../lib/db.js';
 import { SFX } from '../../lib/sfx.js';
-import { Btn, BackBtn } from '../ui/primitives.jsx';
-
+import { Btn, Inp, BackBtn, Card } from '../ui/primitives.jsx';
 
 export function StudentLogin({ onBack, onDone }) {
   const [step,      setStep]      = useState("school"); // school|student
@@ -90,55 +89,6 @@ export function StudentLogin({ onBack, onDone }) {
   );
 }
 
-// ── TeacherLogin Screen ───────────────────────────────────────────
-function TeacherLogin({ onBack, onDone }) {
-  const [email,   setEmail]   = useState("");
-  const [pin,     setPin]     = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error,   setError]   = useState("");
-
-  const handleLogin = async () => {
-    if (!email.trim()||pin.length<4) { setError("Enter email and PIN"); return; }
-    setLoading(true); setError("");
-    try {
-      const d = await schoolApi("teacher_login", {email:email.trim().toLowerCase(), pin});
-      if (d.teacher) { SFX.select(); localStorage.setItem('mm_teacher_session', JSON.stringify({...d.teacher, session_token:d.session_token})); onDone({...d.teacher, session_token:d.session_token}); }
-      else setError(d.error||"Invalid credentials");
-    } catch(e) { setError("Network error"); }
-    setLoading(false);
-  };
-
-  return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),padding:"24px 18px",position:"relative"}}>
-      <Starfield n={20}/>
-      <div style={{position:"relative",zIndex:2,maxWidth:420,margin:"0 auto"}}>
-        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:32}}>
-          <BackBtn onClick={onBack} color={C.yellow}/>
-          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.yellow}}>TEACHER LOGIN</div>
-        </div>
-        <div style={{textAlign:"center",marginBottom:24}}>
-          <div style={{fontSize:52,marginBottom:8}}>👨‍🏫</div>
-          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:15,color:C.yellow}}>TEACHER PORTAL</div>
-        </div>
-        <Card color={C.yellow}>
-          <div style={{color:C.dim,fontSize:12,marginBottom:6,fontFamily:"'Orbitron',sans-serif"}}>EMAIL</div>
-          <input value={email} onChange={e=>setEmail(e.target.value)} placeholder="teacher@school.com" type="email"
-            style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.yellow}44`,borderRadius:10,padding:"11px 14px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:14,marginBottom:12,display:"block"}}/>
-          <div style={{color:C.dim,fontSize:12,marginBottom:6,fontFamily:"'Orbitron',sans-serif"}}>PIN</div>
-          <input value={pin} onChange={e=>setPin(e.target.value.replace(/\D/g,"").slice(0,6))}
-            type="password" placeholder="••••••" maxLength={6}
-            style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.yellow}44`,borderRadius:10,padding:"11px 14px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:20,letterSpacing:6,textAlign:"center",marginBottom:12,display:"block"}}/>
-          {error&&<div style={{color:C.red,fontSize:12,marginBottom:10}}>{error}</div>}
-          <Btn color={C.yellow} loading={loading} onClick={handleLogin}>👨‍🏫 LOGIN</Btn>
-        </Card>
-      </div>
-    </div>
-  );
-}
-
-// ── TeacherDashboard Screen ───────────────────────────────────────
-
-export function StudentActions({ student, teacher, canChangePin, canModifyStudent, canDeleteStudent, canViewAnalytics, onRefresh, onClose }) {
 export function StudentActions({ student, teacher, canChangePin, canModifyStudent, canDeleteStudent, canViewAnalytics, onRefresh, onClose }) {
   const [view,    setView]    = useState("menu");
   const [newPin,  setNewPin]  = useState("");
@@ -302,7 +252,7 @@ export function StudentActions({ student, teacher, canChangePin, canModifyStuden
   );
 }
 
-function TeacherDashboard({ teacher, onLogout }) {
+// ── ExcelImport Component ─────────────────────────────────────────
 export function ExcelImport({ teacher, onDone }) {
   const [file,    setFile]    = useState(null);
   const [preview, setPreview] = useState([]);
@@ -386,8 +336,6 @@ export function ExcelImport({ teacher, onDone }) {
     </Card>
   );
 }
-
-// ── AdminPanel Screen ─────────────────────────────────────────────
 
 export function AdminPanel({ onBack }) {
   const [key,         setKey]         = useState(localStorage.getItem("mm_admin_key")||"");
@@ -784,3 +732,366 @@ export function AdminPanel({ onBack }) {
                 <span style={{fontSize:13,color:textColor()}}>{p.icon} {p.label}</span>
               </div>
             ))}
+          </div>
+          <MsgBar m={msg}/>
+          <Btn color={C.cyan} loading={loading} onClick={async()=>{
+            const sid=view==="add_teacher_global"?form.school_id:targetSchool?.id;
+            if(!sid){setMsg("Select a school.");return;}
+            setLoading(true);setMsg("");
+            const d=await api("admin_create_teacher",{...form,school_id:sid});
+            if(d.data){toast("✅ Teacher created: "+form.name);if(view==="add_teacher")loadTeachers(selSchool);else loadAllTeachers();setForm({});setView(view==="add_teacher"?"school_detail":"all_teachers");}else setMsg(d.error||"Failed");
+            setLoading(false);
+          }}>ADD TEACHER</Btn>
+        </Card>
+      </div>
+    );
+  }
+
+  // ── Bulk Teachers ─────────────────────────────────────────────────
+  if (view==="bulk_teachers") return (
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),padding:"20px 18px"}}>
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><BackBtn onClick={()=>setView("school_detail")} color={C.purple}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.purple}}>BULK ADD TEACHERS — {selSchool?.name}</div></div>
+      <Card color={C.purple} style={{maxWidth:520,margin:"0 auto"}}>
+        <div style={{color:C.dim,fontSize:11,marginBottom:8}}>CSV: <b style={{color:C.purple}}>Name, Email, PIN</b></div>
+        <div style={{color:C.dim,fontSize:10,marginBottom:10,background:`${C.purple}11`,borderRadius:8,padding:"8px 10px"}}>Mrs. Sharma, sharma@school.com, 1234</div>
+        <textarea value={bulkText} onChange={e=>setBulkText(e.target.value)} rows={8} placeholder="Name, Email, PIN" style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.purple}44`,borderRadius:10,padding:"10px 12px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:13,display:"block",marginBottom:10,resize:"vertical"}}/>
+        {bulkResult.length>0&&<div style={{maxHeight:120,overflowY:"auto",marginBottom:10}}>{bulkResult.map((r,i)=><div key={i} style={{fontSize:11,color:r.ok?C.green:C.red}}>{r.ok?"✅":"❌"} {r.name} {r.error||""}</div>)}</div>}
+        <MsgBar m={msg}/>
+        <Btn color={C.purple} loading={loading} onClick={async()=>{
+          const rows=bulkText.split("\n").map(l=>l.trim()).filter(Boolean).map(l=>{const p=l.split(",").map(s=>s.trim());return{name:p[0],email:p[1],pin:p[2]||"1234"};}).filter(r=>r.name&&r.email);
+          if(!rows.length){setMsg("No valid rows.");return;}
+          setLoading(true);setMsg("");setBulkResult([]);
+          const d=await api("admin_bulk_create_teachers",{school_id:selSchool?.id,rows});
+          setBulkResult(d.data||[]);const ok=(d.data||[]).filter(r=>r.ok).length;
+          toast(`✅ ${ok}/${rows.length} teachers created.`);setLoading(false);
+        }}>IMPORT TEACHERS</Btn>
+      </Card>
+    </div>
+  );
+
+  // ── Bulk Students ─────────────────────────────────────────────────
+  if (view==="bulk_students") return (
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),padding:"20px 18px"}}>
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><BackBtn onClick={()=>setView("teacher_detail")} color={C.purple}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.purple}}>BULK ADD STUDENTS</div></div>
+      <Card color={C.purple} style={{maxWidth:520,margin:"0 auto"}}>
+        <div style={{color:C.dim,fontSize:11,marginBottom:8}}>CSV: <b style={{color:C.purple}}>Name, Roll No, Class (1-5 or 10/11/12), Section, PIN</b></div>
+        <div style={{color:C.dim,fontSize:10,marginBottom:10,background:`${C.purple}11`,borderRadius:8,padding:"8px 10px"}}>Aarav Sharma, 01, 3, A, 1234</div>
+        <textarea value={bulkText} onChange={e=>setBulkText(e.target.value)} rows={10} placeholder="Name, Roll No, Class, Section, PIN" style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.purple}44`,borderRadius:10,padding:"10px 12px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:13,display:"block",marginBottom:10,resize:"vertical"}}/>
+        {bulkResult.length>0&&<div style={{maxHeight:150,overflowY:"auto",marginBottom:10}}>{bulkResult.map((r,i)=><div key={i} style={{fontSize:11,color:r.ok?C.green:C.red}}>{r.ok?"✅":"❌"} {r.name} {r.error||""}</div>)}</div>}
+        <MsgBar m={msg}/>
+        <Btn color={C.purple} loading={loading} onClick={async()=>{
+          const rows=bulkText.split("\n").map(l=>l.trim()).filter(Boolean).map(l=>{const p=l.split(",").map(s=>s.trim());return{name:p[0],roll_no:p[1],class_num:parseInt(p[2])||1,section:p[3]||"A",pin:p[4]||"1234"};}).filter(r=>r.name);
+          if(!rows.length){setMsg("No valid rows.");return;}
+          setLoading(true);setMsg("");setBulkResult([]);
+          const d=await api("admin_bulk_create_students",{school_id:selSchool?.id,teacher_id:selTeacher?.id,rows});
+          setBulkResult(d.data||[]);const ok=(d.data||[]).filter(r=>r.ok).length;
+          toast(`✅ ${ok}/${rows.length} students created.`);setLoading(false);
+        }}>IMPORT STUDENTS</Btn>
+      </Card>
+    </div>
+  );
+
+  // ── Add Student ───────────────────────────────────────────────────
+  if (view==="add_student") return (
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),padding:"20px 18px"}}>
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><BackBtn onClick={()=>setView("teacher_detail")} color={C.cyan}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.cyan}}>ADD STUDENT — {selTeacher?.name}</div></div>
+      <Card color={C.cyan} style={{maxWidth:480,margin:"0 auto"}}>
+        {[["Name","name","text","Full name"],["Roll No","roll_no","text","01"],["PIN (4 digits)","pin","password","••••"]].map(([l,k,t,ph])=>(
+          <div key={k} style={{marginBottom:10}}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div><input value={form[k]||""} onChange={e=>setForm({...form,[k]:e.target.value})} type={t} placeholder={ph} style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"10px 12px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:14,display:"block"}}/></div>
+        ))}
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
+          <div><div style={{color:C.dim,fontSize:11,marginBottom:4}}>CLASS</div><select value={form.class_num??1} onChange={e=>setForm({...form,class_num:parseInt(e.target.value)})} style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"10px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:14}}>{CLASS_OPTS.map((n,i)=><option key={i} value={CLASS_NUMS[i]}>{n}</option>)}</select></div>
+          <div><div style={{color:C.dim,fontSize:11,marginBottom:4}}>SECTION</div><input value={form.section||"A"} onChange={e=>setForm({...form,section:e.target.value.toUpperCase().slice(0,3)})} placeholder="A" style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"10px 12px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:14,display:"block"}}/></div>
+        </div>
+        <MsgBar m={msg}/>
+        <Btn color={C.cyan} loading={loading} onClick={async()=>{setLoading(true);setMsg("");const d=await api("create_student_admin",{...form,teacher_id:selTeacher?.id,school_id:selSchool?.id});if(d.data){toast("✅ Student added: "+form.name);setForm({});}else setMsg(d.error||"Failed");setLoading(false);}}>ADD STUDENT</Btn>
+      </Card>
+    </div>
+  );
+
+  // ── Teacher Detail — Student List ─────────────────────────────────
+  if (view==="teacher_detail") return (
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),overflowY:"auto"}}>
+      <Hdr title={selTeacher?.name||""} back={()=>setView("school_detail")} accent={C.purple}
+        extra={<>
+          <button onClick={()=>{setForm({});setMsg("");setView("add_student");}} style={{background:`${C.cyan}22`,border:`1px solid ${C.cyan}44`,borderRadius:10,padding:"7px 12px",color:C.cyan,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:9}}>+ STUDENT</button>
+          <button onClick={()=>{setBulkText("");setBulkResult([]);setMsg("");setView("bulk_students");}} style={{background:`${C.purple}22`,border:`1px solid ${C.purple}44`,borderRadius:10,padding:"7px 12px",color:C.purple,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:9}}>⚡ BULK</button>
+        </>}
+      />
+      <div style={{padding:"12px 16px",maxWidth:620,margin:"0 auto"}}>
+        <div style={{color:C.dim,fontSize:11,marginBottom:8}}>{selSchool?.name} · {students.length} students</div>
+        {loading&&<div style={{textAlign:"center",color:C.dim,padding:20}}>Loading...</div>}
+        {students.map(s=>(
+          <div key={s.id} style={{background:C.card,border:`1px solid ${C.purple}22`,borderRadius:14,padding:"12px 14px",marginBottom:8,display:"flex",alignItems:"center",gap:10}}>
+            <div style={{background:`${C.purple}33`,borderRadius:10,width:36,height:36,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Orbitron',sans-serif",fontSize:11,color:C.purple,flexShrink:0}}>{String(s.roll_no).padStart(2,"0")}</div>
+            <div style={{flex:1}}><div style={{fontWeight:800,fontSize:14,color:textColor()}}>{s.name}</div><div style={{fontSize:11,color:C.dim}}>{CLASS_LABELS[s.class_num]||`Class ${s.class_num}`}-{s.section} · Lv {s.level||1} · {s.xp||0} XP</div></div>
+            <button onClick={()=>{setForm({student_id:s.id,name:s.name,roll_no:s.roll_no,class_num:s.class_num,section:s.section});setMsg("");setView("edit_student");}} style={{background:`${C.cyan}22`,border:`1px solid ${C.cyan}44`,borderRadius:8,padding:"5px 9px",color:C.cyan,cursor:"pointer",fontSize:11}}>✏️</button>
+            <button onClick={async()=>{if(!window.confirm("Delete "+s.name+"?"))return;setLoading(true);const d=await api("admin_delete_student",{student_id:s.id});if(d.data){toast("✅ Student deleted: "+s.name);loadStudents(selTeacher);}else setMsg(d.error||"Failed");setLoading(false);}} style={{background:`${C.red}22`,border:`1px solid ${C.red}44`,borderRadius:8,padding:"5px 9px",color:C.red,cursor:"pointer",fontSize:11}}>🗑️</button>
+          </div>
+        ))}
+        {!loading&&students.length===0&&<div style={{textAlign:"center",color:C.dim,padding:30}}>No students.</div>}
+      </div>
+    </div>
+  );
+
+  // ── Edit Teacher (with permissions) ──────────────────────────────
+  if (view==="edit_teacher") return (
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),padding:"20px 18px",overflowY:"auto"}}>
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><BackBtn onClick={()=>setView(selSchool?"school_detail":"all_teachers")} color={C.cyan}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.cyan}}>EDIT TEACHER</div></div>
+      <Card color={C.cyan} style={{maxWidth:500,margin:"0 auto"}}>
+        {[["Name","name","text","Teacher name"],["Email","email","email","teacher@school.com"]].map(([l,k,t,ph])=>(
+          <div key={k}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div><input value={form[k]||""} onChange={e=>setForm({...form,[k]:e.target.value})} type={t} placeholder={ph} style={iS(C.cyan)}/></div>
+        ))}
+        {/* Permission Sets */}
+        <div style={{marginBottom:12}}>
+          <div style={{color:C.dim,fontSize:11,marginBottom:6}}>PERMISSION PRESET</div>
+          <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}}>
+            {Object.entries(PERM_PRESETS).map(([pname,pperms])=>(
+              <button key={pname} onClick={()=>setForm({...form,permissions:pperms})} style={{background:`${C.cyan}18`,border:`1px solid ${C.cyan}44`,borderRadius:8,padding:"5px 10px",color:C.cyan,cursor:"pointer",fontSize:11,fontWeight:700}}>{pname}</button>
+            ))}
+            <button onClick={()=>setForm({...form,permissions:[]})} style={{background:`${C.red}11`,border:`1px solid ${C.red}33`,borderRadius:8,padding:"5px 10px",color:C.dim,cursor:"pointer",fontSize:11}}>Clear All</button>
+          </div>
+          <div style={{color:C.dim,fontSize:11,marginBottom:6}}>INDIVIDUAL PERMISSIONS</div>
+          {PERMS.map(p=>(
+            <div key={p.id} onClick={()=>{const cur=form.permissions||[];const has=cur.includes(p.id);setForm({...form,permissions:has?cur.filter(x=>x!==p.id):[...cur,p.id]});}} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 10px",borderRadius:10,background:(form.permissions||[]).includes(p.id)?`${C.cyan}18`:"transparent",border:`1px solid ${(form.permissions||[]).includes(p.id)?C.cyan+"44":"transparent"}`,cursor:"pointer",marginBottom:4}}>
+              <div style={{width:18,height:18,borderRadius:5,border:`2px solid ${C.cyan}66`,background:(form.permissions||[]).includes(p.id)?C.cyan:"transparent",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,flexShrink:0}}>{(form.permissions||[]).includes(p.id)?"✓":""}</div>
+              <span style={{fontSize:13,color:textColor()}}>{p.icon} {p.label}</span>
+            </div>
+          ))}
+        </div>
+        <MsgBar m={msg}/>
+        <Btn color={C.cyan} loading={loading} onClick={async()=>{
+          setLoading(true);setMsg("");
+          const d=await api("admin_modify_teacher",{teacher_id:selTeacher?.id,...form});
+          if(d.data){toast("✅ Teacher updated: "+form.name);if(selSchool)loadTeachers(selSchool);else loadAllTeachers();setView(selSchool?"school_detail":"all_teachers");}else setMsg(d.error||"Failed");
+          setLoading(false);
+        }}>SAVE CHANGES</Btn>
+      </Card>
+    </div>
+  );
+
+  // ── Edit Student ──────────────────────────────────────────────────
+  if (view==="edit_student") return (
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),padding:"20px 18px"}}>
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><BackBtn onClick={()=>setView(selTeacher?.id&&selSchool?.id?"teacher_detail":"all_students")} color={C.purple}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.purple}}>EDIT STUDENT</div></div>
+      <Card color={C.purple} style={{maxWidth:480,margin:"0 auto"}}>
+        {[["Name","name","text","Full name"],["Roll No","roll_no","text","01"],["New PIN (blank = keep)","pin","password",""]].map(([l,k,t,ph])=>(
+          <div key={k}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div><input value={form[k]||""} onChange={e=>setForm({...form,[k]:e.target.value})} type={t} placeholder={ph} style={iS(C.purple)}/></div>
+        ))}
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
+          <div><div style={{color:C.dim,fontSize:11,marginBottom:4}}>CLASS</div><select value={form.class_num??1} onChange={e=>setForm({...form,class_num:parseInt(e.target.value)})} style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.purple}44`,borderRadius:10,padding:"10px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:14}}>{CLASS_OPTS.map((n,i)=><option key={i} value={CLASS_NUMS[i]}>{n}</option>)}</select></div>
+          <div><div style={{color:C.dim,fontSize:11,marginBottom:4}}>SECTION</div><input value={form.section||"A"} onChange={e=>setForm({...form,section:e.target.value.toUpperCase().slice(0,3)})} style={iS(C.purple)}/></div>
+        </div>
+        <MsgBar m={msg}/>
+        <Btn color={C.purple} loading={loading} onClick={async()=>{
+          setLoading(true);setMsg("");
+          const payload={student_id:form.student_id,name:form.name,roll_no:form.roll_no,class_num:form.class_num,section:form.section};
+          if(form.pin)payload.pin=form.pin;
+          const d=await api("admin_modify_student",payload);
+          if(d.data){toast("✅ Student updated: "+form.name);if(selTeacher?.id&&selSchool?.id)loadStudents(selTeacher);else loadAllStudents();setView(selTeacher?.id&&selSchool?.id?"teacher_detail":"all_students");}else setMsg(d.error||"Failed");
+          setLoading(false);
+        }}>SAVE CHANGES</Btn>
+      </Card>
+    </div>
+  );
+
+  // ── Questions: Class Selector ─────────────────────────────────────
+  if (view==="questions_class") return (
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),overflowY:"auto"}}>
+      <Hdr title="📚 QUESTION MANAGER" back={()=>setView("home")} accent={C.orange}/>
+      <div style={{padding:"16px 18px",maxWidth:600,margin:"0 auto"}}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+          {CLASS_OPTS.map((n,i)=>{
+            const cn=CLASS_NUMS[i];
+            const emojis=["🌱","🌙","☀️","🌍","🪐","⭐","🔴","🌌"];
+            return (
+              <button key={cn} onClick={()=>{loadQLessons(cn);setView("questions_lessons");}} style={{background:C.card,border:`2px solid ${C.orange}33`,borderRadius:16,padding:"18px 14px",cursor:"pointer",textAlign:"center"}}>
+                <div style={{fontSize:28}}>{emojis[i]}</div>
+                <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:11,color:C.orange,marginTop:6}}>{n}</div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+
+  // ── Questions: Lessons List ───────────────────────────────────────
+  if (view==="questions_lessons") return (
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),overflowY:"auto"}}>
+      <Hdr title={`${CLASS_LABELS[qClassNum]||"Class "+qClassNum} — LESSONS`} back={()=>setView("questions_class")} accent={C.orange}
+        extra={<button onClick={async()=>{setLoading(true);setMsg("");const d=await api("admin_add_lesson",{class_num:qClassNum});if(d.data){const lid=d.data.lesson_id;toast("✅ New lesson: "+lid);await loadQLessons(qClassNum);}else setMsg(d.error||"Failed");setLoading(false);}} style={{background:`${C.green}22`,border:`1px solid ${C.green}44`,borderRadius:10,padding:"7px 12px",color:C.green,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:9}}>+ LESSON</button>}
+      />
+      <div style={{padding:"12px 16px",maxWidth:600,margin:"0 auto"}}>
+        <SearchBar val={search} onChange={setSearch} placeholder="🔍 Filter lessons..." accent={C.orange}/>
+        {loading&&<div style={{textAlign:"center",color:C.dim,padding:20}}>Loading...</div>}
+        {msg&&<div style={{color:msg.startsWith("✅")?C.green:C.red,fontSize:12,marginBottom:10,padding:"8px",borderRadius:8,background:msg.startsWith("✅")?`${C.green}11`:`${C.red}11`}}>{msg}</div>}
+        <div style={{color:C.dim,fontSize:11,marginBottom:8}}>{qLessons.filter(l=>!search||l.toLowerCase().includes(search.toLowerCase())).length} lessons</div>
+        {qLessons.filter(l=>!search||(l.title||l.id||"").toLowerCase().includes(search.toLowerCase())||(l.id||"").toLowerCase().includes(search.toLowerCase())).map((lesson,idx)=>{
+          const lid=lesson.id||lesson;
+          const title=lesson.title||lid;
+          const lessonNum=parseInt((lid.split("-l")[1])||idx+1);
+          const className=CLASS_LABELS[qClassNum]||"Class "+qClassNum;
+          return (
+            <button key={lid} onClick={()=>{loadQSets(lid);setView("questions_sets");}} style={{width:"100%",background:C.card,border:`1px solid ${C.orange}33`,borderRadius:14,padding:"16px 18px",cursor:"pointer",display:"flex",alignItems:"center",gap:14,marginBottom:10,textAlign:"left"}}>
+              <div style={{width:42,height:42,borderRadius:12,background:`${C.orange}22`,border:`2px solid ${C.orange}44`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.orange,fontWeight:900}}>{lessonNum}</div>
+              <div style={{flex:1}}>
+                <div style={{fontWeight:900,color:textColor(),fontSize:15}}>{className} — Lesson {lessonNum}: {title}</div>
+                <div style={{fontSize:11,color:C.orange,marginTop:3,fontFamily:"monospace"}}>{lid}</div>
+              </div>
+              <span style={{color:C.orange,fontSize:22}}>›</span>
+            </button>
+          );
+        })}
+        {!loading&&qLessons.length===0&&<div style={{textAlign:"center",color:C.dim,padding:30}}>No lessons found. Click + LESSON to create one.</div>}
+      </div>
+    </div>
+  );
+
+  // ── Questions: Sets List ──────────────────────────────────────────
+  if (view==="questions_sets") return (
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),overflowY:"auto"}}>
+      <Hdr title={`${qLesson} — SETS`} back={()=>setView("questions_lessons")} accent={C.purple}
+        extra={<button onClick={()=>{setForm({lesson_id:qLesson,set_index:(qSets.length>0?Math.max(...qSets)+1:0)});setMsg("");setView("questions_add_set");}} style={{background:`${C.green}22`,border:`1px solid ${C.green}44`,borderRadius:10,padding:"7px 12px",color:C.green,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:9}}>+ SET</button>}
+      />
+      <div style={{padding:"12px 16px",maxWidth:600,margin:"0 auto"}}>
+        {loading&&<div style={{textAlign:"center",color:C.dim,padding:20}}>Loading...</div>}
+        {qSets.map(si=>(
+          <button key={si} onClick={()=>{loadQs(qLesson,si);setView("questions_list");}} style={{width:"100%",background:C.card,border:`1px solid ${C.purple}33`,borderRadius:12,padding:"14px 16px",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,textAlign:"left"}}>
+            <div><div style={{fontWeight:800,color:textColor(),fontSize:14}}>Set {si+1}</div><div style={{fontSize:11,color:C.dim,marginTop:2}}>set_index: {si}</div></div>
+            <span style={{color:C.purple,fontSize:20}}>›</span>
+          </button>
+        ))}
+        {!loading&&qSets.length===0&&<div style={{textAlign:"center",color:C.dim,padding:30}}>No sets yet.</div>}
+      </div>
+    </div>
+  );
+
+  // ── Questions: Add New Set ────────────────────────────────────────
+  if (view==="questions_add_set") return (
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),padding:"20px 18px"}}>
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><BackBtn onClick={()=>setView("questions_sets")} color={C.green}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.green}}>NEW SET — {qLesson} · Set {(form.set_index??0)+1}</div></div>
+      <Card color={C.green} style={{maxWidth:520,margin:"0 auto"}}>
+        <div style={{color:textColor(),fontSize:13,marginBottom:12,background:`${C.green}11`,borderRadius:8,padding:"8px 12px"}}>Creates Set {(form.set_index??0)+1} in lesson <b style={{color:C.green}}>{qLesson}</b>. Fill the first question to create the set.</div>
+        {[["Question","question"],["Option A","opt0"],["Option B","opt1"],["Option C","opt2"],["Option D","opt3"],["Hint (optional)","hint"]].map(([l,k])=>(
+          <div key={k}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div><input value={form[k]||""} onChange={e=>setForm({...form,[k]:e.target.value})} style={iS(C.green)}/></div>
+        ))}
+        <div style={{marginBottom:12}}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>CORRECT ANSWER</div><select value={form.correct||0} onChange={e=>setForm({...form,correct:parseInt(e.target.value)})} style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.green}44`,borderRadius:10,padding:"10px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:14}}>{["A","B","C","D"].map((l,i)=><option key={i} value={i}>Option {l}</option>)}</select></div>
+        <MsgBar m={msg}/>
+        <Btn color={C.green} loading={loading} onClick={async()=>{
+          if(!form.question||!form.opt0||!form.opt1||!form.opt2||!form.opt3){setMsg("Fill all fields.");return;}
+          setLoading(true);setMsg("");
+          const d=await api("admin_add_question",{lesson_id:form.lesson_id,set_index:form.set_index??0,question_index:0,question:form.question,options:[form.opt0,form.opt1,form.opt2,form.opt3],correct_answer:form.correct??0,hint:form.hint||""});
+          if(d.data){toast("✅ Set created!");loadQSets(qLesson);setTimeout(()=>setView("questions_sets"),800);}else setMsg(d.error||"Failed");
+          setLoading(false);
+        }}>CREATE SET + ADD QUESTION</Btn>
+      </Card>
+    </div>
+  );
+
+  // ── Questions: List in Set (table) ────────────────────────────────
+  if (view==="questions_list") return (
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),overflowY:"auto"}}>
+      <Hdr title={`${qLesson} · Set ${(qSet??0)+1}`} back={()=>setView("questions_sets")} accent={C.yellow}
+        extra={<>
+          <button onClick={()=>{setForm({lesson_id:qLesson,set_index:qSet??0,question_index:questions.length,opt0:"",opt1:"",opt2:"",opt3:"",correct:0});setMsg("");setView("questions_add_q");}} style={{background:`${C.green}22`,border:`1px solid ${C.green}44`,borderRadius:10,padding:"7px 12px",color:C.green,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:9}}>+ QUESTION</button>
+          <button onClick={()=>{setBulkText("");setBulkResult([]);setMsg("");setView("questions_bulk");}} style={{background:`${C.purple}22`,border:`1px solid ${C.purple}44`,borderRadius:10,padding:"7px 12px",color:C.purple,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:9}}>⚡ BULK</button>
+        </>}
+      />
+      <div style={{padding:"10px 12px",maxWidth:800,margin:"0 auto"}}>
+        {loading&&<div style={{textAlign:"center",color:C.dim,padding:20}}>Loading...</div>}
+        <MsgBar m={msg}/>
+        {questions.length>0&&(
+          <div style={{overflowX:"auto"}}>
+            <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+              <thead><tr style={{background:C.card2}}>{["#","Question","A","B","C","D","✓","Hint",""].map((h,i)=><th key={i} style={{padding:"8px 10px",textAlign:"left",color:C.dim,fontWeight:700,whiteSpace:"nowrap",borderBottom:`1px solid ${C.yellow}33`}}>{h}</th>)}</tr></thead>
+              <tbody>
+                {questions.map((q,i)=>(
+                  <tr key={q.id} style={{background:i%2===0?C.card:"transparent",borderBottom:`1px solid #ffffff08`}}>
+                    <td style={{padding:"8px 10px",color:C.dim}}>{i+1}</td>
+                    <td style={{padding:"8px 10px",color:textColor(),maxWidth:200,wordBreak:"break-word"}}>{q.question}</td>
+                    {(q.options||[]).map((o,oi)=><td key={oi} style={{padding:"8px 10px",color:oi===q.correct_answer?C.green:"#aaa",maxWidth:120,wordBreak:"break-word"}}>{o}</td>)}
+                    <td style={{padding:"8px 10px",color:C.green,fontWeight:800}}>{"ABCD"[q.correct_answer]}</td>
+                    <td style={{padding:"8px 10px",color:C.dim,maxWidth:100,wordBreak:"break-word"}}>{q.hint||"—"}</td>
+                    <td style={{padding:"8px 6px",whiteSpace:"nowrap"}}>
+                      <button onClick={()=>{setForm({id:q.id,question:q.question,opt0:q.options[0],opt1:q.options[1],opt2:q.options[2],opt3:q.options[3],correct:q.correct_answer,hint:q.hint||""});setMsg("");setView("questions_edit_q");}} style={{background:`${C.cyan}22`,border:`1px solid ${C.cyan}44`,borderRadius:6,padding:"4px 7px",color:C.cyan,cursor:"pointer",marginRight:4,fontSize:11}}>✏️</button>
+                      <button onClick={async()=>{if(!window.confirm("Delete?"))return;setLoading(true);const d=await api("admin_delete_question",{id:q.id});if(d.ok){toast("✅ Question deleted");loadQs(qLesson,qSet);}else setMsg(d.error||"Failed");setLoading(false);}} style={{background:`${C.red}22`,border:`1px solid ${C.red}44`,borderRadius:6,padding:"4px 7px",color:C.red,cursor:"pointer",fontSize:11}}>🗑️</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {!loading&&questions.length===0&&<div style={{textAlign:"center",color:C.dim,padding:30}}>No questions in this set.</div>}
+      </div>
+    </div>
+  );
+
+  // ── Questions: Add Single Question ────────────────────────────────
+  if (view==="questions_add_q") return (
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),padding:"20px 18px"}}>
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><BackBtn onClick={()=>setView("questions_list")} color={C.green}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.green}}>ADD QUESTION — {qLesson} Set {(qSet??0)+1}</div></div>
+      <Card color={C.green} style={{maxWidth:520,margin:"0 auto"}}>
+        {[["Question","question"],["Option A","opt0"],["Option B","opt1"],["Option C","opt2"],["Option D","opt3"],["Hint (optional)","hint"]].map(([l,k])=>(
+          <div key={k}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div><input value={form[k]||""} onChange={e=>setForm({...form,[k]:e.target.value})} style={iS(C.green)}/></div>
+        ))}
+        <div style={{marginBottom:12}}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>CORRECT ANSWER</div><select value={form.correct??0} onChange={e=>setForm({...form,correct:parseInt(e.target.value)})} style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.green}44`,borderRadius:10,padding:"10px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:14}}>{["A","B","C","D"].map((l,i)=><option key={i} value={i}>Option {l} — {form["opt"+i]||""}</option>)}</select></div>
+        <MsgBar m={msg}/>
+        <Btn color={C.green} loading={loading} onClick={async()=>{
+          if(!form.question||!form.opt0||!form.opt1||!form.opt2||!form.opt3){setMsg("Fill question and all 4 options.");return;}
+          setLoading(true);setMsg("");
+          const d=await api("admin_add_question",{lesson_id:form.lesson_id,set_index:form.set_index??0,question_index:form.question_index??0,question:form.question,options:[form.opt0,form.opt1,form.opt2,form.opt3],correct_answer:form.correct??0,hint:form.hint||""});
+          if(d.data){toast("✅ Question added!");setForm(f=>({...f,question:"",opt0:"",opt1:"",opt2:"",opt3:"",hint:"",question_index:(f.question_index??0)+1}));loadQs(qLesson,qSet);}else setMsg(d.error||"Failed");
+          setLoading(false);
+        }}>ADD QUESTION</Btn>
+      </Card>
+    </div>
+  );
+
+  // ── Questions: Edit Question ──────────────────────────────────────
+  if (view==="questions_edit_q") return (
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),padding:"20px 18px"}}>
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><BackBtn onClick={()=>setView("questions_list")} color={C.cyan}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.cyan}}>EDIT QUESTION</div></div>
+      <Card color={C.cyan} style={{maxWidth:520,margin:"0 auto"}}>
+        {[["Question","question"],["Option A","opt0"],["Option B","opt1"],["Option C","opt2"],["Option D","opt3"],["Hint","hint"]].map(([l,k])=>(
+          <div key={k}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div><input value={form[k]||""} onChange={e=>setForm({...form,[k]:e.target.value})} style={iS(C.cyan)}/></div>
+        ))}
+        <div style={{marginBottom:12}}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>CORRECT ANSWER</div><select value={form.correct??0} onChange={e=>setForm({...form,correct:parseInt(e.target.value)})} style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"10px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:14}}>{["A","B","C","D"].map((l,i)=><option key={i} value={i}>Option {l} — {form["opt"+i]||""}</option>)}</select></div>
+        <MsgBar m={msg}/>
+        <Btn color={C.cyan} loading={loading} onClick={async()=>{
+          setLoading(true);setMsg("");
+          const d=await api("admin_update_question",{id:form.id,question:form.question,options:[form.opt0,form.opt1,form.opt2,form.opt3],correct_answer:form.correct??0,hint:form.hint||""});
+          if(d.ok){toast("✅ Question updated!");loadQs(qLesson,qSet);setView("questions_list");}else setMsg(d.error||"Failed");
+          setLoading(false);
+        }}>SAVE CHANGES</Btn>
+      </Card>
+    </div>
+  );
+
+  // ── Questions: Bulk Upload ────────────────────────────────────────
+  if (view==="questions_bulk") return (
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),padding:"20px 18px"}}>
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><BackBtn onClick={()=>setView("questions_list")} color={C.purple}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.purple}}>BULK UPLOAD — {qLesson} Set {(qSet??0)+1}</div></div>
+      <Card color={C.purple} style={{maxWidth:520,margin:"0 auto"}}>
+        <div style={{color:C.dim,fontSize:11,marginBottom:6}}>CSV: <b style={{color:C.purple}}>Question, Option A, Option B, Option C, Option D, Correct (0-3), Hint</b></div>
+        <div style={{color:C.dim,fontSize:10,marginBottom:10,background:`${C.purple}11`,borderRadius:8,padding:"8px 10px"}}>What is 2+2?, 3, 4, 5, 6, 1, Add the numbers</div>
+        <textarea value={bulkText} onChange={e=>setBulkText(e.target.value)} rows={10} placeholder="Question, A, B, C, D, correct(0-3), hint" style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.purple}44`,borderRadius:10,padding:"10px 12px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:12,display:"block",marginBottom:10,resize:"vertical"}}/>
+        {bulkResult.length>0&&<div style={{maxHeight:150,overflowY:"auto",marginBottom:10}}>{bulkResult.map((r,i)=><div key={i} style={{fontSize:11,color:r.ok?C.green:C.red}}>{r.ok?"✅":"❌"} Row {i+1}: {r.error||"OK"}</div>)}</div>}
+        <MsgBar m={msg}/>
+        <Btn color={C.purple} loading={loading} onClick={async()=>{
+          const rows=bulkText.split("\n").map(l=>l.trim()).filter(Boolean).map(l=>{const p=l.split(",").map(s=>s.trim());return{question:p[0],options:[p[1]||"",p[2]||"",p[3]||"",p[4]||""],correct_answer:parseInt(p[5])||0,hint:p[6]||""};}).filter(r=>r.question);
+          if(!rows.length){setMsg("No valid rows.");return;}
+          setLoading(true);setMsg("");setBulkResult([]);
+          const d=await api("admin_bulk_add_questions",{lesson_id:qLesson,set_index:qSet??0,questions:rows});
+          setBulkResult(d.data||[]);const ok=(d.data||[]).filter(r=>r.ok).length;
+          toast(`✅ ${ok}/${rows.length} questions added.`);if(ok>0)loadQs(qLesson,qSet);
+          setLoading(false);
+        }}>UPLOAD QUESTIONS</Btn>
+      </Card>
+    </div>
+  );
+
+  return null;
+}
+

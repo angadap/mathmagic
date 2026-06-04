@@ -1,35 +1,13 @@
-// src/components/bazaar/BazaarScreen.jsx — All Bazaar sub-screens + main BazaarScreen
+// src/components/bazaar/BazaarScreen.jsx — All Bazaar sub-screens + BazaarScreen orchestrator
 import React, { useState, useEffect, useRef } from 'react';
 import { C, textColor, text2Color, isDark } from '../../constants/themes.js';
 import { db } from '../../lib/db.js';
 import { SFX } from '../../lib/sfx.js';
 import { Btn, Inp, BackBtn, Card } from '../ui/primitives.jsx';
-import { BAZAAR_MARKETS, BAZAAR_PASSPORTS, BAZAAR_FESTIVALS, getBazaarFallback } from '../../constants/bazaarData.js';
-
+import { BAZAAR_MARKETS, BAZAAR_PASSPORTS, BAZAAR_FESTIVALS } from '../../constants/bazaarData.js';
 
 
 // ─── Fallback questions ───────────────────────────────────────────────
-function getBazaarFallback(market, role) {
-  const items=market.items, pick=arr=>arr[Math.floor(Math.random()*arr.length)], qs=[];
-  if (role==="buyer") {
-    const [i0,i1,i2,i3]=items;
-    const a1=i0.price*3; qs.push({scenario:`You want to buy 3 kg of ${i0.name}.`,question:`Total cost? (₹${i0.price}/kg)`,hint:`3×₹${i0.price}`,options:[a1-30,a1,a1+30,a1+15].map(String),correct_answer:String(a1),customer_name:pick(BAZAAR_CUSTOMER_NAMES),customer_emoji:pick(BAZAAR_CUSTOMER_EMOJIS)});
-    const c2=i1.price*2,p2=c2+20,a2=p2-c2; qs.push({scenario:`2 ${i1.name}s (₹${i1.price} ea). You give ₹${p2}.`,question:`How much change back?`,hint:`₹${p2}−₹${c2}`,options:[a2-5,a2+5,a2,a2+10].map(String),correct_answer:String(a2),customer_name:pick(BAZAAR_CUSTOMER_NAMES),customer_emoji:pick(BAZAAR_CUSTOMER_EMOJIS)});
-    const t3=i2.price*2,b3=t3+30; qs.push({scenario:`You have ₹${b3}. ${i2.name} ₹${i2.price} each. Need 2.`,question:`Do you have enough?`,hint:`Need ₹${t3}, have ₹${b3}`,options:["Yes, enough","No, need more","Exactly enough","Not sure"],correct_answer:"Yes, enough",customer_name:pick(BAZAAR_CUSTOMER_NAMES),customer_emoji:pick(BAZAAR_CUSTOMER_EMOJIS)});
-    const ch=i0.price<=i3.price?i0.name:i3.name; qs.push({scenario:`${i0.emoji}${i0.name}:₹${i0.price} vs ${i3.emoji}${i3.name}:₹${i3.price}`,question:`Which is cheaper?`,hint:`Compare ₹${i0.price} and ₹${i3.price}`,options:[i0.name,i3.name,"Both same","Can't tell"],correct_answer:ch,customer_name:pick(BAZAAR_CUSTOMER_NAMES),customer_emoji:pick(BAZAAR_CUSTOMER_EMOJIS)});
-    const a5=i0.price*2+i1.price*3; qs.push({scenario:`2 ${i0.name} + 3 ${i1.name}`,question:`Total bill?`,hint:`(2×₹${i0.price})+(3×₹${i1.price})`,options:[a5-20,a5,a5+20,a5+10].map(String),correct_answer:String(a5),customer_name:pick(BAZAAR_CUSTOMER_NAMES),customer_emoji:pick(BAZAAR_CUSTOMER_EMOJIS)});
-  } else {
-    const [i0,i1,i2,i3]=items;
-    const a1=i0.price*4; qs.push({scenario:`Customer wants 4 kg ${i0.name} at ₹${i0.price}/kg.`,question:`How much to charge?`,hint:`4×₹${i0.price}`,options:[a1-20,a1,a1+20,a1+10].map(String),correct_answer:String(a1),customer_name:pick(BAZAAR_CUSTOMER_NAMES),customer_emoji:pick(BAZAAR_CUSTOMER_EMOJIS)});
-    const c2=i1.price*3,g2=c2+50,a2=g2-c2; qs.push({scenario:`3 ${i1.name}s = ₹${c2}. Customer gives ₹${g2}.`,question:`Change to return?`,hint:`₹${g2}−₹${c2}`,options:[a2-10,a2,a2+10,a2+20].map(String),correct_answer:String(a2),customer_name:pick(BAZAAR_CUSTOMER_NAMES),customer_emoji:pick(BAZAAR_CUSTOMER_EMOJIS)});
-    qs.push({scenario:`Started with 50 kg ${i2.name}. Sold 18 kg.`,question:`How much left?`,hint:`50−18`,options:["27","28","32","37"],correct_answer:"32",customer_name:pick(BAZAAR_CUSTOMER_NAMES),customer_emoji:pick(BAZAAR_CUSTOMER_EMOJIS)});
-    const a4=i3.price-20; qs.push({scenario:`Buy ${i3.name} at ₹${a4}, sell at ₹${i3.price}.`,question:`Profit per unit?`,hint:`₹${i3.price}−₹${a4}`,options:[String(a4-5),"20",String(a4+5),String(a4+10)],correct_answer:"20",customer_name:pick(BAZAAR_CUSTOMER_NAMES),customer_emoji:pick(BAZAAR_CUSTOMER_EMOJIS)});
-    const a5=i0.price*10; qs.push({scenario:`Sold 10 units ${i0.name} at ₹${i0.price} each.`,question:`Total earnings?`,hint:`10×₹${i0.price}`,options:[a5-100,a5,a5+100,a5+50].map(String),correct_answer:String(a5),customer_name:pick(BAZAAR_CUSTOMER_NAMES),customer_emoji:pick(BAZAAR_CUSTOMER_EMOJIS)});
-  }
-  const [i0,i1]=items, tot=i0.price*3+i1.price*2, paid=tot+100, chg=paid-tot;
-  qs.push({isBoss:true,scenario:`⚡ BOSS! 3 kg ${i0.name} + 2 ${i1.name}. Pay ₹${paid}.`,question:`Change? (Total ₹${tot})`,hint:`₹${paid}−₹${tot}`,options:[chg-20,chg,chg+20,chg+15].map(String),correct_answer:String(chg),customer_name:"Khadoos Lala 😤",customer_emoji:"😤"});
-  return qs;
-}
 function getSpeedRoundQuestions(market) {
   return Array.from({length:12},(_,i)=>{
     const item=market.items[i%market.items.length], qty=1+(i%4), ans=item.price*qty;
@@ -450,7 +428,7 @@ function AchievementToast({ achievements, onClose }) {
 // ═══════════════════════════════════════════════════════════════════════
 //  BazaarPassport (Phase 2 — kept)
 // ═══════════════════════════════════════════════════════════════════════
-export function BazaarPassport({ child, onClose, onMarket }) {
+function BazaarPassport({ child, onClose, onMarket }) {
   const totalCoins = getBazaarTotalCoins(child.id);
   return (
     <div style={{position:"fixed",inset:0,zIndex:300,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={onClose}>
@@ -800,7 +778,7 @@ function BazaarHub({ child, onBack, onMarket, onDaily, onSpeed, onChallenge }) {
 // ═══════════════════════════════════════════════════════════════════════
 //  BazaarMarket, BazaarGame, BazaarResult (compact — same logic as P2)
 // ═══════════════════════════════════════════════════════════════════════
-export function BazaarMarket({ market, child, onBack, onRole, isDaily, dailyChallenge }) {
+function BazaarMarket({ market, child, onBack, onRole, isDaily, dailyChallenge }) {
   const [role,setRole]=useState(null);
   const rep=getBazaarReputation(market.id);
   return (
@@ -1031,3 +1009,26 @@ function BazaarResult({ result, market, onReplay, onHub, onHome }) {
 //  BazaarScreen — master orchestrator (all phases)
 // ═══════════════════════════════════════════════════════════════════════
 export function BazaarScreen({ child, onBack }) {
+  const [step,           setStep]           = useState("hub");
+  const [market,         setMarket]         = useState(null);
+  const [role,           setRole]           = useState(null);
+  const [result,         setResult]         = useState(null);
+  const [isDaily,        setIsDaily]        = useState(false);
+  const [dailyChallenge, setDailyChallenge] = useState(null);
+  const [isSpeed,        setIsSpeed]        = useState(false);
+  const [isChallenge,    setIsChallenge]    = useState(false);
+
+  function startMarket(m,daily=false,dc=null) { setMarket(m);setIsDaily(daily);setDailyChallenge(dc);setIsSpeed(false);setIsChallenge(false);setStep("market"); }
+  function startSpeed(m)     { setMarket(m);setIsSpeed(true);setIsDaily(false);setIsChallenge(false);setStep("speed"); }
+  function startChallenge(m) { setMarket(m);setIsChallenge(true);setIsSpeed(false);setIsDaily(false);setStep("challenge"); }
+  function handleDailyPick(dc) { startMarket(BAZAAR_MARKETS.find(m=>!m.isPaid),true,dc); }
+
+  if (step==="hub")       return <BazaarHub child={child} onBack={onBack} onMarket={startMarket} onDaily={handleDailyPick} onSpeed={startSpeed} onChallenge={startChallenge}/>;
+  if (step==="market")    return <BazaarMarket market={market} child={child} isDaily={isDaily} dailyChallenge={dailyChallenge} onBack={()=>setStep("hub")} onRole={r=>{setRole(r);setStep("game");}}/>;
+  if (step==="speed")     return <SpeedRound market={market} child={child} onBack={()=>setStep("hub")} onDone={r=>{ addBazaarCoins(child.id,r.coins); updateWeeklyLeague(child.id,r.coins); updateBazaarStats(child.id,{speedRounds:1}); setStatMax(child.id,"speedBestScore",r.score); const na=checkAndAwardAchievements(child.id); setResult({...r,child,newAchievements:na}); setStep("result"); }}/>;
+  if (step==="challenge") return <ChallengeMode market={market} child={child} onBack={()=>setStep("hub")} onDone={r=>{ updateBazaarStats(child.id,{challengesSent:1}); const na=checkAndAwardAchievements(child.id); setResult({...r,child,newAchievements:na}); setStep("result"); }}/>;
+  if (step==="game")      return <BazaarGame market={market} role={role} child={child} isDaily={isDaily} dailyChallenge={dailyChallenge} onBack={()=>setStep("market")} onDone={r=>{ if(isDaily) markDailyChallengeComplete(child.id); setResult({...r,child}); setStep("result"); }}/>;
+  if (step==="result")    return <BazaarResult result={result} market={market} onReplay={()=>isSpeed?setStep("speed"):isChallenge?setStep("challenge"):setStep("game")} onHub={()=>setStep("hub")} onHome={onBack}/>;
+  return null;
+}
+

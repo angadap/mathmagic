@@ -46,7 +46,6 @@ export function Splash({ onDone }) {
   );
 }
 
-function Welcome({ onRegister, onLogin, onPrivacy }) {
 export function EntryScreen({ onSelect }) {
   useEffect(()=>{ SFX.screenIn(); },[]);
   const [hov, setHov] = useState(-1);

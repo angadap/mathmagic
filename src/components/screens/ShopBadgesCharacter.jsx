@@ -221,7 +221,3 @@ export function CharacterScreen({ child, setChild, onBack }) {
   );
 }
 
-// ══════════════════════════════════════════════════════════════════
-// 🏅 BADGE UNLOCK TOAST (shown after game results)
-// ══════════════════════════════════════════════════════════════════
-function BadgeUnlockToast({ badges, onDone }) {

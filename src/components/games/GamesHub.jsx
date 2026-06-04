@@ -284,4 +284,3 @@ export function GamesHub({ child, onBack }) {
 // SHOP, BADGES, CHARACTER & BADGE TOAST SCREENS
 // ══════════════════════════════════════════════════════════════════
 
-function ShopScreen({ child, setChild, onBack }) {

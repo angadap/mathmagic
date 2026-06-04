@@ -166,8 +166,7 @@ export function OfflineBanner() {
   );
 }
 
-// DB logging — console only in production
-function dbLog(level, msg, detail="") {
+
 export function Starfield({ n = 40 }) {
   const pts = useRef(
     Array.from({ length: n }, (_, i) => ({
@@ -188,6 +187,3 @@ export function Starfield({ n = 40 }) {
     </div>
   );
 }
-
-// Primary button
-function Btn({ children, onClick, color = C.cyan, disabled, loading, style: sx = {} }) {

@@ -146,8 +146,6 @@ export function FeedbackScreen({ child, currentScreen, onBack, prefillCategory }
   );
 }
 
-// ── Floating SOS button — shown on every game screen ─────────────────────
-function SOSButton({ onClick }) {
 export function RatingPrompt({ child, onClose }) {
   const [rating,  setRating]  = useState(0);
   const [hover,   setHover]   = useState(0);
@@ -214,5 +212,3 @@ export function RatingPrompt({ child, onClose }) {
 
 // ── Privacy Policy ────────────────────────────────────────────────────
 
-// ── TermsOfService ────────────────────────────────────────────────
-function TermsOfService({ onBack }) {

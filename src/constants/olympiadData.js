@@ -812,5 +812,3 @@ export const OLYMPIAD_TESTS = [
     {q:"Solve: 377 x 6 = ?",opts:["2256", "2262", "2268", "2274"],ans:1,h:"377x6=2262!",time:40},
   ],
 ];
-
-const ABACUS_LEVELS = [

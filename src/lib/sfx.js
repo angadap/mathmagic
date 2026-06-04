@@ -78,18 +78,3 @@ export const SFX = (() => {
   };
 })();
 
-// Global mute toggle button component
-function MuteBtn() {
-  const [muted, setMuted] = React.useState(SFX.muted);
-  return (
-    <button
-      onClick={() => { setMuted(SFX.toggleMute()); }}
-      title={muted ? "Unmute" : "Mute"}
-      style={{ background:"none", border:"none", cursor:"pointer", fontSize:18,
-               color: muted ? C.dim : C.cyan, padding:"4px 6px", lineHeight:1,
-               transition:"color 0.2s" }}>
-      {muted ? "🔇" : "🔊"}
-    </button>
-  );
-}
-

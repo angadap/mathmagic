@@ -1,7 +1,69 @@
-// src/lib/db.js — API client (sbRest), in-memory store, db wrapper, logging, ls helpers
+// src/lib/db.js — API client (sbRest), in-memory store, db wrapper
 // All Supabase / server communication goes through /api/* Vercel routes.
-// The Supabase service key NEVER reaches the browser.
 
+import { SFX } from './sfx.js';
+
+const DEMO_MODE = false;
+
+// ── Helpers (used internally by fetchSetQuestions) ─────────────────────────
+export function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i+1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// Shuffle opts while keeping correct answer pointer correct
+export function shuffleOpts(opts, ans) {
+  const correct = opts[ans];
+  const shuffled = shuffle(opts);
+  return { opts: shuffled, ans: shuffled.indexOf(correct) };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PERSISTENT QUESTION CACHE — localStorage-backed, 24h TTL, 50-set LRU
+// On page reload the cache is restored instantly — no DB round-trip needed
+// ─────────────────────────────────────────────────────────────────────────────
+export const Q_CACHE_MAX = 50;
+export const Q_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+export const Q_LS_KEY    = "mm_qcache_v2";
+
+export const Q_RAW_CACHE = (() => {
+  try {
+    const raw = localStorage.getItem(Q_LS_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    const now = Date.now();
+    const fresh = {};
+    for (const [k, v] of Object.entries(parsed)) {
+      if (v && v._ts && now - v._ts < Q_CACHE_TTL) fresh[k] = v;
+    }
+    return fresh;
+  } catch(e) { return {}; }
+})();
+
+export function cacheSet(key, data) {
+  const keys = Object.keys(Q_RAW_CACHE);
+  if (keys.length >= Q_CACHE_MAX) {
+    const oldest = keys.sort((a,b)=>(Q_RAW_CACHE[a]._ts||0)-(Q_RAW_CACHE[b]._ts||0))[0];
+    delete Q_RAW_CACHE[oldest];
+  }
+  Q_RAW_CACHE[key] = { _data: data, _ts: Date.now() };
+  try { localStorage.setItem(Q_LS_KEY, JSON.stringify(Q_RAW_CACHE)); } catch(e) {}
+}
+
+export function cacheGet(key) {
+  const entry = Q_RAW_CACHE[key];
+  if (!entry) return null;
+  if (!entry._ts || Date.now() - entry._ts > Q_CACHE_TTL) { delete Q_RAW_CACHE[key]; return null; }
+  return entry._data;
+}
+
+// ── Shared LS helpers (progress + children) ───────────────────────────────────
+
+// ── Main db / API layer ────────────────────────────────────────────────────
 export function dbLog(level, msg, detail="") {
   if (level === "error") console.error("[DB]", msg, detail);
   else console.log("[DB]", msg, detail);
@@ -372,3 +434,390 @@ if ("getBattery" in navigator) {
 
 export const db = {
   _sb: undefined,
+  _token: null,   // mirrors sbRest._token so all fetch calls carry a valid JWT
+
+  async getSb() {
+    if (this._sb !== undefined) return this._sb;
+    this._sb = await loadSb();
+    return this._sb;
+  },
+
+  // -- Fetch child record (memory-first, then DB) ----------------
+  async getChild(cid) {
+    const mem = MEM.children.find(x => x.id === cid);
+    if (mem) return { data: mem, error: null };
+    try {
+      const res = await fetch("/api/db", { method:"POST",
+        headers:{"Content-Type":"application/json","Authorization":`Bearer ${this._token||""}`},
+        body: JSON.stringify({ action:"get_children", id:cid }) });
+      const j = await res.json();
+      const c = Array.isArray(j.data) ? j.data[0] : j.data;
+      if (c) { MEM.children.push(c); lsPersist(CHILDREN_LS_KEY, MEM.children); }
+      return { data: c || null, error: null };
+    } catch(e) { return { data: null, error: e.message }; }
+  },
+
+  // -- Persist arbitrary child fields to DB + memory (optimistic) -
+  async updateChildFields(cid, fields) {
+    const c = MEM.children.find(x => x.id === cid);
+    if (c) { Object.assign(c, fields); lsPersist(CHILDREN_LS_KEY, MEM.children); }
+    try {
+      const res = await fetch("/api/db", { method:"POST",
+        headers:{"Content-Type":"application/json","Authorization":`Bearer ${this._token||""}`},
+        body: JSON.stringify({ action:"update_children", id:cid, ...fields }) });
+      const j = await res.json();
+      if (!j.ok) dbLog("error", "updateChildFields failed", j.error);
+    } catch(e) { dbLog("error", "updateChildFields network error", e.message); }
+    return { error: null };
+  },
+
+  async signUp(email, pass) {
+    const sb = await this.getSb();
+    if (sb) {
+      const r = await sb.signUp(email, pass);
+      if (!r.error && r.data?.user?.id) {
+        const uid = r.data.user.id;
+        dbLog("ok","signUp success",uid.slice(0,8));
+        if (!MEM.users.find(u=>u.id===uid)) MEM.users.push({ id:uid, email, pass });
+        if (sb._token) this._token = sb._token;
+        return { data:{ user:{ id:uid, email } }, error:null };
+      }
+      if (r.error) {
+        const isNet = /fetch|network|host|failed/i.test(r.error.message||"");
+        if (!isNet) { dbLog("error","signUp rejected",r.error.message); return { data:null, error:{ message:r.error.message } }; }
+        dbLog("error","signUp network error — using in-memory",r.error.message);
+      }
+    }
+    if (MEM.users.find(u=>u.email===email))
+      return { data:null, error:{ message:"Email already registered" } };
+    const user = { id:"local_"+Math.random().toString(36).slice(2), email };
+    MEM.users.push({ ...user, pass });
+    return { data:{ user }, error:null };
+  },
+
+  async signIn(email, pass) {
+    const sb = await this.getSb();
+    if (sb) {
+      const r = await sb.signIn(email, pass);
+      if (!r.error && r.data?.user?.id) {
+        dbLog("ok","signIn success","uid="+r.data.user.id.slice(0,8));
+        if (!MEM.users.find(u=>u.id===r.data.user.id)) MEM.users.push({ id:r.data.user.id, email, pass });
+        // Sync JWT token so db.updateChildFields and other fetch calls are authenticated
+        if (sb._token) this._token = sb._token;
+        return { data:{ user:{ id:r.data.user.id, email } }, error:null };
+      }
+      if (r.error) {
+        const isNet = /fetch|network|host|failed/i.test(r.error.message||"");
+        if (!isNet) return { data:null, error:{ message:r.error.message } };
+        dbLog("error","signIn network",r.error.message);
+      }
+    }
+    const u = MEM.users.find(u => u.email===email && u.pass===pass);
+    return u ? { data:{ user:u }, error:null }
+             : { data:null, error:{ message:"Invalid email or password" } };
+  },
+
+  async signOut() {
+    return { error: null };
+  },
+
+  // ── Daily Challenge ──────────────────────────────────────────
+  async getDailyChallenge(classNum) {
+    const epoch  = new Date("2025-01-01");
+    const dayNum = Math.floor((new Date() - epoch) / 86400000) % 250 + 1;
+    const today  = new Date().toISOString().slice(0,10);
+    // Check day-scoped cache
+    const dcKey = `mm_dc_${classNum}_${today}`;
+    const cached = lsRestore(dcKey, 24*60*60*1000);
+    if (cached) return cached;
+    try {
+      const res = await fetch("/api/db", { method:"POST", headers:{"Content-Type":"application/json","Authorization":`Bearer ${this._token||""}`}, body:JSON.stringify({ action:"get_daily_challenge", class_num:classNum, seq_num:dayNum }) });
+      const json = await res.json();
+      const d = json.data;
+      const challenge = (d && !Array.isArray(d)) ? d : (Array.isArray(d) && d[0]) ? d[0] : null;
+      if (challenge) lsPersist(dcKey, challenge);
+      return challenge;
+    } catch(e) { dbLog("error","getDailyChallenge",e.message); return null; }
+  },
+
+  async getDailyCompletion(childId) {
+    const today = new Date().toISOString().slice(0,10);
+    if (localStorage.getItem(`dq_done_${childId}_${today}`)) return { completed_at: today };
+    try {
+      const res = await fetch("/api/db", { method:"POST", headers:{"Content-Type":"application/json","Authorization":`Bearer ${this._token||""}`}, body:JSON.stringify({ action:"get_daily_completion", child_id:childId, date:today }) });
+      const json = await res.json();
+      return json.data?.[0] || null;
+    } catch(e) { return null; }
+  },
+
+  async completeDailyChallenge(childId, challengeId, correct) {
+    const today = new Date().toISOString().slice(0,10);
+    if (correct) localStorage.setItem(`dq_done_${childId}_${today}`,"1");
+    fetch("/api/db", { method:"POST", headers:{"Content-Type":"application/json","Authorization":`Bearer ${this._token||""}`}, body:JSON.stringify({ action:"complete_daily_challenge", child_id:childId, challenge_id:challengeId, date:today, correct }) }).catch(()=>{});
+  },
+
+  async getDailyPuzzle() {
+    const today = new Date().toISOString().slice(0,10);
+    const dpKey = `mm_dp_${today}`;
+    const cached = lsRestore(dpKey, 24*60*60*1000);
+    if (cached) return cached;
+    try {
+      const res = await fetch("/api/db", { method:"POST", headers:{"Content-Type":"application/json","Authorization":`Bearer ${this._token||""}`}, body:JSON.stringify({ action:"get_daily_puzzle" }) });
+      const json = await res.json();
+      if (json.data) { lsPersist(dpKey, json.data); return json.data; }
+      return null;
+    } catch(e) { return null; }
+  },
+
+  async completePuzzle(childId, puzzleId, answerGiven, correct) {
+    const today = new Date().toISOString().slice(0,10);
+    if (correct) localStorage.setItem(`dp_done_${childId}_${today}`,"1");
+    fetch("/api/db", { method:"POST", headers:{"Content-Type":"application/json","Authorization":`Bearer ${this._token||""}`}, body:JSON.stringify({ action:"complete_puzzle", child_id:childId, puzzle_id:puzzleId, date:today, answer_given:answerGiven, correct }) }).catch(()=>{});
+  },
+
+  async getPuzzleCompletion(childId) {
+    const today = new Date().toISOString().slice(0,10);
+    if (localStorage.getItem(`dp_done_${childId}_${today}`)) return { completed_at: today };
+    try {
+      const res = await fetch("/api/db", { method:"POST", headers:{"Content-Type":"application/json","Authorization":`Bearer ${this._token||""}`}, body:JSON.stringify({ action:"get_puzzle_completion", child_id:childId, date:today }) });
+      const json = await res.json();
+      return json.data?.[0] || null;
+    } catch(e) { return null; }
+  },
+
+    // ── Analytics ────────────────────────────────────────────────
+  async track(eventType, childId, parentId, data={}) {
+    const sb = await this.getSb();
+    if (!sb) return;
+    // Fire-and-forget — never block UI
+    sb.insert("analytics", {
+      child_id: childId || null,
+      parent_id: parentId || null,
+      event_type: eventType,
+      event_data: data,
+      app_version: "1.0.0",
+      platform: "web",
+      session_id: window.__sessionId || null,
+      created_at: new Date().toISOString()
+    }).catch(()=>{});
+  },
+
+  // ── App Ratings ──────────────────────────────────────────────
+  async saveRating(childId, parentId, rating, review) {
+    const sb = await this.getSb();
+    if (sb) {
+      await sb.insert("app_ratings", {
+        child_id: childId || null,
+        parent_id: parentId || null,
+        rating, review: review || "",
+        app_version: "1.0.0",
+        platform: "web",
+        created_at: new Date().toISOString()
+      });
+    }
+    localStorage.setItem("mm_rated", "1");
+  },
+
+  async getChildren(pid) {
+    const sb = await this.getSb();
+    if (sb) {
+      const r = await sb.select("children", { parent_id: pid });
+      if (!r.error) {
+        r.data.forEach(c=>{ if(!MEM.children.find(m=>m.id===c.id)) MEM.children.push(c); });
+        lsPersist(CHILDREN_LS_KEY, MEM.children); // persist for next session
+        return { data:r.data, error:null };
+      }
+    }
+    return { data:MEM.children.filter(c=>c.parent_id===pid), error:null };
+  },
+
+  async addChild(pid, { name, avatar, class_num, pin }) {
+    const payload = {
+      parent_id: pid, name, avatar, class_num, pin_hash: pin,
+      xp: 0, level: 1, coins: 50, streak_days: 0, is_premium: false,
+      created_at: new Date().toISOString()
+    };
+    const sb = await this.getSb();
+    if (sb) {
+      const r = await sb.insert("children", payload);
+      if (!r.error && r.data) {
+        MEM.children.push(r.data);
+        lsPersist(CHILDREN_LS_KEY, MEM.children);
+        dbLog("ok","addChild saved to DB ✓", r.data.id);
+        return { data:r.data, error:null };
+      }
+      dbLog("error","addChild DB failed — using in-memory", r?.error?.message);
+    }
+    const c = { ...payload, id:"c_"+Math.random().toString(36).slice(2) };
+    MEM.children.push(c);
+    lsPersist(CHILDREN_LS_KEY, MEM.children);
+    return { data:c, error:null };
+  },
+
+  async checkPin(cid, pin) {
+    const sb = await this.getSb();
+    if (sb) {
+      const r = await sb.select("children", { id: cid });
+      if (!r.error && r.data?.[0]) { const c=r.data[0]; if(!MEM.children.find(m=>m.id===c.id)) MEM.children.push(c); return { ok:c.pin_hash===pin, child:c }; }
+    }
+    const c = MEM.children.find(x=>x.id===cid);
+    return c ? { ok:c.pin_hash===pin, child:c } : { ok:false };
+  },
+
+  async addXP(cid, xp, coins=0, isSchoolStudent=false) {
+    // Optimistic update in memory
+    const c = MEM.children.find(x=>x.id===cid);
+    if (c) { c.xp=(c.xp||0)+xp; c.coins=(c.coins||0)+coins; c.level=Math.floor(c.xp/200)+1; lsPersist(CHILDREN_LS_KEY, MEM.children); }
+    // For school students saveProgress already updates the students table — skip double-write
+    if (isSchoolStudent) return { data:c, error:null };
+    // For individual children: call update_children endpoint
+    try {
+      const nx = c ? c.xp : xp;
+      const nc = c ? c.coins : coins;
+      await fetch("/api/db", { method:"POST",
+        headers:{"Content-Type":"application/json","Authorization":`Bearer ${this._token||""}`},
+        body: JSON.stringify({ action:"update_children", id:cid,
+          xp:nx, coins:nc, level:Math.floor(nx/200)+1, last_active:new Date().toISOString() }) });
+    } catch(e) { dbLog("error","addXP failed",e.message); }
+    return { data:c, error:null };
+  },
+
+  async getProgress(cid) {
+    try {
+      const res = await fetch("/api/db",{method:"POST",headers:{"Content-Type":"application/json","Authorization":`Bearer ${this._token||""}`},body:JSON.stringify({action:"get_progress",child_id:cid})});
+      const j = await res.json();
+      if (j.data) {
+        MEM.progress = [...MEM.progress.filter(p=>p.child_id!==cid), ...j.data];
+        lsPersist(PROGRESS_LS_KEY, MEM.progress);
+        return {data:j.data,error:null};
+      }
+    } catch(e) {}
+    return { data:MEM.progress.filter(p=>p.child_id===cid), error:null };
+  },
+
+  async saveProgress(cid, lid, { correct, total, stars, xpEarned, isSchoolStudent=false }) {
+    const ex = MEM.progress.find(p => p.child_id===cid && p.lesson_id===lid);
+    if (ex) { ex.stars_earned=Math.max(ex.stars_earned||0,stars); ex.correct_count=correct; ex.completed_at=new Date().toISOString(); }
+    else MEM.progress.push({ id:"p_"+Math.random().toString(36).slice(2), child_id:cid, lesson_id:lid,
+      correct_count:correct, total_questions:total, stars_earned:stars,
+      xp_earned:xpEarned, completed_at:new Date().toISOString() });
+    // Persist progress immediately — survives page reload
+    lsPersist(PROGRESS_LS_KEY, MEM.progress);
+
+    const payload = { child_id:cid, lesson_id:lid, correct_count:correct, total_questions:total,
+      stars_earned:stars, xp_earned:xpEarned, completed_at:new Date().toISOString(),
+      is_school_student: isSchoolStudent };
+
+    try {
+      const res = await fetch("/api/db", { method:"POST",
+        headers:{"Content-Type":"application/json","Authorization":`Bearer ${this._token||""}`},
+        body: JSON.stringify({ action:"save_progress", ...payload }) });
+      const j = await res.json();
+      if (j.ok) {
+        dbLog("ok","saveProgress saved to DB ✓", lid);
+        // Sync returned XP/coins into memory so UI stays consistent
+        if (j.xp !== undefined) {
+          const mc = MEM.children.find(x=>x.id===cid);
+          if (mc) { mc.xp=j.xp; mc.coins=j.coins; mc.level=Math.floor(j.xp/200)+1; }
+        }
+      } else {
+        dbLog("error","saveProgress DB failed", j.error);
+      }
+    } catch(e) { dbLog("error","saveProgress network error", e.message); }
+    return { error:null };
+  },
+
+  // RPC-based writes — use Postgres functions with SECURITY DEFINER to bypass RLS
+  async _rpc(fn, params) {
+    const sb = await this.getSb();
+    if (!sb) return null;
+    const r = await sb.rpc(fn, params);
+    if (r && !r.error) return r.data;
+    dbLog("error",`RPC ${fn} failed`, r?.error?.message);
+    return null;
+  },
+
+  async addGems(cid, amount) {
+    const { data: c } = await this.getChild(cid);
+    if (!c) return;
+    const newGems = (c.gems||0) + amount;
+    await this.updateChildFields(cid, { gems: newGems });
+    return newGems;
+  },
+  async unlockBadge(cid, badgeId) {
+    const { data: c } = await this.getChild(cid);
+    if (!c) return false;
+    const ids = Array.isArray(c.badge_ids) ? c.badge_ids : [];
+    if (ids.includes(badgeId)) return false;
+    await this.updateChildFields(cid, { badge_ids: [...ids, badgeId] });
+    return true;
+  },
+  async checkAndUnlockBadges(cid, child) {
+    const unlocked = [];
+    const ids = Array.isArray(child.badge_ids) ? child.badge_ids : [];
+    const checks = [
+      { id:"streak_3",    pass: (child.streak_days||0) >= 3 },
+      { id:"streak_7",    pass: (child.streak_days||0) >= 7 },
+      { id:"streak_30",   pass: (child.streak_days||0) >= 30 },
+      { id:"correct_100", pass: (child.total_correct||0) >= 100 },
+      { id:"correct_500", pass: (child.total_correct||0) >= 500 },
+      { id:"xp_500",      pass: (child.xp||0) >= 500 },
+      { id:"boss_first",  pass: (child.bosses_defeated||0) >= 1 },
+      { id:"boss_5",      pass: (child.bosses_defeated||0) >= 5 },
+      { id:"daily_7",     pass: (child.daily_challenges_done||0) >= 7 },
+    ];
+    for (const { id, pass } of checks) {
+      if (pass && !ids.includes(id)) {
+        const isNew = await this.unlockBadge(cid, id);
+        if (isNew) unlocked.push(id);
+      }
+    }
+    return unlocked;
+  },
+  async purchaseShopItem(cid, itemId, costType, amount) {
+    const { data: c } = await this.getChild(cid);
+    if (!c) return { ok: false, error: "Child not found" };
+    const owned = Array.isArray(c.shop_items) ? c.shop_items : [];
+    if (owned.includes(itemId)) return { ok: false, error: "Already owned" };
+    const updates = { shop_items: [...owned, itemId] };
+    if (costType === "stars") {
+      if ((c.xp||0)/20 < amount) return { ok: false, error: "Not enough stars" };
+    } else if (costType === "gems") {
+      if ((c.gems||0) < amount) return { ok: false, error: "Not enough gems" };
+      updates.gems = (c.gems||0) - amount;
+    } else if (costType === "coins") {
+      if ((c.coins||0) < amount) return { ok: false, error: "Not enough coins" };
+      updates.coins = (c.coins||0) - amount;
+    }
+    await this.updateChildFields(cid, updates);
+    return { ok: true };
+  },
+
+  async setPremium(cid) {
+    await this.updateChildFields(cid, { is_premium: true });
+    return { error:null };
+  },
+
+  async submitFeedback(payload) {
+    const row = {
+      child_id:    payload.child_id    || "guest",
+      child_name:  payload.child_name  || "Unknown",
+      category:    payload.category,
+      description: payload.description,
+      screen:      payload.screen      || "unknown",
+      device_info: payload.device_info || "",
+      app_version: payload.app_version || "1.0.0",
+      status:      "open",
+      created_at:  new Date().toISOString(),
+    };
+    const sb = await this.getSb();
+    if (sb) {
+      const r = await sb.insert("feedback", row);
+      if (!r.error) { dbLog("ok","feedback saved to DB ✓"); return { ok:true }; }
+      dbLog("error","feedback DB failed", r.error.message);
+    }
+    if (!window.__mmFeedbackQueue) window.__mmFeedbackQueue = [];
+    window.__mmFeedbackQueue.push({ ...row });
+    return { ok:true, local:true };
+  },
+};
