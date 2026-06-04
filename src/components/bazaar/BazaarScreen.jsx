@@ -4,7 +4,21 @@ import { C, textColor, text2Color, isDark } from '../../constants/themes.js';
 import { db } from '../../lib/db.js';
 import { SFX } from '../../lib/sfx.js';
 import { Btn, Inp, BackBtn, Card } from '../ui/primitives.jsx';
-import { BAZAAR_MARKETS, BAZAAR_PASSPORT, BAZAAR_FESTIVALS } from '../../constants/bazaarData.js';
+import {
+  BAZAAR_MARKETS, BAZAAR_PASSPORT, BAZAAR_FESTIVALS,
+  BAZAAR_AVATAR_ITEMS, BAZAAR_ACHIEVEMENTS,
+  BAZAAR_CUSTOMER_EMOJIS, BAZAAR_REACTIONS_CORRECT, BAZAAR_REACTIONS_WRONG,
+  fetchBazaarQuestions,
+  getBazaarReputation, updateBazaarReputation,
+  getTodayDailyChallenge, isDailyChallengeCompletedToday, markDailyChallengeComplete,
+  getDailyStreak, getBazaarTotalCoins, addBazaarCoins,
+  getWeeklyLeague, updateWeeklyLeague,
+  getActiveFestival, getBazaarOutfit, setBazaarOutfit,
+  getBazaarPurchased, addBazaarPurchase, isItemOwned,
+  getBazaarStats, updateBazaarStats, setStatMax,
+  getEarnedAchievements, checkAndAwardAchievements,
+  generateChallengeId, saveChallengeResult, getChallengeResult,
+} from '../../constants/bazaarData.js';
 import { BADGES } from '../../constants/gameData.js';
 import { shuffle } from '../../lib/db.js';
 import { Starfield } from '../layout/layout.jsx';
@@ -1034,4 +1048,3 @@ export function BazaarScreen({ child, onBack }) {
   if (step==="result")    return <BazaarResult result={result} market={market} onReplay={()=>isSpeed?setStep("speed"):isChallenge?setStep("challenge"):setStep("game")} onHub={()=>setStep("hub")} onHome={onBack}/>;
   return null;
 }
-

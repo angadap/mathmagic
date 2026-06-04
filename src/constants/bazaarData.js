@@ -235,7 +235,7 @@ export function getChallengeResult(challengeId) {
 }
 
 // ─── Supabase fetch ───────────────────────────────────────────────────
-async function fetchBazaarQuestions(marketId, role, isDaily) {
+export async function fetchBazaarQuestions(marketId, role, isDaily) {
   try {
     const res = await fetch("/api/db",{method:"POST",headers:{"Content-Type":"application/json","Authorization":`Bearer ${db._token||""}`},body:JSON.stringify({action:"get_bazaar_questions",market_id:marketId,role,is_daily:isDaily})});
     const json = await res.json();
