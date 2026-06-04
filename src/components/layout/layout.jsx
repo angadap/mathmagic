@@ -1,0 +1,193 @@
+// src/components/layout/layout.jsx — GlobalStyles, Starfield, MuteBtn, Mascot, Confetti, Tutorial, Skeleton, OfflineBanner
+import React, { useState, useEffect } from 'react';
+import { C, textColor, isDark } from '../../constants/themes.js';
+import { SFX } from '../../lib/sfx.js';
+
+export function GlobalStyles() {
+  useEffect(() => {
+    // fonts
+    if (!document.getElementById("mm-fonts")) {
+      const l = document.createElement("link");
+      l.id = "mm-fonts";
+      l.href = "https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@500;700;800;900&display=swap";
+      l.rel = "stylesheet";
+      document.head.appendChild(l);
+    }
+    // keyframes
+    if (!document.getElementById("mm-styles")) {
+      const s = document.createElement("style");
+      s.id = "mm-styles";
+      s.textContent = `
+        @keyframes twinkle{0%,100%{opacity:.1}50%{opacity:.9}}
+        @keyframes floatUp{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+        @keyframes pulseG{0%,100%{box-shadow:0 0 10px #a855f755}50%{box-shadow:0 0 28px #a855f7cc}}
+        @keyframes slideUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes popIn{0%{transform:scale(0.7);opacity:0}70%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+        @keyframes shakeX{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+        @keyframes correctFlash{0%{background:transparent}30%{background:#22c55e33}100%{background:transparent}}
+        @keyframes wrongShake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-10px)}40%,80%{transform:translateX(10px)}}
+        @keyframes coinBounce{0%{transform:translateY(0)scale(1)}40%{transform:translateY(-20px)scale(1.3)}100%{transform:translateY(0)scale(1)opacity(0)}}
+        @keyframes starPop{0%{transform:scale(0)rotate(-30deg)}60%{transform:scale(1.3)rotate(5deg)}100%{transform:scale(1)rotate(0deg)}}
+        @keyframes xpRise{0%{transform:translateY(0);opacity:1}100%{transform:translateY(-40px);opacity:0}}
+        @keyframes ripple{0%{transform:scale(0.8);opacity:1}100%{transform:scale(2);opacity:0}}
+        @keyframes glow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.4)}}
+        @keyframes loadBar{from{width:0}to{width:100%}}
+        @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+        @keyframes correctBounce{0%{transform:scale(1)}20%{transform:scale(1.18) rotate(-3deg)}40%{transform:scale(1.12) rotate(2deg)}60%{transform:scale(1.06)}100%{transform:scale(1)}}
+        @keyframes wrongWiggle{0%,100%{transform:rotate(0deg)}20%{transform:rotate(-8deg)}40%{transform:rotate(8deg)}60%{transform:rotate(-5deg)}80%{transform:rotate(5deg)}}
+        @keyframes starBurst{0%{opacity:1;transform:scale(0) translate(0,0)}100%{opacity:0;transform:scale(1.5) translate(var(--dx),var(--dy))}}
+        @keyframes confettiFall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+        @keyframes superCorrect{0%{transform:scale(1);filter:brightness(1)}30%{transform:scale(1.25);filter:brightness(1.6)}60%{transform:scale(1.1);filter:brightness(1.3)}100%{transform:scale(1);filter:brightness(1)}}
+        @keyframes floatEmoji{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-80px) scale(1.5);opacity:0}}
+        @keyframes heartbeat{0%,100%{transform:scale(1)}14%{transform:scale(1.3)}28%{transform:scale(1)}42%{transform:scale(1.2)}70%{transform:scale(1)}}
+        @keyframes rainbowBg{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+        .mm-btn-press:active{transform:scale(0.95)!important;transition:transform 0.08s!important}
+        .mm-haptic:active{transform:scale(0.97)}
+        @keyframes spinR{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+        @keyframes bFloat{0%,100%{transform:translateY(0)scale(1)}50%{transform:translateY(-10px)scale(1.05)}}
+        @keyframes bossW{0%,100%{transform:rotate(0)}25%{transform:rotate(-5deg)}75%{transform:rotate(5deg)}}
+        *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+        body{background:${C.bg};color:${textColor()}}
+        body,*{font-family:'Baloo 2','Nunito',sans-serif;}
+        input,textarea,select{font-family:'Baloo 2','Nunito',sans-serif;outline:none;color:${textColor()};background:transparent}
+        input::placeholder,textarea::placeholder{color:${C.dim}}
+        select option{background:${C.card};color:${textColor()}}
+        ::-webkit-scrollbar{width:3px}
+        ::-webkit-scrollbar-thumb{background:${C.cyan};border-radius:4px}
+      `;
+      document.head.appendChild(s);
+    }
+  }, []);
+  return null;
+}
+
+// ─────────────────────────────────────────────────────────────────────
+export function MuteBtn() {
+  const [muted, setMuted] = React.useState(SFX.muted);
+  return (
+    <button
+      onClick={() => { setMuted(SFX.toggleMute()); }}
+      title={muted ? "Unmute" : "Mute"}
+      style={{ background:"none", border:"none", cursor:"pointer", fontSize:18,
+               color: muted ? C.dim : C.cyan, padding:"4px 6px", lineHeight:1,
+               transition:"color 0.2s" }}>
+      {muted ? "🔇" : "🔊"}
+    </button>
+  );
+}
+
+// ── Mascot ────────────────────────────────────────────────────────
+export function Mascot({ message, mood="happy" }) {
+  const faces = { happy:"🚀", thinking:"🤔", celebrate:"🎉", sleep:"😴", cheer:"⭐" };
+  return (
+    <div style={{display:"flex",alignItems:"center",gap:12,background:C.card,border:`1.5px solid ${C.cyan}33`,borderRadius:16,padding:"10px 14px",marginBottom:12}}>
+      <div style={{fontSize:32,animation:"floatUp 2s ease-in-out infinite",flexShrink:0}}>{faces[mood]||faces.happy}</div>
+      <div style={{background:C.card2,borderRadius:12,padding:"8px 12px",flex:1,position:"relative"}}>
+        <div style={{fontSize:13,color:textColor(),lineHeight:1.5}}>{message}</div>
+        <div style={{position:"absolute",left:-8,top:"50%",transform:"translateY(-50%)",width:0,height:0,borderTop:"6px solid transparent",borderBottom:"6px solid transparent",borderRight:`8px solid ${C.card2}`}}/>
+      </div>
+    </div>
+  );
+}
+
+
+// ── Certificate ───────────────────────────────────────────────────
+export function Confetti({ active }) {
+  if (!active) return null;
+  const pieces = Array.from({length:40},(_,i)=>({
+    x: Math.random()*100, delay: Math.random()*1.5,
+    color: [C.yellow,C.cyan,C.green,C.pink,C.orange,C.purple][i%6],
+    size: Math.random()*8+4, rot: Math.random()*360,
+  }));
+  return (
+    <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:998,overflow:"hidden"}}>
+      {pieces.map((p,i)=>(
+        <div key={i} style={{position:"absolute",left:`${p.x}%`,top:"-20px",width:p.size,height:p.size,background:p.color,borderRadius:Math.random()>0.5?"50%":"2px",animation:`coinBounce 1.5s ${p.delay}s ease-in forwards`,transform:`rotate(${p.rot}deg)`}}/>
+      ))}
+    </div>
+  );
+}
+// ── Tutorial (first-time) ────────────────────────────────────────
+export function Tutorial({ onDone }) {
+  const [step, setStep] = useState(0);
+  const steps = [
+    { icon:"🚀", title:"Welcome to MathMagic!", body:"Your personal space academy for maths. Complete lessons, earn XP and unlock new worlds!", color:C.yellow },
+    { icon:"📚", title:"How Lessons Work",       body:"Each lesson has 20 sets of questions. Complete Set 1 to unlock Set 2, and so on. Answer correctly to earn stars and XP!", color:C.cyan },
+    { icon:"🎮", title:"Play Games",             body:"Visit the Games Hub to play 8 fun maths games. The more you play, the more coins you earn!", color:C.purple },
+    { icon:"🏆", title:"Daily Challenges",       body:"A new Word Problem and Brain Puzzle every day! Solve both to earn bonus XP and keep your streak going!", color:C.orange },
+    { icon:"🎯", title:"You're Ready!",          body:"Tap Start to begin your maths adventure. Remember — practice every day to climb the leaderboard!", color:C.green },
+  ];
+  const s = steps[step];
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",padding:20,fontFamily:"'Nunito',sans-serif"}}>
+      <div style={{background:C.card,borderRadius:24,padding:"32px 24px",maxWidth:380,width:"100%",textAlign:"center",border:`2px solid ${s.color}44`,animation:"popIn 0.3s ease"}}>
+        <div style={{fontSize:64,marginBottom:16,animation:"floatUp 2s ease-in-out infinite"}}>{s.icon}</div>
+        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:16,color:s.color,marginBottom:12}}>{s.title}</div>
+        <div style={{color:C.dim,fontSize:14,lineHeight:1.7,marginBottom:24}}>{s.body}</div>
+        <div style={{display:"flex",gap:6,justifyContent:"center",marginBottom:20}}>
+          {steps.map((_,i)=><div key={i} style={{width:i===step?24:8,height:8,borderRadius:4,background:i===step?s.color:C.dim+"44",transition:"all 0.3s"}}/>)}
+        </div>
+        <div style={{display:"flex",gap:10}}>
+          {step>0&&<button onClick={()=>setStep(s=>s-1)} style={{flex:1,background:"none",border:`1px solid ${C.dim}44`,borderRadius:12,padding:"12px",color:C.dim,cursor:"pointer",fontFamily:"'Nunito',sans-serif",fontWeight:700}}>← BACK</button>}
+          <button onClick={()=>step<steps.length-1?setStep(s=>s+1):onDone()} style={{flex:1,background:`linear-gradient(135deg,${s.color},${s.color}aa)`,border:"none",borderRadius:12,padding:"12px",color:textColor(),cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:12,fontWeight:700}}>
+            {step<steps.length-1?"NEXT →":"🚀 START!"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+// ── Skeleton Loader ──────────────────────────────────────────────
+export function SkeletonLoader({ rows=4 }) {
+  return (
+    <div style={{padding:"16px 0"}}>
+      <div style={{background:C.card2,borderRadius:12,height:60,marginBottom:16,animation:"pulseG 1.5s ease-in-out infinite"}}/>
+      {Array.from({length:rows},(_,i)=>(
+        <div key={i} style={{background:C.card2,borderRadius:10,height:44,marginBottom:8,opacity:1-i*0.15,animation:"pulseG 1.5s ease-in-out infinite"}}/>
+      ))}
+    </div>
+  );
+}
+// ── Offline Banner ───────────────────────────────────────────────
+export function OfflineBanner() {
+  const [offline, setOffline] = useState(!navigator.onLine);
+  useEffect(() => {
+    const on  = () => setOffline(false);
+    const off = () => setOffline(true);
+    document.addEventListener("mm_online",  on);
+    document.addEventListener("mm_offline", off);
+    return () => { document.removeEventListener("mm_online",on); document.removeEventListener("mm_offline",off); };
+  }, []);
+  if (!offline) return null;
+  return (
+    <div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#f97316",color:textColor(),textAlign:"center",padding:"6px 12px",fontSize:12,fontFamily:"'Orbitron',sans-serif",letterSpacing:1}}>
+      📡 NO CONNECTION — App works offline, progress saves when back online
+    </div>
+  );
+}
+
+// DB logging — console only in production
+function dbLog(level, msg, detail="") {
+export function Starfield({ n = 40 }) {
+  const pts = useRef(
+    Array.from({ length: n }, (_, i) => ({
+      i, x: Math.random() * 100, y: Math.random() * 100,
+      w: 1 + Math.random() * 2, d: 2 + Math.random() * 3, dl: Math.random() * 4,
+    }))
+  ).current;
+  return (
+    <div style={{ position:"fixed", inset:0, pointerEvents:"none", zIndex:0, overflow:"hidden" }}>
+      {pts.map(p => (
+        <div key={p.i} style={{
+          position:"absolute", left:`${p.x}%`, top:`${p.y}%`,
+          width:p.w, height:p.w, borderRadius:"50%",
+          background: isDark() ? "rgba(255,255,255,0.8)" : `rgba(${100+Math.floor(p.x*1.5)},${80+Math.floor(p.y)},220,0.25)`,
+          animation:`twinkle ${p.d}s ${p.dl}s ease-in-out infinite`,
+        }}/>
+      ))}
+    </div>
+  );
+}
+
+// Primary button
+function Btn({ children, onClick, color = C.cyan, disabled, loading, style: sx = {} }) {
