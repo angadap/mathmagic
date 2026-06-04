@@ -155,7 +155,7 @@ export function Settings({ child, user, onBack, onThemeChange, onLogout }) {
         ].map((item,i)=>(
           <button key={i} onClick={item.act} style={{background:C.card,border:`1.5px solid ${(item.color||C.purple)+"33"}`,borderRadius:14,padding:"14px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:14,textAlign:"left"}}>
             <span style={{fontSize:20,width:28,textAlign:"center"}}>{item.icon}</span>
-            <div style={{flex:1}}><div style={{fontWeight:800,fontSize:14,color:item.color||"white"}}>{item.label}</div><div style={{fontSize:11,color:C.dim,marginTop:2}}>{item.sub}</div></div>
+            <div style={{flex:1}}><div style={{fontWeight:800,fontSize:14,color:item.color||textColor()}}>{item.label}</div><div style={{fontSize:11,color:C.dim,marginTop:2}}>{item.sub}</div></div>
             <span style={{color:C.dim,fontSize:18}}>›</span>
           </button>
         ))}
