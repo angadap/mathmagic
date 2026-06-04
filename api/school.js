@@ -418,6 +418,51 @@ export default async function handler(req, res) {
         return res.status(400).json({error:"Unknown admin action"});
     }
 
+      // ── Non-school (home) students via children table ─────────────
+      if (action==="admin_list_home_students") {
+        const {search, class_num} = req.body;
+        let params = "?order=created_at.desc&limit=200";
+        if (class_num!==undefined) params += `&class_num=eq.${cleanInt(class_num,0,12)}`;
+        if (search) params += `&name=ilike.*${encodeURIComponent(clean(search,50))}*`;
+        const r = await sb("children","GET",null,params);
+        return res.status(200).json({data:r.data||[]});
+      }
+
+      if (action==="admin_create_home_student") {
+        const {name, class_num, pin, avatar} = req.body;
+        if (!name||!pin) return res.status(400).json({error:"Name and PIN required"});
+        const pin_hash = await hashPin(String(pin).slice(0,6));
+        const r = await sb("children","POST",{
+          name:clean(name,50), class_num:cleanInt(class_num,1,12),
+          pin_hash, avatar:clean(avatar||"🚀",10),
+          xp:0, level:1, coins:50, streak_days:0, is_premium:false,
+          created_at:new Date().toISOString()
+        });
+        if (!r.ok) return res.status(400).json({error:"Failed to create"});
+        return res.status(200).json({data:Array.isArray(r.data)?r.data[0]:r.data});
+      }
+
+      if (action==="admin_modify_home_student") {
+        const {child_id, name, class_num, avatar, pin} = req.body;
+        if (!child_id) return res.status(400).json({error:"Missing child_id"});
+        const update = {};
+        if (name)       update.name      = clean(name,50);
+        if (class_num!==undefined) update.class_num = cleanInt(class_num,0,12);
+        if (avatar)     update.avatar    = clean(avatar,10);
+        if (pin)        update.pin_hash  = await hashPin(String(pin).slice(0,6));
+        const r = await sb("children","PATCH",update,`?id=eq.${encodeURIComponent(child_id)}`);
+        if (!r.ok) return res.status(400).json({error:"Update failed"});
+        return res.status(200).json({data:r.data});
+      }
+
+      if (action==="admin_delete_home_student") {
+        const {child_id} = req.body;
+        if (!child_id) return res.status(400).json({error:"Missing child_id"});
+        await sb("progress","DELETE",null,`?child_id=eq.${encodeURIComponent(child_id)}`);
+        const r = await sb("children","DELETE",null,`?id=eq.${encodeURIComponent(child_id)}`);
+        return res.status(200).json({ok:true});
+      }
+
     // ══════════════════════════════════════════════════════
     // TEACHER LOGIN
     // ══════════════════════════════════════════════════════
