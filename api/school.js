@@ -4,7 +4,8 @@
 
 const SB_URL     = process.env.SUPABASE_URL;
 const SB_SERVICE = process.env.SUPABASE_SERVICE_KEY;
-const ADMIN_KEY  = process.env.ADMIN_SECRET_KEY; // set in Vercel — your private key
+// Admin auth: sha256("angadadmin2026") — no env var needed
+const ADMIN_HASH = "ab2da7525c00b97df6fc54fa82adc3c7dbe8345e6e4f621ce2f699994efd61be";
 
 const ALLOWED    = ["https://mathmagic-virid.vercel.app","http://localhost:5173","http://localhost:3000"];
 const UUID_RE    = /^[0-9a-f-]{36}$/i;
@@ -65,10 +66,12 @@ export default async function handler(req, res) {
 
   try {
     // ══════════════════════════════════════════════════════
-    // ADMIN ACTIONS — protected by ADMIN_SECRET_KEY
+    // ADMIN ACTIONS — protected by hardcoded passphrase hash
     // ══════════════════════════════════════════════════════
     if (action.startsWith("admin_")) {
-      if (!ADMIN_KEY || authHeader !== `Bearer ${ADMIN_KEY}`)
+      const { createHash: _ch } = await import("crypto");
+      const _incoming = authHeader.replace("Bearer ","").trim();
+      if (_ch("sha256").update(_incoming).digest("hex") !== ADMIN_HASH)
         return res.status(403).json({error:"Forbidden"});
 
       // Create school

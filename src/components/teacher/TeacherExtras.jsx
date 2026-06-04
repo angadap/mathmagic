@@ -341,8 +341,8 @@ export function ExcelImport({ teacher, onDone }) {
 
 
 export function AdminPanel({ onBack }) {
-  const [key,        setKey]       = useState(localStorage.getItem("mm_admin_key")||"");
-  const [authed,     setAuthed]    = useState(!!localStorage.getItem("mm_admin_key"));
+  // Passphrase is already verified on Entry screen — no second login needed
+  const ADMIN_KEY = "angadadmin2026";
   const [tab,        setTab]       = useState("schools");
   const [view,       setView]      = useState("list");
   const [toast,      setToast]     = useState("");
@@ -385,7 +385,7 @@ export function AdminPanel({ onBack }) {
   const CLASS_NUMS = [10,11,12,1,2,3,4,5];
   const CLASS_LABELS = {10:"Nursery",11:"Jr KG",12:"Sr KG",1:"Class 1",2:"Class 2",3:"Class 3",4:"Class 4",5:"Class 5"};
 
-  const api = (action, body={}) => schoolApi(action, body, key);
+  const api = (action, body={}) => schoolApi(action, body, ADMIN_KEY);
   const showToast = (m) => { setToast(m); setTimeout(()=>setToast(""),3500); };
   const iS = (c) => ({width:"100%",background:isDark()?"rgba(255,255,255,0.05)":"rgba(0,0,0,0.03)",border:`1.5px solid ${c}44`,borderRadius:10,padding:"10px 12px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:14,display:"block",marginBottom:10,outline:"none"});
   const MsgBar = ({m}) => m ? <div style={{margin:"0 0 12px",padding:"10px 14px",borderRadius:12,background:m.startsWith("✅")?`${C.green}18`:`${C.red}18`,color:m.startsWith("✅")?C.green:C.red,fontSize:13,fontWeight:700}}>{m}</div> : null;
@@ -398,26 +398,9 @@ export function AdminPanel({ onBack }) {
   const loadQSets     = async (lid) => { setLoading(true); setQLesson(lid); setQSets([]); setQSet(null); setQuestions([]); const d=await api("admin_list_sets_for_lesson",{lesson_id_prefix:lid}); setQSets(d.data||[]); setLoading(false); };
   const loadQs        = async (lid,si) => { setLoading(true); setQSet(si); setQuestions([]); const d=await api("admin_list_questions",{lesson_id_prefix:lid,set_index:si}); setQuestions(d.data||[]); setLoading(false); };
 
-  const handleAuth = () => { if(!key.trim())return; localStorage.setItem("mm_admin_key",key); setAuthed(true); };
-  useEffect(()=>{ if(authed){ loadSchools(); loadTeachers(); loadStudents(); loadHomeStudents(); } },[authed]);
+  useEffect(()=>{ loadSchools(); loadTeachers(); loadStudents(); loadHomeStudents(); },[]);
 
   const switchTab = (t) => { setTab(t); setView("list"); setSearch(""); setMsg(""); setForm({}); setSelSchool(null); setSelTeacher(null); };
-
-  // ── Auth screen ────────────────────────────────────────────────────
-  if (!authed) return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",display:"flex",alignItems:"center",justifyContent:"center",padding:24,position:"relative",overflow:"hidden"}}>
-      <Starfield n={20}/>
-      <div style={{position:"relative",zIndex:2,width:"100%",maxWidth:380}}>
-        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:28}}><BackBtn onClick={onBack} color={C.red}/><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:11,color:C.red,letterSpacing:3}}>ADMIN ACCESS</div></div>
-        <div style={{background:C.card,border:`2px solid ${C.red}44`,borderRadius:24,padding:"32px 28px",boxShadow:`0 0 60px ${C.red}18`}}>
-          <div style={{textAlign:"center",marginBottom:24}}><div style={{fontSize:56}}>🔐</div><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:16,color:C.red,marginTop:8}}>ADMIN PANEL</div><div style={{fontSize:12,color:C.dim,marginTop:4}}>MathMagic Space Academy</div></div>
-          <div style={{fontSize:12,color:C.dim,marginBottom:6,fontWeight:700}}>Secret Key</div>
-          <input value={key} onChange={e=>setKey(e.target.value)} type="password" placeholder="Enter admin key" autoFocus onKeyDown={e=>e.key==="Enter"&&handleAuth()} style={{width:"100%",background:isDark()?"rgba(255,255,255,0.06)":"rgba(0,0,0,0.04)",border:`2px solid ${C.red}55`,borderRadius:12,padding:"13px 16px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:16,display:"block",marginBottom:14,outline:"none",textAlign:"center",letterSpacing:4}}/>
-          <Btn color={C.red} onClick={handleAuth}>ENTER</Btn>
-        </div>
-      </div>
-    </div>
-  );
 
   // ── TABS config ────────────────────────────────────────────────────
   const TABS = [
@@ -926,7 +909,7 @@ export function AdminPanel({ onBack }) {
             <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:12,color:C.red,letterSpacing:1}}>🔐 ADMIN</div>
           </div>
           <div style={{fontSize:12,fontWeight:800,color:textColor()}}>{activeTab?.icon} {activeTab?.label}</div>
-          <button onClick={()=>{localStorage.removeItem("mm_admin_key");setKey("");setAuthed(false);}} style={{background:`${C.red}22`,border:`1px solid ${C.red}44`,borderRadius:10,padding:"6px 12px",color:C.red,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:9,fontWeight:900}}>LOGOUT</button>
+          <button onClick={onBack} style={{background:`${C.red}22`,border:`1px solid ${C.red}44`,borderRadius:10,padding:"6px 12px",color:C.red,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:9,fontWeight:900}}>EXIT</button>
         </div>
         {/* Tab strip */}
         <div style={{display:"flex",overflowX:"auto",padding:"0 10px 10px",gap:6,scrollbarWidth:"none"}}>
