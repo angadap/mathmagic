@@ -498,6 +498,49 @@ export default async function handler(req, res) {
         return res.status(200).json({ok:true});
       }
 
+
+      // ── Analytics endpoints ────────────────────────────────────────
+      if (action==="admin_get_analytics") {
+        const {days=30} = req.body;
+        const since = new Date(Date.now() - days*86400000).toISOString();
+        const [evts, ratings, feedback] = await Promise.all([
+          sbAll("analytics", `?created_at=gte.${since}&order=created_at.desc&select=event_type,created_at,child_id`),
+          sbAll("app_ratings", `?created_at=gte.${since}&order=created_at.desc&select=rating,review,created_at`),
+          sbAll("feedback", `?order=created_at.desc&select=id,child_name,category,description,screen,status,created_at`),
+        ]);
+        // Aggregate event counts
+        const eventCounts = {};
+        for (const e of evts.data||[]) eventCounts[e.event_type] = (eventCounts[e.event_type]||0)+1;
+        // Daily active users (unique child_ids per day)
+        const dauMap = {};
+        for (const e of evts.data||[]) {
+          const day = e.created_at?.slice(0,10);
+          if (!day||!e.child_id) continue;
+          if (!dauMap[day]) dauMap[day] = new Set();
+          dauMap[day].add(e.child_id);
+        }
+        const dau = Object.entries(dauMap).map(([date,s])=>({date,count:s.size})).sort((a,b)=>a.date.localeCompare(b.date));
+        // Ratings summary
+        const rs = ratings.data||[];
+        const avgRating = rs.length ? (rs.reduce((s,r)=>s+r.rating,0)/rs.length).toFixed(1) : null;
+        const ratingDist = {1:0,2:0,3:0,4:0,5:0};
+        for (const r of rs) ratingDist[r.rating]=(ratingDist[r.rating]||0)+1;
+        return res.status(200).json({
+          eventCounts, dau,
+          totalEvents: (evts.data||[]).length,
+          avgRating, ratingDist, totalRatings: rs.length,
+          recentRatings: rs.slice(0,10),
+          feedback: feedback.data||[],
+        });
+      }
+
+      if (action==="admin_update_feedback_status") {
+        const {id, status} = req.body;
+        if (!id||!status) return res.status(400).json({error:"Missing fields"});
+        const r = await sb("feedback","PATCH",{status:clean(status,20)},`?id=eq.${encodeURIComponent(id)}`);
+        return res.status(200).json({ok:r.ok});
+      }
+
       return res.status(400).json({error:"Unknown admin action"});
 
   } catch(err) {

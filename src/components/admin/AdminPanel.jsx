@@ -30,6 +30,9 @@ export function AdminPanel({ onBack }) {
   const [msg,        setMsg]       = useState("");
   const [search,     setSearch]    = useState("");
   const [bulkText,   setBulkText]  = useState("");
+  const [analytics,  setAnalytics] = useState(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [feedbackFilter, setFeedbackFilter] = useState("all");
   const [bulkResult, setBulkResult]= useState([]);
   const [classes,    setClasses]   = useState([]);
   const [selClass,   setSelClass]  = useState(null);
@@ -76,6 +79,12 @@ export function AdminPanel({ onBack }) {
 
   useEffect(()=>{ loadSchools(); loadTeachers(); loadStudents(); loadHomeStudents(); },[]);
   useEffect(()=>{
+    if (tab==="analytics" && !analytics) {
+      setAnalyticsLoading(true);
+      adminApi("admin_get_analytics",{days:30}).then(d=>{ setAnalytics(d); setAnalyticsLoading(false); });
+    }
+  },[tab]);
+  useEffect(()=>{
     if (tab==="classes") {
       setLoading(true);
       api("admin_list_all_classes",{}).then(d=>{
@@ -95,6 +104,7 @@ export function AdminPanel({ onBack }) {
     {id:"home",     icon:"🏠", label:"Home Users",color:C.green,   count:homeStudents.length},
     {id:"classes",  icon:"🏛️", label:"Classes",   color:C.pink||"#e879f9", count:null},
     {id:"questions",icon:"📚", label:"Questions", color:C.orange,  count:null},
+    {id:"analytics", icon:"📊", label:"Analytics",  color:"#38bdf8",  count:null},
   ];
 
   // ── Shell layout ──────────────────────────────────────────────────
@@ -642,6 +652,98 @@ export function AdminPanel({ onBack }) {
               </button>
             );})}
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── ANALYTICS tab ────────────────────────────────────────────────
+  if (tab==="analytics") {
+    const BLUE = "#38bdf8";
+    const a = analytics;
+    const feedbacks = (a?.feedback||[]).filter(f=>feedbackFilter==="all"||f.status===feedbackFilter);
+    const statCard = (icon,label,val,color) => (
+      <div style={{background:C.card,border:`1.5px solid ${color}33`,borderRadius:14,padding:"14px 16px",textAlign:"center"}}>
+        <div style={{fontSize:28}}>{icon}</div>
+        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:20,color,fontWeight:900,margin:"4px 0"}}>{val??"-"}</div>
+        <div style={{fontSize:10,color:C.dim,fontWeight:700}}>{label}</div>
+      </div>
+    );
+    return (
+      <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),display:"flex",flexDirection:"column"}}>
+        {renderTopBar()}
+        <div style={{flex:1,overflowY:"auto",padding:"14px"}}>
+          {analyticsLoading&&<div style={{textAlign:"center",color:C.dim,padding:40}}>Loading analytics...</div>}
+          {!analyticsLoading&&a&&<>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:18}}>
+              {statCard("⚡","Total Events",a.totalEvents?.toLocaleString(),BLUE)}
+              {statCard("⭐","Avg Rating",a.avgRating,C.yellow)}
+              {statCard("📝","Total Ratings",a.totalRatings,C.orange)}
+              {statCard("🆘","SOS Tickets",a.feedback?.length,C.red)}
+            </div>
+            {a.dau?.length>0&&<div style={{background:C.card,border:`1px solid ${BLUE}22`,borderRadius:14,padding:"14px 16px",marginBottom:16}}>
+              <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:11,color:BLUE,marginBottom:12}}>DAILY ACTIVE USERS — LAST 30 DAYS</div>
+              <div style={{display:"flex",alignItems:"flex-end",gap:3,height:60}}>
+                {a.dau.slice(-30).map((d,i)=>{const max=Math.max(...a.dau.map(x=>x.count),1);return <div key={i} title={d.date+": "+d.count} style={{flex:1,background:`${BLUE}88`,borderRadius:"3px 3px 0 0",height:Math.max(4,(d.count/max)*60)+"px",minWidth:4}}/>;})}
+              </div>
+              <div style={{display:"flex",justifyContent:"space-between",marginTop:4,fontSize:9,color:C.dim}}><span>{a.dau[0]?.date}</span><span>{a.dau[a.dau.length-1]?.date}</span></div>
+            </div>}
+            {a.eventCounts&&Object.keys(a.eventCounts).length>0&&<div style={{background:C.card,border:`1px solid ${C.purple}22`,borderRadius:14,padding:"14px 16px",marginBottom:16}}>
+              <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:11,color:C.purple,marginBottom:10}}>EVENT BREAKDOWN</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+                {Object.entries(a.eventCounts).sort((x,y)=>y[1]-x[1]).map(([evt,cnt])=>(
+                  <div key={evt} style={{display:"flex",justifyContent:"space-between",padding:"6px 10px",background:`${C.purple}11`,borderRadius:8}}>
+                    <span style={{fontSize:12,color:textColor()}}>{evt.replace(/_/g," ")}</span>
+                    <span style={{fontFamily:"monospace",fontSize:12,color:C.purple,fontWeight:900}}>{cnt}</span>
+                  </div>
+                ))}
+              </div>
+            </div>}
+            {a.ratingDist&&<div style={{background:C.card,border:`1px solid ${C.yellow}22`,borderRadius:14,padding:"14px 16px",marginBottom:16}}>
+              <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:11,color:C.yellow,marginBottom:10}}>RATINGS DISTRIBUTION</div>
+              {[5,4,3,2,1].map(n=>{const cnt=a.ratingDist[n]||0;const pct=a.totalRatings?Math.round(cnt/a.totalRatings*100):0;return <div key={n} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{fontSize:11,width:20,color:C.yellow}}>{"★".repeat(n)}</span><div style={{flex:1,height:10,background:`${C.yellow}22`,borderRadius:5,overflow:"hidden"}}><div style={{width:pct+"%",height:"100%",background:C.yellow,borderRadius:5}}/></div><span style={{fontSize:11,color:C.dim,width:30,textAlign:"right"}}>{cnt}</span></div>;})}
+            </div>}
+            <div style={{background:C.card,border:`1px solid ${C.red}22`,borderRadius:14,padding:"14px 16px",marginBottom:16}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+                <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:11,color:C.red}}>SOS / FEEDBACK ({a.feedback?.length||0})</div>
+                <div style={{display:"flex",gap:5}}>
+                  {["all","open","resolved","closed"].map(f=>(
+                    <button key={f} onClick={()=>setFeedbackFilter(f)} style={{background:feedbackFilter===f?`${C.red}33`:"transparent",border:`1px solid ${feedbackFilter===f?C.red:C.dim+"33"}`,borderRadius:7,padding:"3px 7px",color:feedbackFilter===f?C.red:C.dim,cursor:"pointer",fontSize:9,fontWeight:700,textTransform:"uppercase"}}>{f}</button>
+                  ))}
+                </div>
+              </div>
+              {feedbacks.length===0&&<div style={{textAlign:"center",color:C.dim,padding:16,fontSize:13}}>No feedback 🎉</div>}
+              {feedbacks.map(f=>(
+                <div key={f.id} style={{border:`1px solid ${f.status==="open"?C.red+"44":C.green+"22"}`,borderRadius:10,padding:"10px 12px",marginBottom:8,background:isDark()?"rgba(255,255,255,0.02)":"rgba(0,0,0,0.01)"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
+                    <div style={{flex:1}}>
+                      <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap",marginBottom:4}}>
+                        <span style={{fontWeight:800,fontSize:13,color:textColor()}}>{f.child_name||"Guest"}</span>
+                        <span style={{background:`${C.orange}22`,borderRadius:5,padding:"1px 6px",fontSize:10,color:C.orange}}>{f.category}</span>
+                        <span style={{background:f.status==="open"?`${C.red}22`:`${C.green}22`,borderRadius:5,padding:"1px 6px",fontSize:10,color:f.status==="open"?C.red:C.green}}>{f.status}</span>
+                      </div>
+                      <div style={{fontSize:12,color:textColor(),marginBottom:3}}>{f.description}</div>
+                      <div style={{fontSize:10,color:C.dim}}>Screen: {f.screen} · {f.created_at?.slice(0,10)}</div>
+                    </div>
+                    <div style={{display:"flex",flexDirection:"column",gap:4,flexShrink:0}}>
+                      {f.status==="open"&&<button onClick={async()=>{await adminApi("admin_update_feedback_status",{id:f.id,status:"resolved"});setAnalytics(null);adminApi("admin_get_analytics",{days:30}).then(d=>setAnalytics(d));}} style={{background:`${C.green}22`,border:`1px solid ${C.green}44`,borderRadius:7,padding:"4px 8px",color:C.green,cursor:"pointer",fontSize:10,fontWeight:700}}>✅ RESOLVE</button>}
+                      {f.status!=="closed"&&<button onClick={async()=>{await adminApi("admin_update_feedback_status",{id:f.id,status:"closed"});setAnalytics(null);adminApi("admin_get_analytics",{days:30}).then(d=>setAnalytics(d));}} style={{background:`${C.dim}11`,border:`1px solid ${C.dim}33`,borderRadius:7,padding:"4px 8px",color:C.dim,cursor:"pointer",fontSize:10,fontWeight:700}}>CLOSE</button>}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {a.recentRatings?.length>0&&<div style={{background:C.card,border:`1px solid ${C.yellow}22`,borderRadius:14,padding:"14px 16px",marginBottom:16}}>
+              <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:11,color:C.yellow,marginBottom:10}}>RECENT REVIEWS</div>
+              {a.recentRatings.map((r,i)=>(
+                <div key={i} style={{borderBottom:`1px solid ${C.dim}18`,paddingBottom:8,marginBottom:8}}>
+                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:2}}><span style={{color:C.yellow}}>{"★".repeat(r.rating)}</span><span style={{fontSize:10,color:C.dim}}>{r.created_at?.slice(0,10)}</span></div>
+                  {r.review&&<div style={{fontSize:12,color:textColor()}}>{r.review}</div>}
+                </div>
+              ))}
+            </div>}
+            <button onClick={()=>{setAnalytics(null);setAnalyticsLoading(true);adminApi("admin_get_analytics",{days:30}).then(d=>{setAnalytics(d);setAnalyticsLoading(false);});}} style={{background:`${BLUE}22`,border:`1px solid ${BLUE}44`,borderRadius:10,padding:"10px 20px",color:BLUE,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:11,fontWeight:900,width:"100%",marginBottom:20}}>REFRESH</button>
+          </>}
         </div>
       </div>
     );
