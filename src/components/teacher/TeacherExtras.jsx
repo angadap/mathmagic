@@ -359,6 +359,9 @@ export function AdminPanel({ onBack }) {
   const [search,     setSearch]    = useState("");
   const [bulkText,   setBulkText]  = useState("");
   const [bulkResult, setBulkResult]= useState([]);
+  const [classes,    setClasses]   = useState([]);
+  const [selClass,   setSelClass]  = useState(null);
+  const [classStudents,setClassStudents] = useState([]);
   // Questions
   const [qClassNum,  setQClassNum] = useState(1);
   const [qLessons,   setQLessons]  = useState([]);
@@ -400,6 +403,15 @@ export function AdminPanel({ onBack }) {
   const loadQs        = async (lid,si) => { setLoading(true); setQSet(si); setQuestions([]); const d=await api("admin_list_questions",{lesson_id_prefix:lid,set_index:si}); setQuestions(d.data||[]); setLoading(false); };
 
   useEffect(()=>{ loadSchools(); loadTeachers(); loadStudents(); loadHomeStudents(); },[]);
+  useEffect(()=>{
+    if (tab==="classes") {
+      setLoading(true);
+      api("admin_list_all_classes",{}).then(d=>{
+        const rows=(d.data||[]).map(c=>({...c,school_name:schools.find(s=>s.id===c.school_id)?.name||"—"}));
+        setClasses(rows); setLoading(false);
+      });
+    }
+  },[tab]);
 
   const switchTab = (t) => { setTab(t); setView("list"); setSearch(""); setMsg(""); setForm({}); setSelSchool(null); setSelTeacher(null); };
 
@@ -729,21 +741,6 @@ export function AdminPanel({ onBack }) {
   // ── CLASSES tab ───────────────────────────────────────────────────
   if (tab==="classes") {
     const PINK = "#e879f9";
-    const [classes,    setClasses]    = useState([]);
-    const [selClass,   setSelClass]   = useState(null); // {school_id,class_num,section}
-    const [classStudents, setClassStudents] = useState([]);
-
-    useEffect(()=>{
-      (async()=>{
-        setLoading(true);
-        const d = await api("admin_list_all_classes",{});
-        // Enrich with school name
-        const rows = (d.data||[]).map(c=>({...c, school_name: schools.find(s=>s.id===c.school_id)?.name||"—"}));
-        setClasses(rows);
-        setLoading(false);
-      })();
-    },[]);
-
     const loadClassStudents = async(c)=>{
       setLoading(true); setSelClass(c);
       const d = await api("admin_list_all_students",{school_id:c.school_id, class_num:c.class_num, section:c.section});
