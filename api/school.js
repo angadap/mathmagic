@@ -36,6 +36,29 @@ async function sb(table, method, body, params="") {
   try { return {ok:r.ok, data:JSON.parse(t)}; } catch { return {ok:r.ok, data:t}; }
 }
 
+// Fetch ALL rows from a table using pagination (1000/page)
+async function sbAll(table, params="") {
+  const PAGE = 1000;
+  let all = [], from = 0;
+  while (true) {
+    const headers = {
+      apikey:SB_SERVICE, Authorization:`Bearer ${SB_SERVICE}`,
+      "Content-Type":"application/json",
+      "Range-Unit":"items", "Range":`${from}-${from+PAGE-1}`,
+      "Prefer":"count=none",
+    };
+    const r = await fetch(`${SB_URL}/rest/v1/${table}${params}`, {method:"GET",headers});
+    const t = await r.text();
+    let rows; try { rows=JSON.parse(t); } catch { break; }
+    if (!Array.isArray(rows)||rows.length===0) break;
+    all = all.concat(rows);
+    if (rows.length < PAGE) break;
+    from += PAGE;
+    if (all.length > 50000) break;
+  }
+  return {ok:true, data:all};
+}
+
 // Simple PIN hash (server-side)
 async function hashPin(pin) {
   const { createHash } = await import("crypto");
@@ -100,7 +123,7 @@ export default async function handler(req, res) {
 
       // List all schools
       if (action==="admin_list_schools") {
-        const r = await sb("schools","GET",null,"?order=created_at.desc");
+        const r = await sbAll("schools","?order=created_at.desc");
         return res.status(200).json({data:r.data});
       }
 
@@ -124,9 +147,9 @@ export default async function handler(req, res) {
       // List ALL teachers across all schools (for dashboard tiles)
       if (action==="admin_list_all_teachers") {
         const {search, school_id} = req.body;
-        let params = "?order=created_at.desc&limit=10000";
+        let params = "?order=created_at.desc";
         if (school_id && isUUID(school_id)) params += `&school_id=eq.${school_id}`;
-        const r = await sb("teachers","GET",null,params);
+        const r = await sbAll("teachers",params);
         let data = r.data||[];
         if (search) { const s=search.toLowerCase(); data=data.filter(t=>t.name?.toLowerCase().includes(s)||t.email?.toLowerCase().includes(s)); }
         return res.status(200).json({data});
@@ -135,11 +158,11 @@ export default async function handler(req, res) {
       // List ALL students across all schools
       if (action==="admin_list_all_students") {
         const {search, school_id, class_num, section} = req.body;
-        let params = "?order=class_num,section,roll_no&limit=10000";
+        let params = "?order=class_num,section,roll_no";
         if (school_id && isUUID(school_id)) params += `&school_id=eq.${school_id}`;
         if (class_num !== undefined) params += `&class_num=eq.${cleanInt(class_num,0,12)}`;
         if (section) params += `&section=eq.${clean(section,5).toUpperCase()}`;
-        const r = await sb("students","GET",null,params);
+        const r = await sbAll("students",params);
         let data = r.data||[];
         if (search) { const s=search.toLowerCase(); data=data.filter(t=>t.name?.toLowerCase().includes(s)||String(t.roll_no).includes(s)); }
         return res.status(200).json({data});
@@ -150,7 +173,7 @@ export default async function handler(req, res) {
         const {school_id, search} = req.body;
         let params = "?select=class_num,section,school_id&order=class_num,section";
         if (school_id && isUUID(school_id)) params += `&school_id=eq.${school_id}`;
-        const r = await sb("students","GET",null,params);
+        const r = await sbAll("students",params);
         const seen = new Set(); const rows = [];
         for (const s of (r.data||[])) {
           const key = `${s.school_id}__${s.class_num}__${s.section}`;
@@ -343,7 +366,7 @@ export default async function handler(req, res) {
       if (action==="admin_list_sets_for_lesson") {
         const {lesson_id_prefix} = req.body;
         const safe = clean(lesson_id_prefix,30);
-        const r = await sb("questions","GET",null,`?lesson_id=like.${safe}_s%25&select=lesson_id,set_index&order=set_index&limit=50000`);
+        const r = await sbAll("questions", `?lesson_id=gte.${safe}_s&lesson_id=lte.${safe}_t&select=lesson_id,set_index&order=set_index`);
         if (!r.ok) return res.status(400).json({error:"Failed"});
         const seen = new Set(); const sets = [];
         for (const q of (r.data||[])) { if (!seen.has(q.set_index)) { seen.add(q.set_index); sets.push(q.set_index); } }
@@ -355,7 +378,7 @@ export default async function handler(req, res) {
         const {lesson_id_prefix, set_index} = req.body;
         const safe = clean(lesson_id_prefix,30);
         const si = cleanInt(set_index,0,99);
-        const r = await sb("questions","GET",null,`?lesson_id=like.${safe}_s%25&set_index=eq.${si}&order=question_index&limit=200`);
+        const r = await sbAll("questions", `?lesson_id=gte.${safe}_s&lesson_id=lte.${safe}_t&set_index=eq.${si}&order=question_index`);
         return res.status(200).json({data:r.data||[]});
       }
 
@@ -424,10 +447,10 @@ export default async function handler(req, res) {
       // ── Non-school (home) students via children table ─────────────
       if (action==="admin_list_home_students") {
         const {search, class_num} = req.body;
-        let params = "?order=created_at.desc&limit=10000";
+        let params = "?order=created_at.desc";
         if (class_num!==undefined) params += `&class_num=eq.${cleanInt(class_num,0,12)}`;
         if (search) params += `&name=ilike.*${encodeURIComponent(clean(search,50))}*`;
-        const r = await sb("children","GET",null,params);
+        const r = await sbAll("children", params);
         return res.status(200).json({data:r.data||[]});
       }
 
