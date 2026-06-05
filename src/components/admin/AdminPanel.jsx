@@ -4,8 +4,15 @@ import React, { useState, useEffect } from 'react';
 import { C, textColor, isDark } from '../../constants/themes.js';
 import { Btn, BackBtn } from '../ui/primitives.jsx';
 import { Starfield } from '../layout/layout.jsx';
-const adminApi = (action, body={}) =>
-  schoolApi(action, body, "angadadmin2026", "/api/admin");
+
+const adminApi = async (action, body={}) => {
+  const r = await fetch("/api/admin", {
+    method:"POST",
+    headers:{"Content-Type":"application/json","Authorization":"Bearer angadadmin2026"},
+    body: JSON.stringify({action,...body})
+  });
+  return r.json();
+};
 
 export function AdminPanel({ onBack }) {
   // Uses adminApi -> /api/admin with passphrase auth
@@ -654,7 +661,7 @@ export function AdminPanel({ onBack }) {
             <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:12,color:C.red,letterSpacing:1}}>🔐 ADMIN</div>
           </div>
           <div style={{fontSize:12,fontWeight:800,color:textColor()}}>{activeTab?.icon} {activeTab?.label}</div>
-          <button onClick={onBack} style={{background:`${C.red}22`,border:`1px solid ${C.red}44`,borderRadius:10,padding:"6px 12px",color:C.red,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:9,fontWeight:900}}>EXIT</button>
+          <button onClick={onBack} style={{background:`${C.red}22`,border:`1px solid ${C.red}44`,borderRadius:10,padding:"6px 12px",color:C.red,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:9,fontWeight:900}}>LOGOUT</button>
         </div>
         {/* Tab strip */}
         <div style={{display:"flex",overflowX:"auto",padding:"0 10px 10px",gap:6,scrollbarWidth:"none"}}>

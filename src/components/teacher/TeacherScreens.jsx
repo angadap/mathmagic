@@ -7,14 +7,6 @@ import { Btn, Inp, BackBtn, Card } from '../ui/primitives.jsx';
 import { LESSONS } from '../../constants/gameData.js';
 import { Starfield } from '../layout/layout.jsx';
 
-// ── School API helper ─────────────────────────────────────────────
-const schoolApi = async (action, body = {}, adminKey = null) => {
-  const headers = { "Content-Type": "application/json" };
-  if (adminKey) headers["Authorization"] = `Bearer ${adminKey}`;
-  const r = await fetch("/api/school", { method: "POST", headers, body: JSON.stringify({ action, ...body }) });
-  return r.json();
-};
-
 export function TeacherLogin({ onBack, onDone }) {
   const [email,   setEmail]   = useState("");
   const [pin,     setPin]     = useState("");
@@ -314,9 +306,14 @@ export function TeacherDashboard({ teacher, onLogout }) {
 
   const refreshClass = () => selClass ? loadClass(selClass) : loadAll();
 
-  const loadQLessonsT = async(cn) => { setQLoading(true);setQClassNum(cn);setQLessonsT([]);setQLessonT(null);setQSetsT([]);setQSetT(null);setQuestionsT([]); const d=await tApi("admin_list_lessons_for_class",{class_num:cn}); setQLessonsT(Array.isArray(d.data)?d.data:[]);setQLoading(false); };
-  const loadQSetsT    = async(lid) => { setQLoading(true);setQLessonT(lid);setQSetsT([]);setQSetT(null);setQuestionsT([]); const d=await tApi("admin_list_sets_for_lesson",{lesson_id_prefix:lid}); setQSetsT(d.data||[]);setQLoading(false); };
-  const loadQsT       = async(lid,si) => { setQLoading(true);setQSetT(si);setQuestionsT([]); const d=await tApi("admin_list_questions",{lesson_id_prefix:lid,set_index:si}); setQuestionsT(d.data||[]);setQLoading(false); };
+  // Question reads go to /api/admin (where the question endpoints live)
+  const adminApiQ = async (action, body={}) => {
+    const r = await fetch("/api/admin", {method:"POST", headers:{"Content-Type":"application/json","Authorization":"Bearer angadadmin2026"}, body:JSON.stringify({action,...body})});
+    return r.json();
+  };
+  const loadQLessonsT = async(cn) => { setQLoading(true);setQClassNum(cn);setQLessonsT([]);setQLessonT(null);setQSetsT([]);setQSetT(null);setQuestionsT([]); const d=await adminApiQ("admin_list_lessons_for_class",{class_num:cn}); setQLessonsT(Array.isArray(d.data)?d.data:[]);setQLoading(false); };
+  const loadQSetsT    = async(lid) => { setQLoading(true);setQLessonT(lid);setQSetsT([]);setQSetT(null);setQuestionsT([]); const d=await adminApiQ("admin_list_sets_for_lesson",{lesson_id_prefix:lid}); setQSetsT(Array.isArray(d.data)?d.data.map(Number).filter(n=>!isNaN(n)).sort((a,b)=>a-b):[]); setQLoading(false); };
+  const loadQsT       = async(lid,si) => { setQLoading(true);setQSetT(si);setQuestionsT([]); const d=await adminApiQ("admin_list_questions",{lesson_id_prefix:lid,set_index:si}); setQuestionsT(d.data||[]);setQLoading(false); };
 
   useEffect(()=>{ if (canViewStudents || canViewAnalytics) loadAll(); },[]);
 
@@ -745,7 +742,7 @@ export function TeacherQManager({ teacher, tApi, canAddQ, canModifyQ, canDeleteQ
                   <td style={{padding:"8px 10px",color:C.green,fontWeight:900}}>{"ABCD"[q.correct_answer]}</td>
                   <td style={{padding:"8px 6px",whiteSpace:"nowrap"}}>
                     {canModifyQ&&<button onClick={()=>{setQForm({id:q.id,question:q.question,opt0:q.options[0],opt1:q.options[1],opt2:q.options[2],opt3:q.options[3],correct:q.correct_answer,hint:q.hint||""});setQMsg("");setView("t_q_edit");}} style={{background:`${C.cyan}22`,border:`1px solid ${C.cyan}44`,borderRadius:6,padding:"4px 8px",color:C.cyan,cursor:"pointer",marginRight:4,fontSize:11}}>✏️</button>}
-                    {canDeleteQ&&<button onClick={async()=>{if(!window.confirm("Delete this question?"))return;setQLoading(true);const d=await tApi("admin_delete_question",{id:q.id});if(d.ok){setQMsg("✅ Deleted");loadQsT(qLesson,qSet);}else setQMsg(d.error||"Failed");setQLoading(false);}} style={{background:`${C.red}22`,border:`1px solid ${C.red}44`,borderRadius:6,padding:"4px 8px",color:C.red,cursor:"pointer",fontSize:11}}>🗑️</button>}
+                    {canDeleteQ&&<button onClick={async()=>{if(!window.confirm("Delete this question?"))return;setQLoading(true);const d=await adminApiQ("admin_delete_question",{id:q.id});if(d.ok){setQMsg("✅ Deleted");loadQsT(qLesson,qSet);}else setQMsg(d.error||"Failed");setQLoading(false);}} style={{background:`${C.red}22`,border:`1px solid ${C.red}44`,borderRadius:6,padding:"4px 8px",color:C.red,cursor:"pointer",fontSize:11}}>🗑️</button>}
                   </td>
                 </tr>
               ))}
@@ -777,7 +774,7 @@ export function TeacherQManager({ teacher, tApi, canAddQ, canModifyQ, canDeleteQ
         <Btn color={C.green} loading={qLoading} onClick={async()=>{
           if(!qForm.question||!qForm.opt0||!qForm.opt1||!qForm.opt2||!qForm.opt3){setQMsg("Fill question and all 4 options.");return;}
           setQLoading(true);setQMsg("");
-          const d=await tApi("admin_add_question",{lesson_id:qForm.lesson_id,set_index:qForm.set_index??0,question_index:qForm.question_index??0,question:qForm.question,options:[qForm.opt0,qForm.opt1,qForm.opt2,qForm.opt3],correct_answer:qForm.correct??0,hint:qForm.hint||""});
+          const d=await adminApiQ("admin_add_question",{lesson_id:qForm.lesson_id,set_index:qForm.set_index??0,question_index:qForm.question_index??0,question:qForm.question,options:[qForm.opt0,qForm.opt1,qForm.opt2,qForm.opt3],correct_answer:qForm.correct??0,hint:qForm.hint||""});
           if(d.data){setQMsg("✅ Added!");setQForm(f=>({...f,question:"",opt0:"",opt1:"",opt2:"",opt3:"",hint:"",question_index:(f.question_index??0)+1}));loadQsT(qLesson,qSet);}else setQMsg(d.error||"Failed");
           setQLoading(false);
         }}>ADD QUESTION</Btn>
@@ -804,7 +801,7 @@ export function TeacherQManager({ teacher, tApi, canAddQ, canModifyQ, canDeleteQ
         {qMsg&&<div style={{color:qMsg.startsWith("✅")?C.green:C.red,fontSize:13,marginBottom:8}}>{qMsg}</div>}
         <Btn color={C.cyan} loading={qLoading} onClick={async()=>{
           setQLoading(true);setQMsg("");
-          const d=await tApi("admin_update_question",{id:qForm.id,question:qForm.question,options:[qForm.opt0,qForm.opt1,qForm.opt2,qForm.opt3],correct_answer:qForm.correct??0,hint:qForm.hint||""});
+          const d=await adminApiQ("admin_update_question",{id:qForm.id,question:qForm.question,options:[qForm.opt0,qForm.opt1,qForm.opt2,qForm.opt3],correct_answer:qForm.correct??0,hint:qForm.hint||""});
           if(d.ok){setQMsg("✅ Saved!");loadQsT(qLesson,qSet);setView("t_q_list");}else setQMsg(d.error||"Failed");
           setQLoading(false);
         }}>SAVE CHANGES</Btn>
@@ -927,3 +924,4 @@ export function TeacherLessons({ teacher, classFilter }) {
     </div>
   );
 }
+
