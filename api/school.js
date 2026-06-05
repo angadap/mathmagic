@@ -341,7 +341,7 @@ export default async function handler(req, res) {
         const prefix = prefixMap[cn]||`c${cn}`;
         const titles = LESSON_TITLES[cn]||[];
         // Fetch with large range to get all rows
-        const r = await sb("questions","GET",null,`?lesson_id=like.${prefix}-%25&select=lesson_id&order=lesson_id&limit=50000`);
+        const r = await sbAll("questions", `?lesson_id=gte.${prefix}-l&lesson_id=lte.${prefix}-m&select=lesson_id&order=lesson_id`);
         const seen = new Set(); const lessons = [];
         for (const q of (r.data||[])) {
           const raw = q.lesson_id||"";
@@ -445,6 +445,13 @@ export default async function handler(req, res) {
     }
 
       // ── Non-school (home) students via children table ─────────────
+      if (action==="admin_debug_children") {
+        // Returns raw count + first 3 rows for debugging
+        const r1 = await sb("children","GET",null,"?select=id,name,class_num&limit=3");
+        const r2 = await sb("children","GET",null,"?select=count");
+        return res.status(200).json({sample:r1.data, raw_count:r2.data, ok:r1.ok, status_hint: r1.ok?"service key works":"check key"});
+      }
+
       if (action==="admin_list_home_students") {
         const {search, class_num} = req.body;
         let params = "?order=created_at.desc";
