@@ -1,4 +1,6 @@
-// api/school.js — Teacher API (login, student management)
+// api/school.js
+import { createHash, randomBytes } from "crypto";
+// Teacher API (login, student management)
 
 const SB_URL     = process.env.SUPABASE_URL;
 const SB_SERVICE = process.env.SUPABASE_SERVICE_KEY;
@@ -59,8 +61,7 @@ async function sbAll(table, params="") {
 }
 
 // Simple PIN hash (server-side)
-async function hashPin(pin) {
-  const { createHash } = await import("crypto");
+function hashPin(pin) {
   return createHash("sha256").update("mm_school_"+pin).digest("hex");
 }
 
@@ -92,14 +93,13 @@ export default async function handler(req, res) {
     if (action==="teacher_login") {
       const {email, pin} = req.body;
       if (!email||!pin) return res.status(400).json({error:"Missing fields"});
-      const pin_hash = await hashPin(String(pin).slice(0,6));
+      const pin_hash = hashPin(String(pin).slice(0,6));
       const r = await sb("teachers","GET",null,
         `?email=eq.${encodeURIComponent(clean(email,100).toLowerCase())}&pin_hash=eq.${pin_hash}&is_active=eq.true&limit=1`);
       if (!Array.isArray(r.data)||!r.data[0])
         return res.status(401).json({error:"Invalid email or PIN"});
       const t = r.data[0];
       // Generate session token and store in DB
-      const { randomBytes } = await import("crypto");
       const session_token = randomBytes(32).toString("hex");
       await sb("teachers","PATCH",{session_token},`?id=eq.${t.id}`);
       return res.status(200).json({teacher:{id:t.id,name:t.name,email:t.email,school_id:t.school_id,permissions:Array.isArray(t.permissions)?t.permissions:[]},session_token});
@@ -126,7 +126,7 @@ export default async function handler(req, res) {
       const class_num = cleanInt(req.body.class_num, 1, 5);
       const section   = clean(req.body.section, 5).toUpperCase();
       if (!name||!roll_no||!pin) return res.status(400).json({error:"Missing fields"});
-      const pin_hash = await hashPin(String(pin).slice(0,4));
+      const pin_hash = hashPin(String(pin).slice(0,4));
       const r = await sb("students","POST",{
         school_id:teacher.school_id, teacher_id,
         name:clean(name,50), roll_no:clean(roll_no,10),
@@ -187,7 +187,7 @@ export default async function handler(req, res) {
       if (!Array.isArray(sc.data)||!sc.data[0]) return res.status(401).json({error:"Invalid school code"});
       const school_id = sc.data[0].id;
       // Find student by name (case-insensitive via ilike) + PIN
-      const pin_hash = await hashPin(String(pin).slice(0,4));
+      const pin_hash = hashPin(String(pin).slice(0,4));
       const searchName = nameOrRoll.toLowerCase();
 
       // ── Shared streak helper ──────────────────────────────────────
@@ -262,7 +262,7 @@ export default async function handler(req, res) {
       const results = {success:0, failed:[], };
       for (const s of students) {
         if (!s.name||!s.roll_no||!s.pin) { results.failed.push({roll_no:s.roll_no,reason:"Missing fields"}); continue; }
-        const pin_hash = await hashPin(String(s.pin).slice(0,4));
+        const pin_hash = hashPin(String(s.pin).slice(0,4));
         const r = await sb("students","POST",{
           school_id:teacher.school_id, teacher_id,
           name:clean(s.name,50), roll_no:clean(String(s.roll_no),10),
@@ -279,7 +279,7 @@ export default async function handler(req, res) {
       if (!teacher) return res.status(401).json({error:"Unauthorized"});
       const {name, roll_no, pin, class_num, section} = req.body;
       if (!name||!roll_no||!pin) return res.status(400).json({error:"Missing fields"});
-      const pin_hash = await hashPin(String(pin).slice(0,4));
+      const pin_hash = hashPin(String(pin).slice(0,4));
       const r = await sb("students","POST",{
         school_id:teacher.school_id, teacher_id,
         name:clean(name,50), roll_no:clean(String(roll_no),10),
@@ -360,7 +360,7 @@ export default async function handler(req, res) {
       if (action==="update_student_pin") {
         const {new_pin} = req.body;
         if (!new_pin) return res.status(400).json({error:"Missing pin"});
-        const pin_hash = await hashPin(String(new_pin).slice(0,4));
+        const pin_hash = hashPin(String(new_pin).slice(0,4));
         const r = await sb("students","PATCH",{pin_hash},`?id=eq.${student_id}&school_id=eq.${teacher.school_id}`);
         return res.status(200).json({ok:r.ok});
       }

@@ -1,4 +1,6 @@
-// api/admin.js — Admin-only API (schools, teachers, students, questions, home users)
+// api/admin.js
+import { createHash } from "crypto";
+// Admin-only API (schools, teachers, students, questions, home users)
 
 const SB_URL     = process.env.SUPABASE_URL;
 const SB_SERVICE = process.env.SUPABASE_SERVICE_KEY;
@@ -56,8 +58,7 @@ async function sbAll(table, params="") {
   return {ok:true, data:all};
 }
 
-async function hashPin(pin) {
-  const { createHash } = await import("crypto");
+function hashPin(pin) {
   return createHash("sha256").update("mm_school_"+pin).digest("hex");
 }
 
@@ -83,9 +84,8 @@ export default async function handler(req, res) {
 
   // Auth check
   const authHeader = req.headers.authorization||"";
-  const { createHash: _ch } = await import("crypto");
   const _incoming = authHeader.replace("Bearer ","").trim();
-  if (_ch("sha256").update(_incoming).digest("hex") !== ADMIN_HASH)
+  if (createHash("sha256").update(_incoming).digest("hex") !== ADMIN_HASH)
     return res.status(403).json({error:"Forbidden"});
 
   try {
@@ -124,7 +124,7 @@ export default async function handler(req, res) {
         const {school_id, name, email, pin, permissions} = req.body;
         if (!isUUID(school_id)) return res.status(400).json({error:"Invalid school_id"});
         if (!email||!pin||!name) return res.status(400).json({error:"Missing fields"});
-        const pin_hash = await hashPin(String(pin).slice(0,6));
+        const pin_hash = hashPin(String(pin).slice(0,6));
         const validPerms = ["change_student_pin","modify_student","delete_student","add_lesson_set_question","modify_lesson_set_question","delete_lesson_set_question","view_analytics"];
         const perms = Array.isArray(permissions) ? permissions.filter(p=>validPerms.includes(p)) : [];
         const r = await sb("teachers","POST",{
@@ -193,7 +193,7 @@ export default async function handler(req, res) {
         if (action==="create_student_admin") {
       const {school_id, teacher_id, name, roll_no, pin, class_num, section} = req.body;
       if (!school_id||!name||!roll_no||!pin) return res.status(400).json({error:"Missing fields"});
-      const pin_hash = await hashPin(String(pin).slice(0,4));
+      const pin_hash = hashPin(String(pin).slice(0,4));
       const r = await sb("students","POST",{
         school_id:clean(school_id,36), teacher_id:teacher_id||null,
         name:clean(name,50), roll_no:clean(String(roll_no),10),
@@ -234,7 +234,7 @@ export default async function handler(req, res) {
       if (roll_no)   update.roll_no   = clean(String(roll_no),10);
       if (class_num !== undefined) update.class_num = cleanInt(class_num,0,12);
       if (section)   update.section   = clean(String(section),5).toUpperCase();
-      if (pin) { update.pin_hash = await hashPin(String(pin).slice(0,6)); }
+      if (pin) { update.pin_hash = hashPin(String(pin).slice(0,6)); }
       const r = await sb("students","PATCH",update,`?id=eq.${student_id}`);
       if (!r.ok) return res.status(400).json({error:"Update failed"});
       return res.status(200).json({data:true});
@@ -282,7 +282,7 @@ export default async function handler(req, res) {
         const label = labels[cn]||`Class ${cn}`;
         const name = clean(teacher_name||`${label}-${sec} Teacher`,100);
         const email = `class${cn}${sec.toLowerCase()}_${school_id.slice(0,6)}@mathmagic.internal`;
-        const pin_hash = await hashPin("1234");
+        const pin_hash = hashPin("1234");
         const r = await sb("teachers","POST",{school_id,name,email,pin_hash,class_label:`${label}-${sec}`});
         if (!r.ok) return res.status(400).json({error:"Class/teacher may already exist"});
         return res.status(200).json({data:Array.isArray(r.data)?r.data[0]:r.data});
@@ -294,7 +294,7 @@ export default async function handler(req, res) {
         if (!isUUID(school_id)||!Array.isArray(rows)) return res.status(400).json({error:"Missing fields"});
         const results = [];
         for (const row of rows.slice(0,50)) {
-          const pin_hash = await hashPin(String(row.pin||"1234").slice(0,6));
+          const pin_hash = hashPin(String(row.pin||"1234").slice(0,6));
           const r = await sb("teachers","POST",{school_id,name:clean(row.name,100),email:clean(row.email,100).toLowerCase(),pin_hash});
           results.push({name:row.name,ok:r.ok,error:r.ok?null:"Failed (duplicate?)"});
         }
@@ -307,7 +307,7 @@ export default async function handler(req, res) {
         if (!isUUID(school_id)||!Array.isArray(rows)) return res.status(400).json({error:"Missing fields"});
         const results = [];
         for (const row of rows.slice(0,200)) {
-          const pin_hash = await hashPin(String(row.pin||"1234").slice(0,6));
+          const pin_hash = hashPin(String(row.pin||"1234").slice(0,6));
           const username = `${clean(row.name||"",20).toLowerCase().replace(/\s+/g,"")}_${String(row.roll_no||"").padStart(3,"0")}`;
           const r = await sb("students","POST",{school_id,teacher_id:teacher_id||null,name:clean(row.name,50),roll_no:clean(String(row.roll_no),10),class_num:cleanInt(row.class_num,0,12),section:clean(String(row.section||"A"),5).toUpperCase(),username,pin_hash,xp:0,level:1,streak_days:0});
           results.push({name:row.name,ok:r.ok,error:r.ok?null:"Failed"});
@@ -466,7 +466,7 @@ export default async function handler(req, res) {
       if (action==="admin_create_home_student") {
         const {name, class_num, pin, avatar} = req.body;
         if (!name||!pin) return res.status(400).json({error:"Name and PIN required"});
-        const pin_hash = await hashPin(String(pin).slice(0,6));
+        const pin_hash = hashPin(String(pin).slice(0,6));
         const r = await sb("children","POST",{
           name:clean(name,50), class_num:cleanInt(class_num,1,12),
           pin_hash, avatar:clean(avatar||"🚀",10),
@@ -484,7 +484,7 @@ export default async function handler(req, res) {
         if (name)       update.name      = clean(name,50);
         if (class_num!==undefined) update.class_num = cleanInt(class_num,0,12);
         if (avatar)     update.avatar    = clean(avatar,10);
-        if (pin)        update.pin_hash  = await hashPin(String(pin).slice(0,6));
+        if (pin)        update.pin_hash  = hashPin(String(pin).slice(0,6));
         const r = await sb("children","PATCH",update,`?id=eq.${encodeURIComponent(child_id)}`);
         if (!r.ok) return res.status(400).json({error:"Update failed"});
         return res.status(200).json({data:r.data});
@@ -499,9 +499,6 @@ export default async function handler(req, res) {
       }
 
       return res.status(400).json({error:"Unknown admin action"});
-    } // end admin block
-
-    return res.status(400).json({error:"Unknown admin action"});
 
   } catch(err) {
     console.error("[admin API]", err.message);
