@@ -799,25 +799,28 @@ export const db = {
   },
 
   async submitFeedback(payload) {
-    const row = {
-      child_id:    payload.child_id    || "guest",
-      child_name:  payload.child_name  || "Unknown",
-      category:    payload.category,
-      description: payload.description,
-      screen:      payload.screen      || "unknown",
-      device_info: payload.device_info || "",
-      app_version: payload.app_version || "1.0.0",
-      status:      "open",
-      created_at:  new Date().toISOString(),
-    };
-    const sb = await this.getSb();
-    if (sb) {
-      const r = await sb.insert("feedback", row);
-      if (!r.error) { dbLog("ok","feedback saved to DB ✓"); return { ok:true }; }
-      dbLog("error","feedback DB failed", r.error.message);
+    // Always route through /api/db (service key) — works for all user types incl. school students with no JWT
+    try {
+      const res = await fetch("/api/db", {
+        method:"POST",
+        headers:{"Content-Type":"application/json","Authorization":`Bearer ${this._token||""}`},
+        body: JSON.stringify({
+          action:      "submit_feedback",
+          child_id:    payload.child_id    || "guest",
+          child_name:  payload.child_name  || "Unknown",
+          category:    payload.category,
+          description: payload.description,
+          screen:      payload.screen      || "unknown",
+          app_version: payload.app_version || "1.0.0",
+        })
+      });
+      const j = await res.json();
+      if (j.ok) { dbLog("ok","feedback saved ✓"); return { ok:true }; }
+      dbLog("error","feedback failed", j.error);
+      return { ok:false, error:j.error };
+    } catch(e) {
+      dbLog("error","feedback network error", e.message);
+      return { ok:false, error:e.message };
     }
-    if (!window.__mmFeedbackQueue) window.__mmFeedbackQueue = [];
-    window.__mmFeedbackQueue.push({ ...row });
-    return { ok:true, local:true };
   },
 };

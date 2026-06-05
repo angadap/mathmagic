@@ -87,30 +87,6 @@ export default async function handler(req, res) {
   const authHeader = req.headers.authorization||"";
 
   try {
-
-export default async function handler(req, res) {
-  const origin = req.headers.origin||"";
-  if (ALLOWED.includes(origin)) res.setHeader("Access-Control-Allow-Origin", origin);
-  res.setHeader("X-Content-Type-Options","nosniff");
-  res.setHeader("Cache-Control","no-store");
-
-  if (req.method==="OPTIONS") {
-    res.setHeader("Access-Control-Allow-Methods","POST,OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers","Content-Type,Authorization");
-    return res.status(200).end();
-  }
-  if (req.method!=="POST") return res.status(405).json({error:"Method not allowed"});
-
-  const ip = req.headers["x-forwarded-for"]?.split(",")[0]?.trim()||"unknown";
-  const {limited,retryAfter} = rateLimit(ip);
-  if (limited) return res.status(429).json({error:`Rate limit. Wait ${retryAfter}s.`});
-
-  const {action} = req.body||{};
-  if (!action) return res.status(400).json({error:"Missing action"});
-
-  const authHeader = req.headers.authorization||"";
-
-  try {
     // TEACHER LOGIN
     // ══════════════════════════════════════════════════════
     if (action==="teacher_login") {
