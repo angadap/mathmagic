@@ -139,7 +139,7 @@ export default async function handler(req, res) {
       // List ALL teachers across all schools (for dashboard tiles)
       if (action==="admin_list_all_teachers") {
         const {search, school_id} = req.body;
-        let params = "?select=id,name,avatar,class_num,xp,level,coins,streak_days,is_premium&order=id.desc";
+        let params = "?select=id,name,email,school_id,permissions,is_active,created_at&order=created_at.desc";
         if (school_id && isUUID(school_id)) params += `&school_id=eq.${school_id}`;
         const r = await sbAll("teachers",params);
         let data = r.data||[];
