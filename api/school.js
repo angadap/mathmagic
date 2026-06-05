@@ -49,8 +49,10 @@ async function sbAll(table, params="") {
     };
     const r = await fetch(`${SB_URL}/rest/v1/${table}${params}`, {method:"GET",headers});
     const t = await r.text();
-    let rows; try { rows=JSON.parse(t); } catch { break; }
-    if (!Array.isArray(rows)||rows.length===0) break;
+    let rows;
+    try { rows=JSON.parse(t); } catch { return {ok:false,data:[],error:"parse_fail:"+t.slice(0,100)}; }
+    if (!Array.isArray(rows)) return {ok:false,data:[],error:"not_array:"+JSON.stringify(rows).slice(0,200)};
+    if (rows.length===0) break;
     all = all.concat(rows);
     if (rows.length < PAGE) break;
     from += PAGE;
@@ -458,6 +460,7 @@ export default async function handler(req, res) {
         if (class_num!==undefined) params += `&class_num=eq.${cleanInt(class_num,0,12)}`;
         if (search) params += `&name=ilike.*${encodeURIComponent(clean(search,50))}*`;
         const r = await sbAll("children", params);
+        if (!r.ok) return res.status(200).json({data:[], _error:r.error});
         return res.status(200).json({data:r.data||[]});
       }
 
