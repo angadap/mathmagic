@@ -702,7 +702,18 @@ export function AdminPanel({ onBack }) {
                 const d=isEdit?await api("admin_modify_home_student",{child_id:form.child_id,name:form.name,class_num:form.class_num,avatar:form.avatar,pin:form.pin||undefined}):await api("admin_create_home_student",{name:form.name,class_num:form.class_num||1,pin:form.pin||"1234",avatar:form.avatar||"🚀"});
                 if(d.data||d.ok){showToast("✅ Student "+(isEdit?"updated":"created")+": "+form.name);loadHomeStudents();setView("list");}else setMsg(d.error||"Failed");
                 setLoading(false);}}>
-              {[["Full Name","name","text"],["Avatar Emoji","avatar","text"],["PIN (4-6 digits)","pin","password"]].map(([l,k,t])=>(<div key={k}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div><input value={form[k]||""} onChange={e=>setForm({...form,[k]:e.target.value})} type={t} style={iS(C.green)}/></div>))}
+              {[["Full Name","name","text"],["PIN (4-6 digits)","pin","password"]].map(([l,k,t])=>(<div key={k}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div><input value={form[k]||""} onChange={e=>setForm({...form,[k]:e.target.value})} type={t} style={iS(C.green)}/></div>))}
+              <div style={{marginBottom:10}}>
+                <div style={{color:C.dim,fontSize:11,marginBottom:8}}>AVATAR</div>
+                <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+                  {["🚀","⭐","🌙","🌍","🪐","☀️","🌟","🎯","🦁","🐯","🐼","🦊","🐧","🦋","🦄","🐉","🎮","🏆","⚡","🔮","🎸","🎨","🏄","🧙"].map(e=>(
+                    <button key={e} type="button" onClick={()=>setForm({...form,avatar:e})}
+                      style={{fontSize:24,background:(form.avatar||"🚀")===e?`${C.green}33`:"transparent",border:`2px solid ${(form.avatar||"🚀")===e?C.green:"transparent"}`,borderRadius:10,padding:4,cursor:"pointer",lineHeight:1,transition:"all 0.15s"}}>
+                      {e}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div><div style={{color:C.dim,fontSize:11,marginBottom:4}}>CLASS</div><select value={form.class_num||1} onChange={e=>setForm({...form,class_num:parseInt(e.target.value)})} style={iS(C.green)}>{CLASS_OPTS.map((n,i)=><option key={i} value={CLASS_NUMS[i]}>{n}</option>)}</select></div>
               {isEdit&&<div style={{fontSize:11,color:C.dim,marginTop:-8,marginBottom:10}}>Leave PIN blank to keep existing.</div>}
             </FormCard>
