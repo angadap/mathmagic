@@ -706,7 +706,7 @@ export function AdminPanel({ onBack }) {
           <div style={{display:"flex",gap:8,marginBottom:12}}>
             <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search..." style={{...iS(C.green),flex:1,marginBottom:0}}/>
             <ActionBtn color={C.green} onClick={()=>{setForm({});setMsg("");setView("add");}}>+ NEW</ActionBtn>
-            <ActionBtn color={C.dim} onClick={async()=>{const d=await api("admin_list_home_students",{});setMsg("RAW: "+JSON.stringify(d).slice(0,400));}} small>🔍</ActionBtn>
+            <ActionBtn color={C.dim} onClick={async()=>{const d=await api("admin_list_home_students",{});alert("count="+d._count+" data_len="+(d.data||[]).length+" err="+(d._debug||"none")+" sample="+JSON.stringify((d.data||[]).slice(0,2)));}} small>🔍</ActionBtn>
           </div>
           {toast&&<div style={{marginBottom:10,padding:"10px 14px",borderRadius:10,background:toast.startsWith("✅")?`${C.green}18`:`${C.red}18`,color:toast.startsWith("✅")?C.green:C.red,fontSize:13,fontWeight:700}}>{toast}</div>}
           <MsgBar m={msg}/>

@@ -47,7 +47,8 @@ async function sbAll(table, params="") {
       "Range-Unit":"items", "Range":`${from}-${from+PAGE-1}`,
       "Prefer":"count=none",
     };
-    const r = await fetch(`${SB_URL}/rest/v1/${table}${params}`, {method:"GET",headers});
+    const sep = params.includes("?") ? "&" : "?";
+    const r = await fetch(`${SB_URL}/rest/v1/${table}${params}${sep}limit=${PAGE}&offset=${from}`, {method:"GET",headers});
     const t = await r.text();
     let rows;
     try { rows=JSON.parse(t); } catch { return {ok:false,data:[],error:"parse_fail:"+t.slice(0,100)}; }
@@ -456,12 +457,24 @@ export default async function handler(req, res) {
 
       if (action==="admin_list_home_students") {
         const {search, class_num} = req.body;
-        let params = "?select=id,name,avatar,class_num,xp,level,coins,streak_days,is_premium&order=id.desc";
-        if (class_num!==undefined) params += `&class_num=eq.${cleanInt(class_num,0,12)}`;
-        if (search) params += `&name=ilike.*${encodeURIComponent(clean(search,50))}*`;
-        const r = await sbAll("children", params);
-        if (!r.ok) return res.status(200).json({data:[], _error:r.error});
-        return res.status(200).json({data:r.data||[]});
+        // Use same pattern as db.js get_children — proven to work
+        let qs = "?select=*&order=created_at.desc";
+        if (class_num!==undefined) qs += `&class_num=eq.${cleanInt(class_num,0,12)}`;
+        if (search) qs += `&name=ilike.*${encodeURIComponent(clean(search,50))}*`;
+        // Direct fetch matching db.js pattern exactly
+        const resp = await fetch(`${SB_URL}/rest/v1/children${qs}&limit=10000&offset=0`, {
+          method:"GET",
+          headers:{
+            apikey:SB_SERVICE,
+            Authorization:`Bearer ${SB_SERVICE}`,
+            "Content-Type":"application/json",
+            Prefer:"return=minimal",
+          }
+        });
+        const txt = await resp.text();
+        let data; try { data=JSON.parse(txt); } catch { data=[]; }
+        if (!resp.ok) return res.status(200).json({data:[], _debug:`HTTP ${resp.status}: ${txt.slice(0,200)}`});
+        return res.status(200).json({data: Array.isArray(data)?data:[], _count:Array.isArray(data)?data.length:0});
       }
 
       if (action==="admin_create_home_student") {
