@@ -444,9 +444,6 @@ export default async function handler(req, res) {
         return res.status(200).json({data:results});
       }
 
-        return res.status(400).json({error:"Unknown admin action"});
-    }
-
       // ── Non-school (home) students via children table ─────────────
       if (action==="admin_debug_children") {
         // Returns raw count + first 3 rows for debugging
@@ -511,6 +508,9 @@ export default async function handler(req, res) {
         const r = await sb("children","DELETE",null,`?id=eq.${encodeURIComponent(child_id)}`);
         return res.status(200).json({ok:true});
       }
+
+      return res.status(400).json({error:"Unknown admin action"});
+    } // end admin block
 
     // ══════════════════════════════════════════════════════
     // TEACHER LOGIN
