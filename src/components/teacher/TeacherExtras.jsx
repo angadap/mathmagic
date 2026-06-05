@@ -396,7 +396,7 @@ export function AdminPanel({ onBack }) {
   const loadStudents  = async (sid,tid) => { setLoading(true); const body={}; if(sid)body.school_id=sid; if(tid)body.teacher_id=tid; const d=await api("admin_list_all_students",body); setStudents(d.data||[]); setLoading(false); };
   const loadHomeStudents = async () => { setLoading(true); const d=await api("admin_list_home_students"); setHomeStudents(d.data||[]); setLoading(false); };
   const loadQLessons  = async (cn) => { setLoading(true); setQClassNum(cn); setQLessons([]); setQLesson(null); setQSets([]); setQSet(null); setQuestions([]); const d=await api("admin_list_lessons_for_class",{class_num:cn}); setQLessons(Array.isArray(d.data)?d.data:[]); setLoading(false); };
-  const loadQSets     = async (lid) => { setLoading(true); setQLesson(lid); setQSets([]); setQSet(null); setQuestions([]); const d=await api("admin_list_sets_for_lesson",{lesson_id_prefix:lid}); const rows=d.data||[]; const seen=new Set(); const sets=[]; for(const r of rows){if(!seen.has(r.set_index)){seen.add(r.set_index);sets.push(r.set_index);}} setQSets(sets.sort((a,b)=>a-b)); setLoading(false); };
+  const loadQSets     = async (lid) => { setLoading(true); setQLesson(lid); setQSets([]); setQSet(null); setQuestions([]); const d=await api("admin_list_sets_for_lesson",{lesson_id_prefix:lid}); setQSets(Array.isArray(d.data)?d.data.map(Number).filter(n=>!isNaN(n)).sort((a,b)=>a-b):[]); setLoading(false); };
   const loadQs        = async (lid,si) => { setLoading(true); setQSet(si); setQuestions([]); const d=await api("admin_list_questions",{lesson_id_prefix:lid,set_index:si}); setQuestions(d.data||[]); setLoading(false); };
 
   useEffect(()=>{ loadSchools(); loadTeachers(); loadStudents(); loadHomeStudents(); },[]);

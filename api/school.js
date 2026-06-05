@@ -147,7 +147,7 @@ export default async function handler(req, res) {
       // List ALL teachers across all schools (for dashboard tiles)
       if (action==="admin_list_all_teachers") {
         const {search, school_id} = req.body;
-        let params = "?order=created_at.desc";
+        let params = "?select=id,name,avatar,class_num,xp,level,coins,streak_days,is_premium&order=id.desc";
         if (school_id && isUUID(school_id)) params += `&school_id=eq.${school_id}`;
         const r = await sbAll("teachers",params);
         let data = r.data||[];
@@ -447,14 +447,14 @@ export default async function handler(req, res) {
       // ── Non-school (home) students via children table ─────────────
       if (action==="admin_debug_children") {
         // Returns raw count + first 3 rows for debugging
-        const r1 = await sb("children","GET",null,"?select=id,name,class_num&limit=3");
-        const r2 = await sb("children","GET",null,"?select=count");
-        return res.status(200).json({sample:r1.data, raw_count:r2.data, ok:r1.ok, status_hint: r1.ok?"service key works":"check key"});
+        const r1 = await sb("children","GET",null,"?select=id,name,class_num,xp&limit=5&order=id.desc");
+        const r2 = await sb("children","GET",null,"?select=id&limit=1&order=id.asc");
+        return res.status(200).json({sample:r1.data, r1_ok:r1.ok, r2_ok:r2.ok, has_rows:Array.isArray(r1.data)&&r1.data.length>0});
       }
 
       if (action==="admin_list_home_students") {
         const {search, class_num} = req.body;
-        let params = "?order=created_at.desc";
+        let params = "?select=id,name,avatar,class_num,xp,level,coins,streak_days,is_premium&order=id.desc";
         if (class_num!==undefined) params += `&class_num=eq.${cleanInt(class_num,0,12)}`;
         if (search) params += `&name=ilike.*${encodeURIComponent(clean(search,50))}*`;
         const r = await sbAll("children", params);
