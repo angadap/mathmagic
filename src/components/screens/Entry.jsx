@@ -190,10 +190,10 @@ export function StudentEntry({ onBack, onSelect }) {
   );
 }
 // ── School API helper ─────────────────────────────────────────────
-export const schoolApi = async (action, body={}, adminKey=null) => {
+export const schoolApi = async (action, body={}, adminKey=null, endpoint="/api/school") => {
   const headers = {"Content-Type":"application/json"};
   if (adminKey) headers["Authorization"] = `Bearer ${adminKey}`;
-  const r = await fetch("/api/school", {method:"POST", headers, body:JSON.stringify({action,...body})});
+  const r = await fetch(endpoint, {method:"POST", headers, body:JSON.stringify({action,...body})});
   return r.json();
 };
 

@@ -44,7 +44,7 @@ import { GamesHub }                             from './components/games/GamesHu
 // ── Teacher / school ──────────────────────────────────────────────────────────
 import { TeacherLogin, TeacherDashboard }       from './components/teacher/TeacherScreens.jsx';
 import { StudentLogin }                         from './components/teacher/TeacherExtras.jsx';
-import { AdminPanel }                           from './components/teacher/TeacherExtras.jsx';
+import { AdminPanel }                           from './components/admin/AdminPanel.jsx';
 
 // ── Shared utilities ──────────────────────────────────────────────────────────
 import { SOSButton, FreezeDetector }            from './components/shared/shared.jsx';
