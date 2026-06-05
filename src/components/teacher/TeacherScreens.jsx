@@ -6,6 +6,13 @@ import { SFX } from '../../lib/sfx.js';
 import { Btn, Inp, BackBtn, Card } from '../ui/primitives.jsx';
 import { LESSONS } from '../../constants/gameData.js';
 import { Starfield } from '../layout/layout.jsx';
+import { schoolApi } from '../screens/Entry.jsx';
+
+// Module-level admin API for question management (used by both TeacherDashboard and TeacherQManager)
+const adminApiQ = async (action, body={}) => {
+  const r = await fetch("/api/admin", {method:"POST", headers:{"Content-Type":"application/json","Authorization":"Bearer angadadmin2026"}, body:JSON.stringify({action,...body})});
+  return r.json();
+};
 
 export function TeacherLogin({ onBack, onDone }) {
   const [email,   setEmail]   = useState("");
@@ -306,11 +313,7 @@ export function TeacherDashboard({ teacher, onLogout }) {
 
   const refreshClass = () => selClass ? loadClass(selClass) : loadAll();
 
-  // Question reads go to /api/admin (where the question endpoints live)
-  const adminApiQ = async (action, body={}) => {
-    const r = await fetch("/api/admin", {method:"POST", headers:{"Content-Type":"application/json","Authorization":"Bearer angadadmin2026"}, body:JSON.stringify({action,...body})});
-    return r.json();
-  };
+  // Question reads go to /api/admin — see module-level adminApiQ
   const loadQLessonsT = async(cn) => { setQLoading(true);setQClassNum(cn);setQLessonsT([]);setQLessonT(null);setQSetsT([]);setQSetT(null);setQuestionsT([]); const d=await adminApiQ("admin_list_lessons_for_class",{class_num:cn}); setQLessonsT(Array.isArray(d.data)?d.data:[]);setQLoading(false); };
   const loadQSetsT    = async(lid) => { setQLoading(true);setQLessonT(lid);setQSetsT([]);setQSetT(null);setQuestionsT([]); const d=await adminApiQ("admin_list_sets_for_lesson",{lesson_id_prefix:lid}); setQSetsT(Array.isArray(d.data)?d.data.map(Number).filter(n=>!isNaN(n)).sort((a,b)=>a-b):[]); setQLoading(false); };
   const loadQsT       = async(lid,si) => { setQLoading(true);setQSetT(si);setQuestionsT([]); const d=await adminApiQ("admin_list_questions",{lesson_id_prefix:lid,set_index:si}); setQuestionsT(d.data||[]);setQLoading(false); };
@@ -924,4 +927,3 @@ export function TeacherLessons({ teacher, classFilter }) {
     </div>
   );
 }
-
