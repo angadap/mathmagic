@@ -7,6 +7,15 @@ import { Btn, Inp, BackBtn, Card } from '../ui/primitives.jsx';
 import { Starfield } from '../layout/layout.jsx';
 
 
+const FEEDBACK_CATS = [
+  { id:"bug",        icon:"🐛", label:"Bug / Crash",       color:"#ef4444" },
+  { id:"question",   icon:"❓", label:"Question Wrong",     color:"#f97316" },
+  { id:"suggestion", icon:"💡", label:"Suggestion",         color:"#8b5cf6" },
+  { id:"content",    icon:"📚", label:"Missing Content",    color:"#06b6d4" },
+  { id:"praise",     icon:"🌟", label:"Compliment",         color:"#eab308" },
+  { id:"other",      icon:"💬", label:"Other",              color:"#6b7280" },
+];
+
 export function FeedbackScreen({ child, currentScreen, onBack, prefillCategory }) {
   const [cat,     setCat]     = useState(prefillCategory || null);
   const [desc,    setDesc]    = useState("");
@@ -212,4 +221,3 @@ export function RatingPrompt({ child, onClose }) {
 }
 
 // ── Privacy Policy ────────────────────────────────────────────────────
-
