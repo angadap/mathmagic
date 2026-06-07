@@ -237,7 +237,7 @@ export function StarCatcher({ onBack, child }) {
 
   return (
     <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),position:"relative",overflow:"hidden"}}>
-      <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg,#000010,#04040f)"}}>
+      <div style={{position:"absolute",inset:0,background:`linear-gradient(180deg,${C.bg},${C.card})`}}>
         {[...Array(20)].map((_,i)=><div key={i} style={{position:"absolute",left:`${Math.random()*100}%`,top:`${Math.random()*100}%`,width:2,height:2,background:"white",borderRadius:"50%",opacity:Math.random()*0.5+0.1}}/>)}
       </div>
       {/* HUD */}

@@ -265,7 +265,7 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
   if (done) return (
     <>
     {newBadges && newBadges.length > 0 && <BadgeUnlockToast badges={newBadges} onDone={()=>setNewBadges && setNewBadges([])}/>}
-    <div style={{ minHeight:"100vh", background: fst>=2 ? "linear-gradient(160deg,#0a0a1f,#05161a,#0a0a1f)" : C.bg, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", fontFamily:"'Baloo 2','Nunito',sans-serif", padding:22, position:"relative", overflow:"hidden" }}>
+    <div style={{ minHeight:"100vh", background: fst>=2 ? `linear-gradient(160deg,${C.bg},${C.card},${C.bg})` : C.bg, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", fontFamily:"'Baloo 2','Nunito',sans-serif", padding:22, position:"relative", overflow:"hidden" }}>
       {showCert && <Certificate child={child} lesson={lesson} stars={fst} onClose={()=>setShowCert(false)}/>}
       <Confetti active={fst>=2}/>
       <Starfield n={60}/>
@@ -473,7 +473,7 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
           })}
         </div>
         {chosen === null && (
-          <button onClick={() => setHint(h => !h)} style={{ width:"100%", background: hint ? `${C.yellow}18` : C.card, border:`2px solid ${hint ? C.yellow+"66" : "#111128"}`, borderRadius:16, padding:"13px 16px", cursor:"pointer", color: hint ? C.yellow : C.dim, fontSize:15, fontWeight:700, textAlign:"left" }}>
+          <button onClick={() => setHint(h => !h)} style={{ width:"100%", background: hint ? `${C.yellow}18` : C.card, border:`2px solid ${hint ? C.yellow+"66" : C.border}`, borderRadius:16, padding:"13px 16px", cursor:"pointer", color: hint ? C.yellow : C.dim, fontSize:15, fontWeight:700, textAlign:"left" }}>
             💡 {hint ? q.h : "Tap for a cosmic hint!"}
           </button>
         )}

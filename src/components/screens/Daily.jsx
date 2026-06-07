@@ -244,7 +244,7 @@ export function DailyQuiz({ child, onClose }) {
                 const isCorrect = key === challenge.correct;
                 const isChosen  = key === chosen;
                 const answered  = chosen !== null;
-                let bg=isDark()?C.card2:"#ffffff", border=isDark()?"#181838":C.border||"#d0c8f8", color=textColor();
+                let bg=isDark()?C.card2:"#ffffff", border=C.border, color=textColor();
                 if (answered) {
                   if (isCorrect){bg=isDark()?"#052e16":"#edfff6";border=C.green;color=isDark()?"#4ade80":"#065f46";}
                   else if(isChosen){bg=isDark()?"#2d0a0a":"#fff1f1";border=C.red;color=isDark()?"#f87171":"#991b1b";}

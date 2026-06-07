@@ -273,7 +273,7 @@ export function Paywall({ world, child, onBack, onUnlock }) {
         <div style={{ display:"flex", gap:10, marginBottom:14 }}>
           {Object.entries(plans).map(([key, p]) => (
             <button key={key} onClick={() => setPlan(key)} style={{
-              flex:1, background: plan===key ? `${C.cyan}22` : "#07071a",
+              flex:1, background: plan===key ? `${C.cyan}22` : C.card,
               border:`2px solid ${plan===key ? C.cyan : C.purple+"33"}`,
               borderRadius:14, padding:"14px 10px", cursor:"pointer", textAlign:"center",
               position:"relative", boxShadow: plan===key ? `0 0 18px ${C.cyan}33` : "none", transition:"all 0.2s",

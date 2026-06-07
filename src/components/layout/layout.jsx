@@ -18,13 +18,14 @@ export function GlobalStyles() {
       const s = document.createElement("style");
       s.id = "mm-styles";
       s.textContent = `
+        :root{--gold:${C.yellow};--teal:${C.cyan};--violet:${C.purple};--rose:${C.pink};--lime:${C.green};--bg:${C.bg};--card:${C.card};--navyL:${C.card2};--border:${C.border};--ink:${C.text};--ink2:${C.text2};--ink3:${C.dim}}
         @keyframes twinkle{0%,100%{opacity:.1}50%{opacity:.9}}
         @keyframes floatUp{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-        @keyframes pulseG{0%,100%{box-shadow:0 0 10px #a855f755}50%{box-shadow:0 0 28px #a855f7cc}}
+        @keyframes pulseG{0%,100%{box-shadow:0 0 10px ${C.purple}55}50%{box-shadow:0 0 28px ${C.purple}cc}}
         @keyframes slideUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
         @keyframes popIn{0%{transform:scale(0.7);opacity:0}70%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
         @keyframes shakeX{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
-        @keyframes correctFlash{0%{background:transparent}30%{background:#22c55e33}100%{background:transparent}}
+        @keyframes correctFlash{0%{background:transparent}30%{background:${C.green}33}100%{background:transparent}}
         @keyframes wrongShake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-10px)}40%,80%{transform:translateX(10px)}}
         @keyframes coinBounce{0%{transform:translateY(0)scale(1)}40%{transform:translateY(-20px)scale(1.3)}100%{transform:translateY(0)scale(1)opacity(0)}}
         @keyframes starPop{0%{transform:scale(0)rotate(-30deg)}60%{transform:scale(1.3)rotate(5deg)}100%{transform:scale(1)rotate(0deg)}}
@@ -41,11 +42,16 @@ export function GlobalStyles() {
         @keyframes floatEmoji{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-80px) scale(1.5);opacity:0}}
         @keyframes heartbeat{0%,100%{transform:scale(1)}14%{transform:scale(1.3)}28%{transform:scale(1)}42%{transform:scale(1.2)}70%{transform:scale(1)}}
         @keyframes rainbowBg{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
-        .mm-btn-press:active{transform:scale(0.95)!important;transition:transform 0.08s!important}
-        .mm-haptic:active{transform:scale(0.97)}
         @keyframes spinR{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
         @keyframes bFloat{0%,100%{transform:translateY(0)scale(1)}50%{transform:translateY(-10px)scale(1.05)}}
         @keyframes bossW{0%,100%{transform:rotate(0)}25%{transform:rotate(-5deg)}75%{transform:rotate(5deg)}}
+        @keyframes goldPulse{0%,100%{box-shadow:inset 0 1.5px 0 rgba(255,230,100,.25),0 4px 0 rgba(0,0,0,.5),0 8px 28px rgba(255,184,0,.18)}50%{box-shadow:inset 0 1.5px 0 rgba(255,230,100,.35),0 4px 0 rgba(0,0,0,.5),0 8px 44px rgba(255,184,0,.55),0 0 60px rgba(255,184,0,.18)}}
+        @keyframes levitate{0%,100%{transform:translateY(0) rotate(-.5deg)}50%{transform:translateY(-12px) rotate(.5deg)}}
+        @keyframes xpFlow{0%{background-position:-200% 0}100%{background-position:200% 0}}
+        @keyframes fireFlick{0%,100%{transform:scaleY(1) scaleX(1)}30%{transform:scaleY(1.12) scaleX(.92)}65%{transform:scaleY(.92) scaleX(1.06)}}
+        @keyframes starSpin{0%{transform:rotate(0) scale(1)}50%{transform:rotate(180deg) scale(1.3)}100%{transform:rotate(360deg) scale(1)}}
+        @keyframes nebulaDrift{0%{transform:translate(0,0) rotate(0)}33%{transform:translate(18px,-12px) rotate(120deg)}66%{transform:translate(-12px,18px) rotate(240deg)}100%{transform:translate(0,0) rotate(360deg)}}
+        @keyframes pinPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1);box-shadow:0 0 0 5px rgba(255,184,0,.2)}}
         *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
         body{background:${C.bg};color:${textColor()}}
         body,*{font-family:'Baloo 2','Nunito',sans-serif;}
@@ -54,6 +60,20 @@ export function GlobalStyles() {
         select option{background:${C.card};color:${textColor()}}
         ::-webkit-scrollbar{width:3px}
         ::-webkit-scrollbar-thumb{background:${C.cyan};border-radius:4px}
+        .mm-btn-press:active{transform:translateY(4px) scale(.92)!important;transition:transform 0.07s,box-shadow 0.07s!important}
+        .mm-haptic:active{transform:scale(0.97)}
+        .mm-card{position:relative;overflow:hidden;transition:transform .22s cubic-bezier(.34,1.4,.64,1)}
+        .mm-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.22),transparent);pointer-events:none;z-index:1}
+        .mm-card:active{transform:scale(.97) translateY(2px)!important}
+        .mm-card-gold{background:linear-gradient(160deg,rgba(255,184,0,.18),rgba(255,184,0,.04))!important;border-color:rgba(255,184,0,.3)!important;box-shadow:inset 0 1.5px 0 rgba(255,230,100,.25),inset 0 -1px 0 rgba(0,0,0,.25),0 4px 0 rgba(0,0,0,.5),0 8px 28px rgba(255,184,0,.2)!important}
+        .mm-card-teal{background:linear-gradient(160deg,rgba(0,197,181,.16),rgba(0,197,181,.04))!important;border-color:rgba(0,197,181,.3)!important;box-shadow:inset 0 1.5px 0 rgba(100,255,240,.2),inset 0 -1px 0 rgba(0,0,0,.25),0 4px 0 rgba(0,0,0,.5),0 8px 28px rgba(0,197,181,.18)!important}
+        .mm-card-violet{background:linear-gradient(160deg,rgba(155,111,255,.18),rgba(155,111,255,.04))!important;border-color:rgba(155,111,255,.3)!important;box-shadow:inset 0 1.5px 0 rgba(200,180,255,.2),inset 0 -1px 0 rgba(0,0,0,.25),0 4px 0 rgba(0,0,0,.5),0 8px 28px rgba(155,111,255,.18)!important}
+        .mm-card-rose{background:linear-gradient(160deg,rgba(255,107,138,.16),rgba(255,107,138,.04))!important;border-color:rgba(255,107,138,.3)!important;box-shadow:inset 0 1.5px 0 rgba(255,180,200,.2),inset 0 -1px 0 rgba(0,0,0,.25),0 4px 0 rgba(0,0,0,.5),0 8px 28px rgba(255,107,138,.18)!important}
+        .mm-card-lime{background:linear-gradient(160deg,rgba(77,221,136,.14),rgba(77,221,136,.04))!important;border-color:rgba(77,221,136,.28)!important;box-shadow:inset 0 1.5px 0 rgba(150,255,200,.2),inset 0 -1px 0 rgba(0,0,0,.25),0 4px 0 rgba(0,0,0,.5),0 8px 28px rgba(77,221,136,.15)!important}
+        .mm-gold-pulse{animation:goldPulse 3s ease-in-out infinite}
+        .mm-levitate{animation:levitate 4s ease-in-out infinite}
+        .mm-star-spin{animation:starSpin 5s linear infinite}
+        .mm-fire-flick{animation:fireFlick .8s ease-in-out infinite}
       `;
       document.head.appendChild(s);
     }

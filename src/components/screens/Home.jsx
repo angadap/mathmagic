@@ -12,7 +12,7 @@ import { RatingPrompt } from './Feedback.jsx';
 
 
 export function ThemeSelector({ onClose }) {
-  const [cur, setCur] = useState(localStorage.getItem("mm_theme")||"space");
+  const [cur, setCur] = useState(localStorage.getItem("mm_theme")||"midnight");
   const themes = Object.entries(THEMES);
   return (
     <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.7)", zIndex:200, display:"flex", alignItems:"flex-end", justifyContent:"center" }} onClick={onClose}>

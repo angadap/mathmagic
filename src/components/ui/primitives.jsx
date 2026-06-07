@@ -18,27 +18,27 @@ export function Btn({ children, onClick, color = C.cyan, disabled, loading, styl
         border:"none",
         borderRadius:20,
         background: isOff
-          ? "linear-gradient(135deg,#111128,#0a0a1f)"
+          ? `linear-gradient(135deg,${C.card2},${C.card})`
           : hov
-            ? `linear-gradient(135deg,${color},${color}cc,${color}aa)`
-            : `linear-gradient(135deg,${color}ee,${color}bb,${color}88)`,
-        color: isOff ? isDark()?"#2a2a50":"#c5bde8" : "#fff",
+            ? `linear-gradient(155deg,${color}ff,${color}dd,${color}bb)`
+            : `linear-gradient(155deg,${color}ee,${color}cc,${color}99)`,
+        color: isOff ? C.dim : "#fff",
         fontSize:16, fontFamily:"'Baloo 2','Nunito',sans-serif", fontWeight:900,
         cursor: isOff ? "not-allowed" : "pointer",
-        letterSpacing:1.5,
-        textShadow: isOff ? "none" : `0 1px 8px ${color}88`,
+        letterSpacing:1,
+        textShadow: isOff ? "none" : `0 1px 8px ${color}66`,
         boxShadow: isOff
-          ? "none"
+          ? `inset 0 1px 0 rgba(255,255,255,.05)`
           : hov
-            ? `0 6px 28px ${color}88, 0 0 0 2px ${color}55, inset 0 1px 0 rgba(255,255,255,0.25)`
-            : `0 4px 18px ${color}55, 0 0 0 1px ${color}33, inset 0 1px 0 rgba(255,255,255,0.15)`,
-        transform: hov && !isOff ? "translateY(-2px) scale(1.01)" : "none",
+            ? `inset 0 1.5px 0 rgba(255,255,255,.28),0 6px 0 rgba(0,0,0,.45),0 10px 28px ${color}55`
+            : `inset 0 1.5px 0 rgba(255,255,255,.22),0 5px 0 rgba(0,0,0,.42),0 8px 20px ${color}44`,
+        transform: hov && !isOff ? "translateY(-1px)" : "none",
         transition:"all 0.18s ease",
         position:"relative", overflow:"hidden",
         ...sx,
       }}
     >
-      {!isOff && <div style={{position:"absolute",inset:0,background:`linear-gradient(180deg,rgba(255,255,255,0.12) 0%,transparent 60%)`,borderRadius:20,pointerEvents:"none"}}/>}
+      {!isOff && <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg,rgba(255,255,255,0.22) 0%,transparent 55%)",borderRadius:20,pointerEvents:"none"}}/>}
       {loading ? (
         <span style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:10 }}>
           <span style={{
@@ -100,10 +100,11 @@ export function Inp({ value, onChange, placeholder, type = "text", label, error,
 // Card
 export function Card({ children, color = C.purple, style: sx = {} }) {
   return (
-    <div style={{
-      background:C.card, borderRadius:16, padding:14,
-      border:`1.5px solid ${isDark() ? color+"33" : color+"44"}`,
-      boxShadow: isDark() ? `0 4px 18px ${color}12` : `0 4px 20px ${color}18, 0 1px 4px rgba(0,0,0,0.05)`,
+    <div className="mm-card" style={{
+      background:"linear-gradient(160deg,rgba(255,255,255,.08),rgba(255,255,255,.03))",
+      border:`1px solid ${color}33`,
+      borderRadius:20, padding:14,
+      boxShadow:`inset 0 1.5px 0 rgba(255,255,255,.13),inset 0 -1px 0 rgba(0,0,0,.22),0 4px 0 rgba(0,0,0,.38),0 8px 22px ${color}18`,
       ...sx,
     }}>
       {children}
@@ -116,18 +117,22 @@ export function XPBar({ xp = 0, level = 1 }) {
   return (
     <div style={{ display:"flex", alignItems:"center", gap:8 }}>
       <div style={{
-        background:`linear-gradient(135deg,${C.purple},${C.pink})`,
+        background:`linear-gradient(135deg,${C.yellow},${C.orange})`,
         borderRadius:20, padding:"3px 10px", fontSize:10,
-        fontFamily:"'Orbitron',sans-serif", color:textColor(), flexShrink:0,
+        fontFamily:"'Baloo 2',sans-serif", color:"#0a0500", flexShrink:0, fontWeight:900,
       }}>LV {level}</div>
-      <div style={{ flex:1, background:"rgba(255,255,255,0.07)", borderRadius:7, height:7, overflow:"hidden" }}>
+      <div style={{ flex:1, background:"rgba(255,255,255,0.07)", borderRadius:99, height:9, overflow:"hidden", boxShadow:"inset 0 2px 4px rgba(0,0,0,.4)" }}>
         <div style={{
           width:`${((xp % 200) / 200) * 100}%`, height:"100%",
-          background:`linear-gradient(90deg,${C.cyan},${C.purple})`,
-          borderRadius:7, transition:"width 1s ease",
+          background:`linear-gradient(90deg,${C.yellow},#FFD060,${C.cyan},#FFD060,${C.yellow})`,
+          backgroundSize:"200% 100%",
+          borderRadius:99,
+          animation:"xpFlow 2.5s linear infinite",
+          boxShadow:`0 0 12px ${C.yellow}88`,
+          transition:"width 1s ease",
         }}/>
       </div>
-      <span style={{ fontSize:9, color:C.dim, fontFamily:"'Orbitron',sans-serif" }}>{xp} XP</span>
+      <span style={{ fontSize:9, color:C.dim, fontFamily:"'Baloo 2',sans-serif" }}>{xp} XP</span>
     </div>
   );
 }
@@ -143,34 +148,43 @@ export function PinPad({ pin, setPin, error, shake, onComplete }) {
       return next;
     });
   };
+  const keyShad = "0 4px 0 rgba(0,0,0,.42),0 6px 18px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.14)";
+  const keyPressShad = "0 1px 0 rgba(0,0,0,.42)";
   return (
     <div>
-      <div style={{ display:"flex", justifyContent:"center", gap:12, marginBottom:14, animation:shake ? "shakeX 0.4s ease" : "none" }}>
+      {/* PIN dots */}
+      <div style={{ display:"flex", justifyContent:"center", gap:16, marginBottom:22, animation:shake ? "shakeX 0.4s ease" : "none" }}>
         {[0,1,2,3].map(i => (
           <div key={i} style={{
-            width:50, height:50, borderRadius:14,
-            background: pin.length > i ? `linear-gradient(135deg,${C.cyan},${C.purple})` : "#07071a",
-            border:`2px solid ${shake ? C.red : pin.length > i ? C.cyan : "#181840"}`,
-            boxShadow: pin.length > i ? `0 0 14px ${C.cyan}77` : shake ? `0 0 12px ${C.red}66` : "none",
-            display:"flex", alignItems:"center", justifyContent:"center",
-            fontSize:22, color:textColor(), transition:"all 0.2s",
-          }}>{pin.length > i ? "●" : ""}</div>
+            width:18, height:18, borderRadius:"50%",
+            background: pin.length > i ? C.yellow : "transparent",
+            border:`2.5px solid ${shake ? C.red : pin.length > i ? C.yellow : "rgba(255,255,255,.3)"}`,
+            boxShadow: pin.length > i ? `0 0 14px ${C.yellow}99` : shake ? `0 0 10px ${C.red}66` : "none",
+            transition:"all 0.2s",
+            transform: pin.length > i ? "scale(1.1)" : "scale(1)",
+          }}/>
         ))}
       </div>
       {error && <div style={{ color:C.red, fontSize:12, fontWeight:700, textAlign:"center", marginBottom:10 }}>⚠ {error}</div>}
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:10 }}>
+      {/* Keys */}
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:12, maxWidth:280, margin:"0 auto" }}>
         {[1,2,3,4,5,6,7,8,9,"",0,"⌫"].map((k, i) => (
-          <button key={i} onClick={() => k !== "" && handleKey(String(k))}
-            onMouseDown={e => { if(k!=="") e.currentTarget.style.background = "#1a1a40"; }}
-            onMouseUp={e => { if(k!=="") e.currentTarget.style.background = C.card2; }}
-            onTouchStart={e => { if(k!=="") e.currentTarget.style.background = "#1a1a40"; }}
-            onTouchEnd={e => { if(k!=="") e.currentTarget.style.background = C.card2; }}
+          <button key={i}
+            onClick={() => k !== "" && handleKey(String(k))}
+            onMouseDown={e => { if(k!=="") { e.currentTarget.style.transform="translateY(4px) scale(.88)"; e.currentTarget.style.boxShadow=keyPressShad; }}}
+            onMouseUp={e => { if(k!=="") { e.currentTarget.style.transform=""; e.currentTarget.style.boxShadow=keyShad; }}}
+            onTouchStart={e => { if(k!=="") { e.currentTarget.style.transform="translateY(4px) scale(.88)"; e.currentTarget.style.boxShadow=keyPressShad; }}}
+            onTouchEnd={e => { if(k!=="") { e.currentTarget.style.transform=""; e.currentTarget.style.boxShadow=keyShad; }}}
             style={{
-              padding:"15px", background: k === "" ? "transparent" : C.card2,
-              border: k === "" ? "none" : `1.5px solid ${C.purple}44`,
-              borderRadius:13, color:textColor(), fontSize:20,
-              fontFamily:"'Orbitron',sans-serif", fontWeight:700,
+              width:72, height:72, margin:"0 auto", display:"flex", alignItems:"center", justifyContent:"center",
+              background: k === "" ? "transparent" : "rgba(255,255,255,.07)",
+              border: k === "" ? "none" : `2px solid rgba(255,255,255,.12)`,
+              borderRadius:"50%",
+              color:"#fff", fontSize: k === "⌫" ? 20 : 22,
+              fontFamily:"'Baloo 2',sans-serif", fontWeight:900,
               cursor: k === "" ? "default" : "pointer",
+              boxShadow: k === "" ? "none" : keyShad,
+              transition:"transform 0.15s,box-shadow 0.15s",
             }}
           >{k}</button>
         ))}
@@ -198,7 +212,7 @@ export function StepDots({ current }) {
       {[1,2,3,4].map(i => (
         <div key={i} style={{
           width: i === current ? 26 : 8, height:8, borderRadius:4,
-          background: i <= current ? `linear-gradient(90deg,${C.cyan},${C.purple})` : "#111128",
+          background: i <= current ? `linear-gradient(90deg,${C.cyan},${C.purple})` : C.card2,
           boxShadow: i === current ? `0 0 8px ${C.cyan}` : "none",
           transition:"all 0.3s",
         }}/>

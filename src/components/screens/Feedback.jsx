@@ -212,7 +212,7 @@ export function RatingPrompt({ child, onClose }) {
           </div>
         )}
         <div style={{display:"flex",gap:10}}>
-          <button onClick={onClose} style={{flex:1,background:"none",border:`1px solid #181838`,borderRadius:12,color:C.dim,padding:"10px",cursor:"pointer",fontSize:12}}>LATER</button>
+          <button onClick={onClose} style={{flex:1,background:"none",border:`1px solid ${C.border}`,borderRadius:12,color:C.dim,padding:"10px",cursor:"pointer",fontSize:12}}>LATER</button>
           <Btn color={C.yellow} style={{flex:2}} loading={loading} onClick={submit} disabled={rating===0}>⭐ SUBMIT RATING</Btn>
         </div>
       </div>

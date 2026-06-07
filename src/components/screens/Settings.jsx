@@ -184,7 +184,7 @@ export function Settings({ child, user, onBack, onThemeChange, onLogout }) {
 export function PrivacyPolicy({ onBack }) {
   return (
     <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),overflowY:"auto"}}>
-      <div style={{position:"sticky",top:0,background:C.bg,zIndex:10,padding:"14px 18px",borderBottom:`1px solid #181838`,display:"flex",alignItems:"center",gap:12}}>
+      <div style={{position:"sticky",top:0,background:C.bg,zIndex:10,padding:"14px 18px",borderBottom:`1px solid ${C.border}`,display:"flex",alignItems:"center",gap:12}}>
         <BackBtn onClick={onBack} color={C.cyan}/>
         <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.cyan}}>PRIVACY POLICY</div>
       </div>

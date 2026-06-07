@@ -331,13 +331,13 @@ export function UpdatePrompt({ onUpdate, onDismiss }) {
       minWidth:260, maxWidth:340, whiteSpace:"nowrap"
     }}>
       <span style={{fontSize:18}}>🚀</span>
-      <span style={{flex:1, fontSize:12, color:"#04040f", fontWeight:700}}>New update ready!</span>
+      <span style={{flex:1, fontSize:12, color:"#07101F", fontWeight:700}}>New update ready!</span>
       <button onClick={onUpdate}
-        style={{background:"#04040f", border:"none", borderRadius:8, padding:"6px 12px",
-          color:"#7ec8e3", fontSize:11, fontWeight:900, cursor:"pointer",
+        style={{background:"#07101F", border:"none", borderRadius:8, padding:"6px 12px",
+          color:"#00C5B5", fontSize:11, fontWeight:900, cursor:"pointer",
           fontFamily:"'Orbitron',sans-serif"}}>UPDATE</button>
       <button onClick={onDismiss}
-        style={{background:"none", border:"none", color:"#04040f", fontSize:16,
+        style={{background:"none", border:"none", color:"#07101F", fontSize:16,
           cursor:"pointer", padding:"0 2px"}}>✕</button>
     </div>
   );

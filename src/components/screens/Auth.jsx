@@ -99,8 +99,8 @@ export function Register({ onBack, onDone }) {
         <div style={{ display:"grid", gridTemplateColumns:"repeat(6,1fr)", gap:8, marginBottom:12 }}>
           {AVATARS.map((a, i) => (
             <button key={i} onClick={() => setAvatar(a)} style={{
-              background: avatar === a ? `${C.purple}33` : "#07071a",
-              border:`2px solid ${avatar === a ? C.cyan : "#111128"}`,
+              background: avatar === a ? `${C.purple}33` : C.card,
+              border:`2px solid ${avatar === a ? C.cyan : C.border}`,
               borderRadius:12, aspectRatio:"1", fontSize:24, cursor:"pointer",
               boxShadow: avatar === a ? `0 0 14px ${C.cyan}88` : "none",
               transform: avatar === a ? "scale(1.14)" : "scale(1)",
@@ -133,8 +133,8 @@ export function Register({ onBack, onDone }) {
         <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:12 }}>
           {WORLDS.map(w => (
             <button key={w.id} onClick={() => setCls(w.id)} style={{
-              background: cls === w.id ? `${w.color}22` : "#07071a",
-              border:`2px solid ${cls === w.id ? w.color : "#181838"}`,
+              background: cls === w.id ? `${w.color}22` : C.card,
+              border:`2px solid ${cls === w.id ? w.color : C.border}`,
               borderRadius:15, padding:"12px 15px", cursor:"pointer",
               display:"flex", alignItems:"center", gap:12,
               boxShadow: cls === w.id ? `0 0 18px ${w.glow}` : "none",
