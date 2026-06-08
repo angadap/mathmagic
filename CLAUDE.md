@@ -4,6 +4,13 @@
 React+Vite gamified math app for Indian school children (Nursery–Class 5).
 Deployed at https://mathmagic-virid.vercel.app via GitHub→Vercel auto-deploy.
 
+## PowerShell — pre-approved
+All PowerShell read/search commands are pre-approved:
+- Select-String (file search)
+- Get-Content (file read)
+- Set-Content (file write)
+- Get-ChildItem (directory listing)
+
 ## Environment
 - Windows machine, project at D:\Candy Mathmagic\mathmagic
 - Use forward slashes in all paths
