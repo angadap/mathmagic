@@ -53,7 +53,7 @@ export function StudentLogin({ onBack, onDone }) {
             <div style={{color:C.dim,fontSize:12,marginBottom:8,fontFamily:"'Orbitron',sans-serif"}}>SCHOOL CODE</div>
             <input value={schoolCode} onChange={e=>setSchoolCode(e.target.value.toUpperCase())}
               placeholder="e.g. MATH001" maxLength={20}
-              style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.cyan}44`,borderRadius:10,padding:"12px 14px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:16,letterSpacing:3,textAlign:"center",marginBottom:12,display:"block"}}/>
+              style={{width:"100%",background:"#F0ECFF",border:"2px solid #5B4FE825",borderRadius:14,padding:14,color:"#1A1040",fontFamily:"'Nunito',sans-serif",fontSize:20,letterSpacing:4,textAlign:"center",fontWeight:900,marginBottom:12,display:"block",outline:"none"}}/>
             {error&&<div style={{color:C.red,fontSize:12,marginBottom:10}}>{error}</div>}
             <Btn color={C.cyan} onClick={handleSchool}>NEXT →</Btn>
           </Card>
@@ -62,7 +62,7 @@ export function StudentLogin({ onBack, onDone }) {
             <div style={{color:C.cyan,fontSize:11,fontFamily:"'Orbitron',sans-serif",marginBottom:12}}>🏫 {schoolCode}</div>
             <div style={{color:C.dim,fontSize:12,marginBottom:6,fontFamily:"'Orbitron',sans-serif"}}>USERNAME</div>
             <input value={rollNo} onChange={e=>setRollNo(e.target.value)} placeholder="Enter your username"
-              style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.purple}44`,borderRadius:10,padding:"11px 14px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:15,marginBottom:10,display:"block"}}/>
+              style={{width:"100%",background:"#F0ECFF",border:"2px solid #5B4FE825",borderRadius:14,padding:14,color:"#1A1040",fontFamily:"'Nunito',sans-serif",fontSize:15,marginBottom:10,display:"block",outline:"none"}}/>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
               <div>
                 <div style={{color:C.dim,fontSize:11,marginBottom:4}}>CLASS</div>
@@ -78,12 +78,21 @@ export function StudentLogin({ onBack, onDone }) {
                   maxLength={3} style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.purple}44`,borderRadius:10,padding:"10px 14px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:14,display:"block"}}/>
               </div>
             </div>
-            <div style={{color:C.dim,fontSize:12,marginBottom:6,fontFamily:"'Orbitron',sans-serif"}}>4-DIGIT PIN</div>
-            <input value={pin} onChange={e=>setPin(e.target.value.replace(/\D/g,"").slice(0,4))}
-              type="password" placeholder="••••" maxLength={4}
-              style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.purple}44`,borderRadius:10,padding:"11px 14px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:20,letterSpacing:6,textAlign:"center",marginBottom:12,display:"block"}}/>
+            <div style={{color:C.dim,fontSize:12,marginBottom:8,fontFamily:"'Orbitron',sans-serif"}}>4-DIGIT PIN</div>
+            <div style={{position:"relative",marginBottom:12}}>
+              <div style={{display:"flex",gap:8,justifyContent:"center"}}>
+                {[0,1,2,3].map(i=>(
+                  <div key={i} style={{width:50,height:55,borderRadius:14,background:pin.length>i?"#FFFFFF":"#F0ECFF",border:pin.length>i?"2px solid #5B4FE855":"2px solid rgba(91,79,232,0.10)",boxShadow:pin.length>i?"0 4px 12px #5B4FE830":"none",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,color:"#1A1040",transition:"all 0.15s"}}>
+                    {pin.length>i?"●":""}
+                  </div>
+                ))}
+              </div>
+              <input value={pin} onChange={e=>setPin(e.target.value.replace(/\D/g,"").slice(0,4))}
+                type="tel" maxLength={4} inputMode="numeric"
+                style={{position:"absolute",top:0,left:0,width:"100%",height:"100%",opacity:0,cursor:"pointer"}}/>
+            </div>
             {error&&<div style={{color:C.red,fontSize:12,marginBottom:10}}>{error}</div>}
-            <Btn color={C.purple} loading={loading} onClick={handleLogin}>🚀 ENTER ACADEMY</Btn>
+            <Btn color="#5B4FE8" loading={loading} onClick={handleLogin}>ENTER ACADEMY 🚀</Btn>
             <button onClick={()=>{setStep("school");setError("");}} style={{background:"none",border:"none",color:C.dim,fontSize:12,cursor:"pointer",marginTop:8,width:"100%",fontFamily:"'Nunito',sans-serif"}}>← Change school code</button>
           </Card>
         )}

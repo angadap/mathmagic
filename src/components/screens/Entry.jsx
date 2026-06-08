@@ -21,26 +21,35 @@ export function Splash({ onDone }) {
     return () => t.forEach(clearTimeout);
   }, []);
   return (
-    <div style={{ minHeight:"100vh", background:C.bg, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", position:"relative", overflow:"hidden" }}>
-      <Starfield n={80}/>
-      <div style={{ position:"relative", zIndex:1, textAlign:"center" }}>
+    <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#F0ECFF 0%,#E8F4FF 50%,#FFF0F5 100%)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", position:"relative", overflow:"hidden" }}>
+      <div style={{position:"absolute",width:180,height:180,borderRadius:"60% 40% 30% 70%/60% 30% 70% 40%",background:"radial-gradient(circle,#5B4FE855,#5B4FE815)",top:-40,right:-40,animation:"mmWave 8s ease-in-out infinite",pointerEvents:"none"}}/>
+      <div style={{position:"absolute",width:120,height:120,borderRadius:"60% 40% 30% 70%/60% 30% 70% 40%",background:"radial-gradient(circle,#FF6B6B55,#FF6B6B15)",bottom:60,left:-30,animation:"mmWave 8s ease-in-out 1s infinite",pointerEvents:"none"}}/>
+      <div style={{position:"absolute",width:100,height:100,borderRadius:"60% 40% 30% 70%/60% 30% 70% 40%",background:"radial-gradient(circle,#FFC84755,#FFC84715)",top:"40%",right:-20,animation:"mmWave 8s ease-in-out 2s infinite",pointerEvents:"none"}}/>
+      <div style={{ position:"relative", zIndex:1, textAlign:"center", padding:"0 24px" }}>
         <div style={{
-          fontSize:86, marginBottom:10,
+          fontSize:80, marginBottom:16,
           opacity: s >= 1 ? 1 : 0,
           transform: s >= 1 ? "scale(1)" : "scale(0.2)",
           transition:"all 0.6s cubic-bezier(0.34,1.56,0.64,1)",
-          filter: s >= 1 ? "drop-shadow(0 0 40px #a855f7) drop-shadow(0 0 80px #00f5ff55)" : "none",
-          animation: s >= 1 ? "floatUp 3s ease-in-out infinite" : "none",
+          filter: s >= 1 ? "drop-shadow(0 12px 24px #5B4FE844)" : "none",
+          animation: s >= 1 ? "mmFloat 2.5s ease-in-out infinite" : "none",
         }}>🚀</div>
         <div style={{
-          fontFamily:"'Orbitron',sans-serif", fontSize:30, fontWeight:900, letterSpacing:3,
-          background:`linear-gradient(135deg,${C.cyan},${C.purple},${C.pink})`,
-          WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent",
+          fontFamily:"'Fredoka One',cursive", fontSize:38,
+          color:"#5B4FE8", marginBottom:4,
           opacity: s >= 2 ? 1 : 0, transform: s >= 2 ? "translateY(0)" : "translateY(14px)",
           transition:"all 0.5s ease",
-        }}>MATHMAGIC</div>
-        <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:11, color:C.dim, letterSpacing:5, marginTop:6, opacity: s >= 3 ? 1 : 0, transition:"opacity 0.5s ease" }}>
+        }}>MathMagic</div>
+        <div style={{ fontSize:16, color:"#5A4E8A", letterSpacing:4, marginBottom:20, opacity: s >= 3 ? 1 : 0, transition:"opacity 0.5s ease" }}>
           SPACE ACADEMY
+        </div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:6,justifyContent:"center",marginBottom:28,opacity: s >= 3 ? 1 : 0, transition:"opacity 0.5s ease"}}>
+          {[["CBSE","#5B4FE8"],["ICSE","#FF6B6B"],["Class 1-5","#2ECC9A"],["Game-Based","#9B59F5"]].map(([label,color])=>(
+            <span key={label} style={{display:"inline-flex",alignItems:"center",padding:"3px 10px",borderRadius:999,background:`${color}18`,border:`1.5px solid ${color}30`,fontSize:11,fontWeight:800,color,fontFamily:"'Nunito',sans-serif"}}>{label}</span>
+          ))}
+        </div>
+        <div style={{width:"80%",height:5,background:"#F0ECFF",borderRadius:999,margin:"0 auto",overflow:"hidden",opacity: s >= 1 ? 1 : 0, transition:"opacity 0.5s ease"}}>
+          <div style={{width:"65%",height:"100%",background:"linear-gradient(90deg,#5B4FE8,#9B59F5)",backgroundSize:"200% 100%",borderRadius:999,animation:"mmShimmer 1.5s linear infinite"}}/>
         </div>
       </div>
     </div>
@@ -108,13 +117,13 @@ export function EntryScreen({ onSelect }) {
             <button key={i}
               onMouseEnter={()=>setHov(i)} onMouseLeave={()=>setHov(-1)}
               onClick={()=>{SFX.tap();onSelect(r.s);}}
-              style={{background:`linear-gradient(135deg,${r.color}18,${r.color}08)`,border:`2px solid ${hov===i?r.color+"88":r.color+"33"}`,borderRadius:22,padding:"20px 22px",cursor:"pointer",display:"flex",alignItems:"center",gap:16,textAlign:"left",transition:"all 0.2s",boxShadow:hov===i?`0 0 30px ${r.color}33`:"none",transform:hov===i?"translateY(-2px)":"none"}}>
-              <div style={{width:58,height:58,borderRadius:18,background:`${r.color}22`,border:`2px solid ${r.color}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,flexShrink:0}}>{r.icon}</div>
+              style={{background:"#FFFFFF",border:`2px solid ${r.color}28`,borderRadius:28,padding:"18px 20px",cursor:"pointer",display:"flex",alignItems:"center",gap:16,textAlign:"left",width:"100%",boxShadow:`0 8px 30px ${r.color}28, 0 2px 6px ${r.color}18, inset 0 1px 0 rgba(255,255,255,0.8)`,animation:`mmSlideUp 0.4s ease ${i*0.12}s both`,transition:"all 0.2s"}}>
+              <div style={{width:56,height:56,borderRadius:20,background:`linear-gradient(135deg,${r.color}28,${r.color}10)`,border:`2px solid ${r.color}35`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,flexShrink:0}}>{r.icon}</div>
               <div style={{flex:1}}>
-                <div style={{fontSize:18,fontWeight:900,color:textColor()}}>{r.label}</div>
-                <div style={{fontSize:13,color:r.color,marginTop:4,fontWeight:600}}>{r.sub}</div>
+                <div style={{fontSize:17,fontWeight:900,color:"#1A1040",fontFamily:"'Nunito',sans-serif"}}>{r.label}</div>
+                <div style={{fontSize:12,color:"#5A4E8A",marginTop:4,fontWeight:600,fontFamily:"'Nunito',sans-serif"}}>{r.sub}</div>
               </div>
-              <div style={{fontSize:28,color:r.color}}>›</div>
+              <div style={{width:32,height:32,borderRadius:999,background:`${r.color}15`,border:`1.5px solid ${r.color}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,color:r.color}}>›</div>
             </button>
           ))}
         </div>
@@ -153,9 +162,9 @@ export function EntryScreen({ onSelect }) {
 export function StudentEntry({ onBack, onSelect }) {
   const [hov, setHov] = useState(-1);
   const opts = [
-    {icon:"🏫",label:"My School uses MathMagic",sub:"Login with school code",        color:C.cyan,   s:"student_login"},
-    {icon:"🏠",label:"I study at home",          sub:"Login with my account",          color:C.purple, s:"login"},
-    {icon:"✨",label:"New? Register here",       sub:"One-time ₹599 · Lifetime access",color:C.green,  s:"reg_payment", highlight:true},
+    {icon:"🏫",label:"My School uses MathMagic",sub:"Login with school code",        color:"#5B4FE8", s:"student_login"},
+    {icon:"🏠",label:"I study at home",          sub:"Login with my account",          color:"#2ECC9A", s:"login"},
+    {icon:"✨",label:"New? Register here",       sub:"One-time ₹599 · Lifetime access",color:"#FF6B6B", s:"reg_payment", highlight:true},
   ];
   return (
     <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"0",position:"relative",overflow:"hidden"}}>
@@ -174,13 +183,13 @@ export function StudentEntry({ onBack, onSelect }) {
             <button key={i}
               onMouseEnter={()=>setHov(i)} onMouseLeave={()=>setHov(-1)}
               onClick={()=>{SFX.tap();onSelect(r.s);}}
-              style={{background:r.highlight?`linear-gradient(135deg,${r.color}28,${r.color}10)`:`linear-gradient(135deg,${r.color}18,${r.color}06)`,border:`2px solid ${hov===i?r.color+"88":r.highlight?r.color+"55":r.color+"33"}`,borderRadius:22,padding:"22px 20px",cursor:"pointer",textAlign:"left",display:"flex",gap:16,alignItems:"center",transition:"all 0.2s",boxShadow:hov===i?`0 0 28px ${r.color}33`:"none",transform:hov===i?"translateY(-2px)":"none"}}>
-              <div style={{width:56,height:56,borderRadius:18,background:`${r.color}22`,border:`2px solid ${r.color}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,flexShrink:0}}>{r.icon}</div>
+              style={{background:"#FFFFFF",border:`2px solid ${r.color}28`,borderRadius:28,padding:"18px 20px",cursor:"pointer",display:"flex",alignItems:"center",gap:16,textAlign:"left",width:"100%",boxShadow:`0 8px 30px ${r.color}28, 0 2px 6px ${r.color}18, inset 0 1px 0 rgba(255,255,255,0.8)`,animation:`mmSlideUp 0.4s ease ${i*0.12}s both`,transition:"all 0.2s"}}>
+              <div style={{width:56,height:56,borderRadius:20,background:`linear-gradient(135deg,${r.color}28,${r.color}10)`,border:`2px solid ${r.color}35`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,flexShrink:0}}>{r.icon}</div>
               <div style={{flex:1}}>
-                <div style={{fontSize:17,fontWeight:900,color:r.highlight?r.color:textColor()}}>{r.label}</div>
-                <div style={{fontSize:13,color:C.dim,marginTop:4,fontWeight:600}}>{r.sub}</div>
+                <div style={{fontSize:17,fontWeight:900,color:"#1A1040",fontFamily:"'Nunito',sans-serif"}}>{r.label}</div>
+                <div style={{fontSize:12,color:"#5A4E8A",marginTop:4,fontWeight:600,fontFamily:"'Nunito',sans-serif"}}>{r.sub}</div>
               </div>
-              <div style={{fontSize:28,color:r.color}}>›</div>
+              <div style={{width:32,height:32,borderRadius:999,background:`${r.color}15`,border:`1.5px solid ${r.color}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,color:r.color}}>›</div>
             </button>
           ))}
         </div>
