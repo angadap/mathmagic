@@ -790,10 +790,8 @@ function BazaarHub({ child, onBack, onMarket, onDaily, onSpeed, onChallenge }) {
           <button onClick={() => !dailyDone && onDaily(todayChallenge)} disabled={dailyDone}
             style={{
               width: '100%',
-              background: dailyDone
-                ? isDark() ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'
-                : `linear-gradient(135deg,${todayChallenge.color}22,${todayChallenge.color}08)`,
-              border: `2px solid ${dailyDone ? C.dim + '22' : todayChallenge.color + '66'}`,
+              background: dailyDone ? 'rgba(0,0,0,0.03)' : '#FF6B6B10',
+              border: `2px solid ${dailyDone ? 'rgba(91,79,232,0.12)' : '#FF6B6B44'}`,
               borderRadius: 20, padding: '14px 16px', cursor: dailyDone ? 'not-allowed' : 'pointer',
               textAlign: 'left', display: 'flex', alignItems: 'center', gap: 13, position: 'relative', overflow: 'hidden',
               transition: 'all 0.2s',
@@ -812,7 +810,7 @@ function BazaarHub({ child, onBack, onMarket, onDaily, onSpeed, onChallenge }) {
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 3 }}>
                 <span style={{ fontSize: 14, fontWeight: 900, color: dailyDone ? C.dim : textColor() }}>{todayChallenge.title}</span>
-                {!dailyDone && <span style={{ fontSize: 9, background: `${todayChallenge.color}22`, border: `1px solid ${todayChallenge.color}44`, borderRadius: 8, padding: '2px 7px', color: todayChallenge.color, fontWeight: 800, animation: 'heartbeat 1.8s ease-in-out infinite' }}>NEW</span>}
+                {!dailyDone && <span style={{ fontSize: 9, background: `${todayChallenge.color}22`, border: `1px solid ${todayChallenge.color}44`, borderRadius: 999, padding: '2px 9px', color: todayChallenge.color, fontWeight: 800, animation: 'heartbeat 1.8s ease-in-out infinite' }}>NEW</span>}
                 {dailyDone && <span style={{ fontSize: 9, background: '#22c55e22', border: '1px solid #22c55e44', borderRadius: 8, padding: '2px 7px', color: '#22c55e', fontWeight: 800 }}>✅ DONE</span>}
               </div>
               <div style={{ fontSize: 11, color: C.dim, lineHeight: 1.5 }}>{todayChallenge.desc}</div>
@@ -832,42 +830,39 @@ function BazaarHub({ child, onBack, onMarket, onDaily, onSpeed, onChallenge }) {
           <div style={{ width: 3, height: 16, borderRadius: 2, background: `linear-gradient(#f97316,#f9731688)` }} />
           <span style={{ fontSize: 10, color: C.dim, fontWeight: 900, fontFamily: "'Orbitron',sans-serif", letterSpacing: 1.5 }}>CHOOSE YOUR MARKET</span>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 11, marginBottom: 14 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 11, marginBottom: 14 }}>
           {BAZAAR_MARKETS.map((m, i) => {
             const rep = getBazaarReputation(m.id);
             return (
               <button key={m.id} onClick={() => !m.isPaid && onMarket(m)}
                 style={{
-                  background: m.isPaid
-                    ? isDark() ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)'
-                    : `linear-gradient(145deg,${m.color}18,${m.color}06)`,
-                  border: `2px solid ${m.color}${m.isPaid ? '22' : '55'}`,
-                  borderRadius: 22, padding: '16px 13px', cursor: m.isPaid ? 'not-allowed' : 'pointer',
-                  textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 6,
+                  background: 'white',
+                  border: `1.5px solid ${m.color}${m.isPaid ? '22' : '30'}`,
+                  borderRadius: 22, padding: '16px 16px 16px 20px', cursor: m.isPaid ? 'not-allowed' : 'pointer',
+                  textAlign: 'left', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 14,
                   opacity: m.isPaid ? 0.55 : 1,
                   animation: `slideUp 0.4s ease ${i * 0.08}s both`,
                   position: 'relative', overflow: 'hidden',
                   transition: 'all 0.2s',
+                  boxShadow: m.isPaid ? 'none' : `0 4px 16px ${m.color}22, 0 2px 6px ${m.color}14`,
                 }}>
-                {/* Market colour accent bar */}
-                {!m.isPaid && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg,${m.color},${m.color}55)`, borderRadius: '22px 22px 0 0' }} />}
+                {/* Left accent bar */}
+                {!m.isPaid && <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 3, background: `linear-gradient(180deg,${m.color},${m.color}66)`, borderRadius: '22px 0 0 22px' }} />}
                 {m.isPaid && <div style={{ position: 'absolute', top: 8, right: 8, background: '#fbbf24', borderRadius: 8, padding: '2px 7px', fontSize: 8, fontWeight: 900, color: '#000', fontFamily: "'Orbitron',sans-serif" }}>🔒 SOON</div>}
                 {/* Faint emoji watermark */}
-                <div style={{ position: 'absolute', right: -4, bottom: -4, fontSize: 54, opacity: 0.06, pointerEvents: 'none' }}>{m.emoji}</div>
-
-                <div style={{ fontSize: 40 }}>{m.emoji}</div>
-                <div style={{ fontSize: 15, fontWeight: 900, color: textColor(), lineHeight: 1.2 }}>{m.name}</div>
-                <div style={{ fontSize: 10, color: C.dim, lineHeight: 1.4 }}>{m.desc}</div>
-                {!m.isPaid && (
-                  <>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                      <span style={{ fontSize: 13 }}>{m.keeperEmoji}</span>
+                <div style={{ width: 52, height: 52, borderRadius: 14, background: `${m.color}18`, border: `1.5px solid ${m.color}33`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, flexShrink: 0 }}>{m.emoji}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 15, fontWeight: 900, color: '#1A1040', lineHeight: 1.2, marginBottom: 2 }}>{m.name}</div>
+                  <div style={{ fontSize: 11, color: '#9890C4', lineHeight: 1.4 }}>{m.desc}</div>
+                  {!m.isPaid && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4 }}>
+                      <span style={{ fontSize: 12 }}>{m.keeperEmoji}</span>
                       <span style={{ fontSize: 10, color: m.color, fontWeight: 800 }}>{m.keeper}</span>
+                      <StarRating stars={rep.stars} size={10} />
                     </div>
-                    <StarRating stars={rep.stars} size={11} />
-                    <div style={{ background: `linear-gradient(135deg,${m.color},${m.color}aa)`, borderRadius: 11, padding: '5px 12px', textAlign: 'center', fontSize: 11, fontWeight: 900, color: 'white', boxShadow: `0 3px 10px ${m.color}44` }}>▶ Play Now</div>
-                  </>
-                )}
+                  )}
+                </div>
+                {!m.isPaid && <div style={{ width: 32, height: 32, borderRadius: 999, background: `${m.color}15`, border: `1.5px solid ${m.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: m.color, fontSize: 16, flexShrink: 0 }}>›</div>}
               </button>
             );
           })}

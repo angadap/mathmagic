@@ -199,12 +199,17 @@ export function DailyQuiz({ child, onClose }) {
   };
 
   return (
-    <div style={{position:"fixed",inset:0,background:isDark()?"rgba(4,4,15,0.92)":"rgba(100,80,200,0.22)",backdropFilter:"blur(14px)",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",padding:"20px",fontFamily:"'Baloo 2','Nunito',sans-serif"}}>
-      <div style={{background:C.card,borderRadius:24,padding:"0 0 24px",maxWidth:460,width:"100%",border:`2px solid ${C.yellow}44`,boxShadow:`0 8px 48px ${C.yellow}22`,maxHeight:"90vh",overflowY:"auto",animation:"popIn 0.3s ease"}}>
-        <div style={{display:"flex",justifyContent:"center",paddingTop:12,marginBottom:4}}>
-          <div style={{width:44,height:5,borderRadius:10,background:isDark()?"rgba(255,255,255,0.15)":C.border||"#dde"}}/>
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.35)",zIndex:999,display:"flex",alignItems:"flex-end",justifyContent:"center",fontFamily:"'Baloo 2','Nunito',sans-serif"}}>
+      <div style={{background:"#FAFBFF",borderRadius:"28px 28px 0 0",padding:"0 0 32px",width:"100%",maxWidth:480,boxShadow:"0 -20px 60px rgba(91,79,232,0.2)",maxHeight:"90vh",overflowY:"auto",animation:"mmSlideUp 0.3s ease"}}>
+        <div style={{paddingTop:12,marginBottom:4}}>
+          <div style={{width:40,height:4,borderRadius:999,background:"rgba(91,79,232,0.1)",margin:"0 auto 10px"}}/>
+          <div style={{display:"flex",gap:5,justifyContent:"center"}}>
+            {[0,1,2,3,4].map(i=>(
+              <div key={i} style={{width:i===0?24:8,height:6,borderRadius:999,background:i===0?"#4BBDF5":"#F0ECFF"}}/>
+            ))}
+          </div>
         </div>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 20px 14px",borderBottom:`1px solid ${C.yellow}22`}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 20px 14px",borderBottom:"1px solid rgba(91,79,232,0.1)"}}>
           <div style={{display:"flex",alignItems:"center",gap:12}}>
             <div style={{width:44,height:44,borderRadius:14,background:`linear-gradient(135deg,${C.yellow},${C.orange})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>🌟</div>
             <div>
@@ -212,7 +217,7 @@ export function DailyQuiz({ child, onClose }) {
               <div style={{fontSize:11,color:C.dim}}>{new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long"})}</div>
             </div>
           </div>
-          <button onClick={onClose} style={{background:isDark()?"rgba(255,255,255,0.08)":C.border||"#eee",border:"none",borderRadius:12,width:36,height:36,fontSize:16,cursor:"pointer",color:textColor(),display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+          <button onClick={onClose} style={{background:"rgba(91,79,232,0.08)",border:"none",borderRadius:12,width:36,height:36,fontSize:16,cursor:"pointer",color:"#5B4FE8",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
         </div>
         <div style={{padding:"16px 20px"}}>
 
@@ -239,28 +244,30 @@ export function DailyQuiz({ child, onClose }) {
             <div style={{background:`${C.yellow}10`,border:`1px solid ${C.yellow}22`,borderRadius:14,padding:"16px 18px",marginBottom:18,lineHeight:1.6,fontSize:19,color:textColor(),fontWeight:800}}>
               📖 {challenge.question}
             </div>
-            <div style={{display:"flex",flexDirection:"column",gap:9,marginBottom:16,animation:shake?"shake 0.4s":"none"}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16,animation:shake?"shake 0.4s":"none"}}>
               {opts.map(({key,val})=>{
                 const isCorrect = key === challenge.correct;
                 const isChosen  = key === chosen;
                 const answered  = chosen !== null;
-                let bg=isDark()?C.card2:"#ffffff", border=C.border, color=textColor();
+                let bg="white", border="2px solid #9B59F525", color="#1A1040", shadow="none";
                 if (answered) {
-                  if (isCorrect){bg=isDark()?"#052e16":"#edfff6";border=C.green;color=isDark()?"#4ade80":"#065f46";}
-                  else if(isChosen){bg=isDark()?"#2d0a0a":"#fff1f1";border=C.red;color=isDark()?"#f87171":"#991b1b";}
+                  if (isCorrect){bg="#E8FFF4";border="2.5px solid #2ECC9A";color="#2ECC9A";shadow="0 0 24px #2ECC9A55";}
+                  else if(isChosen){bg="#FFF0F0";border="2.5px solid #FF6B6B";color="#FF6B6B";}
                 }
                 return (
                   <button key={key} onClick={()=>handleAnswer(key)} disabled={!!chosen}
-                    style={{background:bg,border:`2px solid ${border}`,borderRadius:16,padding:"14px 16px",cursor:chosen?"default":"pointer",textAlign:"left",color,fontWeight:800,fontSize:17,transition:"all 0.2s",animation:answered&&isCorrect&&key===challenge.correct?"superCorrect 0.5s ease":"none",boxShadow:answered&&isCorrect&&key===challenge.correct?`0 0 20px ${C.green}66`:"none"}}>
-                    <span style={{marginRight:10,opacity:0.6,fontFamily:"'Orbitron',sans-serif",fontSize:11}}>{key}</span>{val}
-                    {answered && isCorrect && <span style={{float:"right"}}>✅</span>}
-                    {answered && isChosen && !isCorrect && <span style={{float:"right"}}>❌</span>}
+                    style={{background:bg,border,borderRadius:16,padding:"14px 12px",cursor:chosen?"default":"pointer",textAlign:"center",color,fontWeight:800,fontSize:16,transition:"all 0.2s",boxShadow:shadow,position:"relative",overflow:"hidden"}}>
+                    {!chosen && <div style={{position:"absolute",top:0,left:0,right:0,height:"50%",background:"linear-gradient(180deg,rgba(255,255,255,0.5),transparent)",borderRadius:"16px 16px 0 0",pointerEvents:"none"}}/>}
+                    <div style={{fontSize:10,color:answered&&isCorrect?"#2ECC9A":answered&&isChosen?"#FF6B6B":"#9B59F5",fontFamily:"'Nunito',sans-serif",fontWeight:900,marginBottom:4}}>{key}</div>
+                    {val}
+                    {answered && isCorrect && <div style={{position:"absolute",top:4,right:6,fontSize:14}}>✅</div>}
+                    {answered && isChosen && !isCorrect && <div style={{position:"absolute",top:4,right:6,fontSize:14}}>❌</div>}
                   </button>
                 );
               })}
             </div>
             {chosen && (
-              <div style={{background:`${chosen===challenge.correct?C.green:C.cyan}14`,border:`1px solid ${chosen===challenge.correct?C.green:C.cyan}33`,borderRadius:10,padding:"10px 14px",marginBottom:14,fontSize:12,color:chosen===challenge.correct?C.green:C.cyan}}>
+              <div style={{background:chosen===challenge.correct?"#2ECC9A14":"#FFC84710",border:`1px solid ${chosen===challenge.correct?"#2ECC9A40":"#FFC84730"}`,borderRadius:10,padding:"10px 14px",marginBottom:14,fontSize:12,color:chosen===challenge.correct?"#2ECC9A":"#FFC847"}}>
                 {chosen===challenge.correct ? "🎉 Excellent! " : "💡 Hint: "}{challenge.hint}
               </div>
             )}
@@ -319,12 +326,17 @@ export function DailyPuzzle({ child, onClose }) {
   const typeColors = { riddle:C.purple, number:C.cyan, logic:C.orange, visual:C.yellow };
 
   return (
-    <div style={{position:"fixed",inset:0,background:isDark()?"rgba(4,4,15,0.92)":"rgba(100,80,200,0.22)",backdropFilter:"blur(14px)",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",padding:"20px",fontFamily:"'Baloo 2','Nunito',sans-serif"}}>
-      <div style={{background:C.card,borderRadius:24,padding:"0 0 24px",maxWidth:460,width:"100%",border:`2px solid ${C.purple}44`,boxShadow:`0 8px 48px ${C.purple}22`,maxHeight:"90vh",overflowY:"auto",animation:"popIn 0.3s ease"}}>
-        <div style={{display:"flex",justifyContent:"center",paddingTop:12,marginBottom:4}}>
-          <div style={{width:44,height:5,borderRadius:10,background:isDark()?"rgba(255,255,255,0.15)":C.border||"#dde"}}/>
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.35)",zIndex:999,display:"flex",alignItems:"flex-end",justifyContent:"center",fontFamily:"'Baloo 2','Nunito',sans-serif"}}>
+      <div style={{background:"#FAFBFF",borderRadius:"28px 28px 0 0",padding:"0 0 32px",width:"100%",maxWidth:480,boxShadow:"0 -20px 60px rgba(91,79,232,0.2)",maxHeight:"90vh",overflowY:"auto",animation:"mmSlideUp 0.3s ease"}}>
+        <div style={{paddingTop:12,marginBottom:4}}>
+          <div style={{width:40,height:4,borderRadius:999,background:"rgba(91,79,232,0.1)",margin:"0 auto 10px"}}/>
+          <div style={{display:"flex",gap:5,justifyContent:"center"}}>
+            {[0,1,2,3,4].map(i=>(
+              <div key={i} style={{width:i===0?24:8,height:6,borderRadius:999,background:i===0?"#9B59F5":"#F0ECFF"}}/>
+            ))}
+          </div>
         </div>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 20px 14px",borderBottom:`1px solid ${C.purple}22`}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 20px 14px",borderBottom:"1px solid rgba(91,79,232,0.1)"}}>
           <div style={{display:"flex",alignItems:"center",gap:12}}>
             <div style={{width:44,height:44,borderRadius:14,background:`linear-gradient(135deg,${C.purple},${C.pink})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>🧩</div>
             <div>
@@ -332,7 +344,7 @@ export function DailyPuzzle({ child, onClose }) {
               <div style={{fontSize:11,color:C.dim}}>{new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long"})}</div>
             </div>
           </div>
-          <button onClick={onClose} style={{background:isDark()?"rgba(255,255,255,0.08)":C.border||"#eee",border:"none",borderRadius:12,width:36,height:36,fontSize:16,cursor:"pointer",color:textColor(),display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+          <button onClick={onClose} style={{background:"rgba(91,79,232,0.08)",border:"none",borderRadius:12,width:36,height:36,fontSize:16,cursor:"pointer",color:"#5B4FE8",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
         </div>
         <div style={{padding:"16px 20px"}}>
 
@@ -361,25 +373,38 @@ export function DailyPuzzle({ child, onClose }) {
             </div>
 
             <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:14, color:textColor(),marginBottom:10}}>{puzzle.title}</div>
-            <div style={{background:isDark()?`${C.purple}12`:"#f5f0ff",border:`2px solid ${C.purple}33`,borderRadius:16,padding:"16px 18px",marginBottom:18,lineHeight:1.8,fontSize:16,color:textColor(),fontWeight:700}}>
+            <div style={{background:"#9B59F510",border:"2px solid #9B59F530",borderRadius:20,padding:"16px 18px",marginBottom:18,lineHeight:1.8,fontSize:16,color:"#1A1040",fontWeight:700}}>
               🧩 {puzzle.description}
             </div>
 
             {result === null && (
               <>
-                <div style={{marginBottom:12}}>
+                <div style={{display:"flex",justifyContent:"center",marginBottom:12}}>
                   <input value={answer} onChange={e=>setAnswer(e.target.value)}
                     onKeyDown={e=>e.key==="Enter"&&handleSubmit()}
-                    placeholder="Type your answer here..."
-                    style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`2px solid ${C.purple}44`,borderRadius:12,padding:"12px 16px",color:textColor(),fontSize:14,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",outline:"none"}}
+                    placeholder="?"
+                    style={{width:64,height:64,borderRadius:14,background:"#9B59F518",border:"2.5px dashed #9B59F5",animation:"mmPulse 1.5s infinite",fontSize:28,color:"#9B59F5",fontFamily:"'Fredoka One',cursive",textAlign:"center",boxSizing:"border-box",outline:"none",display:"block"}}
                   />
                 </div>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:12}}>
+                  {[1,2,3,4,5,6,7,8,9,"0","⌫","✓"].map((k,i)=>(
+                    <button key={i} onClick={()=>{
+                      if(k==="⌫") setAnswer(a=>a.slice(0,-1));
+                      else if(k==="✓") handleSubmit();
+                      else setAnswer(a=>a+String(k));
+                    }} style={{
+                      background:"white",border:"1.5px solid #9B59F525",borderRadius:14,
+                      padding:"12px 0",fontSize:16,fontWeight:900,color:k==="✓"?"#2ECC9A":k==="⌫"?"#FF6B6B":"#1A1040",
+                      cursor:"pointer",boxShadow:"0 2px 8px rgba(91,79,232,0.12)",fontFamily:"'Nunito',sans-serif"
+                    }}>{k}</button>
+                  ))}
+                </div>
                 <div style={{display:"flex",gap:10,marginBottom:10}}>
-                  <Btn color={C.purple} style={{flex:2}} onClick={handleSubmit}>🚀 SUBMIT</Btn>
-                  <button onClick={()=>setShowHint(!showHint)} style={{flex:1,background:`${C.yellow}18`,border:`1px solid ${C.yellow}44`,borderRadius:12,color:C.yellow,fontSize:12,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",padding:"8px"}}>💡 HINT</button>
+                  <Btn color="#9B59F5" style={{flex:2}} onClick={handleSubmit}>🚀 SUBMIT</Btn>
+                  <button onClick={()=>setShowHint(!showHint)} style={{flex:1,background:"#FFC84718",border:"1.5px solid #FFC84740",borderRadius:12,color:"#FFC847",fontSize:12,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",padding:"8px"}}>💡 HINT</button>
                 </div>
                 {showHint && puzzle.hint && (
-                  <div style={{background:`${C.yellow}10`,border:`1px solid ${C.yellow}33`,borderRadius:10,padding:"10px 14px",fontSize:12,color:C.yellow}}>
+                  <div style={{background:"#FFC84710",border:"1.5px solid #FFC84730",borderRadius:14,padding:"10px 14px",fontSize:12,color:"#FFC847",fontWeight:700}}>
                     💡 {puzzle.hint}
                   </div>
                 )}

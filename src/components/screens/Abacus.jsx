@@ -77,12 +77,12 @@ export function Abacus({ onBack, child }) {
   return (
     <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Baloo 2','Nunito',sans-serif", position:"relative" }}>
       <Starfield n={isDark()?20:6}/>
-      <div style={{ position:"relative", zIndex:2, background:`linear-gradient(135deg,${C.purple}22,${C.cyan}0a)`, borderBottom:`3px solid ${C.purple}44`, padding:"14px 18px" }}>
+      <div style={{ position:"relative", zIndex:2, background:"linear-gradient(135deg,#FFC84720,#FF6B6B10)", borderBottom:"1.5px solid #FFC84730", padding:"14px 18px" }}>
         <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:10 }}>
-          <BackBtn onClick={onBack} color={C.purple}/>
-          <div style={{width:44,height:44,borderRadius:14,background:`linear-gradient(135deg,${C.purple},${C.cyan})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🧮</div>
+          <BackBtn onClick={onBack} color="#FFC847"/>
+          <div style={{width:44,height:44,borderRadius:14,background:"linear-gradient(135deg,#FFC847,#FF6B6B)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🧮</div>
           <div>
-            <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:11, color:C.purple, letterSpacing:2 }}>SPACE ABACUS</div>
+            <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:11, color:"#FFC847", letterSpacing:2 }}>SPACE ABACUS</div>
             <div style={{ fontSize:16, fontWeight:900, color:textColor() }}>Level {lv.level} — {lv.title}</div>
             <div style={{ fontSize:11, color:C.dim }}>{unlockedLvl}/30 levels unlocked</div>
           </div>
@@ -94,7 +94,7 @@ export function Abacus({ onBack, child }) {
             const isCurrent  = level === i;
             return (
               <button key={i} onClick={() => isUnlocked && goLevel(i)}
-                style={{ flexShrink:0, width:36, height:36, background: isCurrent ? `linear-gradient(135deg,${C.purple},${C.cyan})` : isUnlocked ? C.card : isDark()?"#060614":"#f5f0ff", border:`2px solid ${isCurrent ? C.cyan : isUnlocked ? C.purple+"44" : isDark()?"#0c0c20":C.border||"#ddd"}`, borderRadius:12, color: isCurrent ? "white" : isUnlocked ? textColor() : C.dim, fontSize:9, fontFamily:"'Orbitron',sans-serif", cursor: isUnlocked ? "pointer" : "not-allowed", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1 }}>
+                style={{ flexShrink:0, width:36, height:36, background: isCurrent ? "linear-gradient(135deg,#FFC847,#FF6B6B)" : isUnlocked ? "white" : "#F0ECFF", border:`2px solid ${isCurrent ? "#FFC847" : isUnlocked ? "#FFC84744" : "rgba(91,79,232,0.12)"}`, borderRadius:12, color: isCurrent ? "white" : isUnlocked ? "#1A1040" : "#9890C4", fontSize:9, fontFamily:"'Orbitron',sans-serif", cursor: isUnlocked ? "pointer" : "not-allowed", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1 }}>
                 {isUnlocked ? <span>L{al.level}</span> : <span style={{fontSize:11}}>🔒</span>}
               </button>
             );
@@ -103,11 +103,12 @@ export function Abacus({ onBack, child }) {
       </div>
 
       <div style={{ position:"relative", zIndex:2, padding:18 }}>
-        <Card color={C.purple} style={{ textAlign:"center", marginBottom:14 }}>
-          <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:10, color:C.dim, letterSpacing:2, marginBottom:4 }}>
+        <Card color="#FFC847" style={{ textAlign:"center", marginBottom:14 }}>
+          <div style={{ fontSize:28, animation:"mmFloat 2.5s ease-in-out infinite", marginBottom:4 }}>🧮</div>
+          <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:10, color:"#9890C4", letterSpacing:2, marginBottom:4 }}>
             LEVEL {lv.level} · {lv.title} · Q{pi+1}/{lv.probs.length}
           </div>
-          <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:18, fontWeight:900, color:textColor() }}>{prob.q}</div>
+          <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:22, color:"#1A1040" }}>{prob.q}</div>
           {/* Progress bar within level */}
           <div style={{ marginTop:8, background:"rgba(255,255,255,0.05)", borderRadius:5, height:4, overflow:"hidden" }}>
             <div style={{ width:`${(pi/lv.probs.length)*100}%`, height:"100%", background:`linear-gradient(90deg,${C.purple},${C.cyan})`, borderRadius:5 }}/>

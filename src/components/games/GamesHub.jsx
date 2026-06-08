@@ -249,14 +249,14 @@ export function GamesHub({ child, onBack }) {
   return (
     <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),position:"relative"}}>
       <Starfield n={30}/>
-      <div style={{position:"relative",zIndex:2,background:`linear-gradient(135deg,${C.cyan}22,${C.purple}0a)`,borderBottom:`3px solid ${C.cyan}44`,padding:"16px 18px"}}>
+      <div style={{position:"relative",zIndex:2,background:"linear-gradient(135deg,#4BBDF520,#5B4FE810)",borderBottom:"1.5px solid #4BBDF520",padding:"16px 18px"}}>
         <div style={{display:"flex",alignItems:"center",gap:14}}>
-          <BackBtn onClick={onBack} color={C.cyan}/>
-          <div style={{width:44,height:44,borderRadius:14,background:`linear-gradient(135deg,${C.cyan},${C.purple})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🎮</div>
+          <BackBtn onClick={onBack} color="#4BBDF5"/>
+          <div style={{width:44,height:44,borderRadius:14,background:"linear-gradient(135deg,#4BBDF5,#5B4FE8)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🎮</div>
           <div>
-            <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:11,color:C.cyan,letterSpacing:2}}>GAMES HUB</div>
-            <div style={{fontSize:16,fontWeight:900,color:textColor()}}>Play & Earn XP</div>
-            <div style={{fontSize:11,color:C.dim}}>8 mini-games</div>
+            <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:11,color:"#4BBDF5",letterSpacing:2}}>GAMES HUB</div>
+            <div style={{fontFamily:"'Fredoka One',cursive",fontSize:18,color:"#1A1040"}}>Play & Earn XP</div>
+            <div style={{fontSize:11,color:"#9890C4"}}>8 mini-games</div>
           </div>
         </div>
       </div>
@@ -264,17 +264,19 @@ export function GamesHub({ child, onBack }) {
         <div style={{display:"flex",flexDirection:"column",gap:12}}>
           {GAME_LIST.map(g=>(
             <button key={g.id} onClick={()=>setActiveGame(g.id)} style={{
-              background:isDark()?`linear-gradient(135deg,${g.color}16,${g.color}08)`:C.card,
-              border:`2px solid ${g.color}${isDark()?"44":"55"}`, borderRadius:20, padding:"18px 16px",
+              background:"white",
+              border:`1.5px solid ${g.color}25`, borderRadius:20, padding:"16px 16px",
               cursor:"pointer", display:"flex", alignItems:"center", gap:14,
-              boxShadow:`0 4px 18px ${g.color}${isDark()?"22":"18"}`, textAlign:"left",
+              boxShadow:`0 4px 16px ${g.color}22, 0 2px 6px ${g.color}14`, textAlign:"left",
+              position:"relative", overflow:"hidden",
             }}>
-              <div style={{width:56,height:56,borderRadius:15,background:`${g.color}22`,border:`2px solid ${g.color}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,flexShrink:0}}>{g.icon}</div>
+              <div style={{position:"absolute",left:0,top:0,bottom:0,width:3,background:`linear-gradient(180deg,${g.color},${g.color}66)`,borderRadius:"20px 0 0 20px"}}/>
+              <div style={{width:52,height:52,borderRadius:14,background:`${g.color}18`,border:`1.5px solid ${g.color}33`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,flexShrink:0}}>{g.icon}</div>
               <div style={{flex:1}}>
-                <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:15,fontWeight:900,color:g.color,marginBottom:4}}>{g.title}</div>
-                <div style={{fontSize:13,color:C.dim,fontWeight:600}}>{g.desc}</div>
+                <div style={{fontFamily:"'Nunito',sans-serif",fontSize:14,fontWeight:900,color:"#1A1040",marginBottom:3}}>{g.title}</div>
+                <div style={{fontSize:12,color:"#9890C4",fontWeight:600}}>{g.desc}</div>
               </div>
-              <div style={{color:g.color,fontSize:22}}>›</div>
+              <div style={{width:32,height:32,borderRadius:999,background:`${g.color}15`,border:`1.5px solid ${g.color}30`,display:"flex",alignItems:"center",justifyContent:"center",color:g.color,fontSize:16}}>›</div>
             </button>
           ))}
         </div>

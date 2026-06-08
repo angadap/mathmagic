@@ -248,18 +248,20 @@ export function AbacusRod({ count, setCount, color, label }) {
         position:"relative", gap:3, boxShadow:`0 0 14px ${color}18`,
       }}>
         <div style={{ position:"absolute", top:8, bottom:8, width:5, background:`${color}44`, borderRadius:3, left:"50%", transform:"translateX(-50%)" }}/>
-        {Array.from({ length:count }).map((_, i) => (
+        {Array.from({ length:9 }).map((_, i) => (
           <div key={i} style={{
             width:40, height:14,
-            background:`linear-gradient(90deg,${color},${color}bb)`,
-            borderRadius:8, boxShadow:`0 0 6px ${color}88`, zIndex:1,
+            background: i >= (9-count) ? "linear-gradient(135deg,#FFC847,#FF6B6B)" : "#F0ECFF",
+            border: i >= (9-count) ? "1px solid #FFC847" : "1px solid rgba(91,79,232,0.12)",
+            boxShadow: i >= (9-count) ? "0 2px 6px #FFC84744" : "none",
+            borderRadius:8, zIndex:1,
           }}/>
         ))}
       </div>
       <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:22, color, textShadow:`0 0 10px ${color}` }}>{count}</div>
       <div style={{ display:"flex", gap:7 }}>
-        <button onClick={() => setCount(c => Math.max(0, c-1))} style={{ width:32, height:32, background:"#2a0a0a", border:`1.5px solid ${C.red}`, borderRadius:9, color:"#f87171", fontSize:18, cursor:"pointer", fontWeight:900 }}>−</button>
-        <button onClick={() => setCount(c => Math.min(9, c+1))} style={{ width:32, height:32, background:"#0a2a0a", border:`1.5px solid ${C.green}`, borderRadius:9, color:"#4ade80", fontSize:18, cursor:"pointer", fontWeight:900 }}>+</button>
+        <button onClick={() => setCount(c => Math.max(0, c-1))} style={{ width:32, height:32, background:"#FF6B6B15", border:"1.5px solid #FF6B6B44", borderRadius:9, color:"#FF6B6B", fontSize:18, cursor:"pointer", fontWeight:900 }}>−</button>
+        <button onClick={() => setCount(c => Math.min(9, c+1))} style={{ width:32, height:32, background:"#FFC84715", border:"1.5px solid #FFC84744", borderRadius:9, color:"#FFC847", fontSize:18, cursor:"pointer", fontWeight:900 }}>+</button>
       </div>
     </div>
   );
