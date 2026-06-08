@@ -21,7 +21,7 @@ export function DonutChart({ pct, color, size=80, strokeW=10, label, sublabel })
   return (
     <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4 }}>
       <svg width={size} height={size} style={{ transform:"rotate(-90deg)" }}>
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke={isDark()?"rgba(255,255,255,0.08)":"rgba(0,0,0,0.07)"} strokeWidth={strokeW}/>
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke={`${color}18`} strokeWidth={strokeW}/>
         <circle cx={cx} cy={cy} r={r} fill="none" stroke={color} strokeWidth={strokeW}
           strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
           style={{ transition:"stroke-dasharray 1.2s ease", filter:`drop-shadow(0 0 5px ${color}88)` }}/>
@@ -188,23 +188,23 @@ export function ParentDash({ child, onBack }) {
     <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Baloo 2','Nunito',sans-serif", paddingBottom:50 }}>
 
       {/* ── Hero Header ── */}
-      <div style={{ background:`linear-gradient(135deg,${C.purple}33,${C.pink}1a,${C.cyan}0a)`, borderBottom:`2px solid ${C.purple}33`, padding:"18px 18px 14px", position:"relative", overflow:"hidden" }}>
+      <div style={{ background:"linear-gradient(135deg,#FF5FA020,#9B59F515)", borderBottom:"1.5px solid #FF5FA018", padding:"18px 18px 14px", position:"relative", overflow:"hidden" }}>
         <div style={{ position:"absolute", top:-30, right:-20, width:120, height:120, borderRadius:"50%", background:`radial-gradient(circle,${C.purple}22,transparent 70%)`, pointerEvents:"none" }}/>
         <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:14 }}>
           <BackBtn onClick={onBack} color={C.pink}/>
           <div style={{ flex:1 }}>
-            <div style={{ fontSize:10, color:C.pink, fontWeight:900, letterSpacing:2, fontFamily:"'Orbitron',sans-serif" }}>PARENT DASHBOARD</div>
+            <div style={{ fontSize:10, color:"#FF5FA0", fontWeight:900, letterSpacing:2, fontFamily:"'Nunito',sans-serif" }}>PARENT DASHBOARD</div>
             <div style={{ fontSize:19, fontWeight:900, color:textColor() }}>📊 {child.name}'s Report Card</div>
           </div>
           {/* Grade badge */}
-          <div style={{ width:54, height:54, borderRadius:16, background:`${grade.color}22`, border:`2.5px solid ${grade.color}66`, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", boxShadow:`0 0 18px ${grade.color}44` }}>
-            <div style={{ fontSize:20, fontWeight:900, color:grade.color, fontFamily:"'Orbitron',sans-serif", lineHeight:1 }}>{grade.label}</div>
-            <div style={{ fontSize:8, color:C.dim }}>GRADE</div>
+          <div style={{ width:52, height:52, borderRadius:14, background:"#2ECC9A18", border:"2px solid #2ECC9A40", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center" }}>
+            <div style={{ fontSize:20, fontWeight:900, color:grade.color, fontFamily:"'Fredoka One',cursive", lineHeight:1 }}>{grade.label}</div>
+            <div style={{ fontSize:8, color:"#9890C4" }}>GRADE</div>
           </div>
         </div>
 
         {/* Child info strip */}
-        <div style={{ display:"flex", alignItems:"center", gap:12, background:isDark()?"rgba(255,255,255,0.05)":"rgba(0,0,0,0.04)", borderRadius:16, padding:"10px 14px" }}>
+        <div style={{ display:"flex", alignItems:"center", gap:12, background:"rgba(255,255,255,0.7)", backdropFilter:"blur(10px)", borderRadius:16, padding:"10px 14px" }}>
           <div style={{ width:46, height:46, borderRadius:14, background:`linear-gradient(135deg,${C.purple},${C.pink})`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:26, flexShrink:0 }}>{child.avatar}</div>
           <div style={{ flex:1 }}>
             <div style={{ fontSize:15, fontWeight:900, color:textColor() }}>{child.name}</div>
@@ -241,10 +241,10 @@ export function ParentDash({ child, onBack }) {
                 {e:"🎯",v:`${acc}%`,l:"Accuracy",c:C.green},
                 {e:"💎",v:child.xp||0,l:"XP",c:C.purple},
               ].map((s,i)=>(
-                <div key={i} style={{ background:C.card, border:`1.5px solid ${s.c}44`, borderRadius:16, padding:"11px 5px", textAlign:"center", boxShadow:`0 2px 12px ${s.c}14` }}>
+                <div key={i} style={{ background:"white", border:`1.5px solid ${s.c}40`, borderRadius:16, padding:"11px 5px", textAlign:"center", boxShadow:`0 4px 14px ${s.c}18, inset 0 1px 0 rgba(255,255,255,0.8)` }}>
                   <div style={{ fontSize:20 }}>{s.e}</div>
-                  <div style={{ fontSize:15, fontWeight:900, color:textColor(), marginTop:2 }}>{s.v}</div>
-                  <div style={{ fontSize:9, color:C.dim, fontWeight:700 }}>{s.l}</div>
+                  <div style={{ fontSize:15, fontWeight:900, color:"#1A1040", marginTop:2 }}>{s.v}</div>
+                  <div style={{ fontSize:9, color:"#9890C4", fontWeight:700 }}>{s.l}</div>
                 </div>
               ))}
             </div>
@@ -262,34 +262,34 @@ export function ParentDash({ child, onBack }) {
             {/* Strengths & Weaknesses quick row */}
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:14 }}>
               {/* Strengths */}
-              <div style={{ background:`${C.green}10`, border:`2px solid ${C.green}44`, borderRadius:18, padding:"14px 12px" }}>
-                <div style={{ fontSize:11, fontWeight:900, color:C.green, marginBottom:10, fontFamily:"'Orbitron',sans-serif" }}>💪 STRONG</div>
+              <div style={{ background:"#2ECC9A0a", border:"2px solid #2ECC9A30", borderRadius:18, padding:"14px 12px" }}>
+                <div style={{ fontSize:11, fontWeight:900, color:"#2ECC9A", marginBottom:10, fontFamily:"'Nunito',sans-serif" }}>💪 STRONG</div>
                 {strengths.length === 0
-                  ? <div style={{ fontSize:11, color:C.dim }}>Keep practising to unlock strengths!</div>
+                  ? <div style={{ fontSize:11, color:"#9890C4" }}>Keep practising to unlock strengths!</div>
                   : strengths.slice(0,3).map((l,i)=>(
                     <div key={i} style={{ display:"flex", alignItems:"center", gap:6, marginBottom:6 }}>
-                      <span style={{ fontSize:14 }}>{l.emoji||l.icon}</span>
+                      <span style={{ fontSize:14 }}>✅</span>
                       <div style={{ flex:1 }}>
-                        <div style={{ fontSize:11, fontWeight:800, color:textColor(), lineHeight:1.2 }}>{l.title}</div>
-                        <div style={{ fontSize:9, color:C.green }}>{l.lacc}% correct</div>
+                        <div style={{ fontSize:11, fontWeight:800, color:"#1A1040", lineHeight:1.2 }}>{l.title}</div>
                       </div>
+                      <div style={{ fontSize:9, color:"#2ECC9A", fontWeight:800 }}>{l.lacc}%+</div>
                     </div>
                   ))
                 }
               </div>
 
               {/* Weaknesses */}
-              <div style={{ background:`${C.red}0e`, border:`2px solid ${C.red}33`, borderRadius:18, padding:"14px 12px" }}>
-                <div style={{ fontSize:11, fontWeight:900, color:C.orange, marginBottom:10, fontFamily:"'Orbitron',sans-serif" }}>⚠️ NEEDS WORK</div>
+              <div style={{ background:"#FF6B6B07", border:"2px solid #FF6B6B25", borderRadius:18, padding:"14px 12px" }}>
+                <div style={{ fontSize:11, fontWeight:900, color:"#FF6B6B", marginBottom:10, fontFamily:"'Nunito',sans-serif" }}>⚠️ NEEDS WORK</div>
                 {weaknesses.length === 0
-                  ? <div style={{ fontSize:11, color:C.dim }}>{totalQ>0?"All topics looking good! 🎉":"No data yet"}</div>
+                  ? <div style={{ fontSize:11, color:"#9890C4" }}>{totalQ>0?"All topics looking good! 🎉":"No data yet"}</div>
                   : weaknesses.slice(0,3).map((l,i)=>(
                     <div key={i} style={{ display:"flex", alignItems:"center", gap:6, marginBottom:6 }}>
-                      <span style={{ fontSize:14 }}>{l.emoji||l.icon}</span>
+                      <span style={{ fontSize:14 }}>📌</span>
                       <div style={{ flex:1 }}>
-                        <div style={{ fontSize:11, fontWeight:800, color:textColor(), lineHeight:1.2 }}>{l.title}</div>
-                        <div style={{ fontSize:9, color:C.orange }}>{l.lacc}% correct</div>
+                        <div style={{ fontSize:11, fontWeight:800, color:"#1A1040", lineHeight:1.2 }}>{l.title}</div>
                       </div>
+                      <div style={{ fontSize:9, color:"#FF6B6B", fontWeight:800 }}>Below 60%</div>
                     </div>
                   ))
                 }

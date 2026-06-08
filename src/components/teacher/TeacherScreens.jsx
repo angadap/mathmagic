@@ -337,7 +337,7 @@ export function TeacherDashboard({ teacher, onLogout }) {
 
   // ── Header ─────────────────────────────────────────────────────
   const Header = () => (
-    <div style={{background:C.card, borderBottom:`1px solid ${C.yellow}22`, padding:"13px 18px", display:"flex", justifyContent:"space-between", alignItems:"center", position:"sticky", top:0, zIndex:20, backdropFilter:"blur(20px)"}}>
+    <div style={{background:"linear-gradient(135deg,#FFC84715,#FF6B6B08)", borderBottom:"1.5px solid #FFC84720", padding:"13px 18px", display:"flex", justifyContent:"space-between", alignItems:"center", position:"sticky", top:0, zIndex:20, backdropFilter:"blur(20px)"}}>
       <div style={{flex:1, minWidth:0}}>
         <div style={{fontSize:15, fontWeight:900, color:textColor(), whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>
           👩‍🏫 {teacher.name}
@@ -454,12 +454,15 @@ export function TeacherDashboard({ teacher, onLogout }) {
           {students.map((s, i) => {
             const isTop = i === 0;
             const expanded = selStudent?.id === s.id;
+            const sAccent = (s.xp||0) > 200 ? "#2ECC9A" : (s.xp||0) >= 50 ? "#FFC847" : "#FF6B6B";
+            const sIcon = (s.xp||0) > 200 ? "⭐" : (s.xp||0) >= 50 ? "📖" : "⚠️";
             return (
-              <div key={s.id} style={{background:C.card, border:`1.5px solid ${isTop?C.yellow+"55":C.purple+"22"}`, borderRadius:16, padding:"12px 14px", marginBottom:8, transition:"all 0.2s"}}>
+              <div key={s.id} style={{background:"white", border:`1.5px solid ${sAccent}33`, borderRadius:16, padding:"12px 14px 12px 18px", marginBottom:8, position:"relative", overflow:"hidden", transition:"all 0.2s"}}>
+                <div style={{position:"absolute", left:0, top:0, bottom:0, width:3, background:`linear-gradient(180deg,${sAccent},${sAccent}66)`, borderRadius:"16px 0 0 16px"}}/>
                 <div style={{display:"flex", alignItems:"center", gap:12}}>
                   {/* Rank badge */}
-                  <div style={{width:38, height:38, borderRadius:12, background:isTop?`${C.yellow}22`:`${C.purple}18`, border:`2px solid ${isTop?C.yellow+"66":C.purple+"33"}`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
-                    {isTop ? <span style={{fontSize:16}}>🏆</span> : <span style={{fontFamily:"'Orbitron',sans-serif", fontSize:11, color:C.purple, fontWeight:900}}>{String(s.roll_no||i+1).padStart(2,"0")}</span>}
+                  <div style={{width:38, height:38, borderRadius:12, background:`${sAccent}18`, border:`2px solid ${sAccent}44`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, fontSize:18}}>
+                    {sIcon}
                   </div>
 
                   {/* Info */}
@@ -630,6 +633,34 @@ export function TeacherDashboard({ teacher, onLogout }) {
   return (
     <div style={{minHeight:"100vh", background:C.bg, fontFamily:"'Baloo 2','Nunito',sans-serif", color:textColor(), overflowY:"auto"}}>
       <Header/>
+      <div style={{padding:"12px 16px", background:"white", borderBottom:"1px solid rgba(91,79,232,0.08)"}}>
+        <div style={{display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:8, marginBottom:10}}>
+          {[
+            {e:"⭐",v:avgXP,l:"Avg XP",c:"#2ECC9A"},
+            {e:"🔥",v:allStudents.filter(st=>(st.streak_days||0)>=3).length,l:"On Streak",c:"#FF6B6B"},
+            {e:"👥",v:totalStudents,l:"Students",c:"#4BBDF5"},
+          ].map((m,i)=>(
+            <div key={i} style={{background:"white", border:`1.5px solid ${m.c}30`, borderRadius:14, padding:"10px 8px", textAlign:"center", boxShadow:`0 4px 12px ${m.c}18`}}>
+              <div style={{fontSize:18}}>{m.e}</div>
+              <div style={{fontFamily:"'Fredoka One',cursive", fontSize:18, color:m.c}}>{m.v}</div>
+              <div style={{fontSize:9, color:"#9890C4", fontWeight:700}}>{m.l}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8}}>
+          {[
+            {e:"📚",l:"Questions",c:"#9B59F5",act:()=>canManageContent&&setActiveTab("content")},
+            {e:"📋",l:"Assign",c:"#4BBDF5",act:()=>{}},
+            {e:"📊",l:"Reports",c:"#2ECC9A",act:()=>canViewAnalytics&&setActiveTab("analytics")},
+            {e:"🔔",l:"Notify",c:"#FF6B6B",act:()=>{}},
+          ].map((a,i)=>(
+            <button key={i} onClick={a.act} style={{background:`${a.c}12`, border:`1.5px solid ${a.c}30`, borderRadius:14, padding:"10px 6px", textAlign:"center", cursor:"pointer"}}>
+              <div style={{fontSize:20}}>{a.e}</div>
+              <div style={{fontSize:9, color:a.c, fontWeight:800, fontFamily:"'Nunito',sans-serif"}}>{a.l}</div>
+            </button>
+          ))}
+        </div>
+      </div>
       {tabs.length > 1 && <TabBar/>}
 
       <div style={{padding:"16px 18px", maxWidth:620, margin:"0 auto"}}>

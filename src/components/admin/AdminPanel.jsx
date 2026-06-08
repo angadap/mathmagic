@@ -124,7 +124,7 @@ export function AdminPanel({ onBack }) {
   );
 
   const Row = ({accent,left,right,onClick,actions}) => (
-    <div style={{background:C.card,border:`1px solid ${accent}22`,borderRadius:12,padding:"11px 14px",marginBottom:8,display:"flex",alignItems:"center",gap:10}}>
+    <div style={{background:"white",border:`1.5px solid ${accent}22`,borderRadius:14,padding:"12px 14px",marginBottom:8,display:"flex",alignItems:"center",gap:10,boxShadow:`0 2px 8px ${accent}12`}}>
       <div style={{flex:1,cursor:onClick?"pointer":"default"}} onClick={onClick}>{left}</div>
       <div style={{display:"flex",gap:6,alignItems:"center",flexShrink:0}}>{right||actions}</div>
     </div>
@@ -755,21 +755,35 @@ export function AdminPanel({ onBack }) {
   function renderTopBar() {
     const activeTab = TABS.find(t=>t.id===tab);
     return (
-      <div style={{background:isDark()?"rgba(4,4,15,0.98)":C.card,borderBottom:"2px solid rgba(124,111,224,0.2)",flexShrink:0}}>
+      <div style={{background:"white",borderBottom:"1.5px solid rgba(91,79,232,0.1)",flexShrink:0}}>
         {/* Header row */}
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px"}}>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
-            <button onClick={onBack} style={{background:"none",border:"none",color:C.dim,cursor:"pointer",fontSize:20,lineHeight:1,padding:"0 2px"}}>‹</button>
-            <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:12,color:C.red,letterSpacing:1}}>🔐 ADMIN</div>
+            <button onClick={onBack} style={{background:"none",border:"none",color:"#9890C4",cursor:"pointer",fontSize:20,lineHeight:1,padding:"0 2px"}}>‹</button>
+            <div style={{fontFamily:"'Fredoka One',cursive",fontSize:14,color:"#5B4FE8",letterSpacing:0.5}}>🔐 ADMIN</div>
           </div>
-          <div style={{fontSize:12,fontWeight:800,color:textColor()}}>{activeTab?.icon} {activeTab?.label}</div>
-          <button onClick={onBack} style={{background:`${C.red}22`,border:`1px solid ${C.red}44`,borderRadius:10,padding:"6px 12px",color:C.red,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:9,fontWeight:900}}>LOGOUT</button>
+          <div style={{fontSize:12,fontWeight:800,color:"#1A1040"}}>{activeTab?.icon} {activeTab?.label}</div>
+          <button onClick={onBack} style={{background:"#FF6B6B12",border:"1px solid #FF6B6B44",borderRadius:10,padding:"6px 12px",color:"#FF6B6B",cursor:"pointer",fontFamily:"'Nunito',sans-serif",fontSize:10,fontWeight:900}}>LOGOUT</button>
+        </div>
+        {/* Platform overview */}
+        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,padding:"0 14px 10px"}}>
+          {[
+            {e:"🏫",v:schools.length,l:"Schools",c:"#9B59F5"},
+            {e:"👨‍🏫",v:teachers.length,l:"Teachers",c:"#4BBDF5"},
+            {e:"👧",v:students.length,l:"Students",c:"#2ECC9A"},
+          ].map((m,i)=>(
+            <div key={i} style={{background:`linear-gradient(135deg,${m.c}14,${m.c}06)`,border:`1.5px solid ${m.c}30`,borderRadius:12,padding:"8px 6px",textAlign:"center"}}>
+              <div style={{fontSize:16}}>{m.e}</div>
+              <div style={{fontFamily:"'Fredoka One',cursive",fontSize:16,color:m.c}}>{m.v}</div>
+              <div style={{fontSize:8,color:"#9890C4",fontWeight:700}}>{m.l}</div>
+            </div>
+          ))}
         </div>
         {/* Tab strip */}
         <div style={{display:"flex",overflowX:"auto",padding:"0 10px 10px",gap:6,scrollbarWidth:"none"}}>
           {TABS.map(t=>(
-            <button key={t.id} onClick={()=>switchTab(t.id)} style={{background:tab===t.id?`${t.color}22`:"transparent",border:`1.5px solid ${tab===t.id?t.color+"66":"transparent"}`,borderRadius:12,padding:"7px 12px",color:tab===t.id?t.color:C.dim,cursor:"pointer",fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:700,whiteSpace:"nowrap",transition:"all 0.2s",display:"flex",alignItems:"center",gap:5,flexShrink:0}}>
-              {t.icon} {t.label}{t.count!==null?<span style={{background:tab===t.id?`${t.color}33`:"rgba(255,255,255,0.08)",borderRadius:8,padding:"1px 6px",fontSize:10}}>{t.count}</span>:null}
+            <button key={t.id} onClick={()=>switchTab(t.id)} style={{background:tab===t.id?`${t.color}20`:"#F5F3FF",border:`1.5px solid ${tab===t.id?t.color+"66":"transparent"}`,borderRadius:12,padding:"7px 12px",color:tab===t.id?t.color:"#9890C4",cursor:"pointer",fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:tab===t.id?800:600,whiteSpace:"nowrap",transition:"all 0.2s",display:"flex",alignItems:"center",gap:5,flexShrink:0}}>
+              {t.icon} {t.label}{t.count!==null?<span style={{background:tab===t.id?`${t.color}33`:"rgba(91,79,232,0.1)",borderRadius:8,padding:"1px 6px",fontSize:10}}>{t.count}</span>:null}
             </button>
           ))}
         </div>
