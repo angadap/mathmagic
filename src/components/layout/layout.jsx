@@ -9,7 +9,7 @@ export function GlobalStyles() {
     if (!document.getElementById("mm-fonts")) {
       const l = document.createElement("link");
       l.id = "mm-fonts";
-      l.href = "https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@500;700;800;900&display=swap";
+      l.href = "https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&family=DM+Mono:wght@400;500&family=Orbitron:wght@700;900&family=Baloo+2:wght@500;600;700;800&display=swap";
       l.rel = "stylesheet";
       document.head.appendChild(l);
     }
@@ -54,10 +54,10 @@ export function GlobalStyles() {
         @keyframes pinPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1);box-shadow:0 0 0 5px rgba(255,184,0,.2)}}
         *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
         body{background:${C.bg};color:${textColor()}}
-        body,*{font-family:'Baloo 2','Nunito',sans-serif;}
-        input,textarea,select{font-family:'Baloo 2','Nunito',sans-serif;outline:none;color:${textColor()};background:transparent}
-        input::placeholder,textarea::placeholder{color:${C.dim}}
-        select option{background:${C.card};color:${textColor()}}
+        body,*{font-family:'Nunito','Baloo 2',sans-serif;}
+        input,textarea,select{font-family:'Nunito','Baloo 2',sans-serif;outline:none;color:#1A1040;background:transparent}
+        input::placeholder,textarea::placeholder{color:#9890C4}
+        select option{background:#FFFFFF;color:#1A1040}
         ::-webkit-scrollbar{width:3px}
         ::-webkit-scrollbar-thumb{background:${C.cyan};border-radius:4px}
         .mm-btn-press:active{transform:translateY(4px) scale(.92)!important;transition:transform 0.07s,box-shadow 0.07s!important}
@@ -100,7 +100,7 @@ export function MuteBtn() {
       onClick={() => { setMuted(SFX.toggleMute()); }}
       title={muted ? "Unmute" : "Mute"}
       style={{ background:"none", border:"none", cursor:"pointer", fontSize:18,
-               color: muted ? C.dim : C.cyan, padding:"4px 6px", lineHeight:1,
+               color: muted ? "#9890C4" : "#4BBDF5", padding:"4px 6px", lineHeight:1,
                transition:"color 0.2s" }}>
       {muted ? "🔇" : "🔊"}
     </button>
@@ -111,11 +111,11 @@ export function MuteBtn() {
 export function Mascot({ message, mood="happy" }) {
   const faces = { happy:"🚀", thinking:"🤔", celebrate:"🎉", sleep:"😴", cheer:"⭐" };
   return (
-    <div style={{display:"flex",alignItems:"center",gap:12,background:C.card,border:`1.5px solid ${C.cyan}33`,borderRadius:16,padding:"10px 14px",marginBottom:12}}>
-      <div style={{fontSize:32,animation:"floatUp 2s ease-in-out infinite",flexShrink:0}}>{faces[mood]||faces.happy}</div>
-      <div style={{background:C.card2,borderRadius:12,padding:"8px 12px",flex:1,position:"relative"}}>
-        <div style={{fontSize:13,color:textColor(),lineHeight:1.5}}>{message}</div>
-        <div style={{position:"absolute",left:-8,top:"50%",transform:"translateY(-50%)",width:0,height:0,borderTop:"6px solid transparent",borderBottom:"6px solid transparent",borderRight:`8px solid ${C.card2}`}}/>
+    <div style={{display:"flex",alignItems:"center",gap:12,background:"white",border:"1.5px solid #4BBDF533",borderRadius:16,padding:"10px 14px",marginBottom:12,boxShadow:"0 4px 14px #5B4FE818"}}>
+      <div style={{fontSize:32,animation:"mmFloat 2s ease-in-out infinite",flexShrink:0}}>{faces[mood]||faces.happy}</div>
+      <div style={{background:"#F0ECFF",borderRadius:12,padding:"8px 12px",flex:1,position:"relative"}}>
+        <div style={{fontSize:13,color:"#1A1040",lineHeight:1.5}}>{message}</div>
+        <div style={{position:"absolute",left:-8,top:"50%",transform:"translateY(-50%)",width:0,height:0,borderTop:"6px solid transparent",borderBottom:"6px solid transparent",borderRight:"8px solid #F0ECFF"}}/>
       </div>
     </div>
   );
@@ -127,7 +127,7 @@ export function Confetti({ active }) {
   if (!active) return null;
   const pieces = Array.from({length:40},(_,i)=>({
     x: Math.random()*100, delay: Math.random()*1.5,
-    color: [C.yellow,C.cyan,C.green,C.pink,C.orange,C.purple][i%6],
+    color: ["#FFC847","#4BBDF5","#2ECC9A","#FF5FA0","#FF6B6B","#9B59F5"][i%6],
     size: Math.random()*8+4, rot: Math.random()*360,
   }));
   return (
@@ -142,25 +142,25 @@ export function Confetti({ active }) {
 export function Tutorial({ onDone }) {
   const [step, setStep] = useState(0);
   const steps = [
-    { icon:"🚀", title:"Welcome to MathMagic!", body:"Your personal space academy for maths. Complete lessons, earn XP and unlock new worlds!", color:C.yellow },
-    { icon:"📚", title:"How Lessons Work",       body:"Each lesson has 20 sets of questions. Complete Set 1 to unlock Set 2, and so on. Answer correctly to earn stars and XP!", color:C.cyan },
-    { icon:"🎮", title:"Play Games",             body:"Visit the Games Hub to play 8 fun maths games. The more you play, the more coins you earn!", color:C.purple },
-    { icon:"🏆", title:"Daily Challenges",       body:"A new Word Problem and Brain Puzzle every day! Solve both to earn bonus XP and keep your streak going!", color:C.orange },
-    { icon:"🎯", title:"You're Ready!",          body:"Tap Start to begin your maths adventure. Remember — practice every day to climb the leaderboard!", color:C.green },
+    { icon:"🚀", title:"Welcome to MathMagic!", body:"Your personal space academy for maths. Complete lessons, earn XP and unlock new worlds!", color:"#FFC847" },
+    { icon:"📚", title:"How Lessons Work",       body:"Each lesson has 20 sets of questions. Complete Set 1 to unlock Set 2, and so on. Answer correctly to earn stars and XP!", color:"#4BBDF5" },
+    { icon:"🎮", title:"Play Games",             body:"Visit the Games Hub to play 8 fun maths games. The more you play, the more coins you earn!", color:"#9B59F5" },
+    { icon:"🏆", title:"Daily Challenges",       body:"A new Word Problem and Brain Puzzle every day! Solve both to earn bonus XP and keep your streak going!", color:"#FF6B6B" },
+    { icon:"🎯", title:"You're Ready!",          body:"Tap Start to begin your maths adventure. Remember — practice every day to climb the leaderboard!", color:"#2ECC9A" },
   ];
   const s = steps[step];
   return (
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",padding:20,fontFamily:"'Nunito',sans-serif"}}>
-      <div style={{background:C.card,borderRadius:24,padding:"32px 24px",maxWidth:380,width:"100%",textAlign:"center",border:`2px solid ${s.color}44`,animation:"popIn 0.3s ease"}}>
-        <div style={{fontSize:64,marginBottom:16,animation:"floatUp 2s ease-in-out infinite"}}>{s.icon}</div>
-        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:16,color:s.color,marginBottom:12}}>{s.title}</div>
-        <div style={{color:C.dim,fontSize:14,lineHeight:1.7,marginBottom:24}}>{s.body}</div>
+      <div style={{background:"white",borderRadius:28,padding:"32px 24px",maxWidth:380,width:"100%",textAlign:"center",border:`2px solid ${s.color}44`,animation:"mmPop 0.3s ease",boxShadow:`0 8px 40px ${s.color}20, inset 0 1px 0 rgba(255,255,255,0.8)`}}>
+        <div style={{fontSize:64,marginBottom:16,animation:"mmFloat 2s ease-in-out infinite"}}>{s.icon}</div>
+        <div style={{fontFamily:"'Fredoka One',cursive",fontSize:18,color:s.color,marginBottom:12}}>{s.title}</div>
+        <div style={{color:"#9890C4",fontSize:14,lineHeight:1.7,marginBottom:24,fontFamily:"'Nunito',sans-serif"}}>{s.body}</div>
         <div style={{display:"flex",gap:6,justifyContent:"center",marginBottom:20}}>
-          {steps.map((_,i)=><div key={i} style={{width:i===step?24:8,height:8,borderRadius:4,background:i===step?s.color:C.dim+"44",transition:"all 0.3s"}}/>)}
+          {steps.map((_,i)=><div key={i} style={{width:i===step?24:8,height:8,borderRadius:4,background:i===step?s.color:"#9890C444",transition:"all 0.3s"}}/>)}
         </div>
         <div style={{display:"flex",gap:10}}>
-          {step>0&&<button onClick={()=>setStep(s=>s-1)} style={{flex:1,background:"none",border:`1px solid ${C.dim}44`,borderRadius:12,padding:"12px",color:C.dim,cursor:"pointer",fontFamily:"'Nunito',sans-serif",fontWeight:700}}>← BACK</button>}
-          <button onClick={()=>step<steps.length-1?setStep(s=>s+1):onDone()} style={{flex:1,background:`linear-gradient(135deg,${s.color},${s.color}aa)`,border:"none",borderRadius:12,padding:"12px",color:textColor(),cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:12,fontWeight:700}}>
+          {step>0&&<button onClick={()=>setStep(s=>s-1)} style={{flex:1,background:"none",border:"1px solid #9890C444",borderRadius:12,padding:"12px",color:"#9890C4",cursor:"pointer",fontFamily:"'Nunito',sans-serif",fontWeight:700}}>← BACK</button>}
+          <button onClick={()=>step<steps.length-1?setStep(s=>s+1):onDone()} style={{flex:1,background:`linear-gradient(155deg,${s.color}EE,${s.color}CC)`,border:"none",borderRadius:16,padding:"12px",color:"white",cursor:"pointer",fontFamily:"'Nunito',sans-serif",fontSize:14,fontWeight:900,boxShadow:`0 4px 0 ${s.color}CC, 0 6px 16px ${s.color}35`}}>
             {step<steps.length-1?"NEXT →":"🚀 START!"}
           </button>
         </div>
@@ -172,9 +172,9 @@ export function Tutorial({ onDone }) {
 export function SkeletonLoader({ rows=4 }) {
   return (
     <div style={{padding:"16px 0"}}>
-      <div style={{background:C.card2,borderRadius:12,height:60,marginBottom:16,animation:"pulseG 1.5s ease-in-out infinite"}}/>
+      <div style={{background:"#F0ECFF",borderRadius:12,height:60,marginBottom:16,animation:"mmPulse 1.5s ease-in-out infinite"}}/>
       {Array.from({length:rows},(_,i)=>(
-        <div key={i} style={{background:C.card2,borderRadius:10,height:44,marginBottom:8,opacity:1-i*0.15,animation:"pulseG 1.5s ease-in-out infinite"}}/>
+        <div key={i} style={{background:"#F0ECFF",borderRadius:10,height:44,marginBottom:8,opacity:1-i*0.15,animation:"mmPulse 1.5s ease-in-out infinite"}}/>
       ))}
     </div>
   );
@@ -191,7 +191,7 @@ export function OfflineBanner() {
   }, []);
   if (!offline) return null;
   return (
-    <div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#f97316",color:textColor(),textAlign:"center",padding:"6px 12px",fontSize:12,fontFamily:"'Orbitron',sans-serif",letterSpacing:1}}>
+    <div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#FF6B6B",color:"white",textAlign:"center",padding:"6px 12px",fontSize:12,fontFamily:"'Nunito',sans-serif",fontWeight:800,letterSpacing:1}}>
       📡 NO CONNECTION — App works offline, progress saves when back online
     </div>
   );
@@ -211,7 +211,7 @@ export function Starfield({ n = 40 }) {
         <div key={p.i} style={{
           position:"absolute", left:`${p.x}%`, top:`${p.y}%`,
           width:p.w, height:p.w, borderRadius:"50%",
-          background: isDark() ? "rgba(255,255,255,0.8)" : `rgba(${100+Math.floor(p.x*1.5)},${80+Math.floor(p.y)},220,0.25)`,
+          background: `rgba(${100+Math.floor(p.x*1.5)},${80+Math.floor(p.y)},220,0.25)`,
           animation:`twinkle ${p.d}s ${p.dl}s ease-in-out infinite`,
         }}/>
       ))}
