@@ -194,8 +194,8 @@ export function PinPad({ pin, setPin, error, shake, onComplete }) {
 export function BackBtn({ onClick, color = C.purple }) {
   return (
     <button onClick={()=>{SFX.back();if(onClick)onClick();}} style={{
-      background:`${color}18`, border:`1px solid ${color}44`,
-      borderRadius:12, width:42, height:42, color,
+      background:`${color}15`, border:`1.5px solid ${color}30`,
+      borderRadius:14, width:40, height:40, color,
       fontSize:22, cursor:"pointer",
       display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0,
     }}>‹</button>

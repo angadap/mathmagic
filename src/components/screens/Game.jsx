@@ -265,45 +265,45 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
   if (done) return (
     <>
     {newBadges && newBadges.length > 0 && <BadgeUnlockToast badges={newBadges} onDone={()=>setNewBadges && setNewBadges([])}/>}
-    <div style={{ minHeight:"100vh", background: fst>=2 ? `linear-gradient(160deg,${C.bg},${C.card},${C.bg})` : C.bg, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", fontFamily:"'Baloo 2','Nunito',sans-serif", padding:22, position:"relative", overflow:"hidden" }}>
+    <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#F5F0FF,#FAFBFF)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", fontFamily:"'Baloo 2','Nunito',sans-serif", padding:22, position:"relative", overflow:"hidden" }}>
       {showCert && <Certificate child={child} lesson={lesson} stars={fst} onClose={()=>setShowCert(false)}/>}
       <Confetti active={fst>=2}/>
       <Starfield n={60}/>
       {/* Big celebration emoji rain for perfect score */}
-      {fst===3 && ["🎉","⭐","🚀","🏆","🌟","🎊","💫","✨"].map((e,i)=>(
-        <div key={i} style={{position:"fixed",left:`${10+i*12}%`,top:"-10px",fontSize:28,animation:`confettiFall ${2+i*0.3}s ${i*0.2}s ease-in forwards`,zIndex:0,pointerEvents:"none"}}>{e}</div>
+      {["🎉","⭐","🚀","🏆","🌟","🎊","💫","✨","🎈","🌈","🎆","💝","⚡","🍬"].map((e,i)=>(
+        <div key={i} style={{position:"absolute",left:`${5+i*7}%`,top:-20,fontSize:22,animation:`mmConfetti ${1.5+i*0.2}s ${i*0.1}s ease-in forwards`,zIndex:0,pointerEvents:"none"}}>{e}</div>
       ))}
       <div style={{ position:"relative", zIndex:1, textAlign:"center", animation:"popIn 0.5s ease", width:"100%", maxWidth:360 }}>
-        <div style={{ fontSize:90, marginBottom:8, animation:"heartbeat 1.2s ease infinite", filter:`drop-shadow(0 0 30px ${fst>=2 ? C.yellow : C.dim})` }}>
+        <div style={{ fontSize:90, marginBottom:8, animation:"mmBounce 1.2s ease", filter:"drop-shadow(0 12px 24px #FFC84788)" }}>
           {mode==="boss" && bossHpRef.current<=0 ? "🏆" : fst===3 ? "🏆" : fst===2 ? "🥈" : fst>=1 ? "🥉" : "💫"}
         </div>
-        <div style={{ fontSize:26, fontWeight:900, background:`linear-gradient(135deg,${C.cyan},${C.purple})`, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", marginBottom:10 }}>
+        <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:28, color:"#5B4FE8", marginBottom:10 }}>
           {mode==="boss" && bossHpRef.current<=0 ? "BOSS DEFEATED! 💥" : fst===3 ? "PERFECT! 🌟" : fst>=2 ? "MISSION COMPLETE! 🚀" : fst>=1 ? "GOOD EFFORT! 💪" : "KEEP TRAINING! 🔥"}
         </div>
         <div style={{ display:"flex", gap:12, justifyContent:"center", marginBottom:20 }}>
-          {[1,2,3].map(i => <span key={i} style={{ fontSize:46, filter: i<=fst ? "none" : "grayscale(1) opacity(0.2)", animation: i<=fst ? `starPop 0.4s ${i*0.15}s both` : "none" }}>⭐</span>)}
+          {[1,2,3].map(i => <span key={i} style={{ fontSize:42, filter: i<=fst ? "none" : "grayscale(1) opacity(0.2)", animation: i<=fst ? `mmStarPop 0.4s ease ${i*0.15}s both` : "none" }}>⭐</span>)}
         </div>
         <Card color={C.purple} style={{ marginBottom:16, textAlign:"center", padding:"18px 26px" }}>
           <div style={{ color:C.dim, fontSize:13, fontWeight:700, letterSpacing:1, marginBottom:4 }}>YOUR SCORE</div>
-          <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:48, color:textColor(), fontWeight:900 }}>{fs}<span style={{ fontSize:18, color:C.dim }}>/{questions.length}</span></div>
-          <div style={{ color:C.yellow, fontWeight:800, fontSize:16, marginTop:6 }}>+{fs*20+(mode==="boss"?50:0)} XP 🌟 +{fst*10} Coins 🪙</div>
+          <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:50, color:"#1A1040", fontWeight:900 }}>{fs}<span style={{ fontSize:20, color:"#5A4E8A", fontFamily:"'Nunito',sans-serif", fontWeight:700 }}>/{questions.length}</span></div>
+          <div style={{ color:"#FFC847", fontWeight:900, fontSize:15, marginTop:6 }}>+{fs*20+(mode==="boss"?50:0)} XP 🌟 +{fst*10} Coins 🪙</div>
           <div style={{ color:C.green, fontSize:13, marginTop:6, fontWeight:700 }}>✅ Progress saved!</div>
         </Card>
         {setIndex < 9 && fst >= 1 && (
-          <div style={{ background:`${C.green}18`, border:`2px solid ${C.green}44`, borderRadius:14, padding:"10px 18px", marginBottom:14, width:"100%", animation:"popIn 0.4s 0.3s both" }}>
-            <div style={{ color:C.green, fontSize:16, fontWeight:800, textAlign:"center" }}>🔓 Set {setIndex+2} Unlocked!</div>
+          <div style={{ background:"#2ECC9A14", border:"1.5px solid #2ECC9A40", borderRadius:14, padding:"10px 18px", marginBottom:14, width:"100%", animation:"popIn 0.4s 0.3s both" }}>
+            <div style={{ color:"#2ECC9A", fontSize:16, fontWeight:800, textAlign:"center" }}>🔓 Set {setIndex+2} Unlocked!</div>
           </div>
         )}
+        {setIndex < 9 && fst >= 1
+          ? <Btn color="#5B4FE8" style={{ width:"100%", marginBottom:10 }} onClick={() => onNextSet && onNextSet(setIndex+1)}>Next Set →</Btn>
+          : <Btn color="#5B4FE8" style={{ width:"100%", marginBottom:10 }} onClick={onDone}>Done ✓</Btn>
+        }
         <div style={{ display:"flex", gap:10, width:"100%" }}>
-          <Btn color={C.dim} style={{ flex:1 }} onClick={() => {
+          <button style={{ flex:1, background:"white", border:"1.5px solid #5B4FE820", borderRadius:20, padding:"14px", cursor:"pointer", fontFamily:"'Nunito',sans-serif", fontWeight:800, fontSize:14, color:"#5A4E8A" }} onClick={() => {
             scoreRef.current = 0; livesRef.current = mode==="boss"?5:3; bossHpRef.current = 100; processing.current = false;
             setQi(0); setChosen(null); setScore(0); setLives(mode==="boss"?5:3); setBossHp(100); setDone(false); setBossCD(mode==="boss"?3:0); setTimeLeft(mode==="boss"?30:null);
-          }}>↺ Retry</Btn>
-          <Btn color={C.purple} style={{ flex:1 }} onClick={onBack}>🏠 Home</Btn>
-          {setIndex < 9 && fst >= 1
-            ? <Btn color={C.cyan} style={{ flex:1 }} onClick={() => onNextSet && onNextSet(setIndex+1)}>Next Set →</Btn>
-            : <Btn color={C.cyan} style={{ flex:1 }} onClick={onDone}>Done ✓</Btn>
-          }
+          }}>↺ Retry</button>
+          <button style={{ flex:1, background:"white", border:"1.5px solid #5B4FE820", borderRadius:20, padding:"14px", cursor:"pointer", fontFamily:"'Nunito',sans-serif", fontWeight:800, fontSize:14, color:"#5A4E8A" }} onClick={onBack}>🏠 Home</button>
         </div>
       </div>
     </div>
@@ -411,14 +411,14 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
   return (
     <div style={{ minHeight:"100vh", fontFamily:"'Nunito',sans-serif", position:"relative", background: burst ? `radial-gradient(circle at 50% 40%,${world.color}18 0%,${C.bg} 65%)` : C.bg, transition:"background 0.4s" }}>
       <Starfield n={16}/>
-      <div style={{ position:"relative", zIndex:2, background:`${world.color}16`, borderBottom:`1px solid ${world.color}2a`, padding:"12px 18px" }}>
+      <div style={{ position:"relative", zIndex:2, background:`${world.color}15`, borderBottom:`1.5px solid ${world.color}25`, padding:"12px 18px" }}>
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:7 }}>
           <BackBtn onClick={handleBack} color={world.color}/>
           <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:11, color:world.color }}>{lesson.emoji} {lesson.title}</div>
           <div style={{ display:"flex", gap:3 }}>{[1,2,3].map(i => <span key={i} style={{ fontSize:13, opacity: i<=lives ? 1 : 0.15 }}>❤️</span>)}</div>
         </div>
-        <div style={{ background:isDark()?"rgba(255,255,255,0.06)":"rgba(124,111,224,0.06)", borderRadius:7, height:5, overflow:"hidden" }}>
-          <div style={{ width:`${((qi+1)/questions.length)*100}%`, height:"100%", background:`linear-gradient(90deg,${world.color},${C.cyan})`, borderRadius:7, transition:"width 0.4s" }}/>
+        <div style={{ background:`${world.color}18`, borderRadius:7, height:5, overflow:"hidden" }}>
+          <div style={{ width:`${((qi+1)/questions.length)*100}%`, height:"100%", background:`linear-gradient(90deg,${world.color},${C.cyan})`, borderRadius:7, transition:"width 0.4s", boxShadow:`0 0 8px ${world.color}66` }}/>
         </div>
         <div style={{ display:"flex", justifyContent:"space-between", marginTop:3 }}>
           <span style={{ fontSize:9, color:C.dim, fontFamily:"'Orbitron',sans-serif" }}>Q {qi+1}/{questions.length}</span>
@@ -447,10 +447,10 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
         <Card color={world.color} style={{ textAlign:"center", padding:"22px 18px", marginBottom:16,
           transform: chosen===q.ans&&chosen!==null ? "scale(1)" : "scale(1)",
           animation: chosen===q.ans&&chosen!==null ? "correctBounce 0.6s ease" : chosen!==null&&chosen!==q.ans ? "wrongWiggle 0.5s ease" : "none",
-          boxShadow: chosen===q.ans&&chosen!==null ? `0 0 40px ${C.green}66` : chosen!==null ? `0 0 20px ${C.red}44` : `0 0 20px ${world.color}22`,
+          boxShadow: chosen===q.ans&&chosen!==null ? "0 0 40px #2ECC9A50" : chosen!==null ? "0 0 20px #FF6B6B44" : `0 0 20px ${world.color}22`,
           transition:"box-shadow 0.3s"
         }}>
-          <div style={{ fontSize:42, marginBottom:10 }}>{lesson.emoji}</div>
+          <div style={{ fontSize:42, marginBottom:10, animation:"mmFloat 2s ease-in-out infinite" }}>{lesson.emoji}</div>
           <div style={{ fontSize:20, color:textColor(), lineHeight:1.5, fontWeight:800 }}>{q.q}</div>
         </Card>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:14 }}>
@@ -458,34 +458,35 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
             const isCorrect = i===q.ans;
             const isChosen  = i===chosen;
             const answered  = chosen!==null;
-            let bg=C.card, border=`2px solid ${world.color}${isDark()?"28":"44"}`, col=textColor(), shadow="none", anim="none";
+            let bg="white", border=`2px solid ${world.color}25`, col="#1A1040", shadow="none", anim=`mmPop 0.3s ease ${i*0.06}s both`;
             if (answered) {
-              if (isCorrect)     { bg=isDark()?"#052e16":"#edfff6"; border=`3px solid ${C.green}`; col=isDark()?"#4ade80":"#065f46"; shadow=`0 0 24px ${C.green}88`; anim="superCorrect 0.5s ease"; }
-              else if (isChosen) { bg=isDark()?"#2d0a0a":"#fff1f1"; border=`3px solid ${C.red}`;   col=isDark()?"#f87171":"#991b1b"; shadow=`0 0 14px ${C.red}44`; }
+              if (isCorrect)     { bg="#E8FFF4"; border="2.5px solid #2ECC9A"; col="#2ECC9A"; shadow="0 0 24px #2ECC9A55"; anim="superCorrect 0.5s ease"; }
+              else if (isChosen) { bg="#FFF0F0"; border="2.5px solid #FF6B6B"; col="#FF6B6B"; }
             }
             const optLabels = ["A","B","C","D"];
             return (
-              <button key={i} onClick={() => pick(i)} style={{ background:bg, border, borderRadius:18, padding:"16px 12px", fontSize:18, fontWeight:800, color:col, cursor:answered?"default":"pointer", transition:"all 0.2s", boxShadow:shadow, animation:anim, position:"relative", textAlign:"center", lineHeight:1.4 }}>
-                <div style={{fontSize:11,color:answered&&isCorrect?(isDark()?"#4ade80":"#065f46"):answered&&isChosen?(isDark()?"#f87171":"#991b1b"):world.color,fontFamily:"'Orbitron',sans-serif",marginBottom:4,opacity:0.8}}>{optLabels[i]}</div>
+              <button key={i} onClick={() => pick(i)} style={{ background:bg, border, borderRadius:18, padding:"16px 12px", fontSize:18, fontWeight:800, color:col, cursor:answered?"default":"pointer", transition:"all 0.2s", boxShadow:shadow, animation:anim, position:"relative", textAlign:"center", lineHeight:1.4, overflow:"hidden" }}>
+                {!answered && <div style={{position:"absolute",top:0,left:0,right:0,height:"50%",background:"linear-gradient(180deg,rgba(255,255,255,0.5),transparent)",borderRadius:"18px 18px 0 0",pointerEvents:"none"}}/>}
+                <div style={{fontSize:10,color:answered&&isCorrect?"#2ECC9A":answered&&isChosen?"#FF6B6B":world.color,fontFamily:"'Nunito',sans-serif",fontWeight:900,marginBottom:4}}>{optLabels[i]}</div>
                 {answered && isCorrect ? "✓ " : answered && isChosen && !isCorrect ? "✗ " : ""}{opt}
               </button>
             );
           })}
         </div>
         {chosen === null && (
-          <button onClick={() => setHint(h => !h)} style={{ width:"100%", background: hint ? `${C.yellow}18` : C.card, border:`2px solid ${hint ? C.yellow+"66" : C.border}`, borderRadius:16, padding:"13px 16px", cursor:"pointer", color: hint ? C.yellow : C.dim, fontSize:15, fontWeight:700, textAlign:"left" }}>
+          <button onClick={() => setHint(h => !h)} style={{ width:"100%", background:"#FFC84710", border:"1.5px solid #FFC84730", borderRadius:20, padding:"13px 16px", cursor:"pointer", color:"#FFC847", fontSize:15, fontWeight:700, textAlign:"left" }}>
             💡 {hint ? q.h : "Tap for a cosmic hint!"}
           </button>
         )}
         {chosen!==null && chosen===q.ans && (
-          <div style={{marginTop:12,textAlign:"center",background:isDark()?`${C.green}15`:"#edfff6",borderRadius:16,padding:"12px 16px",border:`2px solid ${C.green}${isDark()?"33":"88"}`}}>
-            <div style={{fontSize:28,marginBottom:4,animation:"heartbeat 1s ease infinite"}}>🌟</div>
-            <div style={{color:C.green,fontSize:17,fontWeight:800}}>Amazing! +{q.xp||10} XP</div>
+          <div style={{marginTop:12,textAlign:"center",background:"linear-gradient(135deg,#2ECC9A15,#2ECC9A08)",borderRadius:16,padding:"12px 16px",border:"2px solid #2ECC9A40"}}>
+            <div style={{fontSize:28,marginBottom:4,animation:"mmBounce 1s ease infinite"}}>⭐</div>
+            <div style={{color:"#2ECC9A",fontSize:17,fontWeight:800}}>Amazing! +{q.xp||10} XP</div>
           </div>
         )}
         {chosen!==null && chosen!==q.ans && (
-          <div style={{marginTop:12,textAlign:"center",background:isDark()?`${C.orange}12`:"#fffbf0",borderRadius:16,padding:"12px 16px",border:`2px solid ${C.orange}${isDark()?"33":"77"}`}}>
-            <div style={{color:C.orange,fontSize:15,fontWeight:800}}>💡 Hint: {q.h}</div>
+          <div style={{marginTop:12,textAlign:"center",background:"#FFC84710",borderRadius:16,padding:"12px 16px",border:"1.5px solid #FFC84730"}}>
+            <div style={{color:"#FFC847",fontSize:15,fontWeight:800}}>💡 Hint: {q.h}</div>
           </div>
         )}
       </div>

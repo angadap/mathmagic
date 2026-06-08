@@ -21,7 +21,7 @@ export function SetPathMap({ lesson, world, progress, onLesson, onBack, isSetDon
   return (
     <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",paddingBottom:40}}>
       {/* Sticky header */}
-      <div style={{position:"sticky",top:0,zIndex:10,background:C.card,borderBottom:`3px solid ${world.color}55`,padding:"14px 18px",display:"flex",alignItems:"center",gap:12,boxShadow:`0 2px 16px ${world.color}22`}}>
+      <div style={{position:"sticky",top:0,zIndex:10,background:"linear-gradient(135deg,#9B59F520,#5B4FE810)",borderBottom:"1.5px solid #9B59F520",padding:"14px 18px",display:"flex",alignItems:"center",gap:12}}>
         <BackBtn onClick={onBack} color={world.color}/>
         <div style={{width:46,height:46,borderRadius:14,background:`linear-gradient(135deg,${world.color},${world.color}99)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{lesson.emoji}</div>
         <div style={{flex:1}}>
@@ -36,8 +36,8 @@ export function SetPathMap({ lesson, world, progress, onLesson, onBack, isSetDon
 
       {/* Overall progress bar */}
       <div style={{padding:"12px 18px 0"}}>
-        <div style={{background:isDark()?"rgba(255,255,255,0.08)":C.border||"#ece8ff",borderRadius:20,height:12,overflow:"hidden"}}>
-          <div style={{width:`${(cSets/20)*100}%`,height:"100%",background:`linear-gradient(90deg,${world.color},${C.cyan})`,borderRadius:20,transition:"width 0.6s ease",boxShadow:`0 0 10px ${world.color}66`}}/>
+        <div style={{background:"rgba(91,79,232,0.08)",borderRadius:20,height:12,overflow:"hidden"}}>
+          <div style={{width:`${(cSets/20)*100}%`,height:"100%",background:"linear-gradient(90deg,#9B59F5,#4BBDF5)",borderRadius:20,transition:"width 0.6s ease",boxShadow:"0 0 8px #9B59F566"}}/>
         </div>
         <div style={{display:"flex",justifyContent:"space-between",marginTop:4,fontSize:11,color:C.dim}}>
           <span>{cSets} complete</span><span>{20-cSets} remaining</span>
@@ -71,20 +71,21 @@ export function SetPathMap({ lesson, world, progress, onLesson, onBack, isSetDon
                     <button key={si}
                       onClick={()=>{if(sUnlock){SFX.unlock();onLesson({...lesson,setIndex:si,_progress:progress});}else SFX.wrong();}}
                       style={{
-                        background:sDone?`linear-gradient(135deg,${world.color},${world.color}99)`:isCurrent?`linear-gradient(135deg,${world.color}22,${world.color}11)`:isDark()?"rgba(255,255,255,0.04)":"#f5f0ff",
-                        border:`2px solid ${sDone?world.color:isCurrent?world.color+"88":isDark()?"rgba(255,255,255,0.1)":C.border||"#ddd"}`,
+                        background:sDone?"#2ECC9A12":isCurrent?"white":"#F0ECFF",
+                        border:`2px solid ${sDone?"#2ECC9A44":isCurrent?"#9B59F555":"rgba(91,79,232,0.12)"}`,
                         borderRadius:14, padding:"10px 4px", cursor:sUnlock?"pointer":"not-allowed",
-                        textAlign:"center", opacity:sUnlock?1:0.35,
-                        boxShadow:isCurrent?`0 0 0 4px ${world.color}33, 0 4px 14px ${world.color}44`:sDone?`0 3px 10px ${world.color}44`:"none",
-                        animation:isCurrent?"heartbeat 1.5s ease-in-out infinite":"none",
+                        textAlign:"center", opacity:sUnlock?1:0.6,
+                        boxShadow:isCurrent?"0 4px 20px #9B59F544, 0 2px 8px #9B59F522":"none",
+                        transform:isCurrent?"scale(1.06)":"none",
+                        animation:"none",
                         transition:"all 0.2s",
                       }}>
-                      <div style={{fontSize:isChest?22:sDone?20:isCurrent?20:18,marginBottom:3}}>
-                        {isChest&&!sDone&&sUnlock?"🎁":sDone?"⭐":isCurrent?EMOJIS[si%EMOJIS.length]:"🔒"}
+                      <div style={{fontSize:sDone?18:isCurrent?20:16,marginBottom:3}}>
+                        {sDone?"✅":isCurrent?"▶":"🔒"}
                       </div>
-                      <div style={{fontSize:9,fontWeight:900,fontFamily:"'Orbitron',sans-serif",color:sDone?"white":isCurrent?world.color:C.dim}}>S{si+1}</div>
-                      {isCurrent&&<div style={{fontSize:8,color:world.color,fontWeight:700,marginTop:1}}>TAP!</div>}
-                      {sDone&&<div style={{fontSize:8,color:"rgba(255,255,255,0.7)",marginTop:1}}>✓</div>}
+                      <div style={{fontSize:9,fontWeight:900,fontFamily:"'Orbitron',sans-serif",color:sDone?"#2ECC9A":isCurrent?"#9B59F5":"#9890C4"}}>S{si+1}</div>
+                      {isCurrent&&<div style={{fontSize:8,color:"#9B59F5",fontWeight:800,marginTop:1}}>NEXT</div>}
+                      {sDone&&<div style={{fontSize:7,marginTop:1}}>⭐⭐⭐</div>}
                     </button>
                   );
                 })}
@@ -129,7 +130,7 @@ export function LessonMap({ world, child, onBack, onLesson, isLessonPurchased, o
     <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Baloo 2','Nunito',sans-serif", paddingBottom:40, position:"relative" }}>
       <Starfield n={isDark()?20:8}/>
       {/* Header */}
-      <div style={{ position:"relative", zIndex:2, background:isDark()?`${world.color}1a`:C.card, borderBottom:`3px solid ${world.color}44`, padding:"16px 18px", boxShadow:`0 2px 12px ${world.color}22` }}>
+      <div style={{ position:"relative", zIndex:2, background:"linear-gradient(135deg,#9B59F520,#5B4FE810)", borderBottom:"1.5px solid #9B59F520", padding:"16px 18px" }}>
         <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:12 }}>
           <BackBtn onClick={onBack} color={world.color}/>
           <div style={{ width:48, height:48, borderRadius:16, background:`linear-gradient(135deg,${world.color},${world.color}99)`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:26, boxShadow:`0 0 16px ${world.color}55`, flexShrink:0 }}>{world.planet}</div>
@@ -139,8 +140,8 @@ export function LessonMap({ world, child, onBack, onLesson, isLessonPurchased, o
             <div style={{ fontSize:11, color:C.dim }}>{doneSets}/{totalSets} Sets Done</div>
           </div>
         </div>
-        <div style={{ background:isDark()?"rgba(255,255,255,0.06)":C.border||"#ece8ff", borderRadius:10, height:10, overflow:"hidden" }}>
-          <div style={{ width:`${totalSets>0?(doneSets/totalSets)*100:0}%`, height:"100%", background:`linear-gradient(90deg,${world.color},${C.cyan})`, borderRadius:10, transition:"width 0.8s ease", boxShadow:`0 0 8px ${world.color}66` }}/>
+        <div style={{ background:"rgba(91,79,232,0.08)", borderRadius:10, height:10, overflow:"hidden" }}>
+          <div style={{ width:`${totalSets>0?(doneSets/totalSets)*100:0}%`, height:"100%", background:"linear-gradient(90deg,#9B59F5,#4BBDF5)", borderRadius:10, transition:"width 0.8s ease", boxShadow:"0 0 8px #9B59F566" }}/>
         </div>
         <div style={{ fontSize:11, color:C.dim, marginTop:4, fontFamily:"'Orbitron',sans-serif" }}>{worldProg}/{lessons.length} LESSONS STARTED</div>
       </div>
@@ -173,10 +174,10 @@ export function LessonMap({ world, child, onBack, onLesson, isLessonPurchased, o
                   setActiveLesson({...lesson, _li:li});
                 }}
                 style={{
-                  width:"100%", background:C.card, textAlign:"left", cursor:"pointer",
-                  border:`2px solid ${done ? world.color+"66" : nextLesson ? world.color+"88" : purchased ? world.color+"33" : C.dim+"22"}`,
-                  borderRadius:20, padding:"14px 16px", display:"flex", alignItems:"center", gap:14,
-                  boxShadow: nextLesson ? `0 4px 20px ${world.color}44` : done ? `0 2px 12px ${world.color}22` : "none",
+                  width:"100%", background:"white", textAlign:"left", cursor:"pointer",
+                  border:`2px solid ${done ? world.color+"66" : nextLesson ? world.color+"50" : world.color+"22"}`,
+                  borderRadius:28, padding:"14px 16px", display:"flex", alignItems:"center", gap:14,
+                  boxShadow: nextLesson ? `0 8px 30px ${world.color}44, 0 2px 8px ${world.color}22` : done ? `0 4px 16px ${world.color}22` : "0 2px 6px rgba(91,79,232,0.08)",
                   transform: nextLesson ? "scale(1.01)" : "none",
                   transition:"all 0.2s",
                   opacity: purchased ? 1 : 0.65,
@@ -184,8 +185,8 @@ export function LessonMap({ world, child, onBack, onLesson, isLessonPurchased, o
                 {/* Lesson icon circle with progress ring */}
                 <div style={{ position:"relative", flexShrink:0 }}>
                   <svg width="58" height="58" style={{ transform:"rotate(-90deg)" }}>
-                    <circle cx="29" cy="29" r="23" fill="none" stroke={isDark()?"rgba(255,255,255,0.06)":C.border||"#ece8ff"} strokeWidth="4"/>
-                    <circle cx="29" cy="29" r="23" fill="none" stroke={done?C.green:world.color} strokeWidth="4"
+                    <circle cx="29" cy="29" r="23" fill="none" stroke={`${world.color}18`} strokeWidth="4"/>
+                    <circle cx="29" cy="29" r="23" fill="none" stroke={done?"#2ECC9A":world.color} strokeWidth="4"
                       strokeDasharray={`${2*Math.PI*23*pct/100} ${2*Math.PI*23}`} strokeLinecap="round"
                       style={{transition:"stroke-dasharray 0.8s ease"}}/>
                   </svg>
@@ -200,7 +201,7 @@ export function LessonMap({ world, child, onBack, onLesson, isLessonPurchased, o
                   <div style={{ fontSize:12, color:C.dim, marginBottom:6 }}>{lesson.sub}</div>
                   {purchased ? (
                     <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                      <div style={{ flex:1, background:isDark()?"rgba(255,255,255,0.07)":C.border||"#ece8ff", borderRadius:20, height:6, overflow:"hidden" }}>
+                      <div style={{ flex:1, background:"#F0ECFF", borderRadius:999, height:6, overflow:"hidden" }}>
                         <div style={{ width:`${pct}%`, height:"100%", background:done?`linear-gradient(90deg,${C.green},${C.green}aa)`:`linear-gradient(90deg,${world.color},${C.cyan})`, borderRadius:20, transition:"width 0.6s" }}/>
                       </div>
                       <div style={{ fontSize:11, fontWeight:900, color:done?C.green:world.color, whiteSpace:"nowrap" }}>{cSets}/20</div>
@@ -214,9 +215,9 @@ export function LessonMap({ world, child, onBack, onLesson, isLessonPurchased, o
                 {/* Arrow / badge */}
                 <div style={{ flexShrink:0, display:"flex", flexDirection:"column", alignItems:"center", gap:4 }}>
                   {done
-                    ? <div style={{ background:`${C.green}22`, borderRadius:12, padding:"6px 10px" }}><div style={{ fontSize:18 }}>🏆</div></div>
+                    ? <div style={{ background:"#2ECC9A22", border:"1.5px solid #2ECC9A40", borderRadius:12, padding:"6px 10px" }}><div style={{ fontSize:18 }}>🏆</div></div>
                     : nextLesson
-                      ? <div style={{ background:world.color, borderRadius:14, padding:"8px 12px", animation:"heartbeat 1.5s ease-in-out infinite" }}><div style={{ fontSize:16, color:"white", fontWeight:900 }}>▶</div></div>
+                      ? <div style={{ background:world.color, borderRadius:14, padding:"8px 12px", animation:"mmPulse 1.5s infinite" }}><div style={{ fontSize:16, color:"white", fontWeight:900 }}>▶</div></div>
                       : <div style={{ fontSize:22, color:purchased?world.color:C.dim }}>›</div>
                   }
                 </div>
