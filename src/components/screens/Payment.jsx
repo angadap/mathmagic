@@ -1,4 +1,4 @@
-// src/components/screens/Payment.jsx — loadRazorpayScript, RegPayment, LessonPayment, Paywall
+﻿// src/components/screens/Payment.jsx — loadRazorpayScript, RegPayment, LessonPayment, Paywall
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { C, textColor, text2Color, isDark } from '../../constants/themes.js';
 import { db } from '../../lib/db.js';
@@ -101,42 +101,47 @@ export function RegPayment({ onBack, onPaid }) {
   };
 
   return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),padding:"20px 18px",display:"flex",flexDirection:"column",alignItems:"center"}}>
+    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#F5F0FF,#FAFBFF)",fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),padding:"20px 18px",display:"flex",flexDirection:"column",alignItems:"center"}}>
       <div style={{width:"100%",maxWidth:420}}>
         <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:24}}>
           <BackBtn onClick={onBack} color={C.green}/>
           <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.green}}>REGISTRATION FEE</div>
         </div>
-        <div style={{textAlign:"center",marginBottom:20}}>
-          <div style={{fontSize:48}}>{"\u{1F680}"}</div>
-          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:28,color:textColor(),marginTop:8}}>{"\u20B9"}599</div>
-          <div style={{color:C.dim,fontSize:13,marginTop:4}}>One-time {"\u00B7"} Lifetime access to your class</div>
+        <div style={{background:"white",borderRadius:20,boxShadow:"0 8px 30px #2ECC9A28, 0 2px 6px #2ECC9A18, inset 0 1px 0 rgba(255,255,255,0.8)",padding:"24px 20px",marginBottom:20,textAlign:"center"}}>
+          <div style={{fontSize:48,marginBottom:8}}>{"\u{1F680}"}</div>
+          <div style={{fontSize:20,fontWeight:900,color:"#1A1040",marginBottom:8}}>Registration Fee</div>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:4}}>
+            <span style={{fontFamily:"'Fredoka One',cursive",fontSize:32,color:"#5B4FE8"}}>{"\u20B9"}599</span>
+            <span style={{fontSize:12,color:"#9890C4",textDecoration:"line-through"}}>{"\u20B9"}999</span>
+            <span style={{fontSize:10,color:"#FF6B6B",background:"#FF6B6B12",border:"1px solid #FF6B6B30",borderRadius:999,padding:"2px 8px",fontWeight:800}}>40% OFF</span>
+          </div>
+          <div style={{color:"#9890C4",fontSize:12}}>One-time {"\u00B7"} Lifetime access to your class</div>
         </div>
-        <Card color={C.green} style={{marginBottom:14}}>
-          {[["🎯","Full access to your class lessons"],["🎮","All game modes & Abacus"],["📊","Parent dashboard"],["🚫","No ads ever"]].map(([e,t],i)=>(
-            <div key={i} style={{display:"flex",gap:10,marginBottom:6,alignItems:"center"}}>
-              <span style={{fontSize:16}}>{e}</span><span style={{color:"#ccc",fontSize:13}}>{t}</span>
+        <div style={{background:"white",border:"1.5px solid #2ECC9A30",borderRadius:20,boxShadow:"0 4px 12px #2ECC9A18",padding:"16px 14px",marginBottom:14}}>
+          {[["Full access to your class lessons"],["All game modes & Abacus"],["Parent dashboard included"],["No ads, ever"]].map(([t],i)=>(
+            <div key={i} style={{display:"flex",gap:8,marginBottom:8,alignItems:"center"}}>
+              <span style={{fontSize:16}}>✅</span><span style={{color:"#1A1040",fontSize:13,fontWeight:700}}>{t}</span>
             </div>
           ))}
-        </Card>
-        <div style={{display:"flex",gap:0,marginBottom:16,background:C.card,borderRadius:12,padding:3}}>
+        </div>
+        <div style={{display:"flex",gap:0,marginBottom:16,background:"#F0ECFF",borderRadius:14,padding:3}}>
           {[["razorpay","\ud83d\udcb3 Card/UPI"],["upi","\ud83c\udfe6 UPI Manual"]].map(([k,l])=>(
-            <button key={k} onClick={()=>setTab(k)} style={{flex:1,background:tab===k?C.green:"none",border:"none",borderRadius:10,padding:"8px",color:tab===k?"black":C.dim,fontWeight:800,fontSize:12,cursor:"pointer"}}>{l}</button>
+            <button key={k} onClick={()=>setTab(k)} style={{flex:1,background:tab===k?"white":"none",border:"none",borderRadius:11,padding:"8px",color:tab===k?"#5B4FE8":"#9890C4",fontWeight:tab===k?800:600,fontSize:12,cursor:"pointer",boxShadow:tab===k?"0 2px 8px rgba(91,79,232,0.15)":"none",transition:"all 0.2s"}}>{l}</button>
           ))}
         </div>
         {tab==="razorpay" ? (
           <Btn color={C.green} loading={loading} onClick={handleRazorpay}>{"\u{1F680}"} PAY {"\u20B9"}599 {"\u2014"} REGISTER NOW</Btn>
         ) : (
           <div>
-            <div style={{color:C.dim,fontSize:12,marginBottom:6}}>UPI ID: <b style={{color:C.green}}>mathmagic@upi</b> {"\u00B7"} Amount: <b style={{color:textColor()}}>{"\u20B9"}599</b></div>
-            <div style={{color:C.dim,fontSize:11,marginBottom:8}}>After paying, enter UTR / transaction ref number:</div>
+            <div style={{color:"#5B4FE8",fontSize:12,marginBottom:6,textDecoration:"underline"}}>UPI ID: mathmagic@upi \u00B7 Amount: \u20B9599</div>
+            <div style={{color:"#9890C4",fontSize:11,marginBottom:8}}>After paying, enter UTR / transaction ref number:</div>
             <input value={utr} onChange={e=>setUtr(e.target.value.toUpperCase())} placeholder="UTR / Ref number"
-              style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.green}44`,borderRadius:10,padding:"10px 12px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:14,display:"block",marginBottom:10}}/>
+              style={{width:"100%",background:"rgba(91,79,232,0.04)",border:"1.5px solid #2ECC9A44",borderRadius:10,padding:"10px 12px",color:"#1A1040",fontFamily:"'Nunito',sans-serif",fontSize:14,display:"block",marginBottom:10}}/>
             <Btn color={C.green} loading={loading} onClick={handleUPI}>{"\u2705"} VERIFY {"\u0026"} REGISTER</Btn>
           </div>
         )}
         {msg && <div style={{marginTop:12,color:msg.startsWith("\u2705")?C.green:C.red,fontSize:12,textAlign:"center",fontWeight:700}}>{msg}</div>}
-        <div style={{marginTop:12,textAlign:"center",color:C.dim,fontSize:11}}>{"\ud83d\udd12"} Secured by Razorpay {"\u00B7"} 256-bit SSL</div>
+        <div style={{marginTop:16,textAlign:"center",color:"#9890C4",fontSize:10}}>{"\ud83d\udd12"} Secured by Razorpay {"\u00B7"} 256-bit SSL</div>
       </div>
     </div>
   );
@@ -198,41 +203,46 @@ export function LessonPayment({ lessonToBuy, child, user, onBack, onPaid }) {
   };
 
   return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),padding:"20px 18px",display:"flex",flexDirection:"column",alignItems:"center"}}>
+    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#F5F0FF,#FAFBFF)",fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),padding:"20px 18px",display:"flex",flexDirection:"column",alignItems:"center"}}>
       <div style={{width:"100%",maxWidth:420}}>
         <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:24}}>
           <BackBtn onClick={onBack} color={C.orange}/>
           <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.orange}}>UNLOCK LESSON</div>
         </div>
-        <div style={{textAlign:"center",marginBottom:20}}>
-          <div style={{fontSize:48}}>{"\ud83d\udd13"}</div>
-          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:28,color:textColor(),marginTop:8}}>{"\u20B9"}{price}</div>
-          <div style={{color:C.dim,fontSize:13,marginTop:4}}>Permanent unlock {"\u00B7"} Lesson {lessonId}</div>
+        <div style={{background:"white",borderRadius:20,boxShadow:"0 8px 30px #2ECC9A28, 0 2px 6px #2ECC9A18, inset 0 1px 0 rgba(255,255,255,0.8)",padding:"24px 20px",marginBottom:20,textAlign:"center"}}>
+          <div style={{fontSize:48,marginBottom:8}}>{"🔓"}</div>
+          <div style={{fontSize:20,fontWeight:900,color:"#1A1040",marginBottom:8}}>Lesson {lessonId}</div>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:4}}>
+            <span style={{fontFamily:"'Fredoka One',cursive",fontSize:32,color:"#5B4FE8"}}>{"₹"}{price}</span>
+            <span style={{fontSize:12,color:"#9890C4",textDecoration:"line-through"}}>{"₹"}{Math.round(price*1.67)}</span>
+            <span style={{fontSize:10,color:"#FF6B6B",background:"#FF6B6B12",border:"1px solid #FF6B6B30",borderRadius:999,padding:"2px 8px",fontWeight:800}}>40% OFF</span>
+          </div>
+          <div style={{color:"#9890C4",fontSize:12}}>Permanent unlock {"·"} Never expires</div>
         </div>
-        <Card color={C.orange} style={{marginBottom:14}}>
-          {[["📚","All sets in this lesson unlocked"],["♾️","Permanent — never expires"],["🎮","All game modes for this lesson"]].map(([e,t],i)=>(
-            <div key={i} style={{display:"flex",gap:10,marginBottom:6,alignItems:"center"}}>
-              <span style={{fontSize:16}}>{e}</span><span style={{color:"#ccc",fontSize:13}}>{t}</span>
+        <div style={{background:"white",border:"1.5px solid #2ECC9A30",borderRadius:20,boxShadow:"0 4px 12px #2ECC9A18",padding:"16px 14px",marginBottom:14}}>
+          {[["All sets in this lesson unlocked"],["Permanent — never expires"],["All game modes for this lesson"]].map(([t],i)=>(
+            <div key={i} style={{display:"flex",gap:8,marginBottom:8,alignItems:"center"}}>
+              <span style={{fontSize:16}}>✅</span><span style={{color:"#1A1040",fontSize:13,fontWeight:700}}>{t}</span>
             </div>
           ))}
-        </Card>
-        <div style={{display:"flex",gap:0,marginBottom:16,background:C.card,borderRadius:12,padding:3}}>
-          {[["razorpay","\ud83d\udcb3 Card/UPI"],["upi","\ud83c\udfe6 UPI Manual"]].map(([k,l])=>(
-            <button key={k} onClick={()=>setTab(k)} style={{flex:1,background:tab===k?C.orange:"none",border:"none",borderRadius:10,padding:"8px",color:tab===k?"black":C.dim,fontWeight:800,fontSize:12,cursor:"pointer"}}>{l}</button>
+        </div>
+        <div style={{display:"flex",gap:0,marginBottom:16,background:"#F0ECFF",borderRadius:14,padding:3}}>
+          {[["razorpay","💳 Card/UPI"],["upi","🏦 UPI Manual"]].map(([k,l])=>(
+            <button key={k} onClick={()=>setTab(k)} style={{flex:1,background:tab===k?"white":"none",border:"none",borderRadius:11,padding:"8px",color:tab===k?"#5B4FE8":"#9890C4",fontWeight:tab===k?800:600,fontSize:12,cursor:"pointer",boxShadow:tab===k?"0 2px 8px rgba(91,79,232,0.15)":"none",transition:"all 0.2s"}}>{l}</button>
           ))}
         </div>
         {tab==="razorpay" ? (
-          <Btn color={C.orange} loading={loading} onClick={handleRazorpay}>{"\ud83d\udd13"} UNLOCK FOR {"\u20B9"}{price}</Btn>
+          <Btn color="#2ECC9A" loading={loading} onClick={handleRazorpay}>{"\ud83d\udd13"} UNLOCK FOR {"\u20B9"}{price}</Btn>
         ) : (
           <div>
-            <div style={{color:C.dim,fontSize:12,marginBottom:6}}>UPI ID: <b style={{color:C.orange}}>mathmagic@upi</b> {"\u00B7"} Amount: <b style={{color:textColor()}}>{"\u20B9"}{price}</b></div>
+            <div style={{color:"#5B4FE8",fontSize:12,marginBottom:6,textDecoration:"underline"}}>UPI ID: mathmagic@upi · Amount: {"₹"}{price}</div>
             <input value={utr} onChange={e=>setUtr(e.target.value.toUpperCase())} placeholder="UTR / Ref number"
-              style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.orange}44`,borderRadius:10,padding:"10px 12px",color:textColor(),fontFamily:"'Nunito',sans-serif",fontSize:14,display:"block",marginBottom:10}}/>
-            <Btn color={C.orange} loading={loading} onClick={handleUPI}>{"\u2705"} VERIFY {"\u0026"} UNLOCK</Btn>
+              style={{width:"100%",background:"rgba(91,79,232,0.04)",border:"1.5px solid #2ECC9A44",borderRadius:10,padding:"10px 12px",color:"#1A1040",fontFamily:"'Nunito',sans-serif",fontSize:14,display:"block",marginBottom:10}}/>
+            <Btn color="#2ECC9A" loading={loading} onClick={handleUPI}>{"\u2705"} VERIFY {"\u0026"} UNLOCK</Btn>
           </div>
         )}
         {msg && <div style={{marginTop:12,color:msg.startsWith("\u2705")?C.green:C.red,fontSize:12,textAlign:"center",fontWeight:700}}>{msg}</div>}
-        <div style={{marginTop:12,textAlign:"center",color:C.dim,fontSize:11}}>{"\ud83d\udd12"} Secured by Razorpay {"\u00B7"} 256-bit SSL</div>
+        <div style={{marginTop:16,textAlign:"center",color:"#9890C4",fontSize:10}}>{"\ud83d\udd12"} Secured by Razorpay {"\u00B7"} 256-bit SSL</div>
       </div>
     </div>
   );
