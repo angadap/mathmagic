@@ -74,6 +74,17 @@ export function GlobalStyles() {
         .mm-levitate{animation:levitate 4s ease-in-out infinite}
         .mm-star-spin{animation:starSpin 5s linear infinite}
         .mm-fire-flick{animation:fireFlick .8s ease-in-out infinite}
+        @keyframes mmFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+        @keyframes mmPop{0%{transform:scale(0.85);opacity:0}60%{transform:scale(1.06)}100%{transform:scale(1);opacity:1}}
+        @keyframes mmSlideUp{from{transform:translateY(22px);opacity:0}to{transform:translateY(0);opacity:1}}
+        @keyframes mmShimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+        @keyframes mmBounce{0%,100%{transform:scale(1)}40%{transform:scale(1.15)}70%{transform:scale(0.94)}}
+        @keyframes mmStarPop{0%{transform:scale(0) rotate(-30deg)}60%{transform:scale(1.3) rotate(5deg)}100%{transform:scale(1) rotate(0)}}
+        @keyframes mmConfetti{0%{transform:translateY(-10px) rotate(0);opacity:1}100%{transform:translateY(120px) rotate(540deg);opacity:0}}
+        @keyframes mmWave{0%{border-radius:60% 40% 30% 70%/60% 30% 70% 40%}50%{border-radius:30% 60% 70% 40%/50% 60% 30% 60%}100%{border-radius:60% 40% 30% 70%/60% 30% 70% 40%}}
+        @keyframes mmPulse{0%,100%{opacity:1}50%{opacity:0.6}}
+        .mm-press:active{transform:translateY(3px)!important;}
+        .mm-btn:active{transform:translateY(4px)!important;box-shadow:none!important;}
       `;
       document.head.appendChild(s);
     }

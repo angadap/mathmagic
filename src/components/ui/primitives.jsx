@@ -12,26 +12,22 @@ export function Btn({ children, onClick, color = C.cyan, disabled, loading, styl
     <button
       onClick={!isOff ? handleClick : undefined}
       onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}
-      className="mm-btn-press"
+      className="mm-btn"
       style={{
         width:"100%", padding:"17px 24px",
         border:"none",
         borderRadius:20,
         background: isOff
-          ? `linear-gradient(135deg,${C.card2},${C.card})`
-          : hov
-            ? `linear-gradient(155deg,${color}ff,${color}dd,${color}bb)`
-            : `linear-gradient(155deg,${color}ee,${color}cc,${color}99)`,
+          ? "#E5E3F0"
+          : `linear-gradient(155deg,${color}EE,${color}CC)`,
         color: isOff ? C.dim : "#fff",
-        fontSize:16, fontFamily:"'Baloo 2','Nunito',sans-serif", fontWeight:900,
+        fontSize:16, fontFamily:"'Nunito',sans-serif", fontWeight:900,
         cursor: isOff ? "not-allowed" : "pointer",
         letterSpacing:1,
         textShadow: isOff ? "none" : `0 1px 8px ${color}66`,
         boxShadow: isOff
-          ? `inset 0 1px 0 rgba(255,255,255,.05)`
-          : hov
-            ? `inset 0 1.5px 0 rgba(255,255,255,.28),0 6px 0 rgba(0,0,0,.45),0 10px 28px ${color}55`
-            : `inset 0 1.5px 0 rgba(255,255,255,.22),0 5px 0 rgba(0,0,0,.42),0 8px 20px ${color}44`,
+          ? "none"
+          : `0 4px 0 ${color}CC, 0 6px 16px ${color}35, inset 0 1px 0 rgba(255,255,255,0.35)`,
         transform: hov && !isOff ? "translateY(-1px)" : "none",
         transition:"all 0.18s ease",
         position:"relative", overflow:"hidden",
@@ -101,12 +97,13 @@ export function Inp({ value, onChange, placeholder, type = "text", label, error,
 export function Card({ children, color = C.purple, style: sx = {} }) {
   return (
     <div className="mm-card" style={{
-      background:"linear-gradient(160deg,rgba(255,255,255,.08),rgba(255,255,255,.03))",
-      border:`1px solid ${color}33`,
-      borderRadius:20, padding:14,
-      boxShadow:`inset 0 1.5px 0 rgba(255,255,255,.13),inset 0 -1px 0 rgba(0,0,0,.22),0 4px 0 rgba(0,0,0,.38),0 8px 22px ${color}18`,
+      background: C.surface || "#FFFFFF",
+      border:`1.5px solid ${color}22`,
+      borderRadius:28, padding:14,
+      boxShadow:`0 8px 30px ${color}28, 0 2px 6px ${color}18, inset 0 1px 0 rgba(255,255,255,0.8)`,
       ...sx,
     }}>
+      <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:`linear-gradient(90deg,transparent,${color}30,transparent)`,pointerEvents:"none"}}/>
       {children}
     </div>
   );
@@ -121,14 +118,14 @@ export function XPBar({ xp = 0, level = 1 }) {
         borderRadius:20, padding:"3px 10px", fontSize:10,
         fontFamily:"'Baloo 2',sans-serif", color:"#0a0500", flexShrink:0, fontWeight:900,
       }}>LV {level}</div>
-      <div style={{ flex:1, background:"rgba(255,255,255,0.07)", borderRadius:99, height:9, overflow:"hidden", boxShadow:"inset 0 2px 4px rgba(0,0,0,.4)" }}>
+      <div style={{ flex:1, background:"#F0ECFF", borderRadius:999, height:10, overflow:"hidden" }}>
         <div style={{
           width:`${((xp % 200) / 200) * 100}%`, height:"100%",
-          background:`linear-gradient(90deg,${C.yellow},#FFD060,${C.cyan},#FFD060,${C.yellow})`,
+          background:"linear-gradient(90deg,#5B4FE8,#9B59F5,#4BBDF5)",
           backgroundSize:"200% 100%",
-          borderRadius:99,
-          animation:"xpFlow 2.5s linear infinite",
-          boxShadow:`0 0 12px ${C.yellow}88`,
+          borderRadius:999,
+          animation:"mmShimmer 3s linear infinite",
+          boxShadow:"0 0 10px #5B4FE855",
           transition:"width 1s ease",
         }}/>
       </div>

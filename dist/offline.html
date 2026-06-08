@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>MathMagic — Offline</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{min-height:100vh;background:#04040f;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;color:#e0e0ff;text-align:center;padding:24px}
+  .rocket{font-size:80px;animation:float 3s ease-in-out infinite;margin-bottom:24px}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-16px)}}
+  h1{font-size:24px;font-weight:900;margin-bottom:10px;color:#7ec8e3}
+  p{font-size:14px;color:#8888aa;line-height:1.7;max-width:280px;margin:0 auto 24px}
+  .tip{background:rgba(126,200,227,0.08);border:1px solid rgba(126,200,227,0.2);border-radius:14px;padding:14px 18px;font-size:13px;color:#7ec8e3;max-width:300px;margin-bottom:28px}
+  button{background:linear-gradient(135deg,#7ec8e3,#9b7ede);border:none;border-radius:14px;padding:14px 32px;color:#04040f;font-weight:900;font-size:15px;cursor:pointer;font-family:inherit}
+</style>
+</head>
+<body>
+  <div class="rocket">🚀</div>
+  <h1>Lost in Space!</h1>
+  <p>Looks like your spaceship lost signal. Check your internet connection and try again.</p>
+  <div class="tip">💡 Tip: Questions you've already played are saved and work offline!</div>
+  <button onclick="location.reload()">Try Again</button>
+</body>
+</html>
