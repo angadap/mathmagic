@@ -55,7 +55,7 @@ export function DailyQuestSection({ dqDone, dpDone, todaySets, onOpen }) {
   return (
     <div style={{ position:"relative", zIndex:2, margin:"14px 18px 0" }}>
       <button onClick={()=>setOpen(o=>!o)}
-        style={{ width:"100%", background:isDark()?`linear-gradient(135deg,${C.purple}18,${C.cyan}0a)`:C.card, border:`1.5px solid ${C.purple}${isDark()?"33":"44"}`, borderRadius:18, padding:"14px 18px", cursor:"pointer", display:"flex", alignItems:"center", gap:12, textAlign:"left", boxShadow:`0 2px 10px ${C.purple}10` }}>
+        style={{ width:"100%", background:"white", border:"1.5px solid #9B59F522", borderRadius:28, padding:16, cursor:"pointer", display:"flex", alignItems:"center", gap:12, textAlign:"left", boxShadow:"0 8px 30px #9B59F528, inset 0 1px 0 rgba(255,255,255,0.8)" }}>
         <div style={{ fontSize:26 }}>🎯</div>
         <div style={{ flex:1 }}>
           <div style={{ fontSize:15, fontWeight:900, color:textColor() }}>Daily Quest</div>
@@ -69,10 +69,10 @@ export function DailyQuestSection({ dqDone, dpDone, todaySets, onOpen }) {
       {open && (
         <div style={{ marginTop:10 }}>
           {/* Progress bar */}
-          <div style={{ background:isDark()?"rgba(255,255,255,0.06)":"#ece8ff", borderRadius:8, height:7, overflow:"hidden", marginBottom:12 }}>
+          <div style={{ background:"#F0ECFF", borderRadius:8, height:7, overflow:"hidden", marginBottom:12 }}>
             <div style={{ width:`${(doneCnt/3)*100}%`, height:"100%",
-              background:`linear-gradient(90deg,${C.cyan},${C.purple},${C.pink})`, borderRadius:8, transition:"width 0.6s ease",
-              boxShadow:doneCnt===3?`0 0 10px ${C.purple}88`:"none" }}/>
+              background:"linear-gradient(90deg,#5B4FE8,#9B59F5,#FF6B6B)", borderRadius:8, transition:"width 0.6s ease",
+              boxShadow:doneCnt===3?"0 0 10px #9B59F588":"none" }}/>
           </div>
           {allDone ? (
             <div style={{ background:`linear-gradient(135deg,${C.green}18,${C.cyan}12)`, border:`2px solid ${C.green}44`,
@@ -100,11 +100,11 @@ export function DailyQuestSection({ dqDone, dpDone, todaySets, onOpen }) {
                       { label:"Word Problem", done:dqDone,       color:C.yellow, icon:"🌟" },
                       { label:"Brain Puzzle", done:dpDone,       color:C.purple, icon:"🧩" },
                     ].map((t,i)=>(
-                      <div key={i} style={{ background:t.done?`${C.green}22`:`${t.color}18`,
-                        border:`1px solid ${t.done?C.green+"55":t.color+"33"}`,
+                      <div key={i} style={{ background:t.done?`${t.color}14`:"#F0ECFF",
+                        border:`1px solid ${t.done?t.color+"40":"rgba(91,79,232,0.10)"}`,
                         borderRadius:10, padding:"3px 9px", display:"flex", alignItems:"center", gap:4 }}>
                         <span style={{ fontSize:11 }}>{t.done?"✅":t.icon}</span>
-                        <span style={{ fontSize:10, fontWeight:700, color:t.done?C.green:t.color }}>{t.label}</span>
+                        <span style={{ fontSize:10, fontWeight:700, color:t.color }}>{t.label}</span>
                       </div>
                     ))}
                   </div>
@@ -137,15 +137,18 @@ export function MyClassSection({ world: w, child, onWorld, pctDone }) {
       </button>
       {open && (
         <div style={{ marginTop:10 }}>
-          <div onClick={()=>onWorld(w)} style={{ background:`linear-gradient(135deg,${w.color}22,${w.color}0a)`, border:`2px solid ${w.color}55`, borderRadius:22, padding:"18px", cursor:"pointer", display:"flex", alignItems:"center", gap:16, boxShadow:`0 0 30px ${w.glow}`, position:"relative", overflow:"hidden" }}>
+          <div onClick={()=>onWorld(w)} style={{ background:"white", border:"2px solid #9B59F530", borderRadius:28, padding:16, cursor:"pointer", display:"flex", alignItems:"center", gap:16, boxShadow:"0 8px 30px #9B59F528, inset 0 1px 0 rgba(255,255,255,0.8)", position:"relative", overflow:"hidden" }}>
             <div style={{ position:"absolute", right:-10, top:-10, fontSize:80, opacity:0.12, animation:"floatUp 3s ease-in-out infinite", pointerEvents:"none" }}>{w.planet}</div>
-            <div style={{ width:64, height:64, borderRadius:20, background:`${w.color}25`, border:`3px solid ${w.color}55`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:36, flexShrink:0 }}>{w.planet}</div>
+            <div style={{ width:58, height:58, borderRadius:14, background:`${w.color}25`, border:`2px solid ${w.color}40`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:32, flexShrink:0 }}>{w.planet}</div>
             <div style={{ flex:1, position:"relative", zIndex:1 }}>
-              <div style={{ fontSize:20, fontWeight:900, color:textColor() }}>{w.name}</div>
+              <div style={{ fontSize:18, fontWeight:900, color:"#1A1040" }}>{w.name}</div>
               <div style={{ fontSize:13, color:w.color, fontWeight:700, marginTop:2 }}>{w.world}</div>
-              <div style={{ fontSize:12, color:C.dim, marginTop:4 }}>{(LESSONS[child.class_num]||LESSONS[1]).length} Lessons · {pctDone}% complete</div>
+              <div style={{ fontSize:12, color:"#9890C4", marginTop:4 }}>{(LESSONS[child.class_num]||LESSONS[1]).length} Lessons · {pctDone}% complete</div>
+              <div style={{ background:"#F0ECFF", borderRadius:999, height:5, overflow:"hidden", marginTop:8 }}>
+                <div style={{ width:`${pctDone}%`, height:"100%", background:"linear-gradient(90deg,#9B59F5,#4BBDF5)", borderRadius:999, transition:"width 1s ease" }}/>
+              </div>
             </div>
-            <div style={{ fontSize:32, color:w.color }}>›</div>
+            <div style={{ fontSize:24, color:"#9B59F5" }}>›</div>
           </div>
         </div>
       )}
@@ -175,9 +178,9 @@ export function QuickLaunch({ onAbacus, onGames, onOlympiad, onBazaar }) {
       {open && (
         <div style={{ marginTop:10, display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
           {items.map((n,i)=>(
-            <button key={i} onClick={n.a} style={{ background:`${n.c}14`, border:`2px solid ${n.c}33`, borderRadius:18, padding:"16px 14px", cursor:"pointer", textAlign:"left", display:"flex", alignItems:"center", gap:12 }}>
-              <div style={{ fontSize:32, flexShrink:0 }}>{n.i}</div>
-              <div><div style={{ fontSize:16, fontWeight:800, color:textColor() }}>{n.l}</div><div style={{ fontSize:11, color:n.c, marginTop:2, fontWeight:600 }}>{n.sub}</div></div>
+            <button key={i} onClick={n.a} style={{ background:`${n.c}10`, border:`1.5px solid ${n.c}25`, borderRadius:20, padding:"14px 12px", cursor:"pointer", textAlign:"left", display:"flex", alignItems:"center", gap:12, boxShadow:`0 4px 12px ${n.c}30, 0 2px 6px ${n.c}20` }}>
+              <div style={{ fontSize:26, flexShrink:0 }}>{n.i}</div>
+              <div><div style={{ fontSize:13, fontWeight:800, color:"#1A1040" }}>{n.l}</div><div style={{ fontSize:10, color:n.c, marginTop:2, fontWeight:700 }}>{n.sub}</div></div>
             </button>
           ))}
         </div>
@@ -302,20 +305,21 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
 
       {/* Hero Header */}
       <div style={{ position:"relative", zIndex:2 }}>
-        <div style={{ background:`linear-gradient(160deg,${w.color}${isDark()?"28":"18"} 0%,${C.purple}${isDark()?"18":"0f"} 50%,transparent 100%)`, padding:"20px 20px 16px", position:"relative", overflow:"hidden" }}>
+        <div style={{ background:"linear-gradient(160deg,#5B4FE818 0%,#9B59F512 50%,transparent 100%)", padding:"24px 20px 20px", position:"relative", overflow:"hidden" }}>
           <div style={{ position:"absolute", right:-20, top:-20, fontSize:110, opacity:0.1, animation:"floatUp 4s ease-in-out infinite", pointerEvents:"none" }}>{w.planet}</div>
+          <div style={{position:"absolute",top:-50,right:-40,width:160,height:160,borderRadius:"60% 40% 30% 70%/60% 30% 70% 40%",background:"radial-gradient(#9B59F540,#9B59F510)",animation:"mmWave 8s ease-in-out infinite",pointerEvents:"none",opacity:0.4}}/>
           <div style={{ position:"relative", zIndex:1 }}>
             <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:14 }}>
-              <div style={{ position:"relative", flexShrink:0 }}>
-                <div style={{ width:58, height:58, background:`linear-gradient(135deg,${w.color}44,${C.purple}44)`, borderRadius:20, border:`3px solid ${w.color}66`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:30, boxShadow:`0 0 22px ${w.color}44` }}>{child.avatar}</div>
-                <div style={{ position:"absolute", bottom:-5, right:-5, background:C.yellow, borderRadius:10, padding:"2px 7px", fontSize:10, fontWeight:900, color:"#000", border:"2px solid "+C.bg }}>Lv{child.level||1}</div>
+              <div style={{ position:"relative", width:64, height:64, flexShrink:0 }}>
+                <div style={{ width:52, height:52, borderRadius:14, background:"linear-gradient(135deg,#9B59F522,#9B59F50a)", border:"2.5px solid #9B59F544", display:"flex", alignItems:"center", justifyContent:"center", fontSize:27, boxShadow:"0 0 20px #9B59F555" }}>{child.avatar}</div>
+                <div style={{ position:"absolute", bottom:-4, right:-4, background:"linear-gradient(135deg,#FFC847,#FF6B6B)", borderRadius:999, padding:"1px 7px", fontSize:10, fontWeight:900, color:"white", border:"2px solid white" }}>Lv{child.level||1}</div>
               </div>
               <div style={{ flex:1 }}>
                 <div style={{ fontSize:21, fontWeight:900, color:textColor(), lineHeight:1.1 }}>Hey, {child.name?.split(" ")[0]}! {levelEmoji}</div>
                 <div style={{ fontSize:13, color:w.color, fontWeight:700, marginTop:2 }}>{w.world} · Cadet</div>
               </div>
               <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                {child.streak_days>0 && <div style={{ background:`${C.orange}22`, border:`1px solid ${C.orange}44`, borderRadius:12, padding:"5px 9px", textAlign:"center" }}><div style={{ fontSize:16 }}>🔥</div><div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:12, color:C.orange, fontWeight:900 }}>{child.streak_days}</div></div>}
+                {child.streak_days>0 && <div style={{ background:"#FF6B6B15", border:"1.5px solid #FF6B6B30", borderRadius:14, padding:"6px 10px", textAlign:"center" }}><div style={{ fontSize:18 }}>🔥</div><div style={{ fontFamily:"'Fredoka One',cursive", fontSize:13, color:"#FF6B6B", fontWeight:900 }}>{child.streak_days}</div></div>}
                 <MuteBtn/>
                 <button onClick={onLogout} style={{ background:`${C.pink}14`, border:`1px solid ${C.pink}44`, borderRadius:12, padding:"7px 11px", color:C.pink, fontSize:13, cursor:"pointer", fontWeight:700 }}>Exit</button>
               </div>
@@ -324,12 +328,12 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
             <div style={{ display:"flex", alignItems:"center", gap:12, marginTop:12 }}>
               <div style={{ position:"relative", width:56, height:56, flexShrink:0 }}>
                 <svg width="56" height="56" style={{ transform:"rotate(-90deg)" }}>
-                  <circle cx="28" cy="28" r="22" fill="none" stroke="#ffffff10" strokeWidth="5"/>
-                  <circle cx="28" cy="28" r="22" fill="none" stroke={w.color} strokeWidth="5"
+                  <circle cx="28" cy="28" r="22" fill="none" stroke="#9B59F520" strokeWidth="5"/>
+                  <circle cx="28" cy="28" r="22" fill="none" stroke="#9B59F5" strokeWidth="5"
                     strokeDasharray={`${2*Math.PI*22*pctDone/100} ${2*Math.PI*22}`} strokeLinecap="round"
                     style={{transition:"stroke-dasharray 1s ease"}}/>
                 </svg>
-                <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:900, color:textColor() }}>{pctDone}%</div>
+                <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:900, color:"#9B59F5" }}>{pctDone}%</div>
               </div>
               <div style={{ flex:1 }}>
                 <div style={{ fontSize:14, fontWeight:800, color:textColor() }}>Overall Progress</div>
@@ -343,11 +347,11 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
 
       {/* Cosmo Mascot */}
       <div style={{ position:"relative", zIndex:2, margin:"14px 18px 0" }}>
-        <div style={{ background:`linear-gradient(135deg,${C.purple}${isDark()?"22":"14"},${C.cyan}${isDark()?"14":"0f"})`, color:textColor(), border:`1.5px solid ${C.cyan}33`, borderRadius:20, padding:"12px 16px", display:"flex", alignItems:"center", gap:12 }}>
-          <div style={{ fontSize:36, animation:"floatUp 2.5s ease-in-out infinite", flexShrink:0 }}>🤖</div>
+        <div style={{ background:"linear-gradient(135deg,#5B4FE812,#9B59F50a)", border:"1.5px solid #5B4FE820", borderRadius:20, padding:"12px 16px", display:"flex", alignItems:"center", gap:12 }}>
+          <div style={{ fontSize:34, animation:"mmFloat 2.5s ease-in-out infinite", flexShrink:0 }}>🤖</div>
           <div style={{ flex:1 }}>
-            <div style={{ fontSize:11, color:C.cyan, fontWeight:700, marginBottom:2 }}>COSMO SAYS</div>
-            <div key={mascotMsg} style={{ fontSize:15, color:textColor(), fontWeight:700, animation:"slideUp 0.4s ease" }}>{MASCOT_MSGS[mascotMsg]}</div>
+            <div style={{ fontSize:11, color:"#5B4FE8", fontWeight:800, letterSpacing:1, marginBottom:2 }}>COSMO SAYS</div>
+            <div key={mascotMsg} style={{ fontSize:14, color:"#1A1040", fontWeight:700, animation:"slideUp 0.4s ease" }}>{MASCOT_MSGS[mascotMsg]}</div>
           </div>
         </div>
       </div>
@@ -360,10 +364,10 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
           {e:"💎",v:child.gems||0,   l:"Gems",    c:C.purple},
           {e:"🗓️",v:todaySets,       l:"Today",   c:C.cyan},
         ].map((s,i)=>(
-          <div key={i} style={{ flex:1, background:C.card, borderRadius:16, padding:"10px 6px", textAlign:"center", border:`1.5px solid ${s.c}${isDark()?"28":"44"}` }}>
+          <div key={i} style={{ flex:1, background:"white", borderRadius:28, padding:"10px 6px", textAlign:"center", border:`1.5px solid ${s.c}22`, boxShadow:`0 8px 30px ${s.c}28, inset 0 1px 0 rgba(255,255,255,0.8)` }}>
             <div style={{ fontSize:20 }}>{s.e}</div>
-            <div style={{ fontSize:18, fontWeight:900, color:textColor() }}>{s.v}</div>
-            <div style={{ fontSize:10, color:C.dim, fontWeight:700 }}>{s.l}</div>
+            <div style={{ fontSize:16, fontWeight:900, color:"#1A1040" }}>{s.v}</div>
+            <div style={{ fontSize:9, color:"#9890C4", fontWeight:700 }}>{s.l}</div>
           </div>
         ))}
       </div>
