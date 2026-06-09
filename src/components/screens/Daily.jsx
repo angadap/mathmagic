@@ -199,8 +199,8 @@ export function DailyQuiz({ child, onClose }) {
   };
 
   return (
-    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.35)",zIndex:999,display:"flex",alignItems:"flex-end",justifyContent:"center",fontFamily:"'Baloo 2','Nunito',sans-serif"}}>
-      <div style={{background:"#FAFBFF",borderRadius:"28px 28px 0 0",padding:"0 0 32px",width:"100%",maxWidth:480,boxShadow:"0 -20px 60px rgba(91,79,232,0.2)",maxHeight:"90vh",overflowY:"auto",animation:"mmSlideUp 0.3s ease"}}>
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.45)",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Baloo 2','Nunito',sans-serif",padding:"16px"}}>
+      <div style={{background:"#FAFBFF",borderRadius:28,padding:"0 0 28px",width:"100%",maxWidth:480,boxShadow:"0 20px 60px rgba(91,79,232,0.25)",maxHeight:"90vh",overflowY:"auto",animation:"mmPop 0.25s ease"}}>
         <div style={{paddingTop:12,marginBottom:4}}>
           <div style={{width:40,height:4,borderRadius:999,background:"rgba(91,79,232,0.1)",margin:"0 auto 10px"}}/>
           <div style={{display:"flex",gap:5,justifyContent:"center"}}>
@@ -326,8 +326,8 @@ export function DailyPuzzle({ child, onClose }) {
   const typeColors = { riddle:"#9B59F5", number:"#4BBDF5", logic:"#FF6B6B", visual:"#FFC847" };
 
   return (
-    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.35)",zIndex:999,display:"flex",alignItems:"flex-end",justifyContent:"center",fontFamily:"'Baloo 2','Nunito',sans-serif"}}>
-      <div style={{background:"#FAFBFF",borderRadius:"28px 28px 0 0",padding:"0 0 32px",width:"100%",maxWidth:480,boxShadow:"0 -20px 60px rgba(91,79,232,0.2)",maxHeight:"90vh",overflowY:"auto",animation:"mmSlideUp 0.3s ease"}}>
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.45)",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Baloo 2','Nunito',sans-serif",padding:"16px"}}>
+      <div style={{background:"#FAFBFF",borderRadius:28,padding:"0 0 28px",width:"100%",maxWidth:480,boxShadow:"0 20px 60px rgba(91,79,232,0.25)",maxHeight:"90vh",overflowY:"auto",animation:"mmPop 0.25s ease"}}>
         <div style={{paddingTop:12,marginBottom:4}}>
           <div style={{width:40,height:4,borderRadius:999,background:"rgba(91,79,232,0.1)",margin:"0 auto 10px"}}/>
           <div style={{display:"flex",gap:5,justifyContent:"center"}}>

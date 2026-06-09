@@ -347,16 +347,6 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
           ))}
         </div>
 
-        {/* 4a.5 — Parent Dashboard */}
-        <button onClick={onParent} style={{ background:"linear-gradient(135deg,#4BBDF510,#5B4FE810)", border:"1.5px solid #4BBDF530", borderRadius:20, padding:"12px 16px", cursor:"pointer", display:"flex", alignItems:"center", gap:12, width:"100%", textAlign:"left", boxShadow:"0 4px 12px #4BBDF530" }}>
-          <div style={{ width:40, height:40, borderRadius:14, background:"linear-gradient(135deg,#4BBDF5,#5B4FE8)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, flexShrink:0 }}>👨‍👩‍👧</div>
-          <div style={{ flex:1 }}>
-            <div style={{ fontSize:13, fontWeight:800, color:"#1A1040" }}>Parent Dashboard</div>
-            <div style={{ fontSize:10, color:"#4BBDF5", fontWeight:700, marginTop:1 }}>Progress · Reports · Settings</div>
-          </div>
-          <div style={{ fontSize:18, color:"#4BBDF5" }}>›</div>
-        </button>
-
         {/* 4b — Cosmo Mascot */}
         <div style={{ background:"linear-gradient(135deg,#5B4FE812,#9B59F50a)", border:"1.5px solid #5B4FE820", borderRadius:20, padding:"12px 16px", display:"flex", alignItems:"center", gap:12 }}>
           <div style={{ fontSize:34, animation:"mmFloat 2.5s ease-in-out infinite", flexShrink:0 }}>🤖</div>
@@ -430,7 +420,7 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
         {[
           {icon:"🏠",label:"Home",    act:null,       active:true},
           {icon:"🎮",label:"Games",   act:onGames},
-          {icon:"🧮",label:"Abacus",  act:onAbacus},
+          {icon:"👨‍👩‍👧",label:"Parent",  act:onParent},
           {icon:"🎓",label:"Exams",   act:onOlympiad},
           {icon:"⚙️",label:"Settings",act:()=>onSettings&&onSettings()},
           {icon:"📣",label:"Report",  act:onFeedback},
