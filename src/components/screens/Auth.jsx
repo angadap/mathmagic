@@ -370,3 +370,115 @@ export function Login({ onBack, onDone }) {
 }
 
 // ── Paywall ───────────────────────────────────────────────────────────
+
+// ── HomeStudentLogin — for admin-created home students (no parent account) ──
+export function HomeStudentLogin({ onBack, onDone }) {
+  // Step 1: username → fetches child record (avatar, name shown for confirmation)
+  // Step 2: PIN → verified server-side
+  const [step,     setStep]     = useState("username"); // "username" | "pin"
+  const [username, setUsername] = useState("");
+  const [child,    setChild]    = useState(null);
+  const [pin,      setPin]      = useState("");
+  const [error,    setError]    = useState("");
+  const [loading,  setLoading]  = useState(false);
+  const [shake,    setShake]    = useState(false);
+
+  // Step 1: look up child by username only (no PIN yet) to show avatar
+  const handleFindByUsername = async () => {
+    const u = username.trim().toLowerCase().replace(/[^a-z0-9_.]/g, "");
+    if (!u) { setError("Enter your username"); return; }
+    setLoading(true); setError("");
+    try {
+      const r = await fetch("/api/admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer angadadmin2026" },
+        body: JSON.stringify({ action: "admin_list_home_students" })
+      });
+      const d = await r.json();
+      const found = (d.data || []).find(s => s.username === u && !s.parent_id);
+      if (!found) { setError("Username not found. Check spelling and try again."); setLoading(false); return; }
+      setChild(found);
+      setStep("pin");
+    } catch(e) { setError("Network error. Try again."); }
+    setLoading(false);
+  };
+
+  // Step 2: verify PIN server-side
+  const handlePinComplete = async (fullPin) => {
+    setLoading(true); setError("");
+    try {
+      const r = await fetch("/api/admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer angadadmin2026" },
+        body: JSON.stringify({ action: "admin_home_student_login", username: child.username, pin: fullPin })
+      });
+      const d = await r.json();
+      if (d.child) {
+        SFX.select();
+        onDone({ user: { id: null, email: null }, child: d.child });
+      } else {
+        setShake(true);
+        setError(d.error || "Wrong PIN! Try again 🔒");
+        setTimeout(() => { setShake(false); setPin(""); setError(""); }, 700);
+      }
+    } catch(e) { setError("Network error. Try again."); setPin(""); }
+    setLoading(false);
+  };
+
+  return (
+    <div style={{ minHeight:"100vh", background:C.bg, padding:"20px 18px", fontFamily:"'Nunito',sans-serif", position:"relative" }}>
+      <Starfield n={26}/>
+      <div style={{ position:"relative", zIndex:1, animation:"slideUp 0.3s ease" }}>
+
+        {/* Header */}
+        <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:20 }}>
+          <BackBtn onClick={step === "pin" ? () => { setStep("username"); setPin(""); setError(""); } : onBack}/>
+          <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:14, color:C.green }}>HOME STUDENT LOGIN</div>
+        </div>
+
+        {/* Step 1 — Username */}
+        {step === "username" && (
+          <>
+            <div style={{ background:`${C.green}11`, border:`1.5px solid ${C.green}33`, borderRadius:16, padding:"14px 16px", marginBottom:20, display:"flex", gap:12, alignItems:"flex-start" }}>
+              <div style={{ fontSize:24, flexShrink:0 }}>🏠</div>
+              <div>
+                <div style={{ fontSize:14, fontWeight:800, color:textColor(), marginBottom:3 }}>Welcome back!</div>
+                <div style={{ fontSize:12, color:C.dim, lineHeight:1.6 }}>Enter the username your teacher set up for you.</div>
+              </div>
+            </div>
+            <Inp
+              label="USERNAME"
+              value={username}
+              onChange={v => { setUsername(v.toLowerCase().replace(/[^a-z0-9_.]/g, "")); setError(""); }}
+              placeholder="e.g. arjun01"
+              error={error}
+              maxLen={30}
+              autoComp="username"
+              onEnter={handleFindByUsername}
+            />
+            <Btn color={C.green} loading={loading} onClick={handleFindByUsername}>NEXT →</Btn>
+            <div style={{ textAlign:"center", marginTop:14 }}>
+              <button onClick={onBack} style={{ background:"none", border:"none", color:C.dim, fontSize:12, cursor:"pointer", fontWeight:600 }}>
+                ← Back
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* Step 2 — PIN (avatar shown for visual confirmation) */}
+        {step === "pin" && child && (
+          <>
+            <div style={{ textAlign:"center", marginBottom:20 }}>
+              <div style={{ fontSize:56, lineHeight:1, marginBottom:10, animation:"floatUp 2s ease-in-out infinite" }}>{child.avatar || "🚀"}</div>
+              <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:15, color:C.green, marginBottom:2 }}>{child.name}</div>
+              <div style={{ color:C.dim, fontSize:12 }}>@{child.username} · Level {child.level || 1} · {child.xp || 0} XP</div>
+            </div>
+            <div style={{ color:C.dim, fontSize:12, fontWeight:700, textAlign:"center", marginBottom:14, letterSpacing:1 }}>ENTER YOUR PIN 🔐</div>
+            <PinPad pin={pin} setPin={setPin} error={error} shake={shake} onComplete={handlePinComplete}/>
+          </>
+        )}
+
+      </div>
+    </div>
+  );
+}

@@ -21,7 +21,7 @@ import { GlobalStyles, OfflineBanner }          from './components/layout/layout
 // ── Entry / Auth ──────────────────────────────────────────────────────────────
 import { Splash }                               from './components/screens/Entry.jsx';
 import { EntryScreen, StudentEntry }            from './components/screens/Entry.jsx';
-import { Welcome, Register, Login }             from './components/screens/Auth.jsx';
+import { Welcome, Register, Login, HomeStudentLogin }             from './components/screens/Auth.jsx';
 import { RegPayment, LessonPayment, Paywall }   from './components/screens/Payment.jsx';
 
 // ── Main screens ──────────────────────────────────────────────────────────────
@@ -229,6 +229,12 @@ export default function App() {
 
   if (screen === 'login')
     return <><GlobalStyles />{SwUpdatePortal}<Login
+      onBack={() => setScreen('student_entry')}
+      onDone={({ user: u, child: c }) => { setUser(u); setChild(c); setScreen('home'); }}
+    /></>;
+
+  if (screen === 'home_student_login')
+    return <><GlobalStyles />{SwUpdatePortal}<HomeStudentLogin
       onBack={() => setScreen('student_entry')}
       onDone={({ user: u, child: c }) => { setUser(u); setChild(c); setScreen('home'); }}
     /></>;

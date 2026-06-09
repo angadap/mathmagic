@@ -163,7 +163,7 @@ export function StudentEntry({ onBack, onSelect }) {
   const [hov, setHov] = useState(-1);
   const opts = [
     {icon:"🏫",label:"My School uses MathMagic",sub:"Login with school code",        color:"#5B4FE8", s:"student_login"},
-    {icon:"🏠",label:"I study at home",          sub:"Login with my account",          color:"#2ECC9A", s:"login"},
+    {icon:"🏠",label:"I study at home",          sub:"Login with name & PIN",          color:"#2ECC9A", s:"home_student_login"},
     {icon:"✨",label:"New? Register here",       sub:"One-time ₹599 · Lifetime access",color:"#FF6B6B", s:"reg_payment", highlight:true},
   ];
   return (

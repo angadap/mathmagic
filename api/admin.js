@@ -441,6 +441,19 @@ export default async function handler(req, res) {
         return res.status(200).json({sample:r1.data, r1_ok:r1.ok, r2_ok:r2.ok, has_rows:Array.isArray(r1.data)&&r1.data.length>0});
       }
 
+      if (action==="admin_check_username") {
+        // Real-time uniqueness check for home student username
+        const {username, exclude_id} = req.body;
+        if (!username) return res.status(200).json({available:false, error:"Enter a username"});
+        const u = clean(username,30).toLowerCase().replace(/[^a-z0-9_.]/g,"");
+        if (u.length < 3) return res.status(200).json({available:false, error:"Min 3 characters"});
+        let qs = `?username=eq.${encodeURIComponent(u)}&parent_id=is.null&select=id`;
+        if (exclude_id) qs += `&id=neq.${encodeURIComponent(exclude_id)}`;
+        const r = await sb("children","GET",null,qs);
+        const taken = Array.isArray(r.data) && r.data.length > 0;
+        return res.status(200).json({available:!taken, username:u});
+      }
+
       if (action==="admin_list_home_students") {
         const {search, class_num} = req.body;
         // Use same pattern as db.js get_children — proven to work
@@ -464,11 +477,17 @@ export default async function handler(req, res) {
       }
 
       if (action==="admin_create_home_student") {
-        const {name, class_num, pin, avatar} = req.body;
+        const {name, class_num, pin, avatar, username} = req.body;
         if (!name||!pin) return res.status(400).json({error:"Name and PIN required"});
+        if (!username) return res.status(400).json({error:"Username required"});
+        const uname = clean(username,30).toLowerCase().replace(/[^a-z0-9_.]/g,"");
+        if (uname.length < 3) return res.status(400).json({error:"Username must be at least 3 characters"});
+        // Enforce uniqueness
+        const chk = await sb("children","GET",null,`?username=eq.${encodeURIComponent(uname)}&parent_id=is.null&select=id`);
+        if (Array.isArray(chk.data) && chk.data.length > 0) return res.status(400).json({error:"Username already taken. Choose another."});
         const pin_hash = hashPin(String(pin).slice(0,6));
         const r = await sb("children","POST",{
-          name:clean(name,50), class_num:cleanInt(class_num,1,12),
+          name:clean(name,50), username:uname, class_num:cleanInt(class_num,1,12),
           pin_hash, avatar:clean(avatar||"🚀",10),
           xp:0, level:1, coins:50, streak_days:0, is_premium:false,
           created_at:new Date().toISOString()
@@ -478,13 +497,20 @@ export default async function handler(req, res) {
       }
 
       if (action==="admin_modify_home_student") {
-        const {child_id, name, class_num, avatar, pin} = req.body;
+        const {child_id, name, class_num, avatar, pin, username} = req.body;
         if (!child_id) return res.status(400).json({error:"Missing child_id"});
         const update = {};
         if (name)       update.name      = clean(name,50);
         if (class_num!==undefined) update.class_num = cleanInt(class_num,0,12);
         if (avatar)     update.avatar    = clean(avatar,10);
         if (pin)        update.pin_hash  = hashPin(String(pin).slice(0,6));
+        if (username) {
+          const uname = clean(username,30).toLowerCase().replace(/[^a-z0-9_.]/g,"");
+          if (uname.length < 3) return res.status(400).json({error:"Username too short"});
+          const chk = await sb("children","GET",null,`?username=eq.${encodeURIComponent(uname)}&parent_id=is.null&id=neq.${encodeURIComponent(child_id)}&select=id`);
+          if (Array.isArray(chk.data) && chk.data.length > 0) return res.status(400).json({error:"Username already taken."});
+          update.username = uname;
+        }
         const r = await sb("children","PATCH",update,`?id=eq.${encodeURIComponent(child_id)}`);
         if (!r.ok) return res.status(400).json({error:"Update failed"});
         return res.status(200).json({data:r.data});
@@ -496,6 +522,25 @@ export default async function handler(req, res) {
         await sb("progress","DELETE",null,`?child_id=eq.${encodeURIComponent(child_id)}`);
         const r = await sb("children","DELETE",null,`?id=eq.${encodeURIComponent(child_id)}`);
         return res.status(200).json({ok:true});
+      }
+
+      if (action==="admin_home_student_login") {
+        // Login by username + PIN — unique username eliminates name collision
+        const {username, pin} = req.body;
+        if (!username||!pin) return res.status(400).json({error:"Username and PIN required"});
+        const uname = clean(username,30).toLowerCase().replace(/[^a-z0-9_.]/g,"");
+        const pin_hash = hashPin(String(pin).slice(0,6));
+        const r = await sb("children","GET",null,`?username=eq.${encodeURIComponent(uname)}&parent_id=is.null&select=*`);
+        if (!Array.isArray(r.data)||r.data.length===0) return res.status(200).json({error:"Username not found"});
+        const child = r.data[0];
+        if (child.pin_hash !== pin_hash) return res.status(200).json({error:"Wrong PIN"});
+        // Update streak
+        const today = new Date().toISOString().slice(0,10);
+        const lastActive = child.last_active ? new Date(child.last_active).toISOString().slice(0,10) : null;
+        const yesterday = new Date(Date.now()-86400000).toISOString().slice(0,10);
+        const newStreak = lastActive===today ? (child.streak_days||0) : lastActive===yesterday ? (child.streak_days||0)+1 : 1;
+        await sb("children","PATCH",{streak_days:newStreak, last_active:new Date().toISOString()},`?id=eq.${encodeURIComponent(child.id)}`).catch(()=>{});
+        return res.status(200).json({ child: {...child, streak_days:newStreak} });
       }
 
 

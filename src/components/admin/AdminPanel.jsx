@@ -63,6 +63,103 @@ function FormCard({color,onBack,title,children,onSave,saveLabel,saving,msg,loadi
   );
 }
 
+// ── HomeStudentFormCard — username uniqueness check built in ──────────────────
+function HomeStudentFormCard({ isEdit, form, setForm, msg, loading, iS, CLASS_OPTS, CLASS_NUMS, onBack, onSave }) {
+  const [uStatus, setUStatus] = React.useState(null); // null | 'checking' | 'ok' | 'taken' | 'short' | 'invalid'
+  const debounceRef = React.useRef(null);
+
+  const checkUsername = (val) => {
+    const cleaned = val.toLowerCase().replace(/[^a-z0-9_.]/g, '');
+    if (cleaned.length === 0) { setUStatus(null); return; }
+    if (cleaned.length < 3)   { setUStatus('short'); return; }
+    setUStatus('checking');
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const r = await fetch('/api/admin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer angadadmin2026' },
+          body: JSON.stringify({ action: 'admin_check_username', username: cleaned, exclude_id: form.child_id || undefined })
+        });
+        const d = await r.json();
+        setUStatus(d.available ? 'ok' : 'taken');
+      } catch(e) { setUStatus(null); }
+    }, 500);
+  };
+
+  const uColor = uStatus === 'ok' ? C.green : uStatus === 'taken' ? C.red : uStatus === 'checking' ? C.dim : C.dim;
+  const uMsg   = uStatus === 'ok'       ? '✅ Username available!'
+               : uStatus === 'taken'    ? '❌ Already taken — choose another'
+               : uStatus === 'checking' ? '⏳ Checking…'
+               : uStatus === 'short'    ? '⚠ Min 3 characters'
+               : '';
+
+  return (
+    <div style={{maxWidth:520,margin:'0 auto'}}>
+      <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:16}}>
+        <button onClick={onBack} style={{background:'none',border:'none',color:C.dim,cursor:'pointer',fontSize:20}}>‹</button>
+        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:12,color:C.green}}>{isEdit ? 'EDIT HOME STUDENT' : 'NEW HOME STUDENT'}</div>
+      </div>
+      <div style={{background:C.card,border:`1.5px solid ${C.green}33`,borderRadius:16,padding:'18px 16px'}}>
+
+        {/* Full Name */}
+        <div style={{marginBottom:10}}>
+          <div style={{color:C.dim,fontSize:11,marginBottom:4}}>FULL NAME</div>
+          <input value={form.name||''} onChange={e=>setForm({...form,name:e.target.value})} style={iS(C.green)}/>
+        </div>
+
+        {/* Username with live check */}
+        <div style={{marginBottom:10}}>
+          <div style={{color:C.dim,fontSize:11,marginBottom:4}}>USERNAME <span style={{color:C.dim,fontWeight:400}}>(used to log in · lowercase, numbers, _ . only)</span></div>
+          <input
+            value={form.username||''}
+            onChange={e=>{
+              const raw = e.target.value.toLowerCase().replace(/[^a-z0-9_.]/g,'');
+              setForm({...form,username:raw});
+              checkUsername(raw);
+            }}
+            placeholder="e.g. arjun01"
+            style={{...iS(C.green), borderColor: uStatus==='ok'?C.green : uStatus==='taken'?C.red : undefined, marginBottom:2}}
+          />
+          {uMsg ? <div style={{fontSize:11,color:uColor,marginBottom:6,fontWeight:700}}>{uMsg}</div> : null}
+        </div>
+
+        {/* PIN */}
+        <div style={{marginBottom:10}}>
+          <div style={{color:C.dim,fontSize:11,marginBottom:4}}>PIN (4-6 digits){isEdit?' — leave blank to keep existing':''}</div>
+          <input value={form.pin||''} onChange={e=>setForm({...form,pin:e.target.value})} type="password" style={iS(C.green)}/>
+        </div>
+
+        {/* Avatar */}
+        <div style={{marginBottom:10}}>
+          <div style={{color:C.dim,fontSize:11,marginBottom:8}}>AVATAR</div>
+          <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
+            {['🚀','⭐','🌙','🌍','🪐','☀️','🌟','🎯','🦁','🐯','🐼','🦊','🐧','🦋','🦄','🐉','🎮','🏆','⚡','🔮','🎸','🎨','🏄','🧙'].map(e=>(
+              <button key={e} type="button" onClick={()=>setForm({...form,avatar:e})}
+                style={{fontSize:24,background:(form.avatar||'🚀')===e?`${C.green}33`:'transparent',border:`2px solid ${(form.avatar||'🚀')===e?C.green:'transparent'}`,borderRadius:10,padding:4,cursor:'pointer',lineHeight:1,transition:'all 0.15s'}}>
+                {e}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Class */}
+        <div style={{marginBottom:10}}>
+          <div style={{color:C.dim,fontSize:11,marginBottom:4}}>CLASS</div>
+          <select value={form.class_num||1} onChange={e=>setForm({...form,class_num:parseInt(e.target.value)})} style={iS(C.green)}>
+            {CLASS_OPTS.map((n,i)=><option key={i} value={CLASS_NUMS[i]}>{n}</option>)}
+          </select>
+        </div>
+
+        <MsgBar m={msg}/>
+        <Btn color={C.green} loading={loading} onClick={onSave} disabled={uStatus==='taken'||uStatus==='short'}>
+          {isEdit ? 'SAVE CHANGES' : 'CREATE'}
+        </Btn>
+      </div>
+    </div>
+  );
+}
+
 export function AdminPanel({ onBack }) {
   // Uses adminApi -> /api/admin with passphrase auth
   const [tab,        setTab]       = useState("schools");
@@ -415,27 +512,17 @@ export function AdminPanel({ onBack }) {
         <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),overflowY:"auto"}}>
           {renderTopBar()}
           <div style={{padding:"14px"}}>
-            <FormCard color={C.green} title={isEdit?"EDIT HOME STUDENT":"NEW HOME STUDENT"} onBack={()=>{setView("list");setMsg("");}}
-              saveLabel={isEdit?"SAVE CHANGES":"CREATE"}
-              msg={msg} loading={loading} onSave={async()=>{setLoading(true);setMsg("");
-                const d=isEdit?await api("admin_modify_home_student",{child_id:form.child_id,name:form.name,class_num:form.class_num,avatar:form.avatar,pin:form.pin||undefined}):await api("admin_create_home_student",{name:form.name,class_num:form.class_num||1,pin:form.pin||"1234",avatar:form.avatar||"🚀"});
+            <HomeStudentFormCard
+              isEdit={isEdit} form={form} setForm={setForm} msg={msg} loading={loading}
+              iS={iS} CLASS_OPTS={CLASS_OPTS} CLASS_NUMS={CLASS_NUMS}
+              onBack={()=>{setView("list");setMsg("");}}
+              onSave={async()=>{setLoading(true);setMsg("");
+                const d=isEdit
+                  ?await api("admin_modify_home_student",{child_id:form.child_id,name:form.name,username:form.username,class_num:form.class_num,avatar:form.avatar,pin:form.pin||undefined})
+                  :await api("admin_create_home_student",{name:form.name,username:form.username,class_num:form.class_num||1,pin:form.pin||"1234",avatar:form.avatar||"🚀"});
                 if(d.data||d.ok){showToast("✅ Student "+(isEdit?"updated":"created")+": "+form.name);loadHomeStudents();setView("list");}else setMsg(d.error||"Failed");
-                setLoading(false);}}>
-              {[["Full Name","name","text"],["PIN (4-6 digits)","pin","password"]].map(([l,k,t])=>(<div key={k}><div style={{color:C.dim,fontSize:11,marginBottom:4}}>{l}</div><input value={form[k]||""} onChange={e=>setForm({...form,[k]:e.target.value})} type={t} style={iS(C.green)}/></div>))}
-              <div style={{marginBottom:10}}>
-                <div style={{color:C.dim,fontSize:11,marginBottom:8}}>AVATAR</div>
-                <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
-                  {["🚀","⭐","🌙","🌍","🪐","☀️","🌟","🎯","🦁","🐯","🐼","🦊","🐧","🦋","🦄","🐉","🎮","🏆","⚡","🔮","🎸","🎨","🏄","🧙"].map(e=>(
-                    <button key={e} type="button" onClick={()=>setForm({...form,avatar:e})}
-                      style={{fontSize:24,background:(form.avatar||"🚀")===e?`${C.green}33`:"transparent",border:`2px solid ${(form.avatar||"🚀")===e?C.green:"transparent"}`,borderRadius:10,padding:4,cursor:"pointer",lineHeight:1,transition:"all 0.15s"}}>
-                      {e}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div><div style={{color:C.dim,fontSize:11,marginBottom:4}}>CLASS</div><select value={form.class_num||1} onChange={e=>setForm({...form,class_num:parseInt(e.target.value)})} style={iS(C.green)}>{CLASS_OPTS.map((n,i)=><option key={i} value={CLASS_NUMS[i]}>{n}</option>)}</select></div>
-              {isEdit&&<div style={{fontSize:11,color:C.dim,marginTop:-8,marginBottom:10}}>Leave PIN blank to keep existing.</div>}
-            </FormCard>
+                setLoading(false);}}
+            />
           </div>
         </div>
       );
