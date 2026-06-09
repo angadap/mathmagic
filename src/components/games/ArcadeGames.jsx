@@ -10,114 +10,144 @@ import { Card } from '../ui/primitives.jsx';
 
 
 export function NumberRocket({ onBack, child }) {
-  const [q, setQ]         = useState(null);
-  const [opts, setOpts]   = useState([]);
-  const [ans, setAns]     = useState(null);
-  const [fuel, setFuel]   = useState(100);
-  const [score, setScore] = useState(0);
-  const [round, setRound] = useState(1);
-  const [result, setResult]= useState(null); // "win"|"lose"
-  const [chosen, setChosen]= useState(null);
+  const TOTAL = 10;
+  const [phase,   setPhase]   = useState("ready");
+  const [q,       setQ]       = useState("");
+  const [opts,    setOpts]    = useState([]);
+  const [ans,     setAns]     = useState(0);
+  const [fuel,    setFuel]    = useState(100);
+  const [score,   setScore]   = useState(0);
+  const [round,   setRound]   = useState(1);
+  const [chosen,  setChosen]  = useState(null); // index|"timeout"
+  const [rocketY, setRocketY] = useState(60);   // % from top, 20=high 80=low
   const fuelRef = useRef(100);
   const timerRef = useRef(null);
-  const TOTAL = 10;
 
   const genQ = () => {
-    const ops = ["+","-","×"];
-    const op  = ops[Math.floor(Math.random()*ops.length)];
-    let a = Math.floor(Math.random()*20)+1;
-    let b = Math.floor(Math.random()*10)+1;
-    let correct;
-    if (op==="+") correct = a+b;
-    else if (op==="-") { if(b>a)[a,b]=[b,a]; correct = a-b; }
-    else correct = a*b;
-    const wrong = new Set();
-    while(wrong.size < 3) {
-      const w = correct + (Math.floor(Math.random()*7)-3);
-      if (w !== correct && w >= 0) wrong.add(w);
-    }
-    const all = shuffle([correct, ...[...wrong]]);
-    setQ(`${a} ${op} ${b} = ?`);
-    setOpts(all.map(String));
-    setAns(all.indexOf(correct));
-    setChosen(null);
-    fuelRef.current = 100; setFuel(100);
+    const ops=["+","-","×"];
+    const op=ops[Math.floor(Math.random()*ops.length)];
+    let a=Math.floor(Math.random()*20)+1,b=Math.floor(Math.random()*10)+1,correct;
+    if(op==="+")correct=a+b;
+    else if(op==="-"){if(b>a)[a,b]=[b,a];correct=a-b;}
+    else correct=a*b;
+    const wrong=new Set();
+    while(wrong.size<3){const v=correct+(Math.floor(Math.random()*7)-3);if(v!==correct&&v>=0)wrong.add(v);}
+    const all=shuffle([correct,...wrong]);
+    setQ(a+" "+op+" "+b+" = ?"); setOpts(all.map(String)); setAns(all.indexOf(correct)); setChosen(null);
+    fuelRef.current=100; setFuel(100);
   };
 
-  useEffect(() => { genQ(); }, []);
+  const startGame = () => { setScore(0); setRound(1); setRocketY(60); setPhase("playing"); genQ(); };
 
-  useEffect(() => {
-    if (result || chosen !== null) return;
-    timerRef.current = setInterval(() => {
-      fuelRef.current -= 2.5;
+  useEffect(()=>{
+    if(phase!=="playing"||chosen!==null) return;
+    timerRef.current=setInterval(()=>{
+      fuelRef.current-=2;
       setFuel(fuelRef.current);
-      if (fuelRef.current <= 0) {
+      // Rocket drifts down as fuel depletes
+      setRocketY(y=>Math.min(80,y+0.4));
+      if(fuelRef.current<=0){
         clearInterval(timerRef.current);
-        setChosen(-1);
-        setTimeout(() => { if (round >= TOTAL) setResult("lose"); else { setRound(r=>r+1); genQ(); } }, 900);
+        setRocketY(85);
+        setChosen("timeout");
+        setTimeout(()=>{
+          if(round>=TOTAL) setPhase("over");
+          else{setRound(r=>r+1);genQ();}
+        },900);
       }
-    }, 100);
-    return () => clearInterval(timerRef.current);
-  }, [q, result]);
+    },100);
+    return ()=>clearInterval(timerRef.current);
+  },[q,phase]);
 
   const pick = (i) => {
-    if (chosen !== null) return;
+    if(chosen!==null) return;
     clearInterval(timerRef.current);
     setChosen(i);
-    const ok = i === ans;
-    if (ok) setScore(s => s+1);
-    setTimeout(() => {
-      if (round >= TOTAL) setResult(score+(ok?1:0) >= 7 ? "win" : "lose");
-      else { setRound(r=>r+1); genQ(); }
-    }, 700);
+    const ok=i===ans;
+    if(ok){
+      setScore(s=>s+1);
+      setRocketY(y=>Math.max(15,y-25)); // rocket blasts up!
+    } else {
+      setRocketY(y=>Math.min(85,y+12)); // rocket sinks
+    }
+    setTimeout(()=>{ if(round>=TOTAL) setPhase("over"); else{setRound(r=>r+1);genQ();} },700);
   };
 
-  if (result) return (
-    <div style={{minHeight:"100vh",background:C.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"'Nunito',sans-serif",padding:22,position:"relative"}}>
+  if(phase==="ready") return (
+    <div style={{minHeight:"100vh",background:"linear-gradient(180deg,#0a0020,#12003a,#0d1a3a)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"'Nunito',sans-serif",padding:24,position:"relative"}}>
+      <Starfield n={50}/>
+      <div style={{position:"relative",zIndex:1,textAlign:"center",maxWidth:310}}>
+        <div style={{fontSize:72,marginBottom:8}}>🚀</div>
+        <div style={{fontFamily:"'Fredoka One',cursive",fontSize:26,color:C.orange,marginBottom:6,letterSpacing:1}}>NUMBER ROCKET</div>
+        <div style={{background:"rgba(255,150,50,0.1)",border:"1.5px solid rgba(255,150,50,0.3)",borderRadius:16,padding:"12px 16px",marginBottom:20}}>
+          <div style={{color:"rgba(255,255,255,0.75)",fontSize:12,lineHeight:1.9}}>
+            🚀 Solve the question to blast the rocket up!<br/>
+            ⛽ Answer before the fuel runs out<br/>
+            ⚠️ Wrong answer = rocket sinks — {TOTAL} rounds
+          </div>
+        </div>
+        <Btn color={C.orange} onClick={startGame}>🔥 LAUNCH!</Btn>
+        <div style={{marginTop:12}}><Btn color={C.dim} style={{padding:"9px 20px"}} onClick={onBack}>← Back</Btn></div>
+      </div>
+    </div>
+  );
+
+  if(phase==="over") return (
+    <div style={{minHeight:"100vh",background:"linear-gradient(180deg,#0a0020,#12003a,#0d1a3a)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"'Nunito',sans-serif",padding:24,position:"relative"}}>
       <Starfield n={60}/>
       <div style={{position:"relative",zIndex:1,textAlign:"center"}}>
-        <div style={{fontSize:72,marginBottom:8}}>{result==="win"?"🚀":"💥"}</div>
-        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:18,color:result==="win"?C.green:C.red,marginBottom:8}}>{result==="win"?"LAUNCH SUCCESS!":"ROCKET CRASHED!"}</div>
-        <div style={{color:textColor(),fontSize:28,fontFamily:"'Orbitron',sans-serif",marginBottom:16}}>{score}/{TOTAL}</div>
+        <div style={{fontSize:72,marginBottom:8}}>{score>=8?"🏆":score>=5?"🌟":"💥"}</div>
+        <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.orange,marginBottom:4}}>{score>=8?"STELLAR LAUNCH!":score>=5?"GOOD FLIGHT!":"ROCKET CRASHED!"}</div>
+        <div style={{fontFamily:"'Fredoka One',cursive",fontSize:44,color:"#FFD700",marginBottom:20}}>{score}/{TOTAL}</div>
         <div style={{display:"flex",gap:10}}>
-          <Btn color={C.dim} style={{flex:1}} onClick={onBack}>← BACK</Btn>
-          <Btn color={C.cyan} style={{flex:1}} onClick={()=>{setScore(0);setRound(1);setResult(null);genQ();}}>↺ RETRY</Btn>
+          <Btn color={C.dim} style={{flex:1}} onClick={onBack}>← Back</Btn>
+          <Btn color={C.orange} style={{flex:1}} onClick={startGame}>↺ Retry</Btn>
         </div>
       </div>
     </div>
   );
 
   return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),position:"relative"}}>
-      <Starfield n={25}/>
-      <div style={{position:"relative",zIndex:2,background:`${C.orange}18`,borderBottom:`1px solid ${C.orange}33`,padding:"12px 18px"}}>
-        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:6}}>
-          <BackBtn onClick={onBack} color={C.orange}/>
-          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.orange}}>🚀 NUMBER ROCKET</div>
-          <div style={{marginLeft:"auto",fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.yellow}}>⭐ {score}/{TOTAL}</div>
+    <div style={{minHeight:"100vh",background:"linear-gradient(180deg,#0a0020,#12003a,#1a0050)",fontFamily:"'Nunito',sans-serif",position:"relative",overflow:"hidden"}}>
+      <Starfield n={30}/>
+      {/* Rocket visual lane */}
+      <div style={{position:"absolute",left:"50%",top:0,bottom:0,width:80,transform:"translateX(-50%)",zIndex:2,pointerEvents:"none"}}>
+        {/* launch trail */}
+        <div style={{position:"absolute",left:"50%",top:rocketY+"%",transform:"translateX(-50%) translateY(40px)",width:4,background:"linear-gradient(180deg,transparent,"+C.orange+"88)",height:"30vh",borderRadius:4,opacity:0.5}}/>
+        {/* rocket */}
+        <div style={{position:"absolute",left:"50%",top:rocketY+"%",transform:"translateX(-50%)",fontSize:44,transition:"top 0.5s cubic-bezier(0.34,1.56,0.64,1)"}}>🚀</div>
+      </div>
+      {/* HUD strip */}
+      <div style={{position:"relative",zIndex:10,background:"rgba(0,0,0,0.6)",backdropFilter:"blur(8px)",borderBottom:"1px solid rgba(255,150,50,0.2)",padding:"10px 18px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
+          <button onClick={()=>{clearInterval(timerRef.current);setPhase("ready");}} style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:10,padding:"5px 12px",color:"white",fontSize:12,cursor:"pointer",fontFamily:"'Nunito',sans-serif",fontWeight:700}}>✕ QUIT</button>
+          <div style={{fontFamily:"'Fredoka One',cursive",fontSize:16,color:C.orange}}>🚀 {score}/{TOTAL}</div>
+          <div style={{fontFamily:"'Fredoka One',cursive",fontSize:14,color:"rgba(255,255,255,0.6)"}}>Round {round}</div>
         </div>
         {/* Fuel bar */}
-        <div style={{background:isDark()?"rgba(255,255,255,0.06)":"rgba(124,111,224,0.06)",borderRadius:6,height:8,overflow:"hidden"}}>
-          <div style={{width:`${fuel}%`,height:"100%",background:`linear-gradient(90deg,${fuel>50?C.green:fuel>25?C.orange:C.red},${C.yellow})`,borderRadius:6,transition:"width 0.1s"}}/>
+        <div style={{background:"rgba(255,255,255,0.1)",borderRadius:6,height:8,overflow:"hidden"}}>
+          <div style={{width:fuel+"%",height:"100%",background:"linear-gradient(90deg,"+(fuel>50?C.green:fuel>25?C.yellow:C.red)+","+C.orange+")",borderRadius:6,transition:"width 0.1s linear"}}/>
         </div>
-        <div style={{fontSize:9,color:C.dim,marginTop:2,fontFamily:"'Orbitron',sans-serif"}}>FUEL — ANSWER BEFORE IT RUNS OUT! · Q{round}/{TOTAL}</div>
+        <div style={{fontSize:9,color:"rgba(255,255,255,0.4)",marginTop:2,fontWeight:700}}>FUEL — ANSWER BEFORE IT RUNS OUT!</div>
       </div>
-      <div style={{position:"relative",zIndex:2,padding:"28px 18px"}}>
-        {/* Rocket animation */}
-        <div style={{textAlign:"center",marginBottom:20}}>
-          <div style={{fontSize:64,animation:fuel<30?"shakeX 0.3s ease infinite":"bFloat 2s ease-in-out infinite"}}>{fuel<30?"💥":"🚀"}</div>
+      {/* Question + options at bottom */}
+      <div style={{position:"absolute",bottom:0,left:0,right:0,zIndex:10,padding:"16px 18px 28px",background:"linear-gradient(180deg,transparent,rgba(0,0,0,0.85) 40%)"}}>
+        <div style={{background:"rgba(255,150,50,0.1)",border:"1.5px solid rgba(255,150,50,0.35)",borderRadius:20,padding:"16px 18px",textAlign:"center",marginBottom:14}}>
+          <div style={{fontFamily:"'Fredoka One',cursive",fontSize:32,color:"white",letterSpacing:1}}>{q}</div>
         </div>
-        <Card color={C.orange} style={{textAlign:"center",marginBottom:18,padding:"18px"}}>
-          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:22, color:textColor()}}>{q}</div>
-        </Card>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
           {opts.map((o,i)=>{
-            let bg=C.card,border=`1.5px solid ${C.orange}28`,col="white";
-            if(chosen!==null){
-              if(i===ans){bg="#052e16";border=`2px solid ${C.green}`;col="#4ade80";}
-              else if(i===chosen){bg="#2d0a0a";border=`2px solid ${C.red}`;col="#f87171";}
-            }
-            return <button key={i} onClick={()=>pick(i)} style={{background:bg,border,borderRadius:14,padding:"16px",fontSize:18,fontFamily:"'Orbitron',sans-serif",color:col,cursor:"pointer",transition:"all 0.15s"}}>{o}</button>;
+            const state=chosen===null?"idle":i===ans?"correct":i===chosen?"wrong":"idle";
+            return (
+              <button key={i} onClick={()=>pick(i)} style={{
+                background:state==="correct"?"rgba(74,222,128,0.2)":state==="wrong"?"rgba(248,113,113,0.2)":"rgba(255,255,255,0.07)",
+                border:"2px solid "+(state==="correct"?"rgba(74,222,128,0.7)":state==="wrong"?"rgba(248,113,113,0.7)":"rgba(255,150,50,0.3)"),
+                borderRadius:18,padding:"20px 12px",
+                fontFamily:"'Fredoka One',cursive",fontSize:26,color:"white",
+                cursor:chosen===null?"pointer":"default",
+                textAlign:"center",transition:"all 0.2s",
+              }}>{o}</button>
+            );
           })}
         </div>
       </div>
@@ -125,24 +155,23 @@ export function NumberRocket({ onBack, child }) {
   );
 }
 
-// ── Game 2: Star Catcher — catch falling correct answers, avoid wrong ──
 export function StarCatcher({ onBack, child }) {
-  // ── METEOR BLASTER ─ tap WRONG answers (meteors) to blast them, let the RIGHT one through
-  const [gameState, setGameState] = useState("ready"); // ready|playing|over
+  // ── METEOR BLASTER ─ blast WRONG meteors, let the RIGHT one pass
+  const [gameState, setGameState] = useState("ready");
   const [score,     setScore]     = useState(0);
   const [lives,     setLives]     = useState(3);
   const [q,         setQ]         = useState("");
   const [items,     setItems]     = useState([]);
-  const [blastFX,   setBlastFX]   = useState([]); // {id,x,y} short-lived blast effects
-  const itemsRef  = useRef([]);
-  const scoreRef  = useRef(0);
-  const livesRef  = useRef(3);
-  const frameRef  = useRef(null);
-  const qRef      = useRef({ q: "", ans: "" });
+  const [blastFX,   setBlastFX]   = useState([]);
+  const itemsRef   = useRef([]);
+  const scoreRef   = useRef(0);
+  const livesRef   = useRef(3);
+  const frameRef   = useRef(null);
+  const qRef       = useRef({ ans: "" });
   const blastIdRef = useRef(0);
 
   const genQuestion = () => {
-    const ops = ["+", "-", "×"];
+    const ops = ["+", "-", "x"];
     const op  = ops[Math.floor(Math.random() * ops.length)];
     let a = Math.floor(Math.random() * 10) + 1;
     let b = Math.floor(Math.random() * 9)  + 1;
@@ -151,33 +180,37 @@ export function StarCatcher({ onBack, child }) {
     else if (op === "-") { if (b > a) [a, b] = [b, a]; correct = a - b; }
     else correct = a * b;
     const ans = String(correct);
-    qRef.current = { q: `${a} ${op} ${b}`, ans };
-    setQ(`${a} ${op} ${b} = ?`);
+    qRef.current = { ans };
+    setQ(op === "x" ? a + " × " + b + " = ?" : a + " " + op + " " + b + " = ?");
     return ans;
   };
 
   const makeWrong = (correct, existing) => {
     const used = new Set([correct, ...existing]);
     let v;
-    do { v = String(Math.max(0, parseInt(correct) + (Math.floor(Math.random() * 9) - 4))); }
-    while (used.has(v));
+    let tries = 0;
+    do {
+      v = String(Math.max(1, parseInt(correct) + (Math.floor(Math.random() * 10) - 5)));
+      tries++;
+    } while (used.has(v) && tries < 30);
     return v;
   };
 
   const spawnWave = (ans) => {
-    // 1 correct (green safe bubble) + 2 wrong meteors
     const w1 = makeWrong(ans, []);
     const w2 = makeWrong(ans, [w1]);
-    const cols = [12, 50, 86].sort(() => Math.random() - 0.5);
-    const baseSpeed = 0.3 + scoreRef.current * 0.015;
+    const cols = [15, 50, 85].sort(() => Math.random() - 0.5);
+    const spd  = Math.min(0.28 + scoreRef.current * 0.012, 0.65);
+    // All 3 look identical — kids must calculate, not colour-spot
     return [
-      { id: Date.now() + 1, x: cols[0], y: -12, val: ans, correct: true,  speed: Math.min(baseSpeed, 0.7) },
-      { id: Date.now() + 2, x: cols[1], y: -12, val: w1,  correct: false, speed: Math.min(baseSpeed + 0.05, 0.8) },
-      { id: Date.now() + 3, x: cols[2], y: -12, val: w2,  correct: false, speed: Math.min(baseSpeed + 0.1,  0.85) },
+      { id: Date.now() + 1, x: cols[0], y: -12, val: ans, correct: true,  speed: spd },
+      { id: Date.now() + 2, x: cols[1], y: -12, val: w1,  correct: false, speed: spd + 0.04 },
+      { id: Date.now() + 3, x: cols[2], y: -12, val: w2,  correct: false, speed: spd + 0.08 },
     ];
   };
 
   const startGame = () => {
+    cancelAnimationFrame(frameRef.current);
     scoreRef.current = 0; livesRef.current = 3;
     setScore(0); setLives(3); setBlastFX([]);
     itemsRef.current = [];
@@ -186,28 +219,24 @@ export function StarCatcher({ onBack, child }) {
     let frame = 0;
     const loop = () => {
       frame++;
-      // Spawn new wave when field is empty or every 100 frames
-      if (itemsRef.current.length === 0 || frame % 100 === 0) {
-        if (itemsRef.current.every(i => i.y < 5)) {
-          const wave = spawnWave(qRef.current.ans);
-          itemsRef.current = [...itemsRef.current.filter(i => i.y < 95), ...wave];
-        }
+      if (itemsRef.current.length === 0) {
+        const wave = spawnWave(qRef.current.ans);
+        itemsRef.current = wave;
       }
-      // Move items down
       itemsRef.current = itemsRef.current
         .map(it => ({ ...it, y: it.y + it.speed }))
         .filter(it => {
           if (it.y > 102) {
-            if (!it.correct) return false; // wrong fell off bottom = no penalty
-            // Correct answer reached the planet = lose a life
-            livesRef.current = Math.max(0, livesRef.current - 1);
-            setLives(livesRef.current);
-            if (livesRef.current <= 0) { setGameState("over"); return false; }
-            // New question
-            const na = genQuestion();
-            const wave = spawnWave(na);
-            itemsRef.current = wave;
-            return false;
+            if (it.correct) {
+              // correct bubble hit ground = lose life
+              livesRef.current = Math.max(0, livesRef.current - 1);
+              setLives(livesRef.current);
+              if (livesRef.current <= 0) { setGameState("over"); return false; }
+              const na = genQuestion();
+              itemsRef.current = spawnWave(na);
+              return false;
+            }
+            return false; // wrong fell off, no penalty
           }
           return true;
         });
@@ -217,27 +246,23 @@ export function StarCatcher({ onBack, child }) {
     frameRef.current = requestAnimationFrame(loop);
   };
 
-  useEffect(() => () => { if (frameRef.current) cancelAnimationFrame(frameRef.current); }, []);
+  useEffect(() => () => { cancelAnimationFrame(frameRef.current); }, []);
 
   const tapItem = (item) => {
-    // Show blast effect at item position
     const bid = ++blastIdRef.current;
-    setBlastFX(fx => [...fx, { id: bid, x: item.x, y: item.y, correct: item.correct }]);
+    setBlastFX(fx => [...fx, { id: bid, x: item.x, y: item.y, hit: !item.correct }]);
     setTimeout(() => setBlastFX(fx => fx.filter(f => f.id !== bid)), 500);
-
+    itemsRef.current = itemsRef.current.filter(i => i.id !== item.id);
+    setItems([...itemsRef.current]);
     if (!item.correct) {
-      // Blasted a meteor! Great
-      SFX.correct && SFX.correct();
-      scoreRef.current += 1; setScore(scoreRef.current);
-      itemsRef.current = itemsRef.current.filter(i => i.id !== item.id);
-      setItems([...itemsRef.current]);
+      // Blasted a wrong meteor — correct!
+      scoreRef.current += 1;
+      setScore(scoreRef.current);
     } else {
-      // Tapped the correct bubble = penalty
-      SFX.wrong && SFX.wrong();
+      // Tapped the correct answer — penalty
       livesRef.current = Math.max(0, livesRef.current - 1);
       setLives(livesRef.current);
       if (livesRef.current <= 0) { cancelAnimationFrame(frameRef.current); setGameState("over"); return; }
-      // New question
       const na = genQuestion();
       const wave = spawnWave(na);
       itemsRef.current = wave;
@@ -245,85 +270,86 @@ export function StarCatcher({ onBack, child }) {
     }
   };
 
+  // ─ READY SCREEN
   if (gameState === "ready") return (
-    <div style={{ minHeight:"100vh", background:C.bg, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", fontFamily:"'Nunito',sans-serif", padding:24, position:"relative" }}>
+    <div style={{ minHeight:"100vh", background:"linear-gradient(180deg,#0a0020,#12003a,#0d1a3a)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:24, position:"relative" }}>
       <Starfield n={50}/>
       <div style={{ position:"relative", zIndex:1, textAlign:"center", maxWidth:320 }}>
-        <div style={{ fontSize:72, marginBottom:6, animation:"mmFloat 2s ease-in-out infinite" }}>&#x2604;&#xFE0F;</div>
-        <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:26, color:C.orange, marginBottom:6, letterSpacing:1 }}>METEOR BLASTER</div>
-        <div style={{ background:`${C.orange}15`, border:`1.5px solid ${C.orange}40`, borderRadius:16, padding:"12px 16px", marginBottom:18 }}>
-          <div style={{ color:C.orange, fontSize:13, fontWeight:800, marginBottom:8 }}>HOW TO PLAY</div>
-          <div style={{ color:"#5A4E8A", fontSize:12, lineHeight:1.8, textAlign:"left" }}>
-            &#x2614; <b>BLAST</b> the meteor with the <b style={{color:C.red}}>WRONG</b> answer<br/>
-            &#x2705; <b>LET</b> the glowing bubble with the <b style={{color:C.green}}>RIGHT</b> answer pass<br/>
-            &#x2764;&#xFE0F; You lose a life if you tap the right answer or miss it
+        <div style={{ fontSize:72, marginBottom:6 }}>☄️</div>
+        <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:26, color:"#FF6B6B", marginBottom:6, letterSpacing:1 }}>METEOR BLASTER</div>
+        <div style={{ background:"rgba(255,107,107,0.12)", border:"1.5px solid rgba(255,107,107,0.35)", borderRadius:16, padding:"12px 16px", marginBottom:20 }}>
+          <div style={{ color:"#FF6B6B", fontSize:13, fontWeight:800, marginBottom:8 }}>HOW TO PLAY</div>
+          <div style={{ color:"rgba(255,255,255,0.8)", fontSize:12, lineHeight:1.9, textAlign:"left" }}>
+            🔢 Solve the question at the top<br/>
+            💥 TAP the meteor with the <b>WRONG</b> answer to blast it<br/>
+            ✋ Let the <b>CORRECT</b> answer float past safely<br/>
+            ❤️ Lose a life if you tap the right answer or miss it
           </div>
         </div>
-        <Btn color={C.orange} onClick={startGame}>&#x1F680; LAUNCH BLASTER</Btn>
-        <div style={{ marginTop:12 }}><Btn color={C.dim} style={{ padding:"9px 20px" }} onClick={onBack}>\u2190 BACK</Btn></div>
+        <Btn color="#FF6B6B" onClick={startGame}>🚀 LAUNCH BLASTER</Btn>
+        <div style={{ marginTop:12 }}><Btn color={C.dim} style={{ padding:"9px 20px" }} onClick={onBack}>← BACK</Btn></div>
       </div>
     </div>
   );
 
+  // ─ GAME OVER SCREEN
   if (gameState === "over") return (
-    <div style={{ minHeight:"100vh", background:C.bg, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", fontFamily:"'Nunito',sans-serif", padding:24, position:"relative" }}>
+    <div style={{ minHeight:"100vh", background:"linear-gradient(180deg,#0a0020,#12003a,#0d1a3a)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:24, position:"relative" }}>
       <Starfield n={60}/>
       <div style={{ position:"relative", zIndex:1, textAlign:"center" }}>
-        <div style={{ fontSize:72, marginBottom:8 }}>{score >= 10 ? "&#x1F3C6;" : "&#x1F4A5;"}</div>
-        <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:22, color:C.orange, marginBottom:4 }}>{score >= 10 ? "GALAXY HERO!" : "PLANET DOWN!"}</div>
-        <div style={{ fontSize:42, fontFamily:"'Fredoka One',cursive", color:C.yellow, marginBottom:16 }}>&#x2604;&#xFE0F; {score} Blasted</div>
+        <div style={{ fontSize:72, marginBottom:8 }}>{score >= 10 ? "🏆" : "💥"}</div>
+        <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:22, color:"#FF6B6B", marginBottom:4 }}>{score >= 10 ? "GALAXY HERO!" : "PLANET DOWN!"}</div>
+        <div style={{ fontSize:42, fontFamily:"'Fredoka One',cursive", color:"#FFD700", marginBottom:16 }}>☄️ {score} Blasted</div>
         <div style={{ display:"flex", gap:10 }}>
-          <Btn color={C.dim} style={{ flex:1 }} onClick={onBack}>\u2190 BACK</Btn>
-          <Btn color={C.orange} style={{ flex:1 }} onClick={startGame}>&#x21BA; PLAY AGAIN</Btn>
+          <Btn color={C.dim} style={{ flex:1 }} onClick={onBack}>← BACK</Btn>
+          <Btn color="#FF6B6B" style={{ flex:1 }} onClick={startGame}>↺ PLAY AGAIN</Btn>
         </div>
       </div>
     </div>
   );
 
+  // ─ GAMEPLAY SCREEN
   return (
-    <div style={{ minHeight:"100vh", background:`linear-gradient(180deg,#0a0020 0%,#12003a 50%,#0d1a3a 100%)`, fontFamily:"'Nunito',sans-serif", position:"relative", overflow:"hidden" }}>
+    <div style={{ minHeight:"100vh", background:"linear-gradient(180deg,#0a0020 0%,#12003a 60%,#0d1a3a 100%)", position:"relative", overflow:"hidden" }}>
       <Starfield n={60}/>
-      {/* Distant planet at bottom */}
-      <div style={{ position:"absolute", bottom:-60, left:"50%", transform:"translateX(-50%)", width:220, height:220, borderRadius:"50%", background:"radial-gradient(circle at 38% 36%,#4BBDF5,#1a0050)", boxShadow:"0 0 60px #4BBDF588,0 0 120px #4BBDF522", zIndex:1, pointerEvents:"none" }}/>
+      {/* Planet at bottom */}
+      <div style={{ position:"absolute", bottom:-70, left:"50%", transform:"translateX(-50%)", width:220, height:220, borderRadius:"50%", background:"radial-gradient(circle at 38% 36%,#4BBDF5,#1a0050)", boxShadow:"0 0 60px #4BBDF588,0 0 120px #4BBDF522", zIndex:1, pointerEvents:"none" }}/>
       {/* HUD */}
-      <div style={{ position:"relative", zIndex:20, background:"rgba(0,0,0,0.55)", backdropFilter:"blur(8px)", borderBottom:"1px solid rgba(255,180,0,0.2)", padding:"10px 18px", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-        <button onClick={() => { cancelAnimationFrame(frameRef.current); setGameState("ready"); }} style={{ background:"rgba(255,255,255,0.1)", border:"1px solid rgba(255,255,255,0.2)", borderRadius:10, padding:"5px 12px", color:"white", fontSize:12, cursor:"pointer", fontFamily:"'Nunito',sans-serif", fontWeight:700 }}>&#x2715; QUIT</button>
-        <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:18, color:C.orange, letterSpacing:1 }}>&#x2604;&#xFE0F; {score}</div>
-        <div style={{ display:"flex", gap:4 }}>{[...Array(3)].map((_, i) => <span key={i} style={{ fontSize:18, filter:i < lives ? "none" : "grayscale(1) opacity(0.2)" }}>&#x2764;&#xFE0F;</span>)}</div>
+      <div style={{ position:"relative", zIndex:20, background:"rgba(0,0,0,0.6)", backdropFilter:"blur(8px)", borderBottom:"1px solid rgba(255,107,107,0.25)", padding:"10px 18px", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+        <button onClick={() => { cancelAnimationFrame(frameRef.current); setGameState("ready"); }} style={{ background:"rgba(255,255,255,0.1)", border:"1px solid rgba(255,255,255,0.2)", borderRadius:10, padding:"5px 12px", color:"white", fontSize:12, cursor:"pointer", fontFamily:"'Nunito',sans-serif", fontWeight:700 }}>✕ QUIT</button>
+        <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:18, color:"#FF6B6B", letterSpacing:1 }}>☄️ {score}</div>
+        <div style={{ display:"flex", gap:4 }}>{[...Array(3)].map((_,i) => <span key={i} style={{ fontSize:18, filter:i < lives ? "none" : "grayscale(1) opacity(0.15)" }}>❤️</span>)}</div>
       </div>
       {/* Question banner */}
-      <div style={{ position:"relative", zIndex:20, textAlign:"center", padding:"10px 18px 6px" }}>
-        <div style={{ display:"inline-block", background:"rgba(255,200,0,0.12)", border:"1.5px solid rgba(255,200,0,0.35)", borderRadius:14, padding:"6px 20px" }}>
-          <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:22, color:"#FFD700", letterSpacing:1 }}>{q}</div>
+      <div style={{ position:"relative", zIndex:20, textAlign:"center", padding:"10px 18px 4px" }}>
+        <div style={{ display:"inline-block", background:"rgba(255,215,0,0.12)", border:"1.5px solid rgba(255,215,0,0.4)", borderRadius:14, padding:"6px 22px" }}>
+          <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:24, color:"#FFD700", letterSpacing:1 }}>{q}</div>
         </div>
-        <div style={{ fontSize:10, color:"rgba(255,255,255,0.45)", marginTop:3, fontWeight:700 }}>&#x1F4A5; BLAST THE WRONG ANSWERS</div>
+        <div style={{ fontSize:10, color:"rgba(255,255,255,0.4)", marginTop:3, fontWeight:700, letterSpacing:1 }}>TAP THE WRONG ANSWERS</div>
       </div>
       {/* Play field */}
-      <div style={{ position:"relative", height:"72vh", overflow:"hidden", touchAction:"none" }}>
-        {/* Blast effects */}
+      <div style={{ position:"relative", height:"70vh", overflow:"hidden" }}>
+        {/* Blast FX */}
         {blastFX.map(fx => (
-          <div key={fx.id} style={{ position:"absolute", left:`${fx.x}%`, top:`${fx.y}%`, transform:"translate(-50%,-50%)", fontSize:36, animation:"mmPop 0.4s ease forwards", zIndex:15, pointerEvents:"none" }}>
-            {fx.correct ? "&#x274C;" : "&#x1F4A5;"}
+          <div key={fx.id} style={{ position:"absolute", left:fx.x+"%", top:fx.y+"%", transform:"translate(-50%,-50%)", fontSize:30, zIndex:15, pointerEvents:"none", animation:"mmPop 0.4s ease forwards" }}>
+            {fx.hit ? "💥" : "❌"}
           </div>
         ))}
-        {/* Falling items */}
+        {/* Meteors — ALL IDENTICAL STYLE, only the number differs */}
         {items.map(it => (
           <div key={it.id} onClick={() => tapItem(it)}
-            style={{ position:"absolute", left:`${it.x}%`, top:`${it.y}%`, transform:"translate(-50%,-50%)", cursor:"pointer", zIndex:10, userSelect:"none" }}
+            style={{ position:"absolute", left:it.x+"%", top:it.y+"%", transform:"translate(-50%,-50%)", cursor:"pointer", zIndex:10, userSelect:"none" }}
           >
-            {it.correct ? (
-              /* Correct = glowing green shield bubble, DO NOT tap */
-              <div style={{ background:"radial-gradient(circle,#2ECC9A33,#2ECC9A11)", border:`2.5px solid #2ECC9A`, borderRadius:"50%", width:62, height:62, display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", boxShadow:"0 0 18px #2ECC9A88,0 0 40px #2ECC9A33", animation:"mmPulse 1.2s infinite" }}>
-                <div style={{ fontSize:9, color:"#2ECC9A", fontWeight:900, marginBottom:1 }}>SAFE</div>
-                <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:18, color:"#2ECC9A" }}>{it.val}</div>
-              </div>
-            ) : (
-              /* Wrong = dark jagged meteor */
-              <div style={{ position:"relative", background:"radial-gradient(circle at 40% 35%,#6b3030,#2a0a0a)", border:`2px solid ${C.red}99`, borderRadius:"46% 54% 38% 62%/52% 48% 52% 48%", width:58, height:58, display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", boxShadow:`0 0 14px ${C.red}66`, animation:"mmWave 2s ease-in-out infinite" }}>
-                <div style={{ fontSize:9, color:C.red, fontWeight:900, marginBottom:1 }}>BLAST!</div>
-                <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:18, color:"white" }}>{it.val}</div>
-              </div>
-            )}
+            <div style={{
+              background:"radial-gradient(circle at 38% 32%, #5a3060, #1a0a2e)",
+              border:"2px solid rgba(160,100,255,0.6)",
+              borderRadius:"48% 52% 40% 60% / 50% 44% 56% 50%",
+              width:64, height:64,
+              display:"flex", alignItems:"center", justifyContent:"center",
+              boxShadow:"0 0 16px rgba(160,100,255,0.4), inset 0 1px 0 rgba(255,255,255,0.08)",
+            }}>
+              <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:20, color:"white", textShadow:"0 1px 4px rgba(0,0,0,0.8)" }}>{it.val}</div>
+            </div>
           </div>
         ))}
       </div>
@@ -332,95 +358,255 @@ export function StarCatcher({ onBack, child }) {
 }
 
 // ── Game 3: Math Maze — solve to move the astronaut through a maze ────
+// ── Math Maze ─ visual path game, solve to advance the astronaut ────
 export function MathMaze({ onBack, child }) {
-  const MAZES = [
-    { grid:["S","?","?","?","?","?","?","?","?","E"], cols:2, questions:[{q:"2+2",a:"4"},{q:"5-3",a:"2"},{q:"3×2",a:"6"},{q:"8÷2",a:"4"}] },
-  ];
-  const [step,    setStep]    = useState(0);
-  const [q,       setQ]       = useState(null);
-  const [chosen,  setChosen]  = useState(null);
-  const [score,   setScore]   = useState(0);
-  const [done,    setDone]    = useState(false);
-  const [shake,   setShake]   = useState(false);
-  const QUESTIONS = [
-    {q:"4 + 3 = ?",  ans:1, opts:["5","7","8","9"]},
-    {q:"9 - 5 = ?",  ans:1, opts:["2","4","5","6"]},
-    {q:"3 × 3 = ?",  ans:2, opts:["6","7","9","11"]},
-    {q:"12 ÷ 4 = ?", ans:2, opts:["2","3","3","4"]},
-    {q:"6 + 8 = ?",  ans:1, opts:["12","14","15","16"]},
-    {q:"15 - 7 = ?", ans:1, opts:["6","8","9","10"]},
-    {q:"4 × 4 = ?",  ans:2, opts:["12","14","16","18"]},
-    {q:"20 ÷ 5 = ?", ans:1, opts:["3","4","5","6"]},
-  ];
-  const shuffledQs = useRef(shuffle(QUESTIONS));
-  const curQ = shuffledQs.current[Math.min(step, shuffledQs.current.length-1)];
   const STEPS = 8;
+  const genQ = (step) => {
+    const difficulty=Math.min(Math.floor(step/3)+1,4);
+    const ops=difficulty<2?["+","-"]:difficulty<3?["+","-","×"]:["+"," -","×","÷"];
+    const op=ops[Math.floor(Math.random()*ops.length)].trim();
+    let a,b,ans;
+    if(op==="+"){a=Math.floor(Math.random()*15)+1;b=Math.floor(Math.random()*15)+1;ans=a+b;}
+    else if(op==="-"){a=Math.floor(Math.random()*20)+5;b=Math.floor(Math.random()*a)+1;ans=a-b;}
+    else if(op==="×"){a=Math.floor(Math.random()*8)+2;b=Math.floor(Math.random()*8)+2;ans=a*b;}
+    else{b=Math.floor(Math.random()*8)+2;ans=Math.floor(Math.random()*8)+2;a=b*ans;}
+    const wrong=new Set();
+    while(wrong.size<3){const v=ans+(Math.floor(Math.random()*7)-3);if(v>0&&v!==ans)wrong.add(v);}
+    const opts=shuffle([ans,...wrong]);
+    return {q:a+" "+op+" "+b+" = ?",ans,opts};
+  };
 
-  const pick = (i) => {
-    if (chosen !== null) return;
-    setChosen(i);
-    const ok = i === curQ.ans;
-    if (ok) SFX.correct(); else SFX.wrong();
-    if (ok) {
-      setScore(s=>s+1);
-      setTimeout(() => {
-        setChosen(null);
-        if (step+1 >= STEPS) setDone(true);
-        else setStep(s=>s+1);
-      }, 600);
+  const [step,   setStep]   = useState(0);  // 0..STEPS, STEPS = won
+  const [q,      setQ]      = useState(()=>genQ(0));
+  const [chosen, setChosen] = useState(null);
+  const [shake,  setShake]  = useState(false);
+  const [score,  setScore]  = useState(0);
+
+  const pick = (opt) => {
+    if(chosen!==null) return;
+    setChosen(opt);
+    if(opt===q.ans){
+      SFX.correct(); setScore(s=>s+10);
+      setTimeout(()=>{
+        const ns=step+1;
+        setStep(ns); setChosen(null);
+        if(ns<STEPS) setQ(genQ(ns));
+      },600);
     } else {
-      setShake(true);
-      setTimeout(() => { setShake(false); setChosen(null); }, 800);
+      SFX.wrong(); setShake(true);
+      setTimeout(()=>{ setShake(false); setChosen(null); },700);
     }
   };
 
-  if (done) return (
-    <div style={{minHeight:"100vh",background:C.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"'Nunito',sans-serif",padding:24,position:"relative"}}>
+  const done = step>=STEPS;
+
+  return (
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),position:"relative"}}>
+      <Starfield n={20}/>
+      <div style={{position:"relative",zIndex:2,padding:"16px 14px"}}>
+        {/* Header */}
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+          <BackBtn onClick={onBack} color={C.cyan}/>
+          <div style={{fontFamily:"'Fredoka One',cursive",fontSize:17,color:C.cyan,letterSpacing:1}}>🌀 MATH MAZE</div>
+          <div style={{background:C.yellow+"22",border:"1.5px solid "+C.yellow+"44",borderRadius:12,padding:"4px 10px",fontFamily:"'Fredoka One',cursive",fontSize:14,color:C.yellow}}>⭐ {score}</div>
+        </div>
+
+        {/* Path visual */}
+        <div style={{background:C.card,border:"2px solid "+C.cyan+"33",borderRadius:20,padding:"16px 12px",marginBottom:16}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:4,overflowX:"auto"}}>
+            {Array.from({length:STEPS+1},(_,i)=>{
+              const isAstronaut=i===step;
+              const isPast=i<step;
+              const isGoal=i===STEPS;
+              return (
+                <React.Fragment key={i}>
+                  <div style={{
+                    width:isAstronaut?44:isGoal?38:32,
+                    height:isAstronaut?44:isGoal?38:32,
+                    borderRadius:"50%",
+                    background:isAstronaut?"linear-gradient(135deg,"+C.cyan+","+C.purple+")":isPast?C.green+"44":"rgba(255,255,255,0.12)",
+                    border:"2px solid "+(isAstronaut?C.cyan:isPast?C.green:isGoal?"#FFD700":"rgba(255,255,255,0.2)"),
+                    display:"flex",alignItems:"center",justifyContent:"center",
+                    fontSize:isAstronaut?22:isGoal?20:12,
+                    flexShrink:0,
+                    transition:"all 0.4s ease",
+                    boxShadow:isAstronaut?"0 0 14px "+C.cyan+"88":"none",
+                    animation:isAstronaut?"mmPulse 1.5s ease-in-out infinite":"none",
+                  }}>{isAstronaut?"👨‍🚀":isGoal?"🏆":isPast?"✔️":i+1}</div>
+                  {i<STEPS&&<div style={{width:10,height:3,background:isPast?C.green:"rgba(255,255,255,0.15)",borderRadius:2,flexShrink:0,transition:"background 0.4s"}}/>}
+                </React.Fragment>
+              );
+            })}
+          </div>
+          <div style={{textAlign:"center",fontSize:11,color:C.dim,marginTop:8,fontWeight:700}}>Step {step} / {STEPS}</div>
+        </div>
+
+        {done ? (
+          <div style={{textAlign:"center",padding:"30px 20px",background:C.green+"10",borderRadius:22,border:"2px solid "+C.green+"44"}}>
+            <div style={{fontSize:64,marginBottom:10}}>🏆</div>
+            <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.green,marginBottom:6}}>Maze Complete!</div>
+            <div style={{color:C.dim,fontSize:14,marginBottom:20}}>Score: {score}</div>
+            <div style={{display:"flex",gap:10,justifyContent:"center"}}>
+              <Btn color={C.dim} style={{flex:1}} onClick={onBack}>← Back</Btn>
+              <Btn color={C.cyan} style={{flex:1}} onClick={()=>{setStep(0);setScore(0);setChosen(null);setQ(genQ(0));}}>↺ Play Again</Btn>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div style={{background:shake?"rgba(248,113,113,0.1)":C.card,border:"2px solid "+(shake?"rgba(248,113,113,0.5)":C.cyan+"33"),borderRadius:20,padding:"20px 18px",textAlign:"center",marginBottom:16,animation:shake?"shakeX 0.4s ease":"none",transition:"background 0.2s"}}>
+              <div style={{fontSize:10,color:C.dim,fontWeight:700,marginBottom:4,letterSpacing:1}}>SOLVE TO MOVE FORWARD</div>
+              <div style={{fontFamily:"'Fredoka One',cursive",fontSize:32,color:textColor(),letterSpacing:1}}>{q.q}</div>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+              {q.opts.map((o,i)=>{
+                const state=chosen===null?"idle":o===q.ans?"correct":o===chosen?"wrong":"idle";
+                return (
+                  <button key={i} onClick={()=>pick(o)} style={{
+                    background:state==="correct"?C.green+"22":state==="wrong"?"rgba(248,113,113,0.15)":"white",
+                    border:"2.5px solid "+(state==="correct"?C.green:state==="wrong"?"rgba(248,113,113,0.6)":C.cyan+"44"),
+                    borderRadius:18,padding:"20px 12px",
+                    fontFamily:"'Fredoka One',cursive",fontSize:26,
+                    color:state==="correct"?C.green:state==="wrong"?"#f87171":"#1A1040",
+                    cursor:chosen===null?"pointer":"default",
+                    textAlign:"center",transition:"all 0.2s",
+                    boxShadow:"0 4px 14px rgba(75,189,245,0.1)",
+                  }}>{o}</button>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function SpeedMath({ onBack, child }) {
+  const [phase,    setPhase]    = useState("ready");
+  const [q,        setQ]        = useState("");
+  const [opts,     setOpts]     = useState([]);
+  const [ans,      setAns]      = useState(0);
+  const [score,    setScore]    = useState(0);
+  const [wrong,    setWrong]    = useState(0);
+  const [timeLeft, setTimeLeft] = useState(60);
+  const [flash,    setFlash]    = useState(null); // "correct"|"wrong"
+  const [lastPick, setLastPick] = useState(null); // index of last tapped option
+  const scoreRef = useRef(0);
+  const wrongRef = useRef(0);
+
+  const nextQ = () => {
+    const level=Math.min(Math.floor(scoreRef.current/5)+1,5);
+    const max=level*8;
+    const a=Math.floor(Math.random()*max)+1;
+    const b=Math.floor(Math.random()*max)+1;
+    const ops=level<3?["+","-"]:["+"," -","×"];
+    const op=ops[Math.floor(Math.random()*ops.length)].trim();
+    let correct;
+    if(op==="+")correct=a+b;
+    else if(op==="-"){const[x,y]=[Math.max(a,b),Math.min(a,b)];correct=x-y;
+      const w=new Set();while(w.size<3){const v=correct+(Math.floor(Math.random()*7)-3);if(v>=0&&v!==correct)w.add(v);}
+      const all=shuffle([correct,...w]);setQ(x+" - "+y+" = ?");setOpts(all.map(String));setAns(all.indexOf(correct));setLastPick(null);return;
+    }
+    else correct=a*b;
+    const w=new Set();while(w.size<3){const v=correct+(Math.floor(Math.random()*9)-4);if(v>=0&&v!==correct)w.add(v);}
+    const all=shuffle([correct,...w]);
+    setQ(a+" "+op+" "+b+" = ?"); setOpts(all.map(String)); setAns(all.indexOf(correct)); setLastPick(null);
+  };
+
+  useEffect(()=>{
+    if(phase!=="playing") return;
+    if(timeLeft<=0){setPhase("over");return;}
+    const t=setTimeout(()=>setTimeLeft(tl=>tl-1),1000);
+    return ()=>clearTimeout(t);
+  },[timeLeft,phase]);
+
+  const start=()=>{ scoreRef.current=0; wrongRef.current=0; setScore(0); setWrong(0); setTimeLeft(60); setFlash(null); setLastPick(null); setPhase("playing"); nextQ(); };
+
+  const pick=(i)=>{
+    setLastPick(i);
+    const ok=i===ans;
+    if(ok){SFX.correct();scoreRef.current++;setScore(scoreRef.current);setFlash("correct");}
+    else{wrongRef.current++;setWrong(wrongRef.current);SFX.wrong();setFlash("wrong");}
+    setTimeout(()=>{setFlash(null);setLastPick(null);nextQ();},350);
+  };
+
+  if(phase==="ready") return (
+    <div style={{minHeight:"100vh",background:"linear-gradient(135deg,#1a0040,#2d0070,#0d1a3a)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"'Nunito',sans-serif",padding:24,position:"relative"}}>
+      <Starfield n={40}/>
+      <div style={{position:"relative",zIndex:1,textAlign:"center",maxWidth:310}}>
+        <div style={{fontSize:72,marginBottom:8}}>⚡</div>
+        <div style={{fontFamily:"'Fredoka One',cursive",fontSize:28,color:"#FFD700",marginBottom:6,letterSpacing:1}}>SPEED MATH</div>
+        <div style={{background:"rgba(255,215,0,0.1)",border:"1.5px solid rgba(255,215,0,0.3)",borderRadius:16,padding:"12px 16px",marginBottom:20}}>
+          <div style={{color:"rgba(255,255,255,0.75)",fontSize:12,lineHeight:1.9}}>
+            ⏱️ 60 seconds on the clock<br/>
+            📈 Questions get harder as you score<br/>
+            🎯 Aim for 20+ correct!
+          </div>
+        </div>
+        <Btn color="#FFD700" onClick={start}>▶ GO!</Btn>
+        <div style={{marginTop:12}}><Btn color={C.dim} style={{padding:"9px 20px"}} onClick={onBack}>← Back</Btn></div>
+      </div>
+    </div>
+  );
+
+  if(phase==="over") return (
+    <div style={{minHeight:"100vh",background:"linear-gradient(135deg,#1a0040,#2d0070,#0d1a3a)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"'Nunito',sans-serif",padding:24,position:"relative"}}>
       <Starfield n={60}/>
       <div style={{position:"relative",zIndex:1,textAlign:"center"}}>
-        <div style={{fontSize:72,marginBottom:8}}>🏆</div>
-        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:18,color:C.green,marginBottom:8}}>MAZE COMPLETE!</div>
-        <div style={{color:textColor(),fontSize:28,fontFamily:"'Orbitron',sans-serif",marginBottom:16}}>{score}/{STEPS} correct</div>
+        <div style={{fontSize:72,marginBottom:8}}>{score>=15?"🏆":score>=8?"🌟":"⚡"}</div>
+        <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:"#FFD700",marginBottom:16}}>TIME'S UP!</div>
+        <div style={{background:"rgba(255,215,0,0.1)",border:"1.5px solid rgba(255,215,0,0.3)",borderRadius:20,padding:"20px 24px",marginBottom:20,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}}>
+          <div style={{textAlign:"center"}}><div style={{fontFamily:"'Fredoka One',cursive",fontSize:32,color:"#4ade80"}}>{score}</div><div style={{fontSize:10,color:"rgba(255,255,255,0.5)",fontWeight:700}}>CORRECT</div></div>
+          <div style={{textAlign:"center"}}><div style={{fontFamily:"'Fredoka One',cursive",fontSize:32,color:"#f87171"}}>{wrong}</div><div style={{fontSize:10,color:"rgba(255,255,255,0.5)",fontWeight:700}}>WRONG</div></div>
+          <div style={{textAlign:"center"}}><div style={{fontFamily:"'Fredoka One',cursive",fontSize:32,color:"#60a5fa"}}>{Math.round(score/(score+wrong||1)*100)}%</div><div style={{fontSize:10,color:"rgba(255,255,255,0.5)",fontWeight:700}}>ACCURACY</div></div>
+        </div>
         <div style={{display:"flex",gap:10}}>
-          <Btn color={C.dim} style={{flex:1}} onClick={onBack}>← BACK</Btn>
-          <Btn color={C.green} style={{flex:1}} onClick={()=>{setStep(0);setScore(0);setDone(false);setChosen(null);shuffledQs.current=shuffle(QUESTIONS);}}>↺ AGAIN</Btn>
+          <Btn color={C.dim} style={{flex:1}} onClick={onBack}>← Back</Btn>
+          <Btn color="#FFD700" style={{flex:1}} onClick={start}>↺ Retry</Btn>
         </div>
       </div>
     </div>
   );
 
+  const timerPct=(timeLeft/60)*100;
   return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),position:"relative"}}>
-      <Starfield n={20}/>
-      <div style={{position:"relative",zIndex:2,background:`${C.green}18`,borderBottom:`1px solid ${C.green}33`,padding:"12px 18px"}}>
-        <div style={{display:"flex",alignItems:"center",gap:12}}>
-          <BackBtn onClick={onBack} color={C.green}/>
-          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.green}}>🌀 MATH MAZE</div>
-          <div style={{marginLeft:"auto",fontFamily:"'Orbitron',sans-serif",fontSize:11,color:C.dim}}>STEP {step+1}/{STEPS}</div>
+    <div style={{minHeight:"100vh",background:flash==="correct"?"linear-gradient(135deg,#052e16,#064e3b)":flash==="wrong"?"linear-gradient(135deg,#2d0a0a,#450a0a)":"linear-gradient(135deg,#1a0040,#2d0070,#0d1a3a)",fontFamily:"'Nunito',sans-serif",position:"relative",transition:"background 0.15s"}}>
+      <Starfield n={15}/>
+      {/* HUD */}
+      <div style={{position:"relative",zIndex:20,background:"rgba(0,0,0,0.55)",backdropFilter:"blur(8px)",borderBottom:"1px solid rgba(255,215,0,0.2)",padding:"10px 18px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+          <button onClick={()=>setPhase("ready")} style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:10,padding:"5px 12px",color:"white",fontSize:12,cursor:"pointer",fontFamily:"'Nunito',sans-serif",fontWeight:700}}>✕ QUIT</button>
+          <div style={{fontFamily:"'Fredoka One',cursive",fontSize:18,color:"#FFD700"}}>⚡ SPEED MATH</div>
+          <div style={{fontFamily:"'Fredoka One',cursive",fontSize:20,color:timeLeft<=10?"#f87171":"#4ade80"}}>{timeLeft}s</div>
+        </div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
+          <div style={{fontSize:13,color:"#4ade80",fontWeight:800}}>✓ {score}</div>
+          <div style={{fontSize:13,color:"#f87171",fontWeight:800}}>✗ {wrong}</div>
+        </div>
+        <div style={{background:"rgba(255,255,255,0.1)",borderRadius:6,height:6,overflow:"hidden"}}>
+          <div style={{width:timerPct+"%",height:"100%",background:"linear-gradient(90deg,"+(timeLeft>20?"#4ade80":"#f87171")+",#FFD700)",borderRadius:6,transition:"width 1s linear"}}/>
         </div>
       </div>
-      <div style={{position:"relative",zIndex:2,padding:"18px"}}>
-        {/* Path visualizer */}
-        <div style={{display:"flex",gap:4,marginBottom:18,justifyContent:"center",flexWrap:"wrap"}}>
-          {[...Array(STEPS)].map((_,i)=>(
-            <div key={i} style={{width:32,height:32,borderRadius:8,background:i<step?`${C.green}33`:i===step?C.green:"#0a0a20",border:`2px solid ${i<=step?C.green:"#1a1a30"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,transition:"all 0.3s"}}>
-              {i<step?"✅":i===step?"🧑‍🚀":"⬛"}
-            </div>
-          ))}
-          <div style={{width:32,height:32,borderRadius:8,background:"#0a0a20",border:`2px solid ${C.yellow}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>🏆</div>
+      {/* Question */}
+      <div style={{position:"relative",zIndex:2,padding:"24px 18px 0"}}>
+        <div style={{background:flash==="correct"?"rgba(74,222,128,0.15)":flash==="wrong"?"rgba(248,113,113,0.15)":"rgba(255,215,0,0.08)",border:"2px solid "+(flash==="correct"?"rgba(74,222,128,0.5)":flash==="wrong"?"rgba(248,113,113,0.5)":"rgba(255,215,0,0.25)"),borderRadius:24,padding:"28px 20px",textAlign:"center",marginBottom:20,transition:"all 0.15s"}}>
+          <div style={{fontFamily:"'Fredoka One',cursive",fontSize:36,color:"white",letterSpacing:1}}>{q}</div>
+          {flash&&<div style={{fontSize:28,marginTop:8,animation:"mmPop 0.3s ease"}}>{flash==="correct"?"✅":"❌"}</div>}
         </div>
-        <Card color={C.green} style={{textAlign:"center",marginBottom:18,padding:"20px",animation:shake?"shakeX 0.4s ease":"none"}}>
-          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:20, color:textColor(),marginBottom:4}}>🧑‍🚀 Solve to move forward!</div>
-          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:26,color:C.green}}>{curQ.q}</div>
-        </Card>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-          {curQ.opts.map((o,i)=>{
-            let bg=C.card,border=`1.5px solid ${C.green}28`,col="white";
-            if(chosen!==null){
-              if(i===curQ.ans){bg="#052e16";border=`2px solid ${C.green}`;col="#4ade80";}
-              else if(i===chosen){bg="#2d0a0a";border=`2px solid ${C.red}`;col="#f87171";}
-            }
-            return <button key={i} onClick={()=>pick(i)} style={{background:bg,border,borderRadius:14,padding:"16px",fontSize:18,fontFamily:"'Orbitron',sans-serif",color:col,cursor:"pointer",transition:"all 0.15s"}}>{o}</button>;
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+          {opts.map((o,i)=>{
+            const state=lastPick===null?"idle":i===ans?"correct":i===lastPick?"wrong":"idle";
+            return (
+              <button key={i} onClick={()=>pick(i)} disabled={lastPick!==null} style={{
+                background:state==="correct"?"rgba(74,222,128,0.2)":state==="wrong"?"rgba(248,113,113,0.2)":"rgba(255,255,255,0.07)",
+                border:"2px solid "+(state==="correct"?"rgba(74,222,128,0.7)":state==="wrong"?"rgba(248,113,113,0.7)":"rgba(255,215,0,0.25)"),
+                borderRadius:18,padding:"22px 12px",
+                fontFamily:"'Fredoka One',cursive",fontSize:28,color:"white",
+                cursor:lastPick===null?"pointer":"default",
+                textAlign:"center",transition:"all 0.2s",
+                boxShadow:"0 4px 16px rgba(0,0,0,0.3)",
+              }}>{o}</button>
+            );
           })}
         </div>
       </div>
@@ -428,118 +614,6 @@ export function MathMaze({ onBack, child }) {
   );
 }
 
-// ── Game 4: Speed Math — answer as many as possible in 60 seconds ─────
-export function SpeedMath({ onBack, child }) {
-  const [phase,   setPhase]   = useState("ready"); // ready|playing|over
-  const [q,       setQ]       = useState("");
-  const [opts,    setOpts]    = useState([]);
-  const [ans,     setAns]     = useState(0);
-  const [score,   setScore]   = useState(0);
-  const [wrong,   setWrong]   = useState(0);
-  const [timeLeft,setTimeLeft]= useState(60);
-  const [flash,   setFlash]   = useState(null); // "correct"|"wrong"
-  const scoreRef = useRef(0);
-  const wrongRef = useRef(0);
-
-  const nextQ = () => {
-    const level = Math.min(Math.floor(scoreRef.current/5)+1, 5);
-    const max   = level * 8;
-    const a = Math.floor(Math.random()*max)+1;
-    const b = Math.floor(Math.random()*max)+1;
-    const ops = level<3?["+","-"]:["+","-","×"];
-    const op  = ops[Math.floor(Math.random()*ops.length)];
-    let correct;
-    if(op==="+") correct=a+b;
-    else if(op==="-"){const [x,y]=[Math.max(a,b),Math.min(a,b)];correct=x-y;setQ(`${x} ${op} ${y} = ?`);const w=new Set();while(w.size<3){const v=correct+(Math.floor(Math.random()*7)-3);if(v>=0&&v!==correct)w.add(v);}const all=shuffle([correct,...w]);setOpts(all.map(String));setAns(all.indexOf(correct));return;}
-    else correct=a*b;
-    const w=new Set();while(w.size<3){const v=correct+(Math.floor(Math.random()*9)-4);if(v>=0&&v!==correct)w.add(v);}
-    const all=shuffle([correct,...w]);
-    setQ(`${a} ${op} ${b} = ?`); setOpts(all.map(String)); setAns(all.indexOf(correct));
-  };
-
-  useEffect(() => {
-    if (phase !== "playing") return;
-    if (timeLeft <= 0) { setPhase("over"); return; }
-    const t = setTimeout(() => setTimeLeft(tl=>tl-1), 1000);
-    return () => clearTimeout(t);
-  }, [timeLeft, phase]);
-
-  const start = () => { scoreRef.current=0; wrongRef.current=0; setScore(0); setWrong(0); setTimeLeft(60); setPhase("playing"); nextQ(); };
-
-  const pick = (i) => {
-    const ok = i === ans;
-    if(ok){SFX.correct();scoreRef.current++;setScore(scoreRef.current);setFlash("correct");}
-    else{wrongRef.current++;setWrong(wrongRef.current);setFlash("wrong");}
-    setTimeout(()=>{setFlash(null);nextQ();},300);
-  };
-
-  if(phase==="ready") return (
-    <div style={{minHeight:"100vh",background:C.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"'Nunito',sans-serif",padding:24,position:"relative"}}>
-      <Starfield n={40}/>
-      <div style={{position:"relative",zIndex:1,textAlign:"center"}}>
-        <div style={{fontSize:64,marginBottom:12}}>⚡</div>
-        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:18,color:C.yellow,marginBottom:8}}>SPEED MATH</div>
-        <div style={{color:C.dim,fontSize:13,lineHeight:1.7,marginBottom:20,maxWidth:270}}>Answer as many questions as you can in 60 seconds! Questions get harder as you score more.</div>
-        <Btn color={C.yellow} onClick={start}>▶ GO!</Btn>
-        <div style={{marginTop:12}}><Btn color={C.dim} style={{padding:"9px 20px"}} onClick={onBack}>← BACK</Btn></div>
-      </div>
-    </div>
-  );
-
-  if(phase==="over") return (
-    <div style={{minHeight:"100vh",background:C.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"'Nunito',sans-serif",padding:24,position:"relative"}}>
-      <Starfield n={60}/>
-      <div style={{position:"relative",zIndex:1,textAlign:"center"}}>
-        <div style={{fontSize:64,marginBottom:8}}>⏱️</div>
-        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:18,color:C.yellow,marginBottom:12}}>TIME'S UP!</div>
-        <Card color={C.yellow} style={{marginBottom:16,padding:"16px 20px"}}>
-          <div style={{display:"flex",justifyContent:"space-around"}}>
-            <div style={{textAlign:"center"}}><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:28,color:C.green}}>{score}</div><div style={{fontSize:10,color:C.dim}}>CORRECT</div></div>
-            <div style={{textAlign:"center"}}><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:28,color:C.red}}>{wrong}</div><div style={{fontSize:10,color:C.dim}}>WRONG</div></div>
-            <div style={{textAlign:"center"}}><div style={{fontFamily:"'Orbitron',sans-serif",fontSize:28,color:C.cyan}}>{Math.round(score/(score+wrong||1)*100)}%</div><div style={{fontSize:10,color:C.dim}}>ACCURACY</div></div>
-          </div>
-        </Card>
-        <div style={{display:"flex",gap:10}}>
-          <Btn color={C.dim} style={{flex:1}} onClick={onBack}>← BACK</Btn>
-          <Btn color={C.yellow} style={{flex:1}} onClick={start}>↺ RETRY</Btn>
-        </div>
-      </div>
-    </div>
-  );
-
-  return (
-    <div style={{minHeight:"100vh",background:flash==="correct"?"#052e16":flash==="wrong"?"#2d0a0a":C.bg,fontFamily:"'Nunito',sans-serif",position:"relative",transition:"background 0.15s"}}>
-      <Starfield n={15}/>
-      <div style={{position:"relative",zIndex:2,background:`${C.yellow}18`,borderBottom:`1px solid ${C.yellow}33`,padding:"12px 18px"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.yellow}}>⚡ SPEED MATH</div>
-          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:20,color:timeLeft<=10?C.red:C.green}}>{timeLeft}s</div>
-        </div>
-        <div style={{display:"flex",justifyContent:"space-between"}}>
-          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:11,color:C.green}}>✓ {score}</div>
-          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:11,color:C.red}}>✗ {wrong}</div>
-        </div>
-        <div style={{marginTop:5,background:isDark()?"rgba(255,255,255,0.06)":"rgba(124,111,224,0.06)",borderRadius:5,height:5,overflow:"hidden"}}>
-          <div style={{width:`${(timeLeft/60)*100}%`,height:"100%",background:`linear-gradient(90deg,${timeLeft>20?C.green:C.red},${C.yellow})`,borderRadius:5,transition:"width 1s linear"}}/>
-        </div>
-      </div>
-      <div style={{position:"relative",zIndex:2,padding:"24px 18px"}}>
-        <Card color={C.yellow} style={{textAlign:"center",marginBottom:20,padding:"22px"}}>
-          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:28, color:textColor()}}>{q}</div>
-        </Card>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
-          {opts.map((o,i)=>(
-            <button key={i} onClick={()=>pick(i)} style={{background:C.card,border:`1.5px solid ${C.yellow}28`,borderRadius:14,padding:"20px",fontSize:20,fontFamily:"'Orbitron',sans-serif",color:textColor(),cursor:"pointer",transition:"transform 0.1s",active:{transform:"scale(0.95)"}}}>
-              {o}
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Game 5: Number Memory — remember the sequence ─────────────────────
 export function NumberMemory({ onBack, child }) {
   const [phase,    setPhase]    = useState("ready"); // ready|show|input|result
   const [level,    setLevel]    = useState(1);
