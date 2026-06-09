@@ -14,6 +14,55 @@ const adminApi = async (action, body={}) => {
   return r.json();
 };
 
+
+// ── Standalone UI primitives (must be outside AdminPanel to avoid remount on every keystroke) ──
+function MsgBar({m}) {
+  if (!m) return null;
+  return <div style={{margin:"0 0 12px",padding:"10px 14px",borderRadius:12,background:m.startsWith("✅")?`${C.green}18`:`${C.red}18`,color:m.startsWith("✅")?C.green:C.red,fontSize:13,fontWeight:700}}>{m}</div>;
+}
+
+function Shell({children, title, accent, actions, backTo}) {
+  return (
+    <div style={{display:"flex",flexDirection:"column",height:"100%"}}>
+      <div style={{background:isDark()?`rgba(6,6,20,0.97)`:C.card,borderBottom:`2px solid ${accent}33`,padding:"12px 16px",display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
+        {backTo && <button onClick={backTo} style={{background:"none",border:"none",color:C.dim,cursor:"pointer",fontSize:20,padding:"0 2px",lineHeight:1}}>‹</button>}
+        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:accent,fontWeight:900,flex:1}}>{title}</div>
+        <div style={{display:"flex",gap:6}}>{actions}</div>
+      </div>
+      <div style={{flex:1,overflowY:"auto",padding:"12px 14px"}}>{children}</div>
+    </div>
+  );
+}
+
+function ActionBtn({color,onClick,children,small}) {
+  return <button onClick={onClick} style={{background:`${color}22`,border:`1px solid ${color}55`,borderRadius:9,padding:small?"5px 9px":"8px 14px",color:color,cursor:"pointer",fontFamily:"'Orbitron',sans-serif",fontSize:small?10:11,fontWeight:900,whiteSpace:"nowrap"}}>{children}</button>;
+}
+
+function Row({accent,left,right,onClick,actions}) {
+  return (
+    <div style={{background:"white",border:`1.5px solid ${accent}22`,borderRadius:14,padding:"12px 14px",marginBottom:8,display:"flex",alignItems:"center",gap:10,boxShadow:`0 2px 8px ${accent}12`}}>
+      <div style={{flex:1,cursor:onClick?"pointer":"default"}} onClick={onClick}>{left}</div>
+      <div style={{display:"flex",gap:6,alignItems:"center",flexShrink:0}}>{right||actions}</div>
+    </div>
+  );
+}
+
+function FormCard({color,onBack,title,children,onSave,saveLabel,saving,msg,loading}) {
+  return (
+    <div style={{maxWidth:520,margin:"0 auto"}}>
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
+        <button onClick={onBack} style={{background:"none",border:"none",color:C.dim,cursor:"pointer",fontSize:20}}>‹</button>
+        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:12,color:color}}>{title}</div>
+      </div>
+      <div style={{background:C.card,border:`1.5px solid ${color}33`,borderRadius:16,padding:"18px 16px"}}>
+        {children}
+        <MsgBar m={msg}/>
+        <Btn color={color} loading={saving||loading} onClick={onSave}>{saveLabel||"SAVE"}</Btn>
+      </div>
+    </div>
+  );
+}
+
 export function AdminPanel({ onBack }) {
   // Uses adminApi -> /api/admin with passphrase auth
   const [tab,        setTab]       = useState("schools");
@@ -130,19 +179,7 @@ export function AdminPanel({ onBack }) {
     </div>
   );
 
-  const FormCard = ({color,onBack,title,children,onSave,saveLabel,saving}) => (
-    <div style={{maxWidth:520,margin:"0 auto"}}>
-      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
-        <button onClick={onBack} style={{background:"none",border:"none",color:C.dim,cursor:"pointer",fontSize:20}}>‹</button>
-        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:12,color:color}}>{title}</div>
-      </div>
-      <div style={{background:C.card,border:`1.5px solid ${color}33`,borderRadius:16,padding:"18px 16px"}}>
-        {children}
-        <MsgBar m={msg}/>
-        <Btn color={color} loading={saving||loading} onClick={onSave}>{saveLabel||"SAVE"}</Btn>
-      </div>
-    </div>
-  );
+
 
   // ── SCHOOLS tab ───────────────────────────────────────────────────
   if (tab==="schools") {
@@ -154,7 +191,7 @@ export function AdminPanel({ onBack }) {
           <div style={{padding:"14px"}}>
             <FormCard color={C.yellow} title={isEdit?"EDIT SCHOOL":"NEW SCHOOL"} onBack={()=>{setView("list");setMsg("");}}
               saveLabel={isEdit?"SAVE CHANGES":"CREATE SCHOOL"}
-              onSave={async()=>{setLoading(true);setMsg("");
+              msg={msg} loading={loading} onSave={async()=>{setLoading(true);setMsg("");
                 const d=isEdit?await api("admin_update_school",{school_id:selSchool?.id,...form}):await api("admin_create_school",form);
                 if(d.ok||d.data){showToast("✅ School "+(isEdit?"updated":"created")+": "+form.name);loadSchools();setView("list");}else setMsg(d.error||"Failed");
                 setLoading(false);}}>
@@ -231,7 +268,7 @@ export function AdminPanel({ onBack }) {
           <div style={{padding:"14px"}}>
             <FormCard color={C.cyan} title={isEdit?"EDIT TEACHER":"NEW TEACHER"} onBack={()=>{setView("list");setMsg("");}}
               saveLabel={isEdit?"SAVE CHANGES":"CREATE TEACHER"}
-              onSave={async()=>{setLoading(true);setMsg("");
+              msg={msg} loading={loading} onSave={async()=>{setLoading(true);setMsg("");
                 const d=isEdit?await api("admin_modify_teacher",{teacher_id:selTeacher?.id,...form}):await api("admin_create_teacher",{...form,school_id:form.school_id||selSchool?.id});
                 if(d.data){showToast("✅ Teacher "+(isEdit?"updated":"created")+": "+form.name);loadTeachers();setView("list");}else setMsg(d.error||"Failed");
                 setLoading(false);}}>
@@ -251,7 +288,7 @@ export function AdminPanel({ onBack }) {
       <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),overflowY:"auto"}}>
         {renderTopBar()}
         <div style={{padding:"14px"}}>
-          <FormCard color={C.purple} title="BULK IMPORT TEACHERS" onBack={()=>setView("list")} saveLabel="IMPORT" onSave={async()=>{
+          <FormCard color={C.purple} title="BULK IMPORT TEACHERS" onBack={()=>setView("list")} saveLabel="IMPORT" msg={msg} loading={loading} onSave={async()=>{
             const rows=bulkText.split("\n").map(l=>l.trim()).filter(Boolean).map(l=>{const p=l.split(",").map(s=>s.trim());return{name:p[0],email:p[1],pin:p[2]||"1234"};}).filter(r=>r.name&&r.email);
             if(!rows.length){setMsg("No valid rows.");return;}
             setLoading(true);setMsg("");setBulkResult([]);
@@ -304,7 +341,7 @@ export function AdminPanel({ onBack }) {
           <div style={{padding:"14px"}}>
             <FormCard color={C.purple} title={isEdit?"EDIT STUDENT":"NEW STUDENT"} onBack={()=>{setView("list");setMsg("");}}
               saveLabel={isEdit?"SAVE CHANGES":"CREATE STUDENT"}
-              onSave={async()=>{setLoading(true);setMsg("");
+              msg={msg} loading={loading} onSave={async()=>{setLoading(true);setMsg("");
                 const payload=isEdit?{student_id:form.student_id,name:form.name,roll_no:form.roll_no,class_num:form.class_num,section:form.section}:{...form,teacher_id:form.teacher_id||null,school_id:form.school_id||selSchool?.id};
                 if(form.pin)payload.pin=form.pin;
                 const d=isEdit?await api("admin_modify_student",payload):await api("create_student_admin",payload);
@@ -327,7 +364,7 @@ export function AdminPanel({ onBack }) {
       <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),overflowY:"auto"}}>
         {renderTopBar()}
         <div style={{padding:"14px"}}>
-          <FormCard color={C.purple} title="BULK IMPORT STUDENTS" onBack={()=>setView("list")} saveLabel="IMPORT" onSave={async()=>{
+          <FormCard color={C.purple} title="BULK IMPORT STUDENTS" onBack={()=>setView("list")} saveLabel="IMPORT" msg={msg} loading={loading} onSave={async()=>{
             const rows=bulkText.split("\n").map(l=>l.trim()).filter(Boolean).map(l=>{const p=l.split(",").map(s=>s.trim());return{name:p[0],roll_no:p[1],class_num:parseInt(p[2])||1,section:p[3]||"A",pin:p[4]||"1234"};}).filter(r=>r.name);
             if(!rows.length){setMsg("No valid rows.");return;}
             setLoading(true);setMsg("");setBulkResult([]);
@@ -380,7 +417,7 @@ export function AdminPanel({ onBack }) {
           <div style={{padding:"14px"}}>
             <FormCard color={C.green} title={isEdit?"EDIT HOME STUDENT":"NEW HOME STUDENT"} onBack={()=>{setView("list");setMsg("");}}
               saveLabel={isEdit?"SAVE CHANGES":"CREATE"}
-              onSave={async()=>{setLoading(true);setMsg("");
+              msg={msg} loading={loading} onSave={async()=>{setLoading(true);setMsg("");
                 const d=isEdit?await api("admin_modify_home_student",{child_id:form.child_id,name:form.name,class_num:form.class_num,avatar:form.avatar,pin:form.pin||undefined}):await api("admin_create_home_student",{name:form.name,class_num:form.class_num||1,pin:form.pin||"1234",avatar:form.avatar||"🚀"});
                 if(d.data||d.ok){showToast("✅ Student "+(isEdit?"updated":"created")+": "+form.name);loadHomeStudents();setView("list");}else setMsg(d.error||"Failed");
                 setLoading(false);}}>
@@ -556,7 +593,7 @@ export function AdminPanel({ onBack }) {
         {renderTopBar()}
         <div style={{padding:"14px"}}>
           <FormCard color={C.green} title={`NEW SET — ${qLesson} · Set ${(form.set_index??0)+1}`} onBack={()=>setView("sets")} saveLabel="CREATE SET"
-            onSave={async()=>{
+            msg={msg} loading={loading} onSave={async()=>{
               if(!form.question||!form.opt0||!form.opt1||!form.opt2||!form.opt3){setMsg("Fill all fields.");return;}
               setLoading(true);setMsg("");
               const d=await api("admin_add_question",{lesson_id:form.lesson_id,set_index:form.set_index??0,question_index:0,question:form.question,options:[form.opt0,form.opt1,form.opt2,form.opt3],correct_answer:form.correct??0,hint:form.hint||""});
@@ -608,7 +645,7 @@ export function AdminPanel({ onBack }) {
           {renderTopBar()}
           <div style={{padding:"14px"}}>
             <FormCard color={isEdit?C.cyan:C.green} title={isEdit?"EDIT QUESTION":"ADD QUESTION"} onBack={()=>setView("q_list")} saveLabel={isEdit?"SAVE":"ADD QUESTION"}
-              onSave={async()=>{
+              msg={msg} loading={loading} onSave={async()=>{
                 if(!form.question||!form.opt0||!form.opt1||!form.opt2||!form.opt3){setMsg("Fill question and all 4 options.");return;}
                 setLoading(true);setMsg("");
                 const d=isEdit?await api("admin_update_question",{id:form.id,question:form.question,options:[form.opt0,form.opt1,form.opt2,form.opt3],correct_answer:form.correct??0,hint:form.hint||""}):await api("admin_add_question",{lesson_id:form.lesson_id,set_index:form.set_index??0,question_index:form.question_index??0,question:form.question,options:[form.opt0,form.opt1,form.opt2,form.opt3],correct_answer:form.correct??0,hint:form.hint||""});
@@ -625,7 +662,7 @@ export function AdminPanel({ onBack }) {
       <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),overflowY:"auto"}}>
         {renderTopBar()}
         <div style={{padding:"14px"}}>
-          <FormCard color={C.purple} title={`BULK QUESTIONS — ${qLesson} Set ${(qSet??0)+1}`} onBack={()=>setView("q_list")} saveLabel="UPLOAD" onSave={async()=>{
+          <FormCard color={C.purple} title={`BULK QUESTIONS — ${qLesson} Set ${(qSet??0)+1}`} onBack={()=>setView("q_list")} saveLabel="UPLOAD" msg={msg} loading={loading} onSave={async()=>{
             const rows=bulkText.split("\n").map(l=>l.trim()).filter(Boolean).map(l=>{const p=l.split(",").map(s=>s.trim());return{question:p[0],options:[p[1]||"",p[2]||"",p[3]||"",p[4]||""],correct_answer:parseInt(p[5])||0,hint:p[6]||""};}).filter(r=>r.question);
             if(!rows.length){setMsg("No valid rows.");return;}
             setLoading(true);setMsg("");setBulkResult([]);

@@ -69,7 +69,7 @@ export function StudentLogin({ onBack, onDone }) {
                 <select value={classNum} onChange={e=>setClassNum(e.target.value)}
                   style={{width:"100%",background:isDark()?C.card2:"rgba(124,111,224,0.06)",border:`1.5px solid ${C.purple}44`,borderRadius:10,padding:"10px",color:classNum?"white":C.dim,fontFamily:"'Nunito',sans-serif",fontSize:14}}>
                   <option value="">Any</option>
-                  {[1,2,3,4,5].map(n=><option key={n} value={n}>Class {n}</option>)}
+                  {[{v:10,l:"Nursery"},{v:11,l:"Jr KG"},{v:12,l:"Sr KG"},{v:1,l:"Class 1"},{v:2,l:"Class 2"},{v:3,l:"Class 3"},{v:4,l:"Class 4"},{v:5,l:"Class 5"}].map(c=><option key={c.v} value={c.v}>{c.l}</option>)}
                 </select>
               </div>
               <div>
@@ -348,5 +348,3 @@ export function ExcelImport({ teacher, onDone }) {
     </Card>
   );
 }
-
-
