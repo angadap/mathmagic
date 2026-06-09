@@ -442,12 +442,12 @@ export default async function handler(req, res) {
       }
 
       if (action==="admin_check_username") {
-        // Real-time uniqueness check for home student username
+        // Real-time uniqueness check — global across ALL children (admin + parent created)
         const {username, exclude_id} = req.body;
         if (!username) return res.status(200).json({available:false, error:"Enter a username"});
         const u = clean(username,30).toLowerCase().replace(/[^a-z0-9_.]/g,"");
         if (u.length < 3) return res.status(200).json({available:false, error:"Min 3 characters"});
-        let qs = `?username=eq.${encodeURIComponent(u)}&parent_id=is.null&select=id`;
+        let qs = `?username=eq.${encodeURIComponent(u)}&select=id`;
         if (exclude_id) qs += `&id=neq.${encodeURIComponent(exclude_id)}`;
         const r = await sb("children","GET",null,qs);
         const taken = Array.isArray(r.data) && r.data.length > 0;
@@ -482,8 +482,8 @@ export default async function handler(req, res) {
         if (!username) return res.status(400).json({error:"Username required"});
         const uname = clean(username,30).toLowerCase().replace(/[^a-z0-9_.]/g,"");
         if (uname.length < 3) return res.status(400).json({error:"Username must be at least 3 characters"});
-        // Enforce uniqueness
-        const chk = await sb("children","GET",null,`?username=eq.${encodeURIComponent(uname)}&parent_id=is.null&select=id`);
+        // Enforce uniqueness globally across all children
+        const chk = await sb("children","GET",null,`?username=eq.${encodeURIComponent(uname)}&select=id`);
         if (Array.isArray(chk.data) && chk.data.length > 0) return res.status(400).json({error:"Username already taken. Choose another."});
         const pin_hash = hashPin(String(pin).slice(0,6));
         const r = await sb("children","POST",{
@@ -507,7 +507,7 @@ export default async function handler(req, res) {
         if (username) {
           const uname = clean(username,30).toLowerCase().replace(/[^a-z0-9_.]/g,"");
           if (uname.length < 3) return res.status(400).json({error:"Username too short"});
-          const chk = await sb("children","GET",null,`?username=eq.${encodeURIComponent(uname)}&parent_id=is.null&id=neq.${encodeURIComponent(child_id)}&select=id`);
+          const chk = await sb("children","GET",null,`?username=eq.${encodeURIComponent(uname)}&id=neq.${encodeURIComponent(child_id)}&select=id`);
           if (Array.isArray(chk.data) && chk.data.length > 0) return res.status(400).json({error:"Username already taken."});
           update.username = uname;
         }
@@ -530,7 +530,7 @@ export default async function handler(req, res) {
         if (!username||!pin) return res.status(400).json({error:"Username and PIN required"});
         const uname = clean(username,30).toLowerCase().replace(/[^a-z0-9_.]/g,"");
         const pin_hash = hashPin(String(pin).slice(0,6));
-        const r = await sb("children","GET",null,`?username=eq.${encodeURIComponent(uname)}&parent_id=is.null&select=*`);
+        const r = await sb("children","GET",null,`?username=eq.${encodeURIComponent(uname)}&select=*`);
         if (!Array.isArray(r.data)||r.data.length===0) return res.status(200).json({error:"Username not found"});
         const child = r.data[0];
         if (child.pin_hash !== pin_hash) return res.status(200).json({error:"Wrong PIN"});

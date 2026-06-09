@@ -631,9 +631,9 @@ export const db = {
     return { data:MEM.children.filter(c=>c.parent_id===pid), error:null };
   },
 
-  async addChild(pid, { name, avatar, class_num, pin }) {
+  async addChild(pid, { name, username, avatar, class_num, pin }) {
     const payload = {
-      parent_id: pid, name, avatar, class_num, pin_hash: pin,
+      parent_id: pid, name, username: username||null, avatar, class_num, pin_hash: pin,
       xp: 0, level: 1, coins: 50, streak_days: 0, is_premium: false,
       created_at: new Date().toISOString()
     };

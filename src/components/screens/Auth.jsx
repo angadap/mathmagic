@@ -44,17 +44,39 @@ export function Welcome({ onRegister, onLogin, onPrivacy }) {
 
 // ── Register ──────────────────────────────────────────────────────────
 export function Register({ onBack, onDone }) {
-  const [step,    setStep]    = useState(1);
-  const [email,   setEmail]   = useState("");
-  const [pass,    setPass]    = useState("");
-  const [pass2,   setPass2]   = useState("");
-  const [name,    setName]    = useState("");
-  const [avatar,  setAvatar]  = useState(null);
-  const [cls,     setCls]     = useState(null);
-  const [pin,     setPin]     = useState("");
-  const [errors,  setErrors]  = useState({});
-  const [loading, setLoading] = useState(false);
-  const [shake,   setShake]   = useState(false);
+  const [step,     setStep]    = useState(1);
+  const [email,    setEmail]   = useState("");
+  const [pass,     setPass]    = useState("");
+  const [pass2,    setPass2]   = useState("");
+  const [name,     setName]    = useState("");
+  const [username, setUsername]= useState("");
+  const [uStatus,  setUStatus] = useState(null); // null|'checking'|'ok'|'taken'|'short'
+  const [avatar,   setAvatar]  = useState(null);
+  const [cls,      setCls]     = useState(null);
+  const [pin,      setPin]     = useState("");
+  const [errors,   setErrors]  = useState({});
+  const [loading,  setLoading] = useState(false);
+  const [shake,    setShake]   = useState(false);
+  const uDebounce = React.useRef(null);
+
+  const checkUsername = (val) => {
+    const cleaned = val.toLowerCase().replace(/[^a-z0-9_.]/g, '');
+    if (cleaned.length === 0) { setUStatus(null); return; }
+    if (cleaned.length < 3)   { setUStatus('short'); return; }
+    setUStatus('checking');
+    clearTimeout(uDebounce.current);
+    uDebounce.current = setTimeout(async () => {
+      try {
+        const r = await fetch('/api/admin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer angadadmin2026' },
+          body: JSON.stringify({ action: 'admin_check_username', username: cleaned })
+        });
+        const d = await r.json();
+        setUStatus(d.available ? 'ok' : 'taken');
+      } catch(e) { setUStatus(null); }
+    }, 500);
+  };
 
   const goBack = () => { setErrors({}); step > 1 ? setStep(step - 1) : onBack(); };
 
@@ -117,16 +139,51 @@ export function Register({ onBack, onDone }) {
           </div>
         )}
         {errors.avatar && <div style={{ color:C.red, fontSize:11, marginBottom:8, fontWeight:700 }}>⚠ {errors.avatar}</div>}
-        <Btn color={C.purple} onClick={doNext}>NEXT → SELECT CLASS</Btn>
+        <Btn color={C.purple} onClick={doNext}>NEXT → SET USERNAME</Btn>
       </RegPage>
     );
   }
 
-  // Step 3 ─ class
+  // Step 3 ─ username (unique, used for login)
   if (step === 3) {
+    const uColor = uStatus === 'ok' ? C.green : uStatus === 'taken' ? C.red : C.dim;
+    const uMsg   = uStatus === 'ok'       ? '✅ Username available!'
+                 : uStatus === 'taken'    ? '❌ Already taken — choose another'
+                 : uStatus === 'checking' ? '⏳ Checking…'
+                 : uStatus === 'short'    ? '⚠ Min 3 characters'
+                 : '';
+    const doNext = () => {
+      if (!username || uStatus !== 'ok') { setErrors({ username: uMsg || 'Choose a valid unique username' }); return; }
+      setErrors({}); setStep(4);
+    };
     return (
-      <RegPage step={3} title="SELECT CLASS" color={C.orange} onBack={goBack}>
-        <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:10, color:C.dim, letterSpacing:2, marginBottom:4 }}>STEP 3 — WHICH CLASS?</div>
+      <RegPage step={3} title="SET USERNAME" color={C.green} onBack={goBack}>
+        <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:10, color:C.dim, letterSpacing:2, marginBottom:12 }}>STEP 3 — CHOOSE A USERNAME</div>
+        <div style={{ background:`${C.green}11`, border:`1.5px solid ${C.green}33`, borderRadius:14, padding:"12px 14px", marginBottom:16, fontSize:12, color:C.dim, lineHeight:1.6 }}>
+          This is <strong style={{color:textColor()}}>{name}</strong>'s login username. It must be unique — lowercase letters, numbers, _ and . only.
+        </div>
+        <div style={{ marginBottom: uMsg ? 4 : 16 }}>
+          <div style={{ color:C.dim, fontSize:11, marginBottom:4 }}>USERNAME</div>
+          <input
+            value={username}
+            onChange={e => { const v=e.target.value.toLowerCase().replace(/[^a-z0-9_.]/g,''); setUsername(v); setErrors({}); checkUsername(v); }}
+            placeholder="e.g. arjun01"
+            style={{ width:"100%", background:C.card, border:`1.5px solid ${uStatus==='ok'?C.green:uStatus==='taken'?C.red:C.border}`, borderRadius:12, padding:"12px 14px", color:textColor(), fontFamily:"'Nunito',sans-serif", fontSize:15, outline:"none", boxSizing:"border-box" }}
+            onKeyDown={e=>e.key==='Enter'&&doNext()}
+          />
+        </div>
+        {uMsg && <div style={{ fontSize:12, color:uColor, marginBottom:14, fontWeight:700 }}>{uMsg}</div>}
+        {errors.username && <div style={{ color:C.red, fontSize:11, marginBottom:10, fontWeight:700 }}>⚠ {errors.username}</div>}
+        <Btn color={C.green} disabled={uStatus !== 'ok'} onClick={doNext}>NEXT → SELECT CLASS</Btn>
+      </RegPage>
+    );
+  }
+
+  // Step 4 ─ class
+  if (step === 4) {
+    return (
+      <RegPage step={4} title="SELECT CLASS" color={C.orange} onBack={goBack}>
+        <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:10, color:C.dim, letterSpacing:2, marginBottom:4 }}>STEP 4 — WHICH CLASS?</div>
         <div style={{ color:C.dim, fontSize:12, fontWeight:600, marginBottom:12, lineHeight:1.5 }}>
 
         </div>
@@ -150,15 +207,15 @@ export function Register({ onBack, onDone }) {
           ))}
         </div>
         {errors.cls && <div style={{ color:C.red, fontSize:11, marginBottom:8, fontWeight:700 }}>⚠ {errors.cls}</div>}
-        <Btn color={C.orange} disabled={!cls} onClick={() => { if (!cls) { setErrors({ cls:"Select a class" }); return; } setErrors({}); setStep(4); }}>
+        <Btn color={C.orange} disabled={!cls} onClick={() => { if (!cls) { setErrors({ cls:"Select a class" }); return; } setErrors({}); setStep(5); }}>
           NEXT → CREATE PIN
         </Btn>
       </RegPage>
     );
   }
 
-  // Step 4 ─ PIN + submit
-  if (step === 4) {
+  // Step 5 ─ PIN + submit
+  if (step === 5) {
     const doRegister = async () => {
       if (pin.length < 4) { setErrors({ pin:"Enter all 4 digits" }); setShake(true); setTimeout(() => setShake(false), 500); return; }
       setLoading(true);
@@ -175,7 +232,7 @@ export function Register({ onBack, onDone }) {
           setLoading(false); return;
         }
         // Add child profile — works whether uid is a real Supabase UUID or an in-memory id
-        const { data: child } = await db.addChild(uid, { name, avatar, class_num: cls, pin });
+        const { data: child } = await db.addChild(uid, { name, username, avatar, class_num: cls, pin });
         if (!child) { setErrors({ pin: "Could not create profile. Please try again." }); setLoading(false); return; }
         setLoading(false);
         // Save session so login screen skips email/pass next time
@@ -191,8 +248,8 @@ export function Register({ onBack, onDone }) {
       }
     };
     return (
-      <RegPage step={4} title="CREATE PIN" color={C.yellow} onBack={goBack}>
-        <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:10, color:C.dim, letterSpacing:2, marginBottom:4 }}>STEP 4 — SECRET PIN</div>
+      <RegPage step={5} title="CREATE PIN" color={C.yellow} onBack={goBack}>
+        <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:10, color:C.dim, letterSpacing:2, marginBottom:4 }}>STEP 5 — SECRET PIN</div>
         <div style={{ color:C.dim, fontSize:12, fontWeight:600, marginBottom:10, lineHeight:1.6 }}>
           Set a 4-digit PIN for <strong style={{ color:textColor() }}>{name}</strong> to log in.
         </div>
@@ -217,16 +274,17 @@ export function Login({ onBack, onDone }) {
   const savedSession = (() => { try { return JSON.parse(sessionStorage.getItem("mm_parent_session")||"null"); } catch(e){return null;} })();
   const hasSession = savedSession && savedSession.kids && savedSession.kids.length > 0;
 
-  const [step,    setStep]    = useState(hasSession ? "child" : "email");
-  const [email,   setEmail]   = useState(savedSession?.email || "");
-  const [pass,    setPass]    = useState(savedSession?.pass || "");
-  const [kids,    setKids]    = useState(savedSession?.kids || []);
-  const [kid,     setKid]     = useState(null);
-  const [pid,     setPid]     = useState(savedSession?.pid || null);
-  const [pin,     setPin]     = useState("");
-  const [error,   setError]   = useState("");
-  const [loading, setLoading] = useState(false);
-  const [shake,   setShake]   = useState(false);
+  const [step,     setStep]    = useState(hasSession ? "username" : "email");
+  const [email,    setEmail]   = useState(savedSession?.email || "");
+  const [pass,     setPass]    = useState(savedSession?.pass || "");
+  const [kids,     setKids]    = useState(savedSession?.kids || []);
+  const [username, setUsername]= useState("");
+  const [kid,      setKid]     = useState(null);
+  const [pid,      setPid]     = useState(savedSession?.pid || null);
+  const [pin,      setPin]     = useState("");
+  const [error,    setError]   = useState("");
+  const [loading,  setLoading] = useState(false);
+  const [shake,    setShake]   = useState(false);
 
   // ── Clear session and go back to email step (for switching accounts) ──
   const switchAccount = () => {
@@ -265,7 +323,7 @@ export function Login({ onBack, onDone }) {
             const { data: children } = await db.getChildren(parentId);
             setLoading(false);
             if (!children || children.length === 0) { setError("No profiles found. Please register first."); return; }
-            setKids(children); setStep("child");
+            setKids(children); setStep("username");
             // Save session so child can login with just PIN next time (same browser session)
             try { sessionStorage.setItem("mm_parent_session", JSON.stringify({ email:te, pass, pid:parentId, kids:children })); } catch(e) {}
           } catch(e) { setError("Login failed: " + e.message); setLoading(false); }
@@ -282,40 +340,44 @@ export function Login({ onBack, onDone }) {
     </div>
   );
 
-  if (step === "child") return (
+  // Username step — child enters their unique username
+  if (step === "username") return (
     <div style={{ minHeight:"100vh", background:C.bg, padding:"20px 18px", fontFamily:"'Nunito',sans-serif", position:"relative" }}>
       <Starfield n={26}/>
       <div style={{ position:"relative", zIndex:1, animation:"slideUp 0.3s ease" }}>
-        <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:6 }}>
-          <BackBtn onClick={onBack}/>
+        <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:20 }}>
+          <BackBtn onClick={switchAccount}/>
           <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:14, color:C.purple }}>CHOOSE PILOT</div>
+          <button onClick={switchAccount} style={{ marginLeft:"auto", background:"none", border:"none", color:C.dim, fontSize:11, cursor:"pointer", fontWeight:600 }}>🔄 Switch account</button>
         </div>
-        {/* Show who is logged in + option to switch account */}
-        <div style={{ display:"flex", justifyContent:"flex-end", marginBottom:16 }}>
-          <button onClick={switchAccount} style={{ background:"none", border:"none", color:C.dim, fontSize:11, cursor:"pointer", fontFamily:"'Nunito',sans-serif", fontWeight:600 }}>
-            🔄 Switch account
-          </button>
+        <div style={{ background:`${C.purple}11`, border:`1.5px solid ${C.purple}33`, borderRadius:16, padding:"14px 16px", marginBottom:20, display:"flex", gap:12, alignItems:"flex-start" }}>
+          <div style={{ fontSize:24, flexShrink:0 }}>🚀</div>
+          <div>
+            <div style={{ fontSize:14, fontWeight:800, color:textColor(), marginBottom:3 }}>Who's flying today?</div>
+            <div style={{ fontSize:12, color:C.dim, lineHeight:1.6 }}>Enter your username to continue.</div>
+          </div>
         </div>
-        <div style={{ color:C.dim, fontSize:13, fontWeight:600, marginBottom:14 }}>Who's flying today? 🚀</div>
-        <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-          {kids.map(k => {
-            const w = WORLDS[(k.class_num || 1) - 1];
-            return (
-              <button key={k.id} onClick={() => { setKid(k); setPin(""); setError(""); setStep("pin"); }}
-                style={{ background:C.card, border:`2px solid ${w.color}33`, borderRadius:16, padding:"13px 15px", cursor:"pointer", display:"flex", alignItems:"center", gap:12, transition:"all 0.2s" }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = w.color; e.currentTarget.style.boxShadow = `0 0 16px ${w.glow}`; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = `${w.color}33`; e.currentTarget.style.boxShadow = "none"; }}
-              >
-                <div style={{ width:48, height:48, background:`${w.color}18`, borderRadius:12, display:"flex", alignItems:"center", justifyContent:"center", fontSize:24, border:`1.5px solid ${w.color}33` }}>{k.avatar}</div>
-                <div style={{ textAlign:"left" }}>
-                  <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:13, color:textColor()}}>{k.name}</div>
-                  <div style={{ fontSize:11, color:C.dim, marginTop:2 }}>{w.name} · Lv {k.level||1} · {k.xp||0} XP</div>
-                </div>
-                <div style={{ marginLeft:"auto", color:w.color, fontSize:20 }}>›</div>
-              </button>
-            );
-          })}
-        </div>
+        <Inp label="USERNAME" value={username}
+          onChange={v => { setUsername(v.toLowerCase().replace(/[^a-z0-9_.]/g,'')); setError(''); }}
+          placeholder="e.g. arjun01" error={error} maxLen={30} autoComp="username"
+          onEnter={async () => {
+            const u = username.trim();
+            if (!u) { setError('Enter your username'); return; }
+            setLoading(true); setError('');
+            // Find matching child among loaded kids
+            const found = kids.find(k => k.username === u);
+            if (!found) { setError('Username not found. Check spelling.'); setLoading(false); return; }
+            setKid(found); setPin(''); setStep('pin'); setLoading(false);
+          }}
+        />
+        <Btn color={C.purple} loading={loading} onClick={async () => {
+          const u = username.trim();
+          if (!u) { setError('Enter your username'); return; }
+          setLoading(true); setError('');
+          const found = kids.find(k => k.username === u);
+          if (!found) { setError('Username not found. Check spelling.'); setLoading(false); return; }
+          setKid(found); setPin(''); setStep('pin'); setLoading(false);
+        }}>NEXT →</Btn>
       </div>
     </div>
   );
@@ -325,17 +387,16 @@ export function Login({ onBack, onDone }) {
       <Starfield n={26}/>
       <div style={{ position:"relative", zIndex:1, animation:"slideUp 0.3s ease" }}>
         <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:18 }}>
-          <BackBtn onClick={() => { setStep("child"); setPin(""); setError(""); }}/>
+          <BackBtn onClick={() => { setStep("username"); setPin(""); setError(""); }}/>
           <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:14, color:C.cyan }}>ENTER PIN</div>
         </div>
         <div style={{ textAlign:"center", marginBottom:16 }}>
           <div style={{ fontSize:52, animation:"floatUp 2s ease-in-out infinite", marginBottom:8 }}>{kid.avatar}</div>
           <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:14, color:C.cyan }}>{kid.name.toUpperCase()}</div>
-          <div style={{ color:C.dim, fontSize:11, marginTop:3 }}>{WORLDS[(kid.class_num||1)-1].world}</div>
+          <div style={{ color:C.dim, fontSize:11, marginTop:3 }}>@{kid.username} · {WORLDS[(kid.class_num||1)-1].world}</div>
         </div>
         <div style={{ color:C.dim, fontSize:12, fontWeight:600, textAlign:"center", marginBottom:12 }}>Enter your secret PIN 🔐</div>
         <PinPad pin={pin} setPin={setPin} error={error} shake={shake} onComplete={async fullPin => {
-          // SECURITY: track failed PIN attempts
           const attemptKey = `pin_attempts_${kid.id}`;
           const attempts = parseInt(localStorage.getItem(attemptKey)||"0");
           if (attempts >= 5) { setError("Too many attempts. Wait 5 minutes."); setShake(true); setTimeout(()=>setShake(false),600); setPin(""); return; }
@@ -343,21 +404,18 @@ export function Login({ onBack, onDone }) {
           if (!ok) localStorage.setItem(attemptKey, String(attempts+1));
           else localStorage.removeItem(attemptKey);
           if (ok && rawChild) {
-            // Update daily streak
-            const today     = new Date().toISOString().slice(0, 10);
+            const today      = new Date().toISOString().slice(0, 10);
             const lastActive = rawChild.last_active ? new Date(rawChild.last_active).toISOString().slice(0, 10) : null;
             const yesterday  = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
             let updatedChild = { ...rawChild };
             if (lastActive !== today) {
               const newStreak = lastActive === yesterday ? (rawChild.streak_days||0) + 1 : 1;
-              // Direct API call — works regardless of getSb state
               fetch("/api/db", { method:"POST",
                 headers:{"Content-Type":"application/json","Authorization":`Bearer ${db._token||""}`},
                 body: JSON.stringify({ action:"update_children", id:rawChild.id,
                   streak_days: newStreak, last_active: new Date().toISOString() }) }).catch(()=>{});
               updatedChild = { ...rawChild, streak_days: newStreak, last_active: new Date().toISOString() };
             }
-            // Save session so next login skips email/pass
             try { sessionStorage.setItem("mm_parent_session", JSON.stringify({ email, pass, pid, kids })); } catch(e){}
             onDone({ user:{ id:pid, email }, child: updatedChild });
           }

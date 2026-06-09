@@ -383,14 +383,20 @@ export default async function handler(req, res) {
     }
 
     if (action === "add_child") {
-      const name     = sanitizeStr(req.body.name, 50);
-      const avatar   = sanitizeStr(req.body.avatar, 10);
-      const pin_hash = sanitizeStr(req.body.pin_hash, 100);
+      const name      = sanitizeStr(req.body.name, 50);
+      const avatar    = sanitizeStr(req.body.avatar, 10);
+      const pin_hash  = sanitizeStr(req.body.pin_hash, 100);
       const class_num = sanitizeInt(req.body.class_num, 1, 5);
+      const rawUser   = sanitizeStr(req.body.username||'', 30);
+      const username  = rawUser.toLowerCase().replace(/[^a-z0-9_.]/g,'') || null;
       if (!name || !pin_hash) return res.status(400).json({ error: "Missing fields" });
+      if (!username || username.length < 3) return res.status(400).json({ error: "Username required (min 3 chars)" });
+      // Enforce global uniqueness of username across all children
+      const chk = await sbQuery("children", "GET", null, `?username=eq.${encodeURIComponent(username)}&select=id`);
+      if (Array.isArray(chk.data) && chk.data.length > 0) return res.status(400).json({ error: "Username already taken. Choose another." });
 
       const r = await sbQuery("children", "POST", {
-        parent_id: user.id, name, avatar, class_num, pin_hash,
+        parent_id: user.id, name, username, avatar, class_num, pin_hash,
         xp: 0, level: 1, coins: 50, streak_days: 0, is_premium: false,
         created_at: new Date().toISOString(),
       });
