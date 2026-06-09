@@ -273,7 +273,7 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
   const levelEmoji = ["🌱","🌟","💫","🚀","🏆","👑"][Math.min(Math.floor((child.level||1)/2),5)];
 
   return (
-    <div style={{ minHeight:"100vh", background:"#FAFBFF", fontFamily:"'Baloo 2','Nunito',sans-serif", paddingBottom:88, position:"relative", overflowX:"hidden" }}>
+    <div style={{ minHeight:"100vh", background:"#FAFBFF", color:"#1A1040", fontFamily:"'Nunito','Baloo 2',sans-serif", paddingBottom:88, position:"relative", overflowX:"hidden" }}>
       <Starfield n={50}/>
       {onFeedback && <SOSButton onClick={() => onFeedback()}/>}
       {showTutorial && <Tutorial onDone={doneTutorial}/>}

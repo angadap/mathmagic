@@ -114,9 +114,9 @@ export function XPBar({ xp = 0, level = 1 }) {
   return (
     <div style={{ display:"flex", alignItems:"center", gap:8 }}>
       <div style={{
-        background:`linear-gradient(135deg,${C.yellow},${C.orange})`,
+        background:"linear-gradient(135deg,#FFC847,#FF6B6B)",
         borderRadius:20, padding:"3px 10px", fontSize:10,
-        fontFamily:"'Baloo 2',sans-serif", color:"#0a0500", flexShrink:0, fontWeight:900,
+        fontFamily:"'Nunito',sans-serif", color:"#1A1040", flexShrink:0, fontWeight:900,
       }}>LV {level}</div>
       <div style={{ flex:1, background:"#F0ECFF", borderRadius:999, height:10, overflow:"hidden" }}>
         <div style={{
@@ -129,7 +129,7 @@ export function XPBar({ xp = 0, level = 1 }) {
           transition:"width 1s ease",
         }}/>
       </div>
-      <span style={{ fontSize:9, color:C.dim, fontFamily:"'Baloo 2',sans-serif" }}>{xp} XP</span>
+      <span style={{ fontSize:9, color:"#9890C4", fontFamily:"'Nunito',sans-serif", fontWeight:700 }}>{xp} XP</span>
     </div>
   );
 }

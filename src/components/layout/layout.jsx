@@ -53,7 +53,7 @@ export function GlobalStyles() {
         @keyframes nebulaDrift{0%{transform:translate(0,0) rotate(0)}33%{transform:translate(18px,-12px) rotate(120deg)}66%{transform:translate(-12px,18px) rotate(240deg)}100%{transform:translate(0,0) rotate(360deg)}}
         @keyframes pinPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1);box-shadow:0 0 0 5px rgba(255,184,0,.2)}}
         *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-        body{background:${C.bg};color:${textColor()}}
+        body{background:#FAFBFF;color:#1A1040}
         body,*{font-family:'Nunito','Baloo 2',sans-serif;}
         input,textarea,select{font-family:'Nunito','Baloo 2',sans-serif;outline:none;color:#1A1040;background:transparent}
         input::placeholder,textarea::placeholder{color:#9890C4}
