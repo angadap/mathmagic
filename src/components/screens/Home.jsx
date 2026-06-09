@@ -194,12 +194,20 @@ export function QuickLaunch({ onAbacus, onGames, onOlympiad, onBazaar }) {
 // ═══════════════════════════════════════════════════════════════════════
 
 // ─── Market catalogue ────────────────────────────────────────────────
-export function WorldsSection({ WORLDS, child, onWorld }) {
+export function WorldsSection({ WORLDS, child, onWorld, forceOpen, onToggle }) {
   const [open, setOpen] = React.useState(false);
+  const sectionRef = React.useRef(null);
+  React.useEffect(() => {
+    if (forceOpen) {
+      setOpen(true);
+      setTimeout(() => sectionRef.current?.scrollIntoView({ behavior:"smooth", block:"start" }), 80);
+    }
+  }, [forceOpen]);
+  const toggle = () => { setOpen(o=>!o); if (onToggle) onToggle(); };
   const others = WORLDS.filter(cw => cw.id !== parseInt(child.class_num||1));
   return (
-    <div style={{ position:"relative", zIndex:2, margin:"14px 18px 0" }}>
-      <button onClick={()=>setOpen(o=>!o)}
+    <div ref={sectionRef} style={{ position:"relative", zIndex:2, margin:"14px 18px 0" }}>
+      <button onClick={toggle}
         style={{ width:"100%", background:"white", border:"1.5px solid #9B59F522", borderRadius:28, padding:"14px 18px", cursor:"pointer", display:"flex", alignItems:"center", gap:12, textAlign:"left", boxShadow:"0 8px 30px #9B59F528, inset 0 1px 0 rgba(255,255,255,0.8)" }}>
         <div style={{ fontSize:26 }}>🌌</div>
         <div style={{ flex:1 }}>
@@ -236,11 +244,12 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
   const [showDQ,         setShowDQ]         = useState(false);
   const [showPuzzle,     setShowPuzzle]     = useState(false);
   const [showDailyQuest, setShowDailyQuest] = useState(false);
-  const [showRating, setShowRating] = useState(false);
-  const [mascotMsg,  setMascotMsg]  = useState(0);
+  const [showRating,   setShowRating]   = useState(false);
+  const [exploreOpen,  setExploreOpen]  = useState(false);
+  const [mascotMsg,    setMascotMsg]    = useState(0);
   const w = WORLDS.find(x=>x.id===parseInt(child.class_num||1)) || WORLDS[0];
   const MASCOT_MSGS = [
-    `Hi ${child.name?.split(" ")[0]}! Ready to blast off? 🚀`,
+    `Hi ${child.name?.split(" ")[0]?.toUpperCase()}! Ready to blast off? 🚀`,
     "You're a Math Superstar! ⭐ Keep going!",
     "Every problem you solve makes you smarter! 💡",
     "Don't forget your Daily Challenge today! 🎯",
@@ -299,7 +308,7 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
             <div style={{ fontSize:13, color:"#4BBDF5", letterSpacing:4, marginBottom:6, fontWeight:800 }}>WELCOME TO</div>
             <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:26, color:"#1A1040", fontWeight:900, marginBottom:4 }}>MathMagic</div>
             <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:14, color:"#FFC847", marginBottom:20 }}>SPACE ACADEMY 🚀</div>
-            <div style={{ fontSize:20, color:"#1A1040", fontWeight:800, marginBottom:8 }}>Hello, {child.name}! 👋</div>
+            <div style={{ fontSize:20, color:"#1A1040", fontWeight:800, marginBottom:8 }}>Hello, {child.name?.toUpperCase()}! 👋</div>
             <div style={{ fontSize:15, color:"#9890C4", lineHeight:1.7, marginBottom:24 }}>Your math adventure awaits!<br/>Let's explore the galaxy together! 🌌</div>
             <button onClick={dismissWelcome} style={{ background:"linear-gradient(155deg,#4BBDF5EE,#5B4FE8CC)", border:"none", borderRadius:20, padding:"16px 40px", color:"white", fontFamily:"'Nunito',sans-serif", fontSize:18, cursor:"pointer", fontWeight:900, boxShadow:"0 4px 0 #5B4FE8CC, 0 6px 20px #5B4FE845" }}>🚀 LET'S GO!</button>
           </div>
@@ -314,7 +323,7 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
             <div style={{ position:"absolute", bottom:-4, right:-4, background:"linear-gradient(135deg,#FFC847,#FF6B6B)", borderRadius:999, padding:"1px 7px", fontSize:10, fontWeight:900, color:"white", border:"2px solid white" }}>Lv{child.level||1}</div>
           </div>
           <div style={{ flex:1 }}>
-            <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:22, color:"#1A1040", lineHeight:1.1 }}>Hey, {child.name?.split(" ")[0]}! {levelEmoji}</div>
+            <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:22, color:"#1A1040", lineHeight:1.1 }}>Hey, {child.name?.split(" ")[0]?.toUpperCase()}! {levelEmoji}</div>
             <div style={{ fontSize:12, color:"#5A4E8A", fontWeight:600, marginTop:2 }}>{w.world} · Space Cadet</div>
           </div>
           <div style={{ display:"flex", alignItems:"center", gap:8 }}>
@@ -400,8 +409,7 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
           </div>
         </div>
 
-        {/* 4e — My Class (single tap to map) */}
-        <button onClick={()=>onWorld(w)} style={{ background:"white", border:"2px solid #9B59F530", borderRadius:28, padding:16, cursor:"pointer", display:"flex", alignItems:"center", gap:14, boxShadow:"0 8px 30px #9B59F528, inset 0 1px 0 rgba(255,255,255,0.8)", width:"100%", textAlign:"left" }}>
+        {/* 4e — My Class (single tap to map) */}        <button onClick={()=>onWorld(w)} style={{ background:"white", border:"2px solid #9B59F530", borderRadius:28, padding:16, cursor:"pointer", display:"flex", alignItems:"center", gap:14, boxShadow:"0 8px 30px #9B59F528, inset 0 1px 0 rgba(255,255,255,0.8)", width:"100%", textAlign:"left" }}>
           <div style={{ width:58, height:58, borderRadius:20, background:"#9B59F514", border:"2px solid #9B59F530", display:"flex", alignItems:"center", justifyContent:"center", fontSize:28, flexShrink:0 }}>{w.planet}</div>
           <div style={{ flex:1 }}>
             <div style={{ fontSize:18, fontWeight:900, color:"#1A1040" }}>{w.name}</div>
@@ -413,6 +421,9 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
           <div style={{ fontSize:24, color:"#9B59F5" }}>›</div>
         </button>
 
+        {/* 4f — Explore Other Worlds */}
+        <WorldsSection WORLDS={WORLDS} child={child} onWorld={onWorld} forceOpen={exploreOpen} onToggle={()=>setExploreOpen(false)} />
+
       </div>
 
       {/* Bottom Nav */}
@@ -421,7 +432,7 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
           {icon:"🏠",label:"Home",    act:null,       active:true},
           {icon:"🎮",label:"Games",   act:onGames},
           {icon:"👨‍👩‍👧",label:"Parent",  act:onParent},
-          {icon:"🎓",label:"Exams",   act:onOlympiad},
+          {icon:"🌌",label:"Explore", act:()=>setExploreOpen(true)},
           {icon:"⚙️",label:"Settings",act:()=>onSettings&&onSettings()},
           {icon:"📣",label:"Report",  act:onFeedback},
         ].map((n,i)=>(
