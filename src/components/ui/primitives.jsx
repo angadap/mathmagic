@@ -145,8 +145,8 @@ export function PinPad({ pin, setPin, error, shake, onComplete }) {
       return next;
     });
   };
-  const keyShad = "0 4px 0 rgba(0,0,0,.42),0 6px 18px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.14)";
-  const keyPressShad = "0 1px 0 rgba(0,0,0,.42)";
+  const keyShad = "0 4px 0 #5B4FE8CC, 0 6px 16px #5B4FE835, inset 0 1px 0 rgba(255,255,255,0.35)";
+  const keyPressShad = "0 1px 0 #5B4FE8CC";
   return (
     <div>
       {/* PIN dots */}
@@ -154,15 +154,15 @@ export function PinPad({ pin, setPin, error, shake, onComplete }) {
         {[0,1,2,3].map(i => (
           <div key={i} style={{
             width:18, height:18, borderRadius:"50%",
-            background: pin.length > i ? C.yellow : "transparent",
-            border:`2.5px solid ${shake ? C.red : pin.length > i ? C.yellow : "rgba(255,255,255,.3)"}`,
-            boxShadow: pin.length > i ? `0 0 14px ${C.yellow}99` : shake ? `0 0 10px ${C.red}66` : "none",
+            background: pin.length > i ? "#FFC847" : "transparent",
+            border:`2.5px solid ${shake ? "#FF6B6B" : pin.length > i ? "#FFC847" : "rgba(91,79,232,0.15)"}`,
+            boxShadow: pin.length > i ? "0 0 14px #FFC84799" : shake ? "0 0 10px #FF6B6B66" : "none",
             transition:"all 0.2s",
             transform: pin.length > i ? "scale(1.1)" : "scale(1)",
           }}/>
         ))}
       </div>
-      {error && <div style={{ color:C.red, fontSize:12, fontWeight:700, textAlign:"center", marginBottom:10 }}>⚠ {error}</div>}
+      {error && <div style={{ color:"#FF6B6B", fontSize:12, fontWeight:700, textAlign:"center", marginBottom:10 }}>⚠ {error}</div>}
       {/* Keys */}
       <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:12, maxWidth:280, margin:"0 auto" }}>
         {[1,2,3,4,5,6,7,8,9,"",0,"⌫"].map((k, i) => (
@@ -174,10 +174,10 @@ export function PinPad({ pin, setPin, error, shake, onComplete }) {
             onTouchEnd={e => { if(k!=="") { e.currentTarget.style.transform=""; e.currentTarget.style.boxShadow=keyShad; }}}
             style={{
               width:72, height:72, margin:"0 auto", display:"flex", alignItems:"center", justifyContent:"center",
-              background: k === "" ? "transparent" : "rgba(255,255,255,.07)",
-              border: k === "" ? "none" : `2px solid rgba(255,255,255,.12)`,
+              background: k === "" ? "transparent" : "#F0ECFF",
+              border: k === "" ? "none" : "1.5px solid rgba(91,79,232,0.15)",
               borderRadius:"50%",
-              color:"#fff", fontSize: k === "⌫" ? 20 : 22,
+              color:"#1A1040", fontSize: k === "⌫" ? 20 : 22,
               fontFamily:"'Baloo 2',sans-serif", fontWeight:900,
               cursor: k === "" ? "default" : "pointer",
               boxShadow: k === "" ? "none" : keyShad,

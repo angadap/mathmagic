@@ -20,15 +20,15 @@ export function DailyQuestHub({ child, dqDone, dpDone, setDone, onWorld, worldW,
   const allDone = localDQ && localDP && localSet;
 
   const tasks = [
-    { id:"set",       icon:"🧮", label:"Do a Set",     xp:150, coins:0,  color:C.cyan,   done:localSet,  step:1 },
-    { id:"challenge", icon:"🌟", label:"Word Problem",  xp:50,  coins:10, color:C.yellow, done:localDQ,   step:2 },
-    { id:"puzzle",    icon:"🧩", label:"Brain Puzzle",  xp:75,  coins:15, color:C.purple, done:localDP,   step:3 },
+    { id:"set",       icon:"🧮", label:"Do a Set",     xp:150, coins:0,  color:"#4BBDF5", done:localSet,  step:1 },
+    { id:"challenge", icon:"🌟", label:"Word Problem",  xp:50,  coins:10, color:"#FFC847", done:localDQ,   step:2 },
+    { id:"puzzle",    icon:"🧩", label:"Brain Puzzle",  xp:75,  coins:15, color:"#9B59F5", done:localDP,   step:3 },
   ];
   const doneCount = tasks.filter(t=>t.done).length;
 
   // ── Overview screen ───────────────────────────────────────────────
   if (step === 0) return (
-    <div style={{position:"fixed",inset:0,background:isDark()?"rgba(4,4,15,0.96)":"rgba(240,244,255,0.97)",
+    <div style={{position:"fixed",inset:0,background:"rgba(240,244,255,0.97)",
       backdropFilter:"blur(16px)",zIndex:998,display:"flex",flexDirection:"column",fontFamily:"'Baloo 2','Nunito',sans-serif",overflowY:"auto"}}>
       <Starfield n={30}/>
       <div style={{position:"relative",zIndex:1,flex:1,display:"flex",flexDirection:"column",padding:"20px 18px 32px",maxWidth:480,margin:"0 auto",width:"100%"}}>
@@ -37,33 +37,33 @@ export function DailyQuestHub({ child, dqDone, dpDone, setDone, onWorld, worldW,
         <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
           <BackBtn onClick={onClose}/>
           <div style={{flex:1}}>
-            <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:14,color:C.purple,fontWeight:700}}>DAILY QUEST</div>
-            <div style={{fontSize:11,color:C.dim}}>{new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long"})}</div>
+            <div style={{fontFamily:"'Nunito',sans-serif",fontSize:14,color:"#9B59F5",fontWeight:900}}>DAILY QUEST</div>
+            <div style={{fontSize:11,color:"#9890C4"}}>{new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long"})}</div>
           </div>
-          <div style={{background:`${C.purple}22`,border:`1px solid ${C.purple}44`,borderRadius:12,padding:"4px 12px",
-            fontFamily:"'Orbitron',sans-serif",fontSize:11,color:C.purple,fontWeight:700}}>{doneCount}/3</div>
+          <div style={{background:"#9B59F522",border:"1px solid #9B59F544",borderRadius:12,padding:"4px 12px",
+            fontFamily:"'Nunito',sans-serif",fontSize:11,color:"#9B59F5",fontWeight:800}}>{doneCount}/3</div>
         </div>
 
         {/* Hero banner */}
-        <div style={{background:`linear-gradient(135deg,${C.purple}28,${C.cyan}18)`,border:`2px solid ${C.purple}44`,
+        <div style={{background:"linear-gradient(135deg,#9B59F528,#4BBDF518)",border:"2px solid #9B59F544",
           borderRadius:24,padding:"22px 20px",marginBottom:18,textAlign:"center",position:"relative",overflow:"hidden"}}>
           <div style={{position:"absolute",right:-20,top:-20,width:120,height:120,borderRadius:"50%",
-            background:`radial-gradient(circle,${C.yellow}22,transparent 70%)`,pointerEvents:"none"}}/>
+            background:"radial-gradient(circle,#FFC84722,transparent 70%)",pointerEvents:"none"}}/>
           <div style={{fontSize:56,marginBottom:8,animation:"floatUp 2.5s ease-in-out infinite"}}>
             {allDone?"🏆":doneCount===0?"🚀":doneCount===1?"⚡":"🔥"}
           </div>
-          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:15,color:textColor(),fontWeight:900,marginBottom:4}}>
+          <div style={{fontFamily:"'Nunito',sans-serif",fontSize:15,color:"#1A1040",fontWeight:900,marginBottom:4}}>
             {allDone?"QUEST COMPLETE!":doneCount===0?"YOUR DAILY QUEST":"KEEP GOING!"}
           </div>
-          <div style={{fontSize:12,color:C.dim,lineHeight:1.6}}>
+          <div style={{fontSize:12,color:"#9890C4",lineHeight:1.6}}>
             {allDone?"Amazing! You finished all 3 tasks today! 🌟"
               :`Complete all 3 tasks to earn `}<span style={{color:C.yellow,fontWeight:800}}>+275 XP</span>
             {!allDone && <span> & </span>}{!allDone && <span style={{color:C.orange,fontWeight:800}}>+35 Coins</span>}
           </div>
           {/* Overall progress bar */}
-          <div style={{background:"rgba(255,255,255,0.1)",borderRadius:8,height:6,overflow:"hidden",marginTop:14}}>
+          <div style={{background:"#F0ECFF",borderRadius:8,height:6,overflow:"hidden",marginTop:14}}>
             <div style={{width:`${(doneCount/3)*100}%`,height:"100%",
-              background:`linear-gradient(90deg,${C.cyan},${C.purple},${C.pink})`,borderRadius:8,transition:"width 0.6s ease"}}/>
+              background:"linear-gradient(90deg,#4BBDF5,#9B59F5,#FF5FA0)",borderRadius:8,transition:"width 0.6s ease"}}/>
           </div>
         </div>
 
@@ -72,26 +72,26 @@ export function DailyQuestHub({ child, dqDone, dpDone, setDone, onWorld, worldW,
           {tasks.map((t,i)=>(
             <button key={t.id} onClick={()=>{ if(!t.done) setStep(t.step); }}
               disabled={t.done}
-              style={{background:t.done?`${C.green}14`:`${t.color}12`,
-                border:`2px solid ${t.done?C.green+"55":t.color+"44"}`,
+              style={{background:t.done?"#2ECC9A14":`${t.color}12`,
+                border:`2px solid ${t.done?"#2ECC9A55":t.color+"44"}`,
                 borderRadius:18,padding:"16px 18px",cursor:t.done?"default":"pointer",
                 display:"flex",alignItems:"center",gap:14,textAlign:"left",
                 transition:"all 0.2s",opacity:t.done?0.85:1}}>
               <div style={{width:52,height:52,borderRadius:16,
-                background:t.done?`${C.green}22`:`${t.color}22`,
-                border:`2px solid ${t.done?C.green+"44":t.color+"44"}`,
+                background:t.done?"#2ECC9A22":`${t.color}22`,
+                border:`2px solid ${t.done?"#2ECC9A44":t.color+"44"}`,
                 display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,flexShrink:0}}>
                 {t.done?"✅":t.icon}
               </div>
               <div style={{flex:1}}>
-                <div style={{fontSize:15,fontWeight:900,color:t.done?C.green:textColor(),marginBottom:3}}>{t.label}</div>
+                <div style={{fontSize:15,fontWeight:900,color:t.done?"#2ECC9A":"#1A1040",marginBottom:3}}>{t.label}</div>
                 <div style={{display:"flex",gap:8}}>
-                  <span style={{fontSize:11,color:C.yellow,fontWeight:700}}>+{t.xp} XP</span>
-                  {t.coins>0&&<span style={{fontSize:11,color:C.orange,fontWeight:700}}>+{t.coins} Coins</span>}
+                  <span style={{fontSize:11,color:"#FFC847",fontWeight:700}}>+{t.xp} XP</span>
+                  {t.coins>0&&<span style={{fontSize:11,color:"#FF6B6B",fontWeight:700}}>+{t.coins} Coins</span>}
                 </div>
               </div>
               {t.done
-                ? <div style={{fontSize:13,color:C.green,fontFamily:"'Orbitron',sans-serif",fontWeight:700}}>DONE</div>
+                ? <div style={{fontSize:13,color:"#2ECC9A",fontFamily:"'Nunito',sans-serif",fontWeight:800}}>DONE</div>
                 : <div style={{fontSize:24,color:t.color}}>›</div>
               }
             </button>
@@ -100,7 +100,7 @@ export function DailyQuestHub({ child, dqDone, dpDone, setDone, onWorld, worldW,
 
         {allDone && (
           <div style={{textAlign:"center"}}>
-            <Btn color={C.green} onClick={onClose}>🏆 BACK TO HOME</Btn>
+            <Btn color="#2ECC9A" onClick={onClose}>🏆 BACK TO HOME</Btn>
           </div>
         )}
       </div>
@@ -111,24 +111,24 @@ export function DailyQuestHub({ child, dqDone, dpDone, setDone, onWorld, worldW,
   if (step === 1) {
     // Mark as done optimistically and go back to overview, user navigates to lessons
     return (
-      <div style={{position:"fixed",inset:0,background:isDark()?"rgba(4,4,15,0.96)":"rgba(240,244,255,0.97)",
+      <div style={{position:"fixed",inset:0,background:"rgba(240,244,255,0.97)",
         backdropFilter:"blur(16px)",zIndex:998,display:"flex",flexDirection:"column",alignItems:"center",
         justifyContent:"center",padding:24,fontFamily:"'Nunito',sans-serif",gap:16}}>
         <div style={{fontSize:60,animation:"floatUp 2s ease-in-out infinite"}}>🧮</div>
-        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:14,color:C.cyan,textAlign:"center",marginBottom:4}}>DO A SET</div>
-        <div style={{fontSize:14,color:C.dim,textAlign:"center",lineHeight:1.7,maxWidth:300}}>
-          Complete any set from any lesson to earn <span style={{color:C.yellow,fontWeight:800}}>+150 XP</span>. Come back here after!
+        <div style={{fontFamily:"'Nunito',sans-serif",fontSize:14,color:"#4BBDF5",textAlign:"center",marginBottom:4,fontWeight:900}}>DO A SET</div>
+        <div style={{fontSize:14,color:"#9890C4",textAlign:"center",lineHeight:1.7,maxWidth:300}}>
+          Complete any set from any lesson to earn <span style={{color:"#FFC847",fontWeight:800}}>+150 XP</span>. Come back here after!
         </div>
         <div style={{display:"flex",gap:10,marginTop:8,width:"100%",maxWidth:300}}>
           <button onClick={()=>setStep(0)}
-            style={{flex:1,background:"transparent",border:`1.5px solid ${C.dim}44`,borderRadius:12,
-              padding:12,color:C.dim,fontFamily:"'Nunito',sans-serif",fontSize:14,cursor:"pointer",fontWeight:700}}>
+            style={{flex:1,background:"transparent",border:"1.5px solid #9890C444",borderRadius:12,
+              padding:12,color:"#9890C4",fontFamily:"'Nunito',sans-serif",fontSize:14,cursor:"pointer",fontWeight:700}}>
             Back
           </button>
           <button onClick={()=>{ onClose(); onWorld(worldW); }}
-            style={{flex:2,background:`linear-gradient(135deg,${C.cyan},${C.purple})`,border:"none",
-              borderRadius:12,padding:12,color:"white",fontFamily:"'Orbitron',sans-serif",
-              fontSize:11,cursor:"pointer",fontWeight:900}}>
+            style={{flex:2,background:"linear-gradient(135deg,#4BBDF5,#9B59F5)",border:"none",
+              borderRadius:12,padding:12,color:"white",fontFamily:"'Nunito',sans-serif",
+              fontSize:13,cursor:"pointer",fontWeight:900}}>
             GO TO LESSONS →
           </button>
         </div>
@@ -211,10 +211,10 @@ export function DailyQuiz({ child, onClose }) {
         </div>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 20px 14px",borderBottom:"1px solid rgba(91,79,232,0.1)"}}>
           <div style={{display:"flex",alignItems:"center",gap:12}}>
-            <div style={{width:44,height:44,borderRadius:14,background:`linear-gradient(135deg,${C.yellow},${C.orange})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>🌟</div>
+            <div style={{width:44,height:44,borderRadius:14,background:"linear-gradient(135deg,#FFC847,#FF6B6B)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>🌟</div>
             <div>
-              <div style={{fontSize:16,fontWeight:900,color:textColor()}}>Daily Challenge</div>
-              <div style={{fontSize:11,color:C.dim}}>{new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long"})}</div>
+              <div style={{fontSize:16,fontWeight:900,color:"#1A1040"}}>Daily Challenge</div>
+              <div style={{fontSize:11,color:"#9890C4"}}>{new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long"})}</div>
             </div>
           </div>
           <button onClick={onClose} style={{background:"rgba(91,79,232,0.08)",border:"none",borderRadius:12,width:36,height:36,fontSize:16,cursor:"pointer",color:"#5B4FE8",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
@@ -222,26 +222,26 @@ export function DailyQuiz({ child, onClose }) {
         <div style={{padding:"16px 20px"}}>
 
         {loading ? (
-          <div style={{textAlign:"center",padding:30,color:C.dim,fontFamily:"'Orbitron',sans-serif",fontSize:12}}>
+          <div style={{textAlign:"center",padding:30,color:"#9890C4",fontFamily:"'Nunito',sans-serif",fontSize:12}}>
             <div style={{fontSize:32,marginBottom:10,animation:"spin 1s linear infinite"}}>⭐</div>
             LOADING...
           </div>
         ) : !challenge ? (
           <div style={{textAlign:"center",padding:20}}>
             <div style={{fontSize:40,marginBottom:10}}>📅</div>
-            <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:12,color:C.dim,lineHeight:1.7}}>No challenge today yet.<br/>Check back later!</div>
-            <div style={{marginTop:16}}><Btn color={C.dim} onClick={onClose}>CLOSE</Btn></div>
+            <div style={{fontFamily:"'Nunito',sans-serif",fontSize:12,color:"#9890C4",lineHeight:1.7}}>No challenge today yet.<br/>Check back later!</div>
+            <div style={{marginTop:16}}><Btn color="#9890C4" onClick={onClose}>CLOSE</Btn></div>
           </div>
         ) : done && !chosen ? (
           <div style={{textAlign:"center",padding:"20px 0"}}>
             <div style={{fontSize:48,marginBottom:10}}>✅</div>
-            <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.green,marginBottom:6}}>ALREADY COMPLETED TODAY!</div>
-            <div style={{color:C.dim,fontSize:12,lineHeight:1.7}}>Great job! Come back tomorrow for a new challenge.</div>
-            <div style={{marginTop:16}}><Btn color={C.dim} onClick={onClose}>CLOSE</Btn></div>
+            <div style={{fontFamily:"'Nunito',sans-serif",fontSize:13,color:"#2ECC9A",marginBottom:6,fontWeight:900}}>ALREADY COMPLETED TODAY!</div>
+            <div style={{color:"#9890C4",fontSize:12,lineHeight:1.7}}>Great job! Come back tomorrow for a new challenge.</div>
+            <div style={{marginTop:16}}><Btn color="#9890C4" onClick={onClose}>CLOSE</Btn></div>
           </div>
         ) : (
           <>
-            <div style={{background:`${C.yellow}10`,border:`1px solid ${C.yellow}22`,borderRadius:14,padding:"16px 18px",marginBottom:18,lineHeight:1.6,fontSize:19,color:textColor(),fontWeight:800}}>
+            <div style={{background:"#FFC84710",border:"1px solid #FFC84722",borderRadius:14,padding:"16px 18px",marginBottom:18,lineHeight:1.6,fontSize:19,color:"#1A1040",fontWeight:800}}>
               📖 {challenge.question}
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16,animation:shake?"shake 0.4s":"none"}}>
@@ -273,8 +273,8 @@ export function DailyQuiz({ child, onClose }) {
             )}
             {chosen && (
               <div style={{textAlign:"center"}}>
-                {chosen===challenge.correct&&<div style={{fontSize:15,fontWeight:900,color:C.yellow,marginBottom:12}}>+{challenge.xp_reward||50} XP 🌟 +{challenge.coin_reward||10} Coins 🪙</div>}
-                <Btn color={chosen===challenge.correct?C.green:C.dim} onClick={onClose}>{chosen===challenge.correct?"🚀 Awesome!":"Close"}</Btn>
+                {chosen===challenge.correct&&<div style={{fontSize:15,fontWeight:900,color:"#FFC847",marginBottom:12}}>+{challenge.xp_reward||50} XP 🌟 +{challenge.coin_reward||10} Coins 🪙</div>}
+                <Btn color={chosen===challenge.correct?"#2ECC9A":"#9890C4"} onClick={onClose}>{chosen===challenge.correct?"🚀 Awesome!":"Close"}</Btn>
               </div>
             )}
           </>
@@ -323,7 +323,7 @@ export function DailyPuzzle({ child, onClose }) {
     }
   };
 
-  const typeColors = { riddle:C.purple, number:C.cyan, logic:C.orange, visual:C.yellow };
+  const typeColors = { riddle:"#9B59F5", number:"#4BBDF5", logic:"#FF6B6B", visual:"#FFC847" };
 
   return (
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.35)",zIndex:999,display:"flex",alignItems:"flex-end",justifyContent:"center",fontFamily:"'Baloo 2','Nunito',sans-serif"}}>
@@ -338,10 +338,10 @@ export function DailyPuzzle({ child, onClose }) {
         </div>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 20px 14px",borderBottom:"1px solid rgba(91,79,232,0.1)"}}>
           <div style={{display:"flex",alignItems:"center",gap:12}}>
-            <div style={{width:44,height:44,borderRadius:14,background:`linear-gradient(135deg,${C.purple},${C.pink})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>🧩</div>
+            <div style={{width:44,height:44,borderRadius:14,background:"linear-gradient(135deg,#9B59F5,#FF5FA0)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>🧩</div>
             <div>
-              <div style={{fontSize:16,fontWeight:900,color:textColor()}}>Daily Puzzle</div>
-              <div style={{fontSize:11,color:C.dim}}>{new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long"})}</div>
+              <div style={{fontSize:16,fontWeight:900,color:"#1A1040"}}>Daily Puzzle</div>
+              <div style={{fontSize:11,color:"#9890C4"}}>{new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long"})}</div>
             </div>
           </div>
           <button onClick={onClose} style={{background:"rgba(91,79,232,0.08)",border:"none",borderRadius:12,width:36,height:36,fontSize:16,cursor:"pointer",color:"#5B4FE8",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
@@ -349,30 +349,30 @@ export function DailyPuzzle({ child, onClose }) {
         <div style={{padding:"16px 20px"}}>
 
         {loading ? (
-          <div style={{textAlign:"center",padding:30,color:C.dim,fontFamily:"'Orbitron',sans-serif",fontSize:12}}>
+          <div style={{textAlign:"center",padding:30,color:"#9890C4",fontFamily:"'Nunito',sans-serif",fontSize:12}}>
             <div style={{fontSize:32,marginBottom:10}}>🧩</div>LOADING...
           </div>
         ) : !puzzle ? (
           <div style={{textAlign:"center",padding:20}}>
             <div style={{fontSize:40,marginBottom:10}}>📅</div>
-            <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:12,color:C.dim,lineHeight:1.7}}>No puzzle today yet.<br/>Check back later!</div>
-            <div style={{marginTop:16}}><Btn color={C.dim} onClick={onClose}>CLOSE</Btn></div>
+            <div style={{fontFamily:"'Nunito',sans-serif",fontSize:12,color:"#9890C4",lineHeight:1.7}}>No puzzle today yet.<br/>Check back later!</div>
+            <div style={{marginTop:16}}><Btn color="#9890C4" onClick={onClose}>CLOSE</Btn></div>
           </div>
         ) : done && result === null ? (
           <div style={{textAlign:"center",padding:"20px 0"}}>
             <div style={{fontSize:48,marginBottom:10}}>🏆</div>
-            <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:13,color:C.green,marginBottom:6}}>PUZZLE SOLVED TODAY!</div>
-            <div style={{color:C.dim,fontSize:12,lineHeight:1.7}}>A new puzzle drops at midnight. Come back tomorrow!</div>
-            <div style={{marginTop:16}}><Btn color={C.dim} onClick={onClose}>CLOSE</Btn></div>
+            <div style={{fontFamily:"'Nunito',sans-serif",fontSize:13,color:"#2ECC9A",marginBottom:6,fontWeight:900}}>PUZZLE SOLVED TODAY!</div>
+            <div style={{color:"#9890C4",fontSize:12,lineHeight:1.7}}>A new puzzle drops at midnight. Come back tomorrow!</div>
+            <div style={{marginTop:16}}><Btn color="#9890C4" onClick={onClose}>CLOSE</Btn></div>
           </div>
         ) : (
           <>
             <div style={{display:"flex",gap:8,marginBottom:14,alignItems:"center"}}>
               <div style={{background:`${typeColors[puzzle.puzzle_type]||C.purple}22`,border:`1px solid ${typeColors[puzzle.puzzle_type]||C.purple}44`,borderRadius:8,padding:"3px 10px",fontSize:10,color:typeColors[puzzle.puzzle_type]||C.purple,fontFamily:"'Orbitron',sans-serif",textTransform:"uppercase"}}>{puzzle.puzzle_type}</div>
-              <div style={{fontSize:11,color:C.dim}}>+{puzzle.xp_reward||75} XP on solve</div>
+              <div style={{fontSize:11,color:"#9890C4"}}>+{puzzle.xp_reward||75} XP on solve</div>
             </div>
 
-            <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:14, color:textColor(),marginBottom:10}}>{puzzle.title}</div>
+            <div style={{fontFamily:"'Nunito',sans-serif",fontSize:14,color:"#1A1040",marginBottom:10,fontWeight:800}}>{puzzle.title}</div>
             <div style={{background:"#9B59F510",border:"2px solid #9B59F530",borderRadius:20,padding:"16px 18px",marginBottom:18,lineHeight:1.8,fontSize:16,color:"#1A1040",fontWeight:700}}>
               🧩 {puzzle.description}
             </div>
@@ -415,19 +415,19 @@ export function DailyPuzzle({ child, onClose }) {
               <div style={{textAlign:"center"}}>
                 <div style={{fontSize:48,marginBottom:8}}>🎉</div>
                 {/* correct shown via floating overlay */}
-                <div style={{fontSize:12,color:C.dim,marginBottom:14}}>Answer: {puzzle.answer}</div>
-                <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:12,color:C.yellow,marginBottom:14}}>+{puzzle.xp_reward||75} XP · +{puzzle.coin_reward||15} COINS</div>
-                <Btn color={C.green} onClick={onClose}>🏆 AWESOME!</Btn>
+                <div style={{fontSize:12,color:"#9890C4",marginBottom:14}}>Answer: {puzzle.answer}</div>
+                <div style={{fontFamily:"'Nunito',sans-serif",fontSize:12,color:"#FFC847",marginBottom:14,fontWeight:800}}>+{puzzle.xp_reward||75} XP · +{puzzle.coin_reward||15} COINS</div>
+                <Btn color="#2ECC9A" onClick={onClose}>🏆 AWESOME!</Btn>
               </div>
             )}
             {result === "wrong" && (
               <div style={{textAlign:"center"}}>
                 <div style={{fontSize:40,marginBottom:8}}>🤔</div>
-                <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:12,color:C.red,marginBottom:4}}>NOT QUITE!</div>
-                <div style={{fontSize:12,color:C.dim,marginBottom:6}}>Try again or check the hint.</div>
+                <div style={{fontFamily:"'Nunito',sans-serif",fontSize:12,color:"#FF6B6B",marginBottom:4,fontWeight:800}}>NOT QUITE!</div>
+                <div style={{fontSize:12,color:"#9890C4",marginBottom:6}}>Try again or check the hint.</div>
                 <div style={{display:"flex",gap:10}}>
-                  <Btn color={C.dim} style={{flex:1}} onClick={()=>setResult(null)}>↺ TRY AGAIN</Btn>
-                  <Btn color={C.red}  style={{flex:1}} onClick={onClose}>CLOSE</Btn>
+                  <Btn color="#9890C4" style={{flex:1}} onClick={()=>setResult(null)}>↺ TRY AGAIN</Btn>
+                  <Btn color="#FF6B6B" style={{flex:1}} onClick={onClose}>CLOSE</Btn>
                 </div>
               </div>
             )}

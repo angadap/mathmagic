@@ -126,6 +126,9 @@ export default function App() {
     return () => { delete window._setScreen; };
   }, [setScreen]);
 
+  // ── Scroll to top on every navigation ───────────────────────────────────────
+  useEffect(() => { window.scrollTo(0, 0); }, [screen]);
+
   // ── Android hardware-back support ────────────────────────────────────────────
   useEffect(() => {
     window.history.pushState({ mm: true }, '');

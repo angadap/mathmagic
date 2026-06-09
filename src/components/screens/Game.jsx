@@ -311,7 +311,7 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
   );
 
   if (mode === "boss" && bossCD > 0) return (
-    <div style={{ minHeight:"100vh", background:C.bg, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", fontFamily:"'Nunito',sans-serif", position:"relative" }}>
+    <div style={{ minHeight:"100vh", background:"#FAFBFF", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", fontFamily:"'Nunito',sans-serif", position:"relative" }}>
       <Starfield n={30}/>
       <div style={{ position:"relative", zIndex:1, textAlign:"center" }}>
         <div style={{ fontSize:80, marginBottom:16, animation:"bossW 0.5s ease-in-out infinite" }}>{lesson.boss||"👾"}</div>
@@ -323,7 +323,7 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
 
   // Boss UI
   if (mode === "boss") return (
-    <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Nunito',sans-serif", position:"relative" }}>
+    <div style={{ minHeight:"100vh", background:"#FAFBFF", fontFamily:"'Nunito',sans-serif", position:"relative" }}>
       <Starfield n={25}/>
       <div style={{ position:"relative", zIndex:2, background:`${C.red}18`, borderBottom:`1px solid ${C.red}33`, padding:"12px 18px" }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
@@ -354,8 +354,8 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
         <div style={{ fontSize:9, color:C.dim, fontFamily:"'Orbitron',sans-serif", marginBottom:8 }}>Q {qi+1}/{questions.length} · Score: {score}</div>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
           {q.opts.map((opt, i) => {
-            let bg=C.card, border=`1.5px solid ${C.red}28`, col="white";
-            if (chosen!==null) { if(i===q.ans){bg="#052e16";border=`2px solid ${C.green}`;col="#4ade80";}else if(i===chosen){bg="#2d0a0a";border=`2px solid ${C.red}`;col="#f87171";} }
+            let bg="white", border="2px solid #FF6B6B25", col="#1A1040";
+            if (chosen!==null) { if(i===q.ans){bg="#E8FFF4";border="2.5px solid #2ECC9A";col="#2ECC9A";}else if(i===chosen){bg="#FFF0F0";border="2.5px solid #FF6B6B";col="#FF6B6B";} }
             return <button key={i} onClick={() => pick(i)} style={{ background:bg, border, borderRadius:18, padding:"18px 12px", fontSize:18, fontWeight:800, color:col, cursor: chosen!==null?"default":"pointer", transition:"all 0.2s", boxShadow: i===q.ans&&chosen!==null?`0 0 20px ${C.green}66`:"none", animation:i===q.ans&&chosen!==null?"superCorrect 0.5s ease":"none" }}>{i===q.ans&&chosen!==null?"✓ ":""}{opt}</button>;
           })}
         </div>
@@ -366,7 +366,7 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
 
   // Bubble pop
   if (mode === "bubble") return (
-    <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Nunito',sans-serif", position:"relative", overflow:"hidden" }}>
+    <div style={{ minHeight:"100vh", background:"#FAFBFF", fontFamily:"'Nunito',sans-serif", position:"relative", overflow:"hidden" }}>
       <Starfield n={18}/>
       <div style={{ position:"relative", zIndex:2, background:`${world.color}16`, borderBottom:`1px solid ${world.color}2a`, padding:"12px 18px" }}>
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
@@ -409,7 +409,7 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
 
   // Standard quiz
   return (
-    <div style={{ minHeight:"100vh", fontFamily:"'Nunito',sans-serif", position:"relative", background: burst ? `radial-gradient(circle at 50% 40%,${world.color}18 0%,${C.bg} 65%)` : C.bg, transition:"background 0.4s" }}>
+    <div style={{ minHeight:"100vh", fontFamily:"'Nunito',sans-serif", position:"relative", background: burst ? `radial-gradient(circle at 50% 40%,${world.color}18 0%,#FAFBFF 65%)` : "#FAFBFF", transition:"background 0.4s" }}>
       <Starfield n={16}/>
       <div style={{ position:"relative", zIndex:2, background:`${world.color}15`, borderBottom:`1.5px solid ${world.color}25`, padding:"12px 18px" }}>
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:7 }}>
