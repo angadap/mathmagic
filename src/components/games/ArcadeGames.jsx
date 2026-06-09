@@ -127,62 +127,86 @@ export function NumberRocket({ onBack, child }) {
 
 // ── Game 2: Star Catcher — catch falling correct answers, avoid wrong ──
 export function StarCatcher({ onBack, child }) {
+  // ── METEOR BLASTER ─ tap WRONG answers (meteors) to blast them, let the RIGHT one through
   const [gameState, setGameState] = useState("ready"); // ready|playing|over
-  const [score, setScore]   = useState(0);
-  const [lives, setLives]   = useState(3);
-  const [q, setQ]           = useState("");
-  const [correctAns, setCA] = useState("");
-  const [items, setItems]   = useState([]);
-  const [playerX, setPlayerX] = useState(50);
+  const [score,     setScore]     = useState(0);
+  const [lives,     setLives]     = useState(3);
+  const [q,         setQ]         = useState("");
+  const [items,     setItems]     = useState([]);
+  const [blastFX,   setBlastFX]   = useState([]); // {id,x,y} short-lived blast effects
   const itemsRef  = useRef([]);
   const scoreRef  = useRef(0);
   const livesRef  = useRef(3);
   const frameRef  = useRef(null);
-  const qRef      = useRef({q:"",ans:""});
+  const qRef      = useRef({ q: "", ans: "" });
+  const blastIdRef = useRef(0);
 
   const genQuestion = () => {
-    const a = Math.floor(Math.random()*9)+1;
-    const b = Math.floor(Math.random()*9)+1;
-    const correct = String(a+b);
-    qRef.current = {q:`${a} + ${b}`, ans: correct};
-    setQ(`${a} + ${b} = ?`);
-    setCA(correct);
-    return correct;
+    const ops = ["+", "-", "×"];
+    const op  = ops[Math.floor(Math.random() * ops.length)];
+    let a = Math.floor(Math.random() * 10) + 1;
+    let b = Math.floor(Math.random() * 9)  + 1;
+    let correct;
+    if (op === "+") correct = a + b;
+    else if (op === "-") { if (b > a) [a, b] = [b, a]; correct = a - b; }
+    else correct = a * b;
+    const ans = String(correct);
+    qRef.current = { q: `${a} ${op} ${b}`, ans };
+    setQ(`${a} ${op} ${b} = ?`);
+    return ans;
   };
 
-  const spawnWave = (currentCA) => {
-    // Always spawn 1 correct + 2 wrong answers so stars are always visible
-    const wrong1 = (() => { let v; do { v=String(Math.floor(Math.random()*18)+2); } while(v===currentCA); return v; })();
-    const wrong2 = (() => { let v; do { v=String(Math.floor(Math.random()*18)+2); } while(v===currentCA||v===wrong1); return v; })();
-    const positions = [15,50,82].sort(()=>Math.random()-0.5);
+  const makeWrong = (correct, existing) => {
+    const used = new Set([correct, ...existing]);
+    let v;
+    do { v = String(Math.max(0, parseInt(correct) + (Math.floor(Math.random() * 9) - 4))); }
+    while (used.has(v));
+    return v;
+  };
+
+  const spawnWave = (ans) => {
+    // 1 correct (green safe bubble) + 2 wrong meteors
+    const w1 = makeWrong(ans, []);
+    const w2 = makeWrong(ans, [w1]);
+    const cols = [12, 50, 86].sort(() => Math.random() - 0.5);
+    const baseSpeed = 0.3 + scoreRef.current * 0.015;
     return [
-      { id: Date.now()+1, x:positions[0], y:-8, val:currentCA, correct:true,  speed:0.35+Math.random()*0.25 },
-      { id: Date.now()+2, x:positions[1], y:-8, val:wrong1,    correct:false, speed:0.35+Math.random()*0.25 },
-      { id: Date.now()+3, x:positions[2], y:-8, val:wrong2,    correct:false, speed:0.35+Math.random()*0.25 },
+      { id: Date.now() + 1, x: cols[0], y: -12, val: ans, correct: true,  speed: Math.min(baseSpeed, 0.7) },
+      { id: Date.now() + 2, x: cols[1], y: -12, val: w1,  correct: false, speed: Math.min(baseSpeed + 0.05, 0.8) },
+      { id: Date.now() + 3, x: cols[2], y: -12, val: w2,  correct: false, speed: Math.min(baseSpeed + 0.1,  0.85) },
     ];
   };
-  const spawnItem = spawnWave; // alias kept for compat
 
   const startGame = () => {
     scoreRef.current = 0; livesRef.current = 3;
-    setScore(0); setLives(3); itemsRef.current = [];
+    setScore(0); setLives(3); setBlastFX([]);
+    itemsRef.current = [];
     const ca = genQuestion();
     setGameState("playing");
     let frame = 0;
     const loop = () => {
       frame++;
-      // Spawn new wave every 90 frames (~1.5s at 60fps) only when field is clear
-      if (frame % 90 === 0 || (frame > 30 && itemsRef.current.length === 0)) {
-        const wave = spawnWave(qRef.current.ans);
-        itemsRef.current = [...itemsRef.current.filter(i=>i.y<100), ...wave];
+      // Spawn new wave when field is empty or every 100 frames
+      if (itemsRef.current.length === 0 || frame % 100 === 0) {
+        if (itemsRef.current.every(i => i.y < 5)) {
+          const wave = spawnWave(qRef.current.ans);
+          itemsRef.current = [...itemsRef.current.filter(i => i.y < 95), ...wave];
+        }
       }
       // Move items down
       itemsRef.current = itemsRef.current
         .map(it => ({ ...it, y: it.y + it.speed }))
         .filter(it => {
-          if (it.y > 100) {
-            // Missed a correct answer
-            if (it.correct) { livesRef.current = Math.max(0,livesRef.current-1); setLives(livesRef.current); if(livesRef.current<=0){setGameState("over");return false;} }
+          if (it.y > 102) {
+            if (!it.correct) return false; // wrong fell off bottom = no penalty
+            // Correct answer reached the planet = lose a life
+            livesRef.current = Math.max(0, livesRef.current - 1);
+            setLives(livesRef.current);
+            if (livesRef.current <= 0) { setGameState("over"); return false; }
+            // New question
+            const na = genQuestion();
+            const wave = spawnWave(na);
+            itemsRef.current = wave;
             return false;
           }
           return true;
@@ -193,101 +217,115 @@ export function StarCatcher({ onBack, child }) {
     frameRef.current = requestAnimationFrame(loop);
   };
 
-  useEffect(() => () => { if(frameRef.current) cancelAnimationFrame(frameRef.current); }, []);
+  useEffect(() => () => { if (frameRef.current) cancelAnimationFrame(frameRef.current); }, []);
 
-  const catchItem = (item) => {
-    if (item.correct) {
+  const tapItem = (item) => {
+    // Show blast effect at item position
+    const bid = ++blastIdRef.current;
+    setBlastFX(fx => [...fx, { id: bid, x: item.x, y: item.y, correct: item.correct }]);
+    setTimeout(() => setBlastFX(fx => fx.filter(f => f.id !== bid)), 500);
+
+    if (!item.correct) {
+      // Blasted a meteor! Great
+      SFX.correct && SFX.correct();
       scoreRef.current += 1; setScore(scoreRef.current);
-      genQuestion();
+      itemsRef.current = itemsRef.current.filter(i => i.id !== item.id);
+      setItems([...itemsRef.current]);
     } else {
-      livesRef.current = Math.max(0,livesRef.current-1); setLives(livesRef.current);
-      if(livesRef.current<=0) setGameState("over");
+      // Tapped the correct bubble = penalty
+      SFX.wrong && SFX.wrong();
+      livesRef.current = Math.max(0, livesRef.current - 1);
+      setLives(livesRef.current);
+      if (livesRef.current <= 0) { cancelAnimationFrame(frameRef.current); setGameState("over"); return; }
+      // New question
+      const na = genQuestion();
+      const wave = spawnWave(na);
+      itemsRef.current = wave;
+      setItems([...wave]);
     }
-    itemsRef.current = itemsRef.current.filter(i => i.id !== item.id);
-    setItems([...itemsRef.current]);
   };
 
   if (gameState === "ready") return (
-    <div style={{minHeight:"100vh",background:C.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"'Nunito',sans-serif",padding:24,position:"relative"}}>
-      <Starfield n={40}/>
-      <div style={{position:"relative",zIndex:1,textAlign:"center"}}>
-        <div style={{fontSize:64,marginBottom:12}}>⭐</div>
-        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:18,color:C.yellow,marginBottom:8}}>STAR CATCHER</div>
-        <div style={{color:C.dim,fontSize:13,lineHeight:1.7,marginBottom:20,maxWidth:270}}>Stars fall from the sky! Tap the star with the CORRECT answer. Avoid wrong ones!</div>
-        <Btn color={C.yellow} onClick={startGame}>▶ START CATCHING</Btn>
-        <div style={{marginTop:12}}><Btn color={C.dim} style={{padding:"9px 20px"}} onClick={onBack}>← BACK</Btn></div>
+    <div style={{ minHeight:"100vh", background:C.bg, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", fontFamily:"'Nunito',sans-serif", padding:24, position:"relative" }}>
+      <Starfield n={50}/>
+      <div style={{ position:"relative", zIndex:1, textAlign:"center", maxWidth:320 }}>
+        <div style={{ fontSize:72, marginBottom:6, animation:"mmFloat 2s ease-in-out infinite" }}>&#x2604;&#xFE0F;</div>
+        <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:26, color:C.orange, marginBottom:6, letterSpacing:1 }}>METEOR BLASTER</div>
+        <div style={{ background:`${C.orange}15`, border:`1.5px solid ${C.orange}40`, borderRadius:16, padding:"12px 16px", marginBottom:18 }}>
+          <div style={{ color:C.orange, fontSize:13, fontWeight:800, marginBottom:8 }}>HOW TO PLAY</div>
+          <div style={{ color:"#5A4E8A", fontSize:12, lineHeight:1.8, textAlign:"left" }}>
+            &#x2614; <b>BLAST</b> the meteor with the <b style={{color:C.red}}>WRONG</b> answer<br/>
+            &#x2705; <b>LET</b> the glowing bubble with the <b style={{color:C.green}}>RIGHT</b> answer pass<br/>
+            &#x2764;&#xFE0F; You lose a life if you tap the right answer or miss it
+          </div>
+        </div>
+        <Btn color={C.orange} onClick={startGame}>&#x1F680; LAUNCH BLASTER</Btn>
+        <div style={{ marginTop:12 }}><Btn color={C.dim} style={{ padding:"9px 20px" }} onClick={onBack}>\u2190 BACK</Btn></div>
       </div>
     </div>
   );
 
   if (gameState === "over") return (
-    <div style={{minHeight:"100vh",background:C.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"'Nunito',sans-serif",padding:24,position:"relative"}}>
+    <div style={{ minHeight:"100vh", background:C.bg, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", fontFamily:"'Nunito',sans-serif", padding:24, position:"relative" }}>
       <Starfield n={60}/>
-      <div style={{position:"relative",zIndex:1,textAlign:"center"}}>
-        <div style={{fontSize:64,marginBottom:8}}>🌟</div>
-        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:18,color:C.yellow,marginBottom:8}}>GAME OVER!</div>
-        <div style={{color:textColor(),fontSize:36,fontFamily:"'Orbitron',sans-serif",marginBottom:16}}>Score: {score}</div>
-        <div style={{display:"flex",gap:10}}>
-          <Btn color={C.dim} style={{flex:1}} onClick={onBack}>← BACK</Btn>
-          <Btn color={C.yellow} style={{flex:1}} onClick={startGame}>↺ PLAY AGAIN</Btn>
+      <div style={{ position:"relative", zIndex:1, textAlign:"center" }}>
+        <div style={{ fontSize:72, marginBottom:8 }}>{score >= 10 ? "&#x1F3C6;" : "&#x1F4A5;"}</div>
+        <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:22, color:C.orange, marginBottom:4 }}>{score >= 10 ? "GALAXY HERO!" : "PLANET DOWN!"}</div>
+        <div style={{ fontSize:42, fontFamily:"'Fredoka One',cursive", color:C.yellow, marginBottom:16 }}>&#x2604;&#xFE0F; {score} Blasted</div>
+        <div style={{ display:"flex", gap:10 }}>
+          <Btn color={C.dim} style={{ flex:1 }} onClick={onBack}>\u2190 BACK</Btn>
+          <Btn color={C.orange} style={{ flex:1 }} onClick={startGame}>&#x21BA; PLAY AGAIN</Btn>
         </div>
       </div>
     </div>
   );
 
   return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Baloo 2','Nunito',sans-serif",color:textColor(),position:"relative",overflow:"hidden"}}>
-      <div style={{position:"absolute",inset:0,background:`linear-gradient(180deg,${C.bg},${C.card})`}}>
-        {[...Array(20)].map((_,i)=><div key={i} style={{position:"absolute",left:`${Math.random()*100}%`,top:`${Math.random()*100}%`,width:2,height:2,background:"white",borderRadius:"50%",opacity:Math.random()*0.5+0.1}}/>)}
-      </div>
+    <div style={{ minHeight:"100vh", background:`linear-gradient(180deg,#0a0020 0%,#12003a 50%,#0d1a3a 100%)`, fontFamily:"'Nunito',sans-serif", position:"relative", overflow:"hidden" }}>
+      <Starfield n={60}/>
+      {/* Distant planet at bottom */}
+      <div style={{ position:"absolute", bottom:-60, left:"50%", transform:"translateX(-50%)", width:220, height:220, borderRadius:"50%", background:"radial-gradient(circle at 38% 36%,#4BBDF5,#1a0050)", boxShadow:"0 0 60px #4BBDF588,0 0 120px #4BBDF522", zIndex:1, pointerEvents:"none" }}/>
       {/* HUD */}
-      <div style={{position:"relative",zIndex:10,background:`${C.yellow}18`,borderBottom:`1px solid ${C.yellow}33`,padding:"10px 18px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-        <Btn color={C.dim} style={{padding:"5px 10px",fontSize:10}} onClick={()=>{cancelAnimationFrame(frameRef.current);setGameState("ready");}}>✕</Btn>
-        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:16,color:C.yellow}}>⭐ {score}</div>
-        <div style={{display:"flex",gap:4}}>{[...Array(3)].map((_,i)=><span key={i} style={{fontSize:16,filter:i<lives?"none":"grayscale(1) opacity(0.2)"}}>❤️</span>)}</div>
+      <div style={{ position:"relative", zIndex:20, background:"rgba(0,0,0,0.55)", backdropFilter:"blur(8px)", borderBottom:"1px solid rgba(255,180,0,0.2)", padding:"10px 18px", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+        <button onClick={() => { cancelAnimationFrame(frameRef.current); setGameState("ready"); }} style={{ background:"rgba(255,255,255,0.1)", border:"1px solid rgba(255,255,255,0.2)", borderRadius:10, padding:"5px 12px", color:"white", fontSize:12, cursor:"pointer", fontFamily:"'Nunito',sans-serif", fontWeight:700 }}>&#x2715; QUIT</button>
+        <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:18, color:C.orange, letterSpacing:1 }}>&#x2604;&#xFE0F; {score}</div>
+        <div style={{ display:"flex", gap:4 }}>{[...Array(3)].map((_, i) => <span key={i} style={{ fontSize:18, filter:i < lives ? "none" : "grayscale(1) opacity(0.2)" }}>&#x2764;&#xFE0F;</span>)}</div>
       </div>
-      {/* Question */}
-      <div style={{position:"relative",zIndex:10,textAlign:"center",padding:"12px 18px"}}>
-        <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:20, color:textColor()}}>{q}</div>
+      {/* Question banner */}
+      <div style={{ position:"relative", zIndex:20, textAlign:"center", padding:"10px 18px 6px" }}>
+        <div style={{ display:"inline-block", background:"rgba(255,200,0,0.12)", border:"1.5px solid rgba(255,200,0,0.35)", borderRadius:14, padding:"6px 20px" }}>
+          <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:22, color:"#FFD700", letterSpacing:1 }}>{q}</div>
+        </div>
+        <div style={{ fontSize:10, color:"rgba(255,255,255,0.45)", marginTop:3, fontWeight:700 }}>&#x1F4A5; BLAST THE WRONG ANSWERS</div>
       </div>
       {/* Play field */}
-      <div style={{position:"relative",height:"65vh",overflow:"hidden",background:"transparent",touchAction:"none"}}
-        onTouchMove={e=>{e.preventDefault();const rect=e.currentTarget.getBoundingClientRect();const pct=((e.touches[0].clientX-rect.left)/rect.width)*100;setPlayerX(Math.max(8,Math.min(92,pct)));}}
-        onMouseMove={e=>{const rect=e.currentTarget.getBoundingClientRect();const pct=((e.clientX-rect.left)/rect.width)*100;setPlayerX(Math.max(8,Math.min(92,pct)));}}
-      >
-        {items.map(it=>(
-          <div key={it.id}
-            onClick={()=>catchItem(it)}
-            style={{
-              position:"absolute",
-              left:`${it.x}%`,
-              top:`${it.y}%`,
-              transform:"translate(-50%,-50%)",
-              cursor:"pointer",
-              zIndex:5,
-              userSelect:"none",
-            }}
-          >
-            <div style={{
-              background: it.correct ? `linear-gradient(135deg,${C.yellow}44,${C.orange}22)` : `${C.red}22`,
-              border:`2px solid ${it.correct ? C.yellow : C.red}`,
-              borderRadius:14,
-              padding:"6px 12px",
-              fontFamily:"'Orbitron',sans-serif",
-              fontSize:14,
-              fontWeight:700,
-              color: it.correct ? C.yellow : C.red,
-              boxShadow: it.correct ? `0 0 12px ${C.yellow}66` : "none",
-              minWidth:44,
-              textAlign:"center",
-              whiteSpace:"nowrap",
-            }}>
-              {it.correct ? "⭐ " : ""}{it.val}
-            </div>
+      <div style={{ position:"relative", height:"72vh", overflow:"hidden", touchAction:"none" }}>
+        {/* Blast effects */}
+        {blastFX.map(fx => (
+          <div key={fx.id} style={{ position:"absolute", left:`${fx.x}%`, top:`${fx.y}%`, transform:"translate(-50%,-50%)", fontSize:36, animation:"mmPop 0.4s ease forwards", zIndex:15, pointerEvents:"none" }}>
+            {fx.correct ? "&#x274C;" : "&#x1F4A5;"}
           </div>
         ))}
-        {/* Catcher ship */}
-        <div style={{position:"absolute",bottom:10,left:`${playerX}%`,transform:"translateX(-50%)",fontSize:34,zIndex:5,filter:"drop-shadow(0 0 8px #00f5ff)"}}>🛸</div>
+        {/* Falling items */}
+        {items.map(it => (
+          <div key={it.id} onClick={() => tapItem(it)}
+            style={{ position:"absolute", left:`${it.x}%`, top:`${it.y}%`, transform:"translate(-50%,-50%)", cursor:"pointer", zIndex:10, userSelect:"none" }}
+          >
+            {it.correct ? (
+              /* Correct = glowing green shield bubble, DO NOT tap */
+              <div style={{ background:"radial-gradient(circle,#2ECC9A33,#2ECC9A11)", border:`2.5px solid #2ECC9A`, borderRadius:"50%", width:62, height:62, display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", boxShadow:"0 0 18px #2ECC9A88,0 0 40px #2ECC9A33", animation:"mmPulse 1.2s infinite" }}>
+                <div style={{ fontSize:9, color:"#2ECC9A", fontWeight:900, marginBottom:1 }}>SAFE</div>
+                <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:18, color:"#2ECC9A" }}>{it.val}</div>
+              </div>
+            ) : (
+              /* Wrong = dark jagged meteor */
+              <div style={{ position:"relative", background:"radial-gradient(circle at 40% 35%,#6b3030,#2a0a0a)", border:`2px solid ${C.red}99`, borderRadius:"46% 54% 38% 62%/52% 48% 52% 48%", width:58, height:58, display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", boxShadow:`0 0 14px ${C.red}66`, animation:"mmWave 2s ease-in-out infinite" }}>
+                <div style={{ fontSize:9, color:C.red, fontWeight:900, marginBottom:1 }}>BLAST!</div>
+                <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:18, color:"white" }}>{it.val}</div>
+              </div>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -617,4 +655,3 @@ export function NumberMemory({ onBack, child }) {
     </div>
   );
 }
-

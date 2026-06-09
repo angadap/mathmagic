@@ -343,18 +343,27 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
         {/* 4a — Stats Row */}
         <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:10 }}>
           {[
-            {e:"⭐",v:totalStars,     l:"Stars",  c:"#FFC847"},
-            {e:"🪙",v:child.coins||0, l:"Coins",  c:"#4BBDF5"},
-            {e:"💎",v:child.gems||0,  l:"Gems",   c:"#9B59F5"},
-            {e:"🗓️",v:todaySets,      l:"Today",  c:"#2ECC9A"},
+            {e:"⭐",v:totalStars,     l:"Stars",  c:"#FFC847", tap:null},
+            {e:"🪙",v:child.coins||0, l:"Coins",  c:"#4BBDF5", tap:onShop},
+            {e:"💎",v:child.gems||0,  l:"Gems",   c:"#9B59F5", tap:onShop},
+            {e:"🗓️",v:todaySets,      l:"Today",  c:"#2ECC9A", tap:null},
           ].map((s,i)=>(
-            <div key={i} style={{ background:"white", border:`1.5px solid ${s.c}22`, borderRadius:28, padding:"10px 6px", textAlign:"center", boxShadow:`0 8px 30px ${s.c}28, inset 0 1px 0 rgba(255,255,255,0.8)` }}>
+            <div key={i} onClick={s.tap||undefined}
+              style={{ background:"white", border:`1.5px solid ${s.c}22`, borderRadius:28, padding:"10px 6px", textAlign:"center", boxShadow:`0 8px 30px ${s.c}28, inset 0 1px 0 rgba(255,255,255,0.8)`, cursor:s.tap?"pointer":"default", position:"relative" }}>
+              {s.tap && <div style={{ position:"absolute", top:4, right:6, fontSize:8, color:s.c, fontWeight:900, opacity:0.7 }}>🛍️</div>}
               <div style={{ fontSize:20 }}>{s.e}</div>
               <div style={{ fontSize:16, fontWeight:900, color:"#1A1040" }}>{s.v}</div>
               <div style={{ fontSize:9, color:"#9890C4", fontWeight:700 }}>{s.l}</div>
             </div>
           ))}
         </div>
+
+        {/* Shop quick-access chip */}
+        <button onClick={onShop} style={{ alignSelf:"flex-start", background:"linear-gradient(135deg,#FF5FA022,#9B59F518)", border:"1.5px solid #FF5FA040", borderRadius:999, padding:"7px 16px", cursor:"pointer", display:"flex", alignItems:"center", gap:7, boxShadow:"0 4px 12px #FF5FA025" }}>
+          <span style={{ fontSize:16 }}>🛍️</span>
+          <span style={{ fontFamily:"'Nunito',sans-serif", fontSize:12, fontWeight:900, color:"#FF5FA0" }}>Shop</span>
+          <span style={{ fontFamily:"'Nunito',sans-serif", fontSize:10, color:"#9890C4", fontWeight:700 }}>Avatars · Badges · Themes</span>
+        </button>
 
         {/* 4b — Cosmo Mascot */}
         <div style={{ background:"linear-gradient(135deg,#5B4FE812,#9B59F50a)", border:"1.5px solid #5B4FE820", borderRadius:20, padding:"12px 16px", display:"flex", alignItems:"center", gap:12 }}>

@@ -229,7 +229,7 @@ export function SequenceBuilder({ onBack, child }) {
 
 const GAME_LIST = [
   {id:"rocket",  icon:"🚀", title:"Number Rocket",  desc:"Answer before fuel runs out!", color:"#f97316", component: NumberRocket},
-  {id:"catcher", icon:"⭐", title:"Star Catcher",   desc:"Catch the right answers!",      color:"#fbbf24", component: StarCatcher},
+  {id:"catcher", icon:"☄️", title:"Meteor Blaster",  desc:"Blast wrong answers, save the planet!", color:"#FF6B6B", component: StarCatcher},
   {id:"maze",    icon:"🌀", title:"Math Maze",       desc:"Solve puzzles to move forward!",color:"#22c55e", component: MathMaze},
   {id:"speed",   icon:"⚡", title:"Speed Math",      desc:"60 seconds — go as fast as you can!", color:"#a855f7", component: SpeedMath},
   {id:"memory",  icon:"🧠", title:"Number Memory",    desc:"Remember the number sequence!",    color:"#ec4899", component: NumberMemory},
@@ -287,4 +287,3 @@ export function GamesHub({ child, onBack }) {
 // ══════════════════════════════════════════════════════════════════
 // SHOP, BADGES, CHARACTER & BADGE TOAST SCREENS
 // ══════════════════════════════════════════════════════════════════
-
