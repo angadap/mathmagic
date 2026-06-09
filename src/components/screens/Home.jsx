@@ -271,9 +271,13 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
   const dqDone     = !!localStorage.getItem(`dq_done_${child.id}_${todayKey}`);
   const dpDone     = !!localStorage.getItem(`dp_done_${child.id}_${todayKey}`);
   const levelEmoji = ["🌱","🌟","💫","🚀","🏆","👑"][Math.min(Math.floor((child.level||1)/2),5)];
+  const doneCnt = [dqDone, dpDone, todaySets>=1].filter(Boolean).length;
 
   return (
-    <div style={{ minHeight:"100vh", background:"#FAFBFF", color:"#1A1040", fontFamily:"'Nunito','Baloo 2',sans-serif", paddingBottom:88, position:"relative", overflowX:"hidden" }}>
+    <div style={{ minHeight:"100vh", background:"#FAFBFF", color:"#1A1040", fontFamily:"'Nunito','Baloo 2',sans-serif", position:"relative", overflowX:"hidden" }}>
+      {/* Background blobs */}
+      <div style={{ position:"absolute", top:-40, right:-40, width:180, height:180, borderRadius:"60% 40% 30% 70%/60% 30% 70% 40%", background:"radial-gradient(#9B59F540,#9B59F510)", animation:"mmWave 8s ease-in-out infinite", pointerEvents:"none", zIndex:0 }}/>
+      <div style={{ position:"absolute", bottom:80, left:-30, width:120, height:120, borderRadius:"60% 40% 30% 70%/60% 30% 70% 40%", background:"radial-gradient(#5B4FE840,#5B4FE810)", animation:"mmWave 10s ease-in-out infinite reverse", pointerEvents:"none", zIndex:0 }}/>
       <Starfield n={50}/>
       {onFeedback && <SOSButton onClick={() => onFeedback()}/>}
       {showTutorial && <Tutorial onDone={doneTutorial}/>}
@@ -288,7 +292,6 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
         />
       )}
       {showRating && <RatingPrompt child={child} onClose={() => setShowRating(false)}/>}
-
       {showWelcome && (
         <div onClick={dismissWelcome} style={{ position:"fixed", inset:0, zIndex:150, display:"flex", alignItems:"center", justifyContent:"center", background:"rgba(91,79,232,0.18)", backdropFilter:"blur(10px)", padding:"0 20px" }}>
           <div style={{ background:"white", border:"2px solid #4BBDF544", borderRadius:28, padding:"36px 28px", maxWidth:380, width:"100%", textAlign:"center", boxShadow:"0 8px 40px #5B4FE828, inset 0 1px 0 rgba(255,255,255,0.8)", animation:"mmPop 0.4s ease" }}>
@@ -303,124 +306,113 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
         </div>
       )}
 
-      {/* Hero Header */}
-      <div style={{ position:"relative", zIndex:2 }}>
-        <div style={{ background:"linear-gradient(160deg,#5B4FE818 0%,#9B59F512 50%,transparent 100%)", padding:"24px 20px 20px", position:"relative", overflow:"hidden" }}>
-          <div style={{ position:"absolute", right:-20, top:-20, fontSize:110, opacity:0.1, animation:"floatUp 4s ease-in-out infinite", pointerEvents:"none" }}>{w.planet}</div>
-          <div style={{position:"absolute",top:-50,right:-40,width:160,height:160,borderRadius:"60% 40% 30% 70%/60% 30% 70% 40%",background:"radial-gradient(#9B59F540,#9B59F510)",animation:"mmWave 8s ease-in-out infinite",pointerEvents:"none",opacity:0.4}}/>
-          <div style={{ position:"relative", zIndex:1 }}>
-            <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:14 }}>
-              <div style={{ position:"relative", width:64, height:64, flexShrink:0 }}>
-                <div style={{ width:52, height:52, borderRadius:14, background:"linear-gradient(135deg,#9B59F522,#9B59F50a)", border:"2.5px solid #9B59F544", display:"flex", alignItems:"center", justifyContent:"center", fontSize:27, boxShadow:"0 0 20px #9B59F555" }}>{child.avatar}</div>
-                <div style={{ position:"absolute", bottom:-4, right:-4, background:"linear-gradient(135deg,#FFC847,#FF6B6B)", borderRadius:999, padding:"1px 7px", fontSize:10, fontWeight:900, color:"white", border:"2px solid white" }}>Lv{child.level||1}</div>
-              </div>
-              <div style={{ flex:1 }}>
-                <div style={{ fontSize:21, fontWeight:900, color:"#1A1040", lineHeight:1.1 }}>Hey, {child.name?.split(" ")[0]}! {levelEmoji}</div>
-                <div style={{ fontSize:13, color:w.color, fontWeight:700, marginTop:2 }}>{w.world} · Cadet</div>
-              </div>
-              <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                {child.streak_days>0 && <div style={{ background:"#FF6B6B15", border:"1.5px solid #FF6B6B30", borderRadius:14, padding:"6px 10px", textAlign:"center" }}><div style={{ fontSize:18 }}>🔥</div><div style={{ fontFamily:"'Fredoka One',cursive", fontSize:13, color:"#FF6B6B", fontWeight:900 }}>{child.streak_days}</div></div>}
-                <MuteBtn/>
-                <button onClick={onLogout} style={{ background:"#FF5FA014", border:"1px solid #FF5FA044", borderRadius:12, padding:"7px 11px", color:"#FF5FA0", fontSize:13, cursor:"pointer", fontWeight:700 }}>Exit</button>
-              </div>
-            </div>
-            <XPBar xp={child.xp||0} level={child.level||1}/>
-            <div style={{ display:"flex", alignItems:"center", gap:12, marginTop:12 }}>
-              <div style={{ position:"relative", width:56, height:56, flexShrink:0 }}>
-                <svg width="56" height="56" style={{ transform:"rotate(-90deg)" }}>
-                  <circle cx="28" cy="28" r="22" fill="none" stroke="#9B59F520" strokeWidth="5"/>
-                  <circle cx="28" cy="28" r="22" fill="none" stroke="#9B59F5" strokeWidth="5"
-                    strokeDasharray={`${2*Math.PI*22*pctDone/100} ${2*Math.PI*22}`} strokeLinecap="round"
-                    style={{transition:"stroke-dasharray 1s ease"}}/>
-                </svg>
-                <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:900, color:"#9B59F5" }}>{pctDone}%</div>
-              </div>
-              <div style={{ flex:1 }}>
-                <div style={{ fontSize:14, fontWeight:800, color:"#1A1040" }}>Overall Progress</div>
-                <div style={{ fontSize:12, color:"#9890C4" }}>{doneSets} of {totalSets} sets done</div>
-              </div>
-              <div style={{ textAlign:"right" }}><div style={{ fontSize:24, fontWeight:900, color:"#FFC847" }}>{totalStars}</div><div style={{ fontSize:10, color:"#9890C4" }}>Stars ⭐</div></div>
-            </div>
+      {/* 3 — Hero Header */}
+      <div style={{ position:"relative", zIndex:1, background:"linear-gradient(160deg,#5B4FE818,#9B59F512,transparent)", padding:"20px 18px 16px" }}>
+        <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:14 }}>
+          <div style={{ position:"relative", width:64, height:64, flexShrink:0 }}>
+            <div style={{ width:52, height:52, borderRadius:14, background:"linear-gradient(135deg,#9B59F522,#9B59F50a)", border:"2.5px solid #9B59F544", display:"flex", alignItems:"center", justifyContent:"center", fontSize:27, boxShadow:"0 0 20px #9B59F555" }}>{child.avatar}</div>
+            <div style={{ position:"absolute", bottom:-4, right:-4, background:"linear-gradient(135deg,#FFC847,#FF6B6B)", borderRadius:999, padding:"1px 7px", fontSize:10, fontWeight:900, color:"white", border:"2px solid white" }}>Lv{child.level||1}</div>
+          </div>
+          <div style={{ flex:1 }}>
+            <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:22, color:"#1A1040", lineHeight:1.1 }}>Hey, {child.name?.split(" ")[0]}! {levelEmoji}</div>
+            <div style={{ fontSize:12, color:"#5A4E8A", fontWeight:600, marginTop:2 }}>{w.world} · Space Cadet</div>
+          </div>
+          <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+            {child.streak_days>0 && (
+              <div style={{ background:"#FF6B6B15", border:"1.5px solid #FF6B6B30", borderRadius:14, padding:"4px 10px", fontSize:12, fontWeight:800, color:"#FF6B6B", display:"flex", alignItems:"center", gap:4 }}>🔥 {child.streak_days}</div>
+            )}
+            <MuteBtn/>
+            <button onClick={onLogout} style={{ background:"#FF5FA014", border:"1px solid #FF5FA044", borderRadius:12, padding:"7px 11px", color:"#FF5FA0", fontSize:13, cursor:"pointer", fontWeight:700 }}>Exit</button>
           </div>
         </div>
+        <XPBar xp={child.xp||0} level={child.level||1}/>
       </div>
 
-      {/* Cosmo Mascot */}
-      <div style={{ position:"relative", zIndex:2, margin:"14px 18px 0" }}>
+      {/* 4 — Content Wrapper */}
+      <div style={{ position:"relative", zIndex:1, padding:"14px 16px", display:"flex", flexDirection:"column", gap:14, paddingBottom:88 }}>
+
+        {/* 4a — Stats Row */}
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:10 }}>
+          {[
+            {e:"⭐",v:totalStars,     l:"Stars",  c:"#FFC847"},
+            {e:"🪙",v:child.coins||0, l:"Coins",  c:"#4BBDF5"},
+            {e:"💎",v:child.gems||0,  l:"Gems",   c:"#9B59F5"},
+            {e:"🗓️",v:todaySets,      l:"Today",  c:"#2ECC9A"},
+          ].map((s,i)=>(
+            <div key={i} style={{ background:"white", border:`1.5px solid ${s.c}22`, borderRadius:28, padding:"10px 6px", textAlign:"center", boxShadow:`0 8px 30px ${s.c}28, inset 0 1px 0 rgba(255,255,255,0.8)` }}>
+              <div style={{ fontSize:20 }}>{s.e}</div>
+              <div style={{ fontSize:16, fontWeight:900, color:"#1A1040" }}>{s.v}</div>
+              <div style={{ fontSize:9, color:"#9890C4", fontWeight:700 }}>{s.l}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* 4b — Cosmo Mascot */}
         <div style={{ background:"linear-gradient(135deg,#5B4FE812,#9B59F50a)", border:"1.5px solid #5B4FE820", borderRadius:20, padding:"12px 16px", display:"flex", alignItems:"center", gap:12 }}>
           <div style={{ fontSize:34, animation:"mmFloat 2.5s ease-in-out infinite", flexShrink:0 }}>🤖</div>
           <div style={{ flex:1 }}>
             <div style={{ fontSize:11, color:"#5B4FE8", fontWeight:800, letterSpacing:1, marginBottom:2 }}>COSMO SAYS</div>
-            <div key={mascotMsg} style={{ fontSize:14, color:"#1A1040", fontWeight:700, animation:"slideUp 0.4s ease" }}>{MASCOT_MSGS[mascotMsg]}</div>
+            <div key={mascotMsg} style={{ fontSize:14, color:"#1A1040", fontWeight:700, animation:"mmSlideUp 0.4s ease" }}>{MASCOT_MSGS[mascotMsg]}</div>
           </div>
         </div>
-      </div>
 
-      {/* Stats Row */}
-      <div style={{ position:"relative", zIndex:2, display:"flex", gap:10, padding:"12px 18px 0" }}>
-        {[
-          {e:"⭐",v:totalStars,      l:"Stars",   c:"#FFC847"},
-          {e:"🪙",v:child.coins||0,  l:"Coins",   c:"#FF6B6B"},
-          {e:"💎",v:child.gems||0,   l:"Gems",    c:"#9B59F5"},
-          {e:"🗓️",v:todaySets,       l:"Today",   c:"#4BBDF5"},
-        ].map((s,i)=>(
-          <div key={i} style={{ flex:1, background:"white", borderRadius:28, padding:"10px 6px", textAlign:"center", border:`1.5px solid ${s.c}22`, boxShadow:`0 8px 30px ${s.c}28, inset 0 1px 0 rgba(255,255,255,0.8)` }}>
-            <div style={{ fontSize:20 }}>{s.e}</div>
-            <div style={{ fontSize:16, fontWeight:900, color:"#1A1040" }}>{s.v}</div>
-            <div style={{ fontSize:9, color:"#9890C4", fontWeight:700 }}>{s.l}</div>
+        {/* 4c — Daily Quest (always expanded) */}
+        <div style={{ background:"white", border:"1.5px solid #9B59F522", borderRadius:28, padding:16, boxShadow:"0 8px 30px #9B59F528, inset 0 1px 0 rgba(255,255,255,0.8)" }}>
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
+            <div style={{ fontSize:15, fontWeight:900, color:"#1A1040" }}>🎯 Daily Quest</div>
+            <div style={{ background:"#9B59F518", border:"1.5px solid #9B59F530", borderRadius:999, padding:"3px 10px", fontSize:11, fontWeight:800, color:"#9B59F5" }}>{doneCnt}/3 done</div>
           </div>
-        ))}
-      </div>
+          <div style={{ background:"#F0ECFF", borderRadius:999, height:7, overflow:"hidden", marginBottom:10 }}>
+            <div style={{ width:`${(doneCnt/3)*100}%`, height:"100%", background:"linear-gradient(90deg,#5B4FE8,#9B59F5,#FF5FA0)", borderRadius:999, transition:"width 0.6s ease" }}/>
+          </div>
+          <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+            {[
+              {icon:"🧮",label:"Do a Set",    done:todaySets>=1, onClick:()=>onWorld(w)},
+              {icon:"🌟",label:"Word Problem", done:dqDone,       onClick:()=>setShowDailyQuest(true)},
+              {icon:"🧩",label:"Puzzle",       done:dpDone,       onClick:()=>setShowDailyQuest(true)},
+            ].map((t,i)=>(
+              <button key={i} onClick={t.onClick} style={{ flex:1, background:t.done?"#2ECC9A14":"#F0ECFF", border:`1.5px solid ${t.done?"#2ECC9A40":"rgba(91,79,232,0.10)"}`, borderRadius:999, padding:"5px 12px", fontSize:12, fontWeight:700, color:t.done?"#2ECC9A":"#9890C4", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+                <span>{t.done?"✅":t.icon}</span><span>{t.label}</span>
+              </button>
+            ))}
+          </div>
+          <div style={{ marginTop:10, fontSize:12, fontWeight:800, color:"#FFC847", textAlign:"center" }}>+275 XP · +35 Coins</div>
+        </div>
 
-      {/* ── Parent Dashboard — prominent card ───────────────────────── */}
-      <div style={{ position:"relative", zIndex:2, margin:"12px 18px 0" }}>
-        <button onClick={onParent}
-          style={{ width:"100%", background:"white", border:"2px solid #FF5FA025", borderRadius:28, padding:"14px 16px", cursor:"pointer", display:"flex", alignItems:"center", gap:14, textAlign:"left", boxShadow:"0 8px 30px #FF5FA020, inset 0 1px 0 rgba(255,255,255,0.8)", transition:"all 0.2s" }}>
-          <div style={{ width:50, height:50, borderRadius:16, background:"linear-gradient(135deg,#FF5FA0,#9B59F5)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:26, flexShrink:0, boxShadow:"0 4px 14px #FF5FA044" }}>📊</div>
+        {/* 4d — Quick Launch (always expanded) */}
+        <div style={{ background:"white", border:"1.5px solid #FFC84722", borderRadius:28, padding:16, boxShadow:"0 8px 30px #FFC84728, inset 0 1px 0 rgba(255,255,255,0.8)" }}>
+          <div style={{ fontSize:15, fontWeight:900, color:"#1A1040", marginBottom:12 }}>⚡ Quick Launch</div>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
+            {[
+              {i:"🧮",l:"Abacus",   s:"Train your brain", c:"#FFC847",a:onAbacus},
+              {i:"🎮",l:"Games Hub", s:"8 mini-games",     c:"#4BBDF5",a:onGames},
+              {i:"🎓",l:"Olympiad",  s:"Compete & win",    c:"#9B59F5",a:onOlympiad},
+              {i:"🛒",l:"Bazaar 🆕", s:"Real-life maths",  c:"#FF6B6B",a:onBazaar},
+            ].map((n,i)=>(
+              <button key={i} onClick={n.a} style={{ background:`${n.c}10`, border:`1.5px solid ${n.c}25`, borderRadius:20, padding:"14px 12px", cursor:"pointer", textAlign:"left", display:"flex", alignItems:"center", gap:10, boxShadow:`0 4px 12px ${n.c}30, 0 2px 6px ${n.c}20` }}>
+                <div style={{ fontSize:26, flexShrink:0 }}>{n.i}</div>
+                <div>
+                  <div style={{ fontSize:13, fontWeight:800, color:"#1A1040" }}>{n.l}</div>
+                  <div style={{ fontSize:10, color:n.c, fontWeight:700, marginTop:2 }}>{n.s}</div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 4e — My Class (single tap to map) */}
+        <button onClick={()=>onWorld(w)} style={{ background:"white", border:"2px solid #9B59F530", borderRadius:28, padding:16, cursor:"pointer", display:"flex", alignItems:"center", gap:14, boxShadow:"0 8px 30px #9B59F528, inset 0 1px 0 rgba(255,255,255,0.8)", width:"100%", textAlign:"left" }}>
+          <div style={{ width:58, height:58, borderRadius:20, background:"#9B59F514", border:"2px solid #9B59F530", display:"flex", alignItems:"center", justifyContent:"center", fontSize:28, flexShrink:0 }}>{w.planet}</div>
           <div style={{ flex:1 }}>
-            <div style={{ fontSize:15, fontWeight:900, color:"#1A1040" }}>Parent Dashboard</div>
-            <div style={{ fontSize:11, color:"#9890C4", marginTop:2, lineHeight:1.5 }}>View progress · Strengths · Insights · Reports</div>
+            <div style={{ fontSize:18, fontWeight:900, color:"#1A1040" }}>{w.name}</div>
+            <div style={{ fontSize:12, color:"#5A4E8A", fontWeight:600, marginTop:2 }}>{w.world} · {pctDone}% done</div>
+            <div style={{ background:"#F0ECFF", borderRadius:999, height:5, overflow:"hidden", marginTop:6 }}>
+              <div style={{ width:`${pctDone}%`, height:"100%", background:"linear-gradient(90deg,#9B59F5,#4BBDF5)", borderRadius:999, transition:"width 1s ease" }}/>
+            </div>
           </div>
-          <div style={{ fontSize:22, color:"#FF5FA0" }}>›</div>
+          <div style={{ fontSize:24, color:"#9B59F5" }}>›</div>
         </button>
-      </div>
 
-      {/* ── Daily Quest ─────────────────────────────────────────────── */}
-      <DailyQuestSection
-        dqDone={dqDone} dpDone={dpDone} todaySets={todaySets}
-        onOpen={()=>setShowDailyQuest(true)}
-      />
-
-      {/* Quick Launch */}
-      <QuickLaunch onAbacus={onAbacus} onGames={onGames} onOlympiad={onOlympiad} onBazaar={onBazaar}/>
-
-      {/* Shop · Badges · Character */}
-      {(onShop || onBadges || onCharacter) && (
-        <div style={{ position:"relative", zIndex:2, display:"flex", gap:10, padding:"12px 18px 0" }}>
-          {[{icon:"🛒",label:"Shop",    act:onShop,      color:"#2ECC9A"},
-            {icon:"🏅",label:"Badges",  act:onBadges,    color:"#FFC847"},
-            {icon:"🎭",label:"Me",      act:onCharacter, color:"#9B59F5"},
-          ].map((b,i)=> b.act ? (
-            <button key={i} onClick={b.act}
-              style={{ flex:1, background:"white", border:`2px solid ${b.color}35`, borderRadius:20,
-                padding:"12px 6px", cursor:"pointer", textAlign:"center",
-                boxShadow:`0 4px 14px ${b.color}22, inset 0 1px 0 rgba(255,255,255,0.8)`, transition:"all 0.2s" }}>
-              <div style={{ fontSize:24, marginBottom:4 }}>{b.icon}</div>
-              <div style={{ fontSize:11, fontWeight:800, color:"#1A1040" }}>{b.label}</div>
-            </button>
-          ) : null)}
-        </div>
-      )}
-
-      {/* My Class */}
-      <MyClassSection world={w} child={child} onWorld={onWorld} pctDone={pctDone}/>
-
-      {/* Other Worlds — collapsible */}
-      <WorldsSection WORLDS={WORLDS} child={child} onWorld={onWorld}/>
-
-      {/* Progress Grid */}
-      <div style={{ position:"relative", zIndex:2, margin:"14px 18px 14px" }}>
-        <ProgressGrid lessons={LESSONS[child.class_num]||LESSONS[1]} progress={progress}/>
       </div>
 
       {/* Bottom Nav */}
