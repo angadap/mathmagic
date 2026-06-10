@@ -482,7 +482,7 @@ export function HomeStudentLogin({ onBack, onDone }) {
         body: JSON.stringify({ action: "admin_list_home_students" })
       });
       const d = await r.json();
-      const found = (d.data || []).find(s => s.username === u && !s.parent_id);
+      const found = (d.data || []).find(s => s.username === u);
       if (!found) { setError("Username not found. Check spelling and try again."); setLoading(false); return; }
       setChild(found);
       setStep("pin");
