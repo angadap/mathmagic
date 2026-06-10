@@ -94,7 +94,7 @@ export function Abacus({ onBack, child }) {
             const isCurrent  = level === i;
             return (
               <button key={i} onClick={() => isUnlocked && goLevel(i)}
-                style={{ flexShrink:0, width:36, height:36, background: isCurrent ? "linear-gradient(135deg,#FFC847,#FF6B6B)" : isUnlocked ? "white" : "#F0ECFF", border:`2px solid ${isCurrent ? "#FFC847" : isUnlocked ? "#FFC84744" : "rgba(91,79,232,0.12)"}`, borderRadius:12, color: isCurrent ? "white" : isUnlocked ? "#1A1040" : "#9890C4", fontSize:9, fontFamily:"'Orbitron',sans-serif", cursor: isUnlocked ? "pointer" : "not-allowed", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1 }}>
+                style={{ flexShrink:0, width:36, height:36, background: isCurrent ? "linear-gradient(135deg,#FFC847,#FF6B6B)" : isUnlocked ? "#F0ECFF" : "#E8E4F8", border:`2px solid ${isCurrent ? "#FFC847" : isUnlocked ? "#FFC84744" : "rgba(91,79,232,0.12)"}`, borderRadius:12, color: isCurrent ? "white" : isUnlocked ? "#1A1040" : "#9890C4", fontSize:9, fontFamily:"'Orbitron',sans-serif", cursor: isUnlocked ? "pointer" : "not-allowed", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1 }}>
                 {isUnlocked ? <span>L{al.level}</span> : <span style={{fontSize:11}}>🔒</span>}
               </button>
             );
@@ -110,7 +110,7 @@ export function Abacus({ onBack, child }) {
           </div>
           <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:22, color:"#1A1040" }}>{prob.q}</div>
           {/* Progress bar within level */}
-          <div style={{ marginTop:8, background:"rgba(255,255,255,0.05)", borderRadius:5, height:4, overflow:"hidden" }}>
+          <div style={{ marginTop:8, background:"rgba(91,79,232,0.08)", borderRadius:5, height:4, overflow:"hidden" }}>
             <div style={{ width:`${(pi/lv.probs.length)*100}%`, height:"100%", background:`linear-gradient(90deg,${C.purple},${C.cyan})`, borderRadius:5 }}/>
           </div>
         </Card>

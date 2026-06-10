@@ -429,19 +429,19 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
       </div>
 
       {/* Bottom Nav */}
-      <div style={{ position:"fixed", bottom:0, left:0, right:0, zIndex:10, background:"rgba(255,255,255,0.97)", backdropFilter:"blur(20px)", borderTop:"1.5px solid rgba(91,79,232,0.10)", padding:"10px 14px 14px", display:"flex", justifyContent:"space-around", boxShadow:"0 -4px 20px rgba(91,79,232,0.08)" }}>
+      <div style={{ position:"fixed", bottom:0, left:0, right:0, zIndex:10, background:"rgba(255,255,255,0.98)", backdropFilter:"blur(24px)", borderTop:"1.5px solid rgba(91,79,232,0.10)", padding:"8px 8px 16px", display:"flex", justifyContent:"space-around", boxShadow:"0 -4px 24px rgba(91,79,232,0.10)" }}>
         {[
-          {icon:"🏠",label:"Home",    act:null,                         active:true},
+          {icon:"🏠",label:"Home",    act:null,                          active:true},
           {icon:"🎮",label:"Games",   act:onGames},
           {icon:"👨‍👩‍👧",label:"Parent",  act:onParent},
           {icon:"🌌",label:"Explore", act:()=>setExploreOpen(true)},
           {icon:"⚙️",label:"Settings",act:()=>onSettings&&onSettings()},
           {icon:"🛍️",label:"Shop",    act:()=>onShop&&onShop()},
         ].map((n,i)=>(
-          <button key={i} onClick={n.act||undefined} style={{ background:"none", border:"none", cursor:n.act?"pointer":"default", display:"flex", flexDirection:"column", alignItems:"center", gap:2, color:n.active?"#5B4FE8":"#9890C4" }}>
-            <div style={{ fontSize:22 }}>{n.icon}</div>
-            <div style={{ fontSize:9, fontFamily:"'Nunito',sans-serif", fontWeight:700 }}>{n.label}</div>
-            {n.active&&<div style={{ width:4, height:4, borderRadius:"50%", background:"#5B4FE8", boxShadow:"0 0 6px #5B4FE8" }}/>}
+          <button key={i} onClick={n.act||undefined} style={{ background:n.active?"#5B4FE815":"none", border:"none", cursor:n.act?"pointer":"default", display:"flex", flexDirection:"column", alignItems:"center", gap:2, padding:"6px 10px", borderRadius:16, color:n.active?"#5B4FE8":"#9890C4", minWidth:44, transition:"all 0.2s" }}>
+            <div style={{ fontSize:22, lineHeight:1 }}>{n.icon}</div>
+            <div style={{ fontSize:9, fontFamily:"'Nunito',sans-serif", fontWeight:800, marginTop:2 }}>{n.label}</div>
+            {n.active&&<div style={{ width:16, height:3, borderRadius:999, background:"linear-gradient(90deg,#5B4FE8,#9B59F5)", marginTop:2 }}/>}
           </button>
         ))}
       </div>

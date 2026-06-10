@@ -174,8 +174,8 @@ export function PinPad({ pin, setPin, error, shake, onComplete }) {
             onTouchEnd={e => { if(k!=="") { e.currentTarget.style.transform=""; e.currentTarget.style.boxShadow=keyShad; }}}
             style={{
               width:72, height:72, margin:"0 auto", display:"flex", alignItems:"center", justifyContent:"center",
-              background: k === "" ? "transparent" : "#F0ECFF",
-              border: k === "" ? "none" : "1.5px solid rgba(91,79,232,0.15)",
+              background: k === "" ? "transparent" : "linear-gradient(155deg,#F0ECFF,#E8E2FF)",
+              border: k === "" ? "none" : "2px solid rgba(91,79,232,0.20)",
               borderRadius:"50%",
               color:"#1A1040", fontSize: k === "⌫" ? 20 : 22,
               fontFamily:"'Baloo 2',sans-serif", fontWeight:900,

@@ -408,7 +408,7 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
         <div style={{ fontSize:9, color:C.dim, fontFamily:"'Orbitron',sans-serif", marginBottom:8 }}>Q {qi+1}/{questions.length} · Score: {score}</div>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
           {q.opts.map((opt, i) => {
-            let bg="white", border="2px solid #FF6B6B25", col="#1A1040";
+            let bg="#F5F3FF", border="2px solid #FF6B6B25", col="#1A1040";
             if (chosen!==null) { if(i===q.ans){bg="#E8FFF4";border="2.5px solid #2ECC9A";col="#2ECC9A";}else if(i===chosen){bg="#FFF0F0";border="2.5px solid #FF6B6B";col="#FF6B6B";} }
             return <button key={i} onClick={() => pick(i)} style={{ background:bg, border, borderRadius:18, padding:"18px 12px", fontSize:18, fontWeight:800, color:col, cursor: chosen!==null?"default":"pointer", transition:"all 0.2s", boxShadow: i===q.ans&&chosen!==null?`0 0 20px ${C.green}66`:"none", animation:i===q.ans&&chosen!==null?"superCorrect 0.5s ease":"none" }}>{i===q.ans&&chosen!==null?"✓ ":""}{opt}</button>;
           })}
@@ -512,7 +512,7 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
             const isCorrect = i===q.ans;
             const isChosen  = i===chosen;
             const answered  = chosen!==null;
-            let bg="white", border=`2px solid ${world.color}25`, col="#1A1040", shadow="none", anim=`mmPop 0.3s ease ${i*0.06}s both`;
+            let bg="#F5F3FF", border=`2px solid ${world.color}25`, col="#1A1040", shadow="none", anim=`mmPop 0.3s ease ${i*0.06}s both`;
             if (answered) {
               if (isCorrect)     { bg="#E8FFF4"; border="2.5px solid #2ECC9A"; col="#2ECC9A"; shadow="0 0 24px #2ECC9A55"; anim="superCorrect 0.5s ease"; }
               else if (isChosen) { bg="#FFF0F0"; border="2.5px solid #FF6B6B"; col="#FF6B6B"; }

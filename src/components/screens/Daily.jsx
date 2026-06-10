@@ -249,7 +249,7 @@ export function DailyQuiz({ child, onClose }) {
                 const isCorrect = key === challenge.correct;
                 const isChosen  = key === chosen;
                 const answered  = chosen !== null;
-                let bg="white", border="2px solid #9B59F525", color="#1A1040", shadow="none";
+                let bg="#F5F3FF", border="2px solid #9B59F525", color="#1A1040", shadow="none";
                 if (answered) {
                   if (isCorrect){bg="#E8FFF4";border="2.5px solid #2ECC9A";color="#2ECC9A";shadow="0 0 24px #2ECC9A55";}
                   else if(isChosen){bg="#FFF0F0";border="2.5px solid #FF6B6B";color="#FF6B6B";}
@@ -393,7 +393,7 @@ export function DailyPuzzle({ child, onClose }) {
                       else if(k==="✓") handleSubmit();
                       else setAnswer(a=>a+String(k));
                     }} style={{
-                      background:"white",border:"1.5px solid #9B59F525",borderRadius:14,
+                      background:"#F5F3FF",border:"2px solid #9B59F530",borderRadius:14,
                       padding:"12px 0",fontSize:16,fontWeight:900,color:k==="✓"?"#2ECC9A":k==="⌫"?"#FF6B6B":"#1A1040",
                       cursor:"pointer",boxShadow:"0 2px 8px rgba(91,79,232,0.12)",fontFamily:"'Nunito',sans-serif"
                     }}>{k}</button>

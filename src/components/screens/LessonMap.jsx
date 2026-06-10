@@ -71,7 +71,7 @@ export function SetPathMap({ lesson, world, progress, onLesson, onBack, isSetDon
                     <button key={si}
                       onClick={()=>{if(sUnlock){SFX.unlock();onLesson({...lesson,setIndex:si,_progress:progress});}else SFX.wrong();}}
                       style={{
-                        background:sDone?"#2ECC9A12":isCurrent?"white":"#F0ECFF",
+                        background:sDone?"#2ECC9A12":isCurrent?"#FFFFFF":"#F5F3FF",
                         border:`2px solid ${sDone?"#2ECC9A44":isCurrent?"#9B59F555":"rgba(91,79,232,0.12)"}`,
                         borderRadius:14, padding:"10px 4px", cursor:sUnlock?"pointer":"not-allowed",
                         textAlign:"center", opacity:sUnlock?1:0.6,
@@ -174,7 +174,7 @@ export function LessonMap({ world, child, onBack, onLesson, isLessonPurchased, o
                   setActiveLesson({...lesson, _li:li});
                 }}
                 style={{
-                  width:"100%", background:"white", textAlign:"left", cursor:"pointer",
+                  width:"100%", background:"#F5F3FF", textAlign:"left", cursor:"pointer",
                   border:`2px solid ${done ? world.color+"66" : nextLesson ? world.color+"50" : world.color+"22"}`,
                   borderRadius:28, padding:"14px 16px", display:"flex", alignItems:"center", gap:14,
                   boxShadow: nextLesson ? `0 8px 30px ${world.color}44, 0 2px 8px ${world.color}22` : done ? `0 4px 16px ${world.color}22` : "0 2px 6px rgba(91,79,232,0.08)",
