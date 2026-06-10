@@ -106,11 +106,11 @@ export function MathCardFlip({ onBack, child }) {
   );
 }
 
-// ── Brain Blitz (was Equation Balance) ──────────────────
+// ── Brain Blitz (Equation Balance) ──────────────────────────────
 export function EquationBalance({ onBack, child }) {
   const genQ = (lvl) => {
-    const ops = lvl<2?["+","-"]:lvl<4?["+","-","×"]:["+"," -","×","÷"];
-    const op = ops[Math.floor(Math.random()*ops.length)].trim();
+    const ops = lvl<2?["+","-"]:lvl<4?["+","-","×"]:["+","-","×","÷"];
+    const op = ops[Math.floor(Math.random()*ops.length)];
     let a,b,ans;
     if(op==="+"){a=Math.floor(Math.random()*20)+1;b=Math.floor(Math.random()*20)+1;ans=a+b;}
     else if(op==="-"){a=Math.floor(Math.random()*20)+10;b=Math.floor(Math.random()*a)+1;ans=a-b;}
@@ -121,13 +121,13 @@ export function EquationBalance({ onBack, child }) {
     return {q:a+" "+op+" "+b+" = ?",ans,opts};
   };
 
-  const [phase,  setPhase]  = useState("ready"); // ready|playing|over
-  const [q,      setQ]      = useState(null);
-  const [score,  setScore]  = useState(0);
-  const [streak, setStreak] = useState(0);
-  const [wrong,  setWrong]  = useState(0);
-  const [flash,  setFlash]  = useState(null); // "right"|"wrong"
-  const [timeLeft,setTimeLeft]=useState(60);
+  const [phase,   setPhase]   = useState("ready");
+  const [q,       setQ]       = useState(null);
+  const [score,   setScore]   = useState(0);
+  const [streak,  setStreak]  = useState(0);
+  const [wrong,   setWrong]   = useState(0);
+  const [chosen,  setChosen]  = useState(null);
+  const [timeLeft,setTimeLeft]= useState(60);
   const scoreRef = React.useRef(0);
   const lvlRef   = React.useRef(1);
 
@@ -138,95 +138,104 @@ export function EquationBalance({ onBack, child }) {
     return ()=>clearTimeout(t);
   },[timeLeft,phase]);
 
-  const start = () => { scoreRef.current=0; lvlRef.current=1; setScore(0); setStreak(0); setWrong(0); setTimeLeft(60); setQ(genQ(1)); setPhase("playing"); };
+  const start=()=>{ scoreRef.current=0; lvlRef.current=1; setScore(0); setStreak(0); setWrong(0); setTimeLeft(60); setChosen(null); setQ(genQ(1)); setPhase("playing"); };
 
-  const answer = (opt) => {
-    if(!q) return;
+  const answer=(opt)=>{
+    if(!q||chosen!==null) return;
+    setChosen(opt);
     if(opt===q.ans){
       SFX.correct();
       const ns=streak+1;
       const bonus=ns>=5?3:ns>=3?2:1;
       scoreRef.current+=10*bonus;
       lvlRef.current=Math.min(Math.ceil(scoreRef.current/50)+1,5);
-      setScore(scoreRef.current); setStreak(ns); setFlash("right");
-      setTimeout(()=>{setFlash(null);setQ(genQ(lvlRef.current));},400);
+      setScore(scoreRef.current); setStreak(ns);
+      setTimeout(()=>{ setChosen(null); setQ(genQ(lvlRef.current)); },400);
     } else {
-      SFX.wrong(); setStreak(0); setWrong(w=>w+1); setFlash("wrong");
-      setTimeout(()=>setFlash(null),400);
+      SFX.wrong(); setStreak(0); setWrong(w=>w+1);
+      setTimeout(()=>setChosen(null),400);
     }
   };
 
   if(phase==="ready") return (
-    <div style={{minHeight:"100vh",background:"linear-gradient(135deg,#1a0040,#2d0070,#0d1a3a)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,position:"relative",fontFamily:"'Baloo 2',sans-serif"}}>
-      <Starfield n={40}/>
-      <div style={{position:"relative",zIndex:1,textAlign:"center",maxWidth:320}}>
+    <div style={{minHeight:"100vh",background:C.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"'Nunito',sans-serif",padding:24,position:"relative"}}>
+      <Starfield n={20}/>
+      <div style={{position:"relative",zIndex:1,textAlign:"center",width:"100%",maxWidth:360}}>
         <div style={{fontSize:72,marginBottom:8}}>⚡</div>
-        <div style={{fontFamily:"'Fredoka One',cursive",fontSize:28,color:"#FFD700",marginBottom:6,letterSpacing:1}}>BRAIN BLITZ</div>
-        <div style={{background:"rgba(255,215,0,0.1)",border:"1.5px solid rgba(255,215,0,0.3)",borderRadius:16,padding:"12px 16px",marginBottom:20}}>
-          <div style={{color:"rgba(255,255,255,0.7)",fontSize:12,lineHeight:1.8}}>
+        <div style={{fontFamily:"'Fredoka One',cursive",fontSize:26,color:C.purple,marginBottom:16}}>Brain Blitz</div>
+        <div style={{background:"white",border:"1.5px solid "+C.purple+"33",borderRadius:24,padding:"16px 20px",marginBottom:20,boxShadow:"0 8px 30px "+C.purple+"18"}}>
+          <div style={{color:C.dim,fontSize:13,lineHeight:1.9,textAlign:"left"}}>
             ⚡ 60 seconds, answer as many as you can<br/>
-            🔥 Build a streak for bonus points (x2, x3)<br/>
+            🔥 Build a streak for bonus points (×2, ×3)<br/>
             📈 Harder questions as your score grows
           </div>
         </div>
-        <Btn color="#FFD700" onClick={start}>⚡ BLITZ START!</Btn>
-        <div style={{marginTop:12}}><Btn color={C.dim} style={{padding:"9px 20px"}} onClick={onBack}>← Back</Btn></div>
+        <Btn color={C.purple} onClick={start}>⚡ Blitz Start!</Btn>
+        <div style={{marginTop:12}}><Btn color={C.dim} style={{padding:"12px 24px"}} onClick={onBack}>← Back</Btn></div>
       </div>
     </div>
   );
 
   if(phase==="over") return (
-    <div style={{minHeight:"100vh",background:"linear-gradient(135deg,#1a0040,#2d0070,#0d1a3a)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,position:"relative"}}>
-      <Starfield n={60}/>
-      <div style={{position:"relative",zIndex:1,textAlign:"center"}}>
+    <div style={{minHeight:"100vh",background:C.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"'Nunito',sans-serif",padding:24,position:"relative"}}>
+      <Starfield n={20}/>
+      <div style={{position:"relative",zIndex:1,textAlign:"center",width:"100%",maxWidth:360}}>
         <div style={{fontSize:72,marginBottom:8}}>{score>=100?"🏆":score>=50?"🌟":"⚡"}</div>
-        <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:"#FFD700",marginBottom:16}}>TIME'S UP!</div>
-        <div style={{background:"rgba(255,215,0,0.1)",border:"1.5px solid rgba(255,215,0,0.3)",borderRadius:20,padding:"20px 24px",marginBottom:20,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}}>
-          <div style={{textAlign:"center"}}><div style={{fontFamily:"'Fredoka One',cursive",fontSize:32,color:"#4ade80"}}>{score}</div><div style={{fontSize:10,color:"rgba(255,255,255,0.5)",fontWeight:700}}>SCORE</div></div>
-          <div style={{textAlign:"center"}}><div style={{fontFamily:"'Fredoka One',cursive",fontSize:32,color:"#60a5fa"}}>{score/10|0}</div><div style={{fontSize:10,color:"rgba(255,255,255,0.5)",fontWeight:700}}>CORRECT</div></div>
-          <div style={{textAlign:"center"}}><div style={{fontFamily:"'Fredoka One',cursive",fontSize:32,color:"#f87171"}}>{wrong}</div><div style={{fontSize:10,color:"rgba(255,255,255,0.5)",fontWeight:700}}>WRONG</div></div>
+        <div style={{fontFamily:"'Fredoka One',cursive",fontSize:24,color:C.purple,marginBottom:16}}>Time's Up!</div>
+        <div style={{background:"white",border:"1.5px solid "+C.purple+"33",borderRadius:24,padding:"20px",marginBottom:20,boxShadow:"0 8px 30px "+C.purple+"18",display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
+          <div style={{textAlign:"center"}}><div style={{fontFamily:"'Fredoka One',cursive",fontSize:32,color:C.green}}>{score}</div><div style={{fontSize:10,color:C.dim,fontWeight:700}}>SCORE</div></div>
+          <div style={{textAlign:"center"}}><div style={{fontFamily:"'Fredoka One',cursive",fontSize:32,color:C.cyan}}>{score/10|0}</div><div style={{fontSize:10,color:C.dim,fontWeight:700}}>CORRECT</div></div>
+          <div style={{textAlign:"center"}}><div style={{fontFamily:"'Fredoka One',cursive",fontSize:32,color:C.red}}>{wrong}</div><div style={{fontSize:10,color:C.dim,fontWeight:700}}>WRONG</div></div>
         </div>
         <div style={{display:"flex",gap:10}}>
           <Btn color={C.dim} style={{flex:1}} onClick={onBack}>← Back</Btn>
-          <Btn color="#FFD700" style={{flex:1}} onClick={start}>↺ Play Again</Btn>
+          <Btn color={C.purple} style={{flex:1}} onClick={start}>↺ Play Again</Btn>
         </div>
       </div>
     </div>
   );
 
   const timerPct=(timeLeft/60)*100;
+  const timerColor=timeLeft>20?C.green:timeLeft>10?C.yellow:C.red;
   return (
-    <div style={{minHeight:"100vh",background:flash==="right"?"linear-gradient(135deg,#052e16,#064e3b)":flash==="wrong"?"linear-gradient(135deg,#2d0a0a,#450a0a)":"linear-gradient(135deg,#1a0040,#2d0070,#0d1a3a)",fontFamily:"'Baloo 2',sans-serif",transition:"background 0.2s",position:"relative"}}>
+    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Nunito',sans-serif",position:"relative"}}>
       <Starfield n={15}/>
-      {/* HUD */}
-      <div style={{position:"relative",zIndex:20,background:"rgba(0,0,0,0.5)",backdropFilter:"blur(8px)",borderBottom:"1px solid rgba(255,215,0,0.2)",padding:"10px 18px"}}>
+      <div style={{position:"relative",zIndex:10,background:C.surface||"white",borderBottom:"1.5px solid "+C.purple+"25",padding:"10px 18px",boxShadow:"0 2px 12px "+C.purple+"15"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-          <button onClick={()=>{setPhase("ready");}} style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:10,padding:"5px 12px",color:"white",fontSize:12,cursor:"pointer",fontFamily:"'Nunito',sans-serif",fontWeight:700}}>✕ QUIT</button>
-          <div style={{fontFamily:"'Fredoka One',cursive",fontSize:18,color:"#FFD700"}}>⚡ BRAIN BLITZ</div>
-          <div style={{fontFamily:"'Fredoka One',cursive",fontSize:18,color:timeLeft<=10?"#f87171":"#4ade80"}}>{timeLeft}s</div>
+          <button onClick={()=>setPhase("ready")} style={{background:"transparent",border:"1.5px solid "+C.dim+"44",borderRadius:12,padding:"5px 12px",color:C.dim,fontSize:12,cursor:"pointer",fontFamily:"'Nunito',sans-serif",fontWeight:800}}>✕ Quit</button>
+          <div style={{fontFamily:"'Fredoka One',cursive",fontSize:16,color:C.purple}}>⚡ Brain Blitz</div>
+          <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:timerColor}}>{timeLeft}s</div>
         </div>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
-          <div style={{fontSize:12,color:"#4ade80",fontWeight:700}}>✓ {scoreRef.current}</div>
-          {streak>=3&&<div style={{fontSize:11,color:"#FFD700",fontWeight:800,animation:"mmPulse 0.6s ease"}}>🔥 x{streak>=5?3:2} COMBO!</div>}
-          <div style={{fontSize:12,color:"#f87171",fontWeight:700}}>✗ {wrong}</div>
+          <div style={{fontSize:13,color:C.green,fontWeight:800}}>✓ {scoreRef.current}</div>
+          {streak>=3&&<div style={{fontSize:11,color:C.orange,fontWeight:900}}>🔥 ×{streak>=5?3:2} Combo!</div>}
+          <div style={{fontSize:13,color:C.red,fontWeight:800}}>✗ {wrong}</div>
         </div>
-        <div style={{background:"rgba(255,255,255,0.1)",borderRadius:6,height:6,overflow:"hidden"}}>
-          <div style={{width:timerPct+"%",height:"100%",background:"linear-gradient(90deg,"+(timeLeft>20?"#4ade80":"#f87171")+",#FFD700)",borderRadius:6,transition:"width 1s linear"}}/>
+        <div style={{background:C.purple+"22",borderRadius:8,height:8,overflow:"hidden"}}>
+          <div style={{width:timerPct+"%",height:"100%",background:"linear-gradient(90deg,"+timerColor+","+C.purple+")",borderRadius:8,transition:"width 1s linear"}}/>
         </div>
       </div>
-      {/* Question */}
-      <div style={{position:"relative",zIndex:2,padding:"24px 18px 0"}}>
-        <div style={{background:flash==="right"?"rgba(74,222,128,0.15)":flash==="wrong"?"rgba(248,113,113,0.15)":"rgba(255,215,0,0.08)",border:"2px solid "+(flash==="right"?"rgba(74,222,128,0.5)":flash==="wrong"?"rgba(248,113,113,0.5)":"rgba(255,215,0,0.3)"),borderRadius:24,padding:"28px 20px",textAlign:"center",marginBottom:20,transition:"all 0.2s",animation:flash==="wrong"?"shakeX 0.4s ease":"none"}}>
-          <div style={{fontFamily:"'Fredoka One',cursive",fontSize:36,color:"white",letterSpacing:1}}>{q&&q.q}</div>
-          {flash&&<div style={{fontSize:28,marginTop:10}}>{flash==="right"?"✅":"❌"}</div>}
-        </div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
-          {q&&q.opts.map((o,i)=>(
-            <button key={i} onClick={()=>answer(o)} style={{background:"rgba(255,255,255,0.07)",border:"2px solid rgba(255,215,0,0.25)",borderRadius:18,padding:"22px 12px",fontFamily:"'Fredoka One',cursive",fontSize:26,color:"white",cursor:"pointer",textAlign:"center",transition:"transform 0.1s",boxShadow:"0 4px 16px rgba(0,0,0,0.3)"}}
-              onTouchStart={e=>e.currentTarget.style.transform="scale(0.95)"}
-              onTouchEnd={e=>e.currentTarget.style.transform="scale(1)"}
-            >{o}</button>
-          ))}
+      <div style={{position:"relative",zIndex:2,padding:"20px 16px"}}>
+        <Card color={C.purple} style={{textAlign:"center",padding:"26px 18px",marginBottom:16,
+          animation:chosen===q.ans?"correctBounce 0.5s ease":chosen!==null&&chosen!==q.ans?"wrongWiggle 0.5s ease":"none",
+          boxShadow:chosen===q.ans?"0 0 40px "+C.green+"50":chosen!==null&&chosen!==q.ans?"0 0 20px "+C.red+"44":"0 8px 30px "+C.purple+"28, inset 0 1px 0 rgba(255,255,255,0.8)",
+        }}>
+          {chosen!==null&&<div style={{fontSize:28,marginBottom:4,animation:"mmPop 0.3s ease"}}>{chosen===q.ans?"✅":"❌"}</div>}
+          <div style={{fontFamily:"'Fredoka One',cursive",fontSize:34,color:textColor()}}>{q&&q.q}</div>
+        </Card>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+          {q&&q.opts.map((o,i)=>{
+            const answered=chosen!==null;
+            let bg="white",border="2px solid "+C.purple+"33",col=textColor();
+            if(answered){if(o===q.ans){bg="#E8FFF4";border="2.5px solid #2ECC9A";col="#2ECC9A";}else if(o===chosen){bg="#FFF0F0";border="2.5px solid "+C.red;col=C.red;}}
+            return(
+              <button key={i} onClick={()=>answer(o)} style={{background:bg,border,borderRadius:18,padding:"18px 12px",fontSize:20,fontWeight:800,color:col,cursor:answered?"default":"pointer",transition:"all 0.2s",fontFamily:"'Nunito',sans-serif",position:"relative",overflow:"hidden"}}>
+                {!answered&&<div style={{position:"absolute",top:0,left:0,right:0,height:"50%",background:"linear-gradient(180deg,rgba(255,255,255,0.5),transparent)",borderRadius:"18px 18px 0 0",pointerEvents:"none"}}/>}
+                <div style={{fontSize:10,color:answered&&o===q.ans?"#2ECC9A":answered&&o===chosen?C.red:C.purple,fontWeight:900,marginBottom:3}}>{"ABCD"[i]}</div>
+                {answered&&o===q.ans?"✓ ":answered&&o===chosen&&o!==q.ans?"✗ ":""}{o}
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>
