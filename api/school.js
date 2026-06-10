@@ -381,6 +381,56 @@ export default async function handler(req, res) {
         return res.status(200).json({ok:r.ok});
       }
     }
+    // ══════════════════════════════════════════════════════
+    // CLASS LEADERBOARD — read-only, no teacher auth needed
+    // Called by school students directly; school_id verified
+    // against the student's own school_id stored at login.
+    // ══════════════════════════════════════════════════════
+    if (action==="school_get_class_leaderboard") {
+      const { school_id, class_num, section } = req.body;
+      if (!isUUID(school_id))         return res.status(400).json({error:"Invalid school_id"});
+      if (class_num === undefined)    return res.status(400).json({error:"class_num required"});
+
+      // 1. Fetch all students in this school + class + section
+      let params = `?school_id=eq.${school_id}&class_num=eq.${cleanInt(class_num,0,12)}&select=id,name,xp,coins,level,streak_days&order=xp.desc&limit=50`;
+      if (section && section.trim()) {
+        params += `&section=eq.${encodeURIComponent(clean(section,5).toUpperCase())}`;
+      }
+      const sr = await sb("students","GET",null,params);
+      if (!Array.isArray(sr.data)) return res.status(200).json({data:[]});
+
+      const students = sr.data;
+      if (students.length === 0) return res.status(200).json({data:[]});
+
+      // 2. Fetch sets_completed count for each student from student_progress
+      const ids = students.map(s=>s.id);
+      // PostgREST: get count per student_id using in filter
+      const inList = ids.map(id=>`"${id}"`).join(",");
+      const pr = await sb("student_progress","GET",null,
+        `?student_id=in.(${ids.join(",")})&select=student_id`);
+      // Count rows per student_id
+      const setCount = {};
+      if (Array.isArray(pr.data)) {
+        for (const row of pr.data) {
+          setCount[row.student_id] = (setCount[row.student_id]||0) + 1;
+        }
+      }
+
+      // 3. Build ranked list (already sorted by xp desc from DB)
+      const ranked = students.map((s, i) => ({
+        rank:          i + 1,
+        id:            s.id,
+        name:          s.name,
+        xp:            s.xp   || 0,
+        coins:         s.coins|| 0,
+        level:         s.level|| 1,
+        streak_days:   s.streak_days || 0,
+        sets_completed: setCount[s.id] || 0,
+      }));
+
+      return res.status(200).json({ data: ranked });
+    }
+
     return res.status(400).json({error:"Unknown action"});
 
   } catch(err) {

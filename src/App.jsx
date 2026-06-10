@@ -47,7 +47,7 @@ import { StudentLogin }                         from './components/teacher/Teach
 import { AdminPanel }                           from './components/admin/AdminPanel.jsx';
 
 // ── Shared utilities ──────────────────────────────────────────────────────────
-import { SOSButton, FreezeDetector }            from './components/shared/shared.jsx';
+import { SOSButton, FABButton, FreezeDetector }            from './components/shared/shared.jsx';
 import { ErrorBoundary, UpdatePrompt }          from './components/shared/ErrorBoundary.jsx';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -286,21 +286,21 @@ export default function App() {
         onDone={() => { db.track('lesson_complete', child?.id, null, { lesson_id: lesson?.id, set_index: lesson?.setIndex }); setScreen('lessons'); }}
         onNextSet={si => { db.track('set_advance', child?.id, null, { lesson_id: lesson?.id, set_index: si }); setLesson(l => ({ ...l, setIndex: si })); }}
       />
-      {showSOS && <SOSButton onClick={() => goFeedback('bug')} />}
+      {showSOS && <FABButton onHelp={() => goFeedback('bug')} showRankings={false} />}
       <FreezeDetector currentScreen={screen} child={child} onReport={goFeedback} />
     </>;
 
   if (screen === 'abacus')
     return <><GlobalStyles />{SwUpdatePortal}
       <Abacus onBack={() => setScreen('home')} child={child} />
-      {showSOS && <SOSButton onClick={() => goFeedback('bug')} />}
+      {showSOS && <FABButton onHelp={() => goFeedback('bug')} showRankings={false} />}
       <FreezeDetector currentScreen={screen} child={child} onReport={goFeedback} />
     </>;
 
   if (screen === 'olympiad')
     return <><GlobalStyles />{SwUpdatePortal}
       <Olympiad child={child} setChild={setChild} onBack={() => setScreen('home')} />
-      {showSOS && <SOSButton onClick={() => goFeedback('bug')} />}
+      {showSOS && <FABButton onHelp={() => goFeedback('bug')} showRankings={false} />}
       <FreezeDetector currentScreen={screen} child={child} onReport={goFeedback} />
     </>;
 

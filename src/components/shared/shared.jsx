@@ -189,26 +189,104 @@ export function ProgressMap({ child, lessons, progress, world, onSelectSet }) {
     </div>
   );
 }
-export function SOSButton({ onClick }) {
+// ── FABButton — floating action button (Help + optional Rankings) ──────────
+// Props:
+//   onHelp       — called when Help 🆘 is tapped
+//   onRankings   — called when Rankings 🏆 is tapped (optional)
+//   showRankings — boolean: show the rankings sub-button (school students only)
+export function FABButton({ onHelp, onRankings, showRankings }) {
+  const [open,  setOpen]  = useState(false);
   const [pulse, setPulse] = useState(false);
+
   useEffect(() => {
-    // Pulse every 30 seconds to remind user it exists
-    const t = setInterval(() => { setPulse(true); setTimeout(() => setPulse(false), 1000); }, 30000);
+    const t = setInterval(() => {
+      setPulse(true);
+      setTimeout(() => setPulse(false), 1000);
+    }, 30000);
     return () => clearInterval(t);
   }, []);
+
+  // Close on outside tap
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    const t = setTimeout(() => document.addEventListener("click", close), 0);
+    return () => { clearTimeout(t); document.removeEventListener("click", close); };
+  }, [open]);
+
   return (
-    <button onClick={onClick} style={{
-      position:"fixed", bottom:72, right:16, zIndex:999,
-      width:46, height:46, borderRadius:"50%",
-      background: pulse ? `${C.red}` : `${C.red}cc`,
-      border:`2px solid ${C.red}`,
-      boxShadow: pulse ? `0 0 20px ${C.red}` : `0 0 10px ${C.red}66`,
-      display:"flex", alignItems:"center", justifyContent:"center",
-      fontSize:20, cursor:"pointer",
-      animation: pulse ? "pulseG 0.5s ease" : "none",
-      transition:"all 0.3s",
-    }}>🆘</button>
+    <div style={{ position:"fixed", bottom:72, right:16, zIndex:999, display:"flex", flexDirection:"column", alignItems:"center", gap:10 }}>
+
+      {/* Sub-buttons — fan upward when open */}
+      {open && (
+        <>
+          {/* Help 🆘 */}
+          <button
+            onClick={e => { e.stopPropagation(); setOpen(false); onHelp(); }}
+            style={{
+              width:44, height:44, borderRadius:"50%",
+              background:`${C.red}ee`,
+              border:`2px solid ${C.red}`,
+              boxShadow:`0 0 12px ${C.red}88`,
+              display:"flex", alignItems:"center", justifyContent:"center",
+              fontSize:19, cursor:"pointer",
+              animation:"fabSubIn 0.2s ease both",
+              animationDelay: showRankings ? "0.05s" : "0s",
+            }}
+            title="Help"
+          >🆘</button>
+
+          {/* Rankings 🏆 — only for school students */}
+          {showRankings && (
+            <button
+              onClick={e => { e.stopPropagation(); setOpen(false); onRankings && onRankings(); }}
+              style={{
+                width:44, height:44, borderRadius:"50%",
+                background:`${C.yellow}ee`,
+                border:`2px solid ${C.yellow}`,
+                boxShadow:`0 0 12px ${C.yellow}88`,
+                display:"flex", alignItems:"center", justifyContent:"center",
+                fontSize:19, cursor:"pointer",
+                animation:"fabSubIn 0.2s ease both",
+                animationDelay:"0s",
+              }}
+              title="Class Rankings"
+            >🏆</button>
+          )}
+        </>
+      )}
+
+      {/* Main FAB */}
+      <button
+        onClick={e => {
+          e.stopPropagation();
+          // If rankings not available — single-tap fires help directly
+          if (!showRankings) { onHelp(); return; }
+          setOpen(o => !o);
+        }}
+        style={{
+          width:46, height:46, borderRadius:"50%",
+          background: open ? C.purple : pulse ? C.red : `${C.red}cc`,
+          border:`2px solid ${open ? C.purple : C.red}`,
+          boxShadow: open
+            ? `0 0 18px ${C.purple}99`
+            : pulse ? `0 0 20px ${C.red}` : `0 0 10px ${C.red}66`,
+          display:"flex", alignItems:"center", justifyContent:"center",
+          fontSize:20, cursor:"pointer",
+          transition:"all 0.25s",
+          transform: open ? "rotate(45deg)" : "none",
+        }}
+        title={open ? "Close" : showRankings ? "Menu" : "Help"}
+      >
+        {open ? "✕" : "🚀"}
+      </button>
+    </div>
   );
+}
+
+// Keep SOSButton as a thin alias so any file that still imports it doesn't break
+export function SOSButton({ onClick }) {
+  return <FABButton onHelp={onClick} showRankings={false} />;
 }
 
 export function BadgeUnlockToast({ badges, onDone }) {

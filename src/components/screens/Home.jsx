@@ -7,7 +7,7 @@ import { Btn, Inp, Card, BackBtn, XPBar } from '../ui/primitives.jsx';
 import { Starfield, Confetti, Mascot, Tutorial, MuteBtn } from '../layout/layout.jsx';
 import { WORLDS, LESSONS, BADGES } from '../../constants/gameData.js';
 import { DailyQuestHub, DailyQuiz, DailyPuzzle } from './Daily.jsx';
-import { ProgressGrid, SOSButton } from '../shared/shared.jsx';
+import { ProgressGrid, SOSButton, FABButton, ClassLeaderboard } from '../shared/shared.jsx';
 import { RatingPrompt } from './Feedback.jsx';
 
 
@@ -235,7 +235,215 @@ export function WorldsSection({ WORLDS, child, onWorld, forceOpen, onToggle }) {
   );
 }
 
+// ── ClassLeaderboard — bottom drawer for school students ─────────────────────
+// Caches result in localStorage keyed by school+class+section.
+// Refreshes once per day (midnight reset).
+const LB_CACHE_KEY = (sid, cls, sec) => `mm_lb_${sid}_${cls}_${sec||"all"}`;
+
+export function ClassLeaderboard({ child, onClose }) {
+  const [data,    setData]    = useState(null);   // null=loading, []= empty, [...]= rows
+  const [error,   setError]   = useState("");
+  const [msLeft,  setMsLeft]  = useState(0);      // ms until midnight
+
+  // ── Countdown to midnight ────────────────────────────────────────
+  useEffect(() => {
+    const calcMs = () => {
+      const now = new Date();
+      const midnight = new Date(now);
+      midnight.setHours(24, 0, 0, 0);
+      return midnight - now;
+    };
+    setMsLeft(calcMs());
+    const t = setInterval(() => setMsLeft(calcMs()), 60000); // update every minute
+    return () => clearInterval(t);
+  }, []);
+
+  const hh = String(Math.floor(msLeft / 3600000)).padStart(2, "0");
+  const mm = String(Math.floor((msLeft % 3600000) / 60000)).padStart(2, "0");
+
+  // ── Fetch / cache logic ─────────────────────────────────────────
+  useEffect(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    const cacheKey = LB_CACHE_KEY(child.school_id, child.class_num, child.section);
+    let cached = null;
+    try {
+      const raw = localStorage.getItem(cacheKey);
+      if (raw) cached = JSON.parse(raw);
+    } catch(e) {}
+
+    if (cached && cached.fetchedAt === today && Array.isArray(cached.data)) {
+      setData(cached.data);
+      return;
+    }
+
+    // Stale or missing — fetch fresh
+    fetch("/api/school", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action:    "school_get_class_leaderboard",
+        school_id: child.school_id,
+        class_num: child.class_num,
+        section:   child.section || "",
+      }),
+    })
+      .then(r => r.json())
+      .then(d => {
+        if (d.data) {
+          setData(d.data);
+          try { localStorage.setItem(cacheKey, JSON.stringify({ fetchedAt: today, data: d.data })); } catch(e) {}
+        } else {
+          setError(d.error || "Could not load rankings.");
+          setData([]);
+        }
+      })
+      .catch(() => { setError("Network error. Try again later."); setData([]); });
+  }, [child.school_id, child.class_num, child.section]);
+
+  // ── Class label ──────────────────────────────────────────────────
+  const classLabel = (() => {
+    const cn = parseInt(child.class_num);
+    if (cn === 10) return "Nursery";
+    if (cn === 11) return "Jr KG";
+    if (cn === 12) return "Sr KG";
+    return `Class ${cn}`;
+  })();
+  const secLabel = child.section ? ` · Section ${child.section}` : "";
+
+  // ── Rank medal ───────────────────────────────────────────────────
+  const medal = (rank) => {
+    if (rank === 1) return "🥇";
+    if (rank === 2) return "🥈";
+    if (rank === 3) return "🥉";
+    return <span style={{ fontSize:13, color:"#9890C4", fontWeight:800, minWidth:22, display:"inline-block", textAlign:"center" }}>{rank}</span>;
+  };
+
+  // ── My row (logged-in student) ───────────────────────────────────
+  const myRow  = data ? data.find(r => r.id === child.id) : null;
+  const inTop  = myRow && myRow.rank <= 10;
+  const top10  = data ? data.slice(0, 10) : [];
+
+  // ── Row renderer ─────────────────────────────────────────────────
+  const renderRow = (row, isMe) => (
+    <div key={row.id} style={{
+      display:"flex", alignItems:"center", gap:10,
+      padding:"10px 12px", borderRadius:16,
+      background: isMe ? "linear-gradient(135deg,#5B4FE814,#9B59F510)" : "white",
+      border: isMe ? "2px solid #5B4FE844" : "1.5px solid rgba(91,79,232,0.08)",
+      boxShadow: isMe ? "0 0 14px #5B4FE822" : "0 2px 8px rgba(91,79,232,0.06)",
+      marginBottom:8,
+    }}>
+      {/* Rank */}
+      <div style={{ width:28, textAlign:"center", fontSize:18, flexShrink:0 }}>{medal(row.rank)}</div>
+      {/* Avatar initial */}
+      <div style={{ width:34, height:34, borderRadius:10, background:`${isMe?"#5B4FE8":"#9B59F5"}22`, border:`1.5px solid ${isMe?"#5B4FE8":"#9B59F5"}33`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:900, color:isMe?"#5B4FE8":"#9B59F5", flexShrink:0 }}>
+        {row.name?.[0]?.toUpperCase() || "?"}
+      </div>
+      {/* Name */}
+      <div style={{ flex:1, minWidth:0 }}>
+        <div style={{ fontSize:13, fontWeight:800, color:"#1A1040", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+          {isMe ? `${row.name} (You)` : row.name}
+        </div>
+        <div style={{ fontSize:10, color:"#9890C4", fontWeight:600 }}>Lv {row.level} · 🔥 {row.streak_days}d</div>
+      </div>
+      {/* Stats */}
+      <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:2, flexShrink:0 }}>
+        <div style={{ fontSize:12, fontWeight:900, color:"#FFC847" }}>⭐ {(row.xp||0).toLocaleString()} XP</div>
+        <div style={{ fontSize:11, color:"#4BBDF5", fontWeight:700 }}>🪙 {row.coins||0} · 📚 {row.sets_completed||0}</div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div
+      style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.55)", zIndex:400, display:"flex", alignItems:"flex-end", justifyContent:"center" }}
+      onClick={onClose}
+    >
+      <div
+        style={{ background:"#FAFBFF", borderRadius:"24px 24px 0 0", width:"100%", maxWidth:480, maxHeight:"82vh", display:"flex", flexDirection:"column", animation:"slideUp 0.28s ease", boxShadow:"0 -4px 40px rgba(91,79,232,0.18)" }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div style={{ padding:"18px 18px 12px", borderBottom:"1.5px solid rgba(91,79,232,0.08)", flexShrink:0 }}>
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:6 }}>
+            <div>
+              <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                <span style={{ fontSize:22 }}>🏆</span>
+                <span style={{ fontFamily:"'Orbitron',sans-serif", fontSize:13, fontWeight:900, color:"#1A1040" }}>CLASS RANKINGS</span>
+              </div>
+              <div style={{ fontSize:12, color:"#9890C4", fontWeight:600, marginTop:2 }}>{classLabel}{secLabel}</div>
+            </div>
+            <button onClick={onClose} style={{ background:"rgba(91,79,232,0.08)", border:"none", borderRadius:10, width:32, height:32, fontSize:16, cursor:"pointer", color:"#9890C4", display:"flex", alignItems:"center", justifyContent:"center" }}>✕</button>
+          </div>
+          {/* Freshness bar */}
+          <div style={{ display:"flex", alignItems:"center", gap:8, background:"#F0ECFF", borderRadius:12, padding:"7px 12px", marginTop:6 }}>
+            <span style={{ fontSize:10 }}>🟢</span>
+            <span style={{ fontSize:11, color:"#2ECC9A", fontWeight:700 }}>Updated today</span>
+            <span style={{ fontSize:11, color:"#9890C4", marginLeft:"auto" }}>Next update in <strong style={{ color:"#5B4FE8" }}>{hh}:{mm}</strong></span>
+          </div>
+          {/* Ranked-by pill */}
+          <div style={{ marginTop:8, display:"inline-flex", alignItems:"center", gap:6, background:"#FFC84718", border:"1.5px solid #FFC84730", borderRadius:999, padding:"4px 12px" }}>
+            <span style={{ fontSize:11 }}>📊</span>
+            <span style={{ fontSize:11, fontWeight:800, color:"#FFC847" }}>Ranked by XP · Top 10 in your class</span>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div style={{ flex:1, overflowY:"auto", padding:"14px 16px 24px" }}>
+          {/* Loading */}
+          {data === null && (
+            <div style={{ textAlign:"center", padding:"32px 0" }}>
+              <div style={{ fontSize:32, animation:"mmFloat 1.5s ease-in-out infinite", marginBottom:10 }}>🏆</div>
+              <div style={{ color:"#9890C4", fontSize:13, fontWeight:700 }}>Loading rankings…</div>
+            </div>
+          )}
+
+          {/* Error */}
+          {data !== null && error && (
+            <div style={{ background:"#FF6B6B14", border:"1.5px solid #FF6B6B30", borderRadius:14, padding:"14px 16px", textAlign:"center", color:"#FF6B6B", fontSize:13, fontWeight:700 }}>
+              ⚠ {error}
+            </div>
+          )}
+
+          {/* Empty */}
+          {data !== null && !error && data.length === 0 && (
+            <div style={{ textAlign:"center", padding:"28px 0", color:"#9890C4", fontSize:13 }}>
+              No classmates found yet. Be the first on the board! 🚀
+            </div>
+          )}
+
+          {/* Top 10 */}
+          {data !== null && !error && data.length > 0 && (
+            <>
+              {top10.map(row => renderRow(row, row.id === child.id))}
+
+              {/* Pinned self row — only if outside top 10 */}
+              {myRow && !inTop && (
+                <>
+                  <div style={{ textAlign:"center", margin:"6px 0", fontSize:11, color:"#9890C4", fontWeight:700 }}>── Your Rank ──</div>
+                  {renderRow(myRow, true)}
+                </>
+              )}
+
+              {/* Not in list at all — show placeholder */}
+              {!myRow && (
+                <>
+                  <div style={{ textAlign:"center", margin:"6px 0", fontSize:11, color:"#9890C4", fontWeight:700 }}>── Your Rank ──</div>
+                  <div style={{ background:"linear-gradient(135deg,#5B4FE814,#9B59F510)", border:"2px solid #5B4FE844", borderRadius:16, padding:"12px 14px", textAlign:"center", color:"#9890C4", fontSize:13, fontWeight:700 }}>
+                    Complete a lesson to appear on the board! 🚀
+                  </div>
+                </>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onBazaar, onLogout, onFeedback, onRate, onSettings, isLessonPurchased, onShop, onBadges, onCharacter, onThemeChange }) {
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showTutorial, setShowTutorial] = useState(()=>!localStorage.getItem('mm_tutorial_done'));
   const doneTutorial = () => { localStorage.setItem('mm_tutorial_done','1'); setShowTutorial(false); };
   const [showWelcome, setShowWelcome] = useState(()=>!localStorage.getItem('mm_welcomed_'+(child?.id||"")));
@@ -288,7 +496,19 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
       <div style={{ position:"absolute", top:-40, right:-40, width:180, height:180, borderRadius:"60% 40% 30% 70%/60% 30% 70% 40%", background:"radial-gradient(#9B59F540,#9B59F510)", animation:"mmWave 8s ease-in-out infinite", pointerEvents:"none", zIndex:0 }}/>
       <div style={{ position:"absolute", bottom:80, left:-30, width:120, height:120, borderRadius:"60% 40% 30% 70%/60% 30% 70% 40%", background:"radial-gradient(#5B4FE840,#5B4FE810)", animation:"mmWave 10s ease-in-out infinite reverse", pointerEvents:"none", zIndex:0 }}/>
       <Starfield n={50}/>
-      {onFeedback && <SOSButton onClick={() => onFeedback()}/>}
+      {onFeedback && (
+        <FABButton
+          onHelp={() => onFeedback()}
+          onRankings={() => setShowLeaderboard(true)}
+          showRankings={!!(child.is_school_student && child.school_id)}
+        />
+      )}
+      {showLeaderboard && (
+        <ClassLeaderboard
+          child={child}
+          onClose={() => setShowLeaderboard(false)}
+        />
+      )}
       {showTutorial && <Tutorial onDone={doneTutorial}/>}
       {showDQ     && <DailyQuiz   child={child} onClose={() => setShowDQ(false)}/>}
       {showPuzzle && <DailyPuzzle child={child} onClose={() => setShowPuzzle(false)}/>}

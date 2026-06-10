@@ -48,6 +48,7 @@ export function GlobalStyles() {
         @keyframes goldPulse{0%,100%{box-shadow:inset 0 1.5px 0 rgba(255,230,100,.25),0 4px 0 rgba(0,0,0,.5),0 8px 28px rgba(255,184,0,.18)}50%{box-shadow:inset 0 1.5px 0 rgba(255,230,100,.35),0 4px 0 rgba(0,0,0,.5),0 8px 44px rgba(255,184,0,.55),0 0 60px rgba(255,184,0,.18)}}
         @keyframes levitate{0%,100%{transform:translateY(0) rotate(-.5deg)}50%{transform:translateY(-12px) rotate(.5deg)}}
         @keyframes xpFlow{0%{background-position:-200% 0}100%{background-position:200% 0}}
+        @keyframes fabSubIn{0%{opacity:0;transform:scale(0.5) translateY(12px)}100%{opacity:1;transform:scale(1) translateY(0)}}
         @keyframes fireFlick{0%,100%{transform:scaleY(1) scaleX(1)}30%{transform:scaleY(1.12) scaleX(.92)}65%{transform:scaleY(.92) scaleX(1.06)}}
         @keyframes starSpin{0%{transform:rotate(0) scale(1)}50%{transform:rotate(180deg) scale(1.3)}100%{transform:rotate(360deg) scale(1)}}
         @keyframes nebulaDrift{0%{transform:translate(0,0) rotate(0)}33%{transform:translate(18px,-12px) rotate(120deg)}66%{transform:translate(-12px,18px) rotate(240deg)}100%{transform:translate(0,0) rotate(360deg)}}
