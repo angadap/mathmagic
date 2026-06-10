@@ -7,7 +7,7 @@ import { Btn, Inp, Card, BackBtn, XPBar } from '../ui/primitives.jsx';
 import { Starfield, Confetti, Mascot, Tutorial, MuteBtn } from '../layout/layout.jsx';
 import { WORLDS, LESSONS, BADGES } from '../../constants/gameData.js';
 import { DailyQuestHub, DailyQuiz, DailyPuzzle } from './Daily.jsx';
-import { ProgressGrid, SOSButton, FABButton, ClassLeaderboard } from '../shared/shared.jsx';
+import { ProgressGrid, SOSButton, FABButton } from '../shared/shared.jsx';
 import { RatingPrompt } from './Feedback.jsx';
 
 
