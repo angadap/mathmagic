@@ -4,7 +4,7 @@ import { createHash } from "crypto";
 
 const SB_URL     = process.env.SUPABASE_URL;
 const SB_SERVICE = process.env.SUPABASE_SERVICE_KEY;
-const ADMIN_HASH = "ab2da7525c00b97df6fc54fa82adc3c7dbe8345e6e4f621ce2f699994efd61be";
+const ADMIN_HASH = process.env.ADMIN_SECRET_HASH || "ab2da7525c00b97df6fc54fa82adc3c7dbe8345e6e4f621ce2f699994efd61be";
 
 const ALLOWED  = ["https://mathmagic-virid.vercel.app","http://localhost:5173","http://localhost:3000"];
 const UUID_RE  = /^[0-9a-f-]{36}$/i;

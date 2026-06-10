@@ -2,6 +2,12 @@
 // All DB operations server-side only. JWT verified before every write.
 
 import { notifyNewUser } from "./notify.js";
+import { createHash } from "crypto";
+
+// SECURITY: hash PIN server-side before storing
+function hashPin(pin) {
+  return createHash("sha256").update("mm_pin_" + String(pin)).digest("hex");
+}
 
 // ── ENV (all from Vercel environment variables — never in client code) ──
 const SB_URL     = process.env.SUPABASE_URL;
@@ -278,6 +284,23 @@ export default async function handler(req, res) {
       return res.status(200).json({ data: Array.isArray(r.data) ? r.data[0] : null });
     }
 
+    // ── PUBLIC WRITE: submit_feedback — works for all user types incl. school students with no JWT ──
+    if (action === "submit_feedback") {
+      const { child_id, child_name, category, description, screen, app_version } = req.body;
+      await sbQuery("feedback", "POST", {
+        child_id: sanitizeStr(child_id, 36) || "guest",
+        child_name: sanitizeStr(child_name, 50) || "Unknown",
+        category: sanitizeStr(category, 50),
+        description: sanitizeStr(description, 1000),
+        screen: sanitizeStr(screen, 50) || "unknown",
+        device_info: "",
+        app_version: sanitizeStr(app_version, 20) || "1.0.0",
+        status: "open",
+        created_at: new Date().toISOString(),
+      });
+      return res.status(200).json({ ok: true });
+    }
+
     // ── AUTHENTICATED ──────────────────────────────────────────
     const user = await verifyToken(token);
     if (!user?.id) return res.status(401).json({ error: "Unauthorized — please log in" });
@@ -296,15 +319,38 @@ export default async function handler(req, res) {
         return res.status(403).json({ error: "Forbidden" });
       const r = await sbQuery("children", "GET", null,
         `?parent_id=eq.${encodeURIComponent(user.id)}&order=created_at`);
-      return res.status(200).json({ data: r.data });
+      // SECURITY: never send pin_hash to client
+      const safe = Array.isArray(r.data)
+        ? r.data.map(({ pin_hash, ...rest }) => rest)
+        : [];
+      return res.status(200).json({ data: safe });
+    }
+
+    if (action === "verify_pin") {
+      // Server-side PIN comparison — pin_hash never leaves server
+      const { child_id, pin } = req.body;
+      if (!isValidUUID(child_id)) return res.status(400).json({ error: "Invalid child_id" });
+      if (!isValidUUID(user.id)) return res.status(401).json({ error: "Unauthorized" });
+      const r = await sbQuery("children", "GET", null,
+        `?id=eq.${encodeURIComponent(child_id)}&parent_id=eq.${encodeURIComponent(user.id)}&select=id,name,avatar,class_num,xp,coins,gems,level,streak_days,is_premium,badge_ids,shop_items,total_correct,bosses_defeated,pin_hash`);
+      const child = Array.isArray(r.data) ? r.data[0] : null;
+      if (!child) return res.status(403).json({ error: "Forbidden" });
+      // Compare against hashed PIN (new registrations) with fallback to raw (legacy)
+      const inputHash = hashPin(sanitizeStr(pin, 10));
+      const ok = child.pin_hash === inputHash || child.pin_hash === sanitizeStr(pin, 10);
+      const { pin_hash, ...safeChild } = child;
+      return res.status(200).json({ ok, child: ok ? safeChild : null });
     }
 
     if (action === "add_child") {
       const name     = sanitizeStr(req.body.name, 50);
       const avatar   = sanitizeStr(req.body.avatar, 10);
-      const pin_hash = sanitizeStr(req.body.pin_hash, 100);
+      // SECURITY: receive raw PIN from client, hash it server-side before storing
+      const raw_pin = sanitizeStr(req.body.pin_hash || req.body.pin, 10);
       const class_num = sanitizeInt(req.body.class_num, 1, 5);
-      if (!name || !pin_hash) return res.status(400).json({ error: "Missing fields" });
+      if (!name || !raw_pin) return res.status(400).json({ error: "Missing fields" });
+      if (!/^\d{4}$/.test(raw_pin)) return res.status(400).json({ error: "PIN must be 4 digits" });
+      const pin_hash = hashPin(raw_pin);
 
       const r = await sbQuery("children", "POST", {
         parent_id: user.id, name, avatar, class_num, pin_hash,
@@ -312,7 +358,9 @@ export default async function handler(req, res) {
         created_at: new Date().toISOString(),
       });
       if (!r.ok) return res.status(400).json({ error: "Failed to create child" });
-      const child = Array.isArray(r.data) ? r.data[0] : r.data;
+      const rawChild = Array.isArray(r.data) ? r.data[0] : r.data;
+      // SECURITY: never return pin_hash to client
+      const { pin_hash: _ph, ...child } = rawChild || {};
 
       // Telegram notification (fire-and-forget)
       notifyNewUser({ name, classNum: class_num, avatar, email: user.email }).catch(() => {});
@@ -408,22 +456,6 @@ export default async function handler(req, res) {
       const r = await sbQuery("puzzle_completions", "GET", null,
         `?child_id=eq.${encodeURIComponent(child_id)}&date=eq.${sanitizeStr(date, 10)}&limit=1`);
       return res.status(200).json({ data: Array.isArray(r.data) ? r.data : [] });
-    }
-
-    if (action === "submit_feedback") {
-      const { child_id, child_name, category, description, screen, app_version } = req.body;
-      await sbQuery("feedback", "POST", {
-        child_id: sanitizeStr(child_id, 36) || "guest",
-        child_name: sanitizeStr(child_name, 50) || "Unknown",
-        category: sanitizeStr(category, 50),
-        description: sanitizeStr(description, 1000),
-        screen: sanitizeStr(screen, 50) || "unknown",
-        device_info: "",
-        app_version: sanitizeStr(app_version, 20) || "1.0.0",
-        status: "open",
-        created_at: new Date().toISOString(),
-      });
-      return res.status(200).json({ ok: true });
     }
 
     if (action === "save_rating") {

@@ -63,6 +63,13 @@ export function cacheGet(key) {
 
 // ── Shared LS helpers (progress + children) ───────────────────────────────────
 
+// SECURITY: strip pin_hash before caching any child record client-side
+export function stripPin(child) {
+  if (!child) return child;
+  const { pin_hash, ...safe } = child;
+  return safe;
+}
+
 // ── Main db / API layer ────────────────────────────────────────────────────
 export function dbLog(level, msg, detail="") {
   if (level === "error") console.error("[DB]", msg, detail);
@@ -452,7 +459,7 @@ export const db = {
         body: JSON.stringify({ action:"get_children", id:cid }) });
       const j = await res.json();
       const c = Array.isArray(j.data) ? j.data[0] : j.data;
-      if (c) { MEM.children.push(c); lsPersist(CHILDREN_LS_KEY, MEM.children); }
+      if (c) { MEM.children.push(stripPin(c)); lsPersist(CHILDREN_LS_KEY, MEM.children); }
       return { data: c || null, error: null };
     } catch(e) { return { data: null, error: e.message }; }
   },
@@ -623,7 +630,7 @@ export const db = {
     if (sb) {
       const r = await sb.select("children", { parent_id: pid });
       if (!r.error) {
-        r.data.forEach(c=>{ if(!MEM.children.find(m=>m.id===c.id)) MEM.children.push(c); });
+        r.data.forEach(c=>{ const sc=stripPin(c); if(!MEM.children.find(m=>m.id===sc.id)) MEM.children.push(sc); });
         lsPersist(CHILDREN_LS_KEY, MEM.children); // persist for next session
         return { data:r.data, error:null };
       }
@@ -641,7 +648,7 @@ export const db = {
     if (sb) {
       const r = await sb.insert("children", payload);
       if (!r.error && r.data) {
-        MEM.children.push(r.data);
+        MEM.children.push(stripPin(r.data));
         lsPersist(CHILDREN_LS_KEY, MEM.children);
         dbLog("ok","addChild saved to DB ✓", r.data.id);
         return { data:r.data, error:null };
@@ -655,13 +662,26 @@ export const db = {
   },
 
   async checkPin(cid, pin) {
-    const sb = await this.getSb();
-    if (sb) {
-      const r = await sb.select("children", { id: cid });
-      if (!r.error && r.data?.[0]) { const c=r.data[0]; if(!MEM.children.find(m=>m.id===c.id)) MEM.children.push(c); return { ok:c.pin_hash===pin, child:c }; }
+    // SECURITY: PIN comparison always server-side — pin_hash never sent to client
+    try {
+      const res = await fetch("/api/db", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${this._token||""}` },
+        body: JSON.stringify({ action: "verify_pin", child_id: cid, pin: String(pin) }),
+      });
+      const j = await res.json();
+      if (j.ok && j.child) {
+        // Cache child in memory (without pin_hash — server already stripped it)
+        if (!MEM.children.find(m => m.id === j.child.id)) MEM.children.push(j.child);
+        else { const idx = MEM.children.findIndex(m => m.id === j.child.id); MEM.children[idx] = j.child; }
+        lsPersist(CHILDREN_LS_KEY, MEM.children);
+        return { ok: true, child: j.child };
+      }
+      return { ok: false };
+    } catch(e) {
+      dbLog("error", "checkPin failed", e.message);
+      return { ok: false };
     }
-    const c = MEM.children.find(x=>x.id===cid);
-    return c ? { ok:c.pin_hash===pin, child:c } : { ok:false };
   },
 
   async addXP(cid, xp, coins=0, isSchoolStudent=false) {
