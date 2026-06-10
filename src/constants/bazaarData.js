@@ -406,40 +406,7 @@ export const ADVENTURE_QUESTIONS = {
   },
 };
 
-// ─── Get questions for a specific adventure + class ───────────────────
-export function getAdventureQuestions(adventureId, classNum, count = 8) {
-  const group = getClassGroup(classNum);
-  const pool = (ADVENTURE_QUESTIONS[adventureId] || {})[group] || [];
-  if (!pool.length) return [];
-  const shuffled = [...pool].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, Math.min(count, shuffled.length)).map(q => ({
-    ...q,
-    options: q.optionLabels || q.options.map(String),
-    correct_answer: q.displayAnswer || String(q.answer),
-    scenario: q.story,
-    question: q.question,
-    hint: q.hint,
-    explain: q.explain,
-  }));
-}
-
-// ─── Speed Blitz — mixed questions for the child's class group ────────
-export function getSpeedBlitzQuestions(classNum, count = 15) {
-  const group = getClassGroup(classNum);
-  const all = [];
-  Object.entries(ADVENTURE_QUESTIONS).forEach(([adventureId, groups]) => {
-    const pool = groups[group] || [];
-    pool.forEach(q => all.push({ ...q, adventureId }));
-  });
-  return all.sort(() => Math.random() - 0.5).slice(0, count).map(q => ({
-    ...q,
-    options: q.optionLabels || q.options.map(String),
-    correct_answer: q.displayAnswer || String(q.answer),
-    scenario: q.story,
-    question: q.question,
-    hint: q.hint,
-  }));
-}
+// ─── Question getters moved to bottom (parametric + anti-repeat versions) ───
 
 // ─── Daily Scenarios (class-appropriate) ─────────────────────────────
 export const DAILY_SCENARIOS = [
