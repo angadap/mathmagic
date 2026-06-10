@@ -6,7 +6,7 @@ import { SFX } from '../../lib/sfx.js';
 import { BackBtn } from '../ui/primitives.jsx';
 import {
   BAZAAR_ADVENTURES, CLASS_GROUP_LABELS, getClassGroup,
-  getAdventureQuestions, getSpeedBlitzQuestions,
+  getAdventureQuestions, getAdventureQuestionsForChild, getSpeedBlitzQuestions,
   getTodayDailyScenario, DAILY_SCENARIOS,
   BAZAAR_ACHIEVEMENTS,
   getBazaarStats, updateBazaarStats, setStatMax,
@@ -847,7 +847,7 @@ export function BazaarScreen({ child, onBack }) {
     setIsDaily(daily);
     setDailyScenario(ds);
     setIsSpeed(false);
-    const qs = getAdventureQuestions(adv.id, child.class_num, 8);
+    const qs = getAdventureQuestionsForChild(adv.id, child.class_num, child.id, 8);
     setQuestions(qs);
     setStep('intro');
   }

@@ -559,3 +559,561 @@ export function setBazaarOutfit() {}
 export function getBazaarPurchased() { return []; }
 export function addBazaarPurchase() {}
 export function isItemOwned() { return true; }
+
+// ═══════════════════════════════════════════════════════════════════════
+//  QUESTION GENERATOR — Parametric questions with randomized numbers
+//  These produce DIFFERENT numbers every play → mathematically infinite
+// ═══════════════════════════════════════════════════════════════════════
+
+// ── Random helpers ─────────────────────────────────────────────────────
+function rnd(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function rndStep(min, max, step) { return min + rnd(0, Math.floor((max - min) / step)) * step; }
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+// ── Template engine ────────────────────────────────────────────────────
+// Each generator returns a fresh question object with randomized values.
+// answer is always computed from the random values — never hardcoded.
+
+export const QUESTION_GENERATORS = {
+
+  // ──────────────────────────────────────────────────────────────────
+  //  🛒 SHOPPING generators
+  // ──────────────────────────────────────────────────────────────────
+  shopping: [
+    // G1: Simple counting / comparison
+    () => {
+      const a = rnd(2, 6), b = rnd(2, 6);
+      const items = pick(['apples 🍎','bananas 🍌','oranges 🍊','mangoes 🥭']);
+      return { story:`Mummy has ${a} ${items} and buys ${b} more.`, question:`How many ${items} are there now?`, hint:`${a} + ${b}`, answer: a+b, options: shuffle4([a+b, a+b-1, a+b+1, a+b+2]), explain:`${a} + ${b} = ${a+b}!`, group:1 };
+    },
+    () => {
+      const p1 = rndStep(2,8,1), p2 = rndStep(10,20,5);
+      const i1 = pick(['banana 🍌','lemon 🍋','guava']), i2 = pick(['mango 🥭','apple 🍎','papaya']);
+      return { story:`A ${i1} costs ₹${p1}. A ${i2} costs ₹${p2}.`, question:`Which one costs MORE?`, hint:`₹${p2} is bigger`, answer: i2, options: [i1, i2], explain:`₹${p2} > ₹${p1}, so ${i2} costs more!`, group:1, isText:true };
+    },
+    () => {
+      const have = rndStep(5,20,5), cost = rnd(3, have-1);
+      return { story:`You have ₹${have}. A toy costs ₹${cost}.`, question:`Can you buy the toy?`, hint:`₹${have} > ₹${cost}?`, answer:'Yes ✅', options:['Yes ✅','No ❌'], explain:`₹${have} > ₹${cost}, so Yes!`, group:1, isText:true };
+    },
+    // G2: Simple totals, change
+    () => {
+      const qty = rnd(2,5), rate = rndStep(10,30,5), extra = rndStep(5,20,5);
+      const item = pick(['apples','tomatoes','potatoes','bananas']);
+      return { story:`Mummy buys ${qty} kg ${item} at ₹${rate}/kg and a packet of biscuits for ₹${extra}.`, question:`Total amount?`, hint:`${qty}×${rate} + ${extra}`, answer: qty*rate+extra, options: shuffle4([qty*rate+extra, qty*rate+extra-5, qty*rate+extra+5, qty*rate+extra+10]), explain:`${qty}×${rate}=${qty*rate}, +${extra}=₹${qty*rate+extra}!`, group:2 };
+    },
+    () => {
+      const total = rndStep(20,80,5), paid = rndStep(total+5, total+50, 5);
+      const item = pick(['groceries','vegetables','fruits','snacks']);
+      return { story:`You buy ${item} for ₹${total} and give the shopkeeper ₹${paid}.`, question:`How much change do you get?`, hint:`${paid} - ${total}`, answer: paid-total, options: shuffle4([paid-total, paid-total-5, paid-total+5, paid-total+10]), explain:`${paid} - ${total} = ₹${paid-total}!`, group:2 };
+    },
+    () => {
+      const qty = rnd(2,6), rate = rndStep(5,20,5);
+      const item = pick(['eggs','oranges','bananas','lemons']);
+      return { story:`Mummy buys ${qty} ${item} at ₹${rate} each.`, question:`How much for all ${qty} ${item}?`, hint:`${qty} × ${rate}`, answer: qty*rate, options: shuffle4([qty*rate, qty*rate-rate, qty*rate+rate, qty*rate+2*rate]), explain:`${qty} × ${rate} = ₹${qty*rate}!`, group:2 };
+    },
+    // G3: Multi-item bills, percentages
+    () => {
+      const q1=rnd(1,4), r1=rndStep(30,60,5), q2=rnd(1,3), r2=rndStep(20,45,5), r3=rndStep(40,120,10);
+      const i1=pick(['Atta','Rice','Wheat']), i2=pick(['Sugar','Salt','Daal']), i3=pick(['Oil','Ghee','Butter']);
+      const total = q1*r1+q2*r2+r3;
+      return { story:`${q1} kg ${i1} ₹${r1}/kg, ${q2} kg ${i2} ₹${r2}/kg, 1 bottle ${i3} ₹${r3}.`, question:`Total bill?`, hint:`${q1}×${r1} + ${q2}×${r2} + ${r3}`, answer: total, options: shuffle4([total, total-10, total+10, total+20]), explain:`${q1*r1}+${q2*r2}+${r3}=₹${total}!`, group:3 };
+    },
+    () => {
+      const budget = rndStep(400,800,100), spent = rndStep(200, budget-50, 50);
+      return { story:`Mummy's budget is ₹${budget}. She has spent ₹${spent} so far.`, question:`How much budget is left?`, hint:`${budget} - ${spent}`, answer: budget-spent, options: shuffle4([budget-spent, budget-spent-25, budget-spent+25, budget-spent+50]), explain:`${budget} - ${spent} = ₹${budget-spent}!`, group:3 };
+    },
+    () => {
+      const orig = rndStep(200,600,50), disc = pick([10,15,20,25]);
+      const saving = Math.round(orig*disc/100);
+      const pay = orig - saving;
+      return { story:`Mummy gets ${disc}% discount on groceries worth ₹${orig}.`, question:`How much does she pay after discount?`, hint:`${disc}% of ${orig}=${saving}. Pay=${orig}-${saving}`, answer: pay, options: shuffle4([pay, pay-10, pay+10, pay+25]), explain:`${orig}-${saving}=₹${pay}!`, group:3 };
+    },
+    // G4: Best value, GST, fractions
+    () => {
+      const r1=rndStep(50,80,2), w1=pick([2,5,10]), r2=rndStep(55,90,2), w2=pick([1,2,3]);
+      const ppk1=Math.round(r1/w1), ppk2=Math.round(r2/w2);
+      const cheaper = ppk1<ppk2 ? `${w1}kg bag` : `${w2}kg bag`;
+      return { story:`${w1} kg bag ₹${r1} vs ${w2} kg bag ₹${r2}.`, question:`Cost per kg of the ${w1} kg bag?`, hint:`${r1} ÷ ${w1}`, answer: ppk1, options: shuffle4([ppk1, ppk1+2, ppk1-2, ppk1+5]), explain:`${r1}÷${w1}=₹${ppk1}/kg. ${cheaper} is better value!`, group:4, displayAnswer:`₹${ppk1}/kg`, optionLabels:[`₹${ppk1-2}/kg`,`₹${ppk1}/kg`,`₹${ppk1+2}/kg`,`₹${ppk1+5}/kg`] };
+    },
+    () => {
+      const base = rndStep(300,900,100), pct = pick([5,12,18]);
+      const tax = Math.round(base*pct/100);
+      return { story:`Bill is ₹${base} before ${pct}% GST.`, question:`Amount with GST?`, hint:`${pct}% of ${base}=${tax}. Add to ${base}`, answer: base+tax, options: shuffle4([base+tax, base+tax-10, base+tax+10, base]), explain:`${base}+${tax}=₹${base+tax} with ${pct}% GST!`, group:4 };
+    },
+  ],
+
+  // ──────────────────────────────────────────────────────────────────
+  //  🍱 CANTEEN generators
+  // ──────────────────────────────────────────────────────────────────
+  canteen: [
+    // G1
+    () => {
+      const have = rndStep(5,15,5), cost = rnd(3, have-1);
+      const item = pick(['samosa','vada','idli','banana']);
+      return { story:`A ${item} costs ₹${cost}. You have ₹${have}.`, question:`Can you buy 2 ${item}s?`, hint:`2 × ${cost} = ${2*cost}`, answer: 2*cost<=have?'Yes ✅':'No ❌', options:['Yes ✅','No ❌'], explain:`2×${cost}=₹${2*cost}. ${2*cost<=have?'₹'+have+'>₹'+2*cost+', Yes!':'₹'+2*cost+'>₹'+have+', No!'}`, group:1, isText:true };
+    },
+    () => {
+      const a = rnd(2,5), b = rnd(2,5);
+      const item = pick(['biscuits 🍪','grapes 🍇','pieces of cake','chocolates']);
+      return { story:`You have ${a} ${item}. Your friend gives you ${b} more.`, question:`How many ${item} now?`, hint:`${a} + ${b}`, answer: a+b, options: shuffle4([a+b,a+b-1,a+b+1,a+b+2]), explain:`${a} + ${b} = ${a+b}!`, group:1 };
+    },
+    // G2
+    () => {
+      const p1 = rndStep(10,25,5), p2 = rndStep(15,30,5), have = rndStep(50,100,10);
+      const i1 = pick(['samosa','paratha','dosa','idli']), i2 = pick(['juice','lassi','tea','buttermilk']);
+      return { story:`${i1} ₹${p1}, ${i2} ₹${p2}. You have ₹${have}.`, question:`Total cost of ${i1} and ${i2}?`, hint:`${p1} + ${p2}`, answer: p1+p2, options: shuffle4([p1+p2,p1+p2-3,p1+p2+3,p1+p2+7]), explain:`${p1}+${p2}=₹${p1+p2}. Change=₹${have-(p1+p2)}!`, group:2 };
+    },
+    () => {
+      const pricePer2 = rndStep(10,25,5), want = pick([4,6,8,10]);
+      const item = pick(['idlis','vadas','dhoklas','rolls']);
+      const total = Math.round(pricePer2 * want / 2);
+      return { story:`${item} cost ₹${pricePer2} for 2 pieces. You want ${want} ${item}.`, question:`Cost for ${want} ${item}?`, hint:`${want}÷2=${want/2} sets. ${want/2}×${pricePer2}`, answer: total, options: shuffle4([total,total-pricePer2,total+pricePer2,total+5]), explain:`${want/2} sets × ₹${pricePer2} = ₹${total}!`, group:2 };
+    },
+    () => {
+      const cost = rndStep(30,55,5), have = rndStep(cost+5, cost+50, 5);
+      const item = pick(['lunch box','thali','combo meal','special']);
+      return { story:`${item} costs ₹${cost}. You pay with ₹${have}.`, question:`Change received?`, hint:`${have} - ${cost}`, answer: have-cost, options: shuffle4([have-cost,have-cost-5,have-cost+5,have-cost+10]), explain:`${have}-${cost}=₹${have-cost} change!`, group:2 };
+    },
+    // G3
+    () => {
+      const disc = pick([10,15,20,25]), orig = rndStep(40,100,10);
+      const saving = Math.round(orig*disc/100), price = orig-saving;
+      const day = pick(['Tuesday','Wednesday','Thursday','Friday']);
+      const item = pick(['biryani','thali','special','combo']);
+      return { story:`${item} ₹${orig} on ${day} with ${disc}% off.`, question:`${day} price?`, hint:`${disc}% of ${orig}=${saving}. ${orig}-${saving}`, answer: price, options: shuffle4([price,price-5,price+5,orig]), explain:`${orig}-${saving}=₹${price} on ${day}!`, group:3 };
+    },
+    () => {
+      const meals = rnd(15,60), profit = rndStep(5,15,1);
+      return { story:`Canteen earns ₹${profit} profit per meal. Sold ${meals} meals today.`, question:`Total profit today?`, hint:`${meals} × ${profit}`, answer: meals*profit, options: shuffle4([meals*profit,meals*profit-profit*2,meals*profit+profit*2,meals*profit+profit*5]), explain:`${meals}×${profit}=₹${meals*profit}!`, group:3 };
+    },
+    () => {
+      const n = pick([3,4,5,6,8,10]), pricePerN = rndStep(20,50,5), want = n * rnd(2,4);
+      const item = pick(['ice creams','laddoos','modaks','pedas']);
+      return { story:`Buy ${n} get 1 free offer on ${item} at ₹${pricePerN} for ${n}. You want ${want}.`, question:`How much do you pay for ${want} ${item}?`, hint:`Sets of ${n}: you pay ${want/n} sets`, answer: Math.ceil(want/n)*pricePerN, options: shuffle4([Math.ceil(want/n)*pricePerN, want/n*pricePerN, Math.ceil(want/n)*pricePerN+pricePerN, want*Math.round(pricePerN/n)]), explain:`${want/n} paid sets × ₹${pricePerN}=₹${Math.ceil(want/n)*pricePerN}!`, group:3 };
+    },
+    // G4
+    () => {
+      const cost = rndStep(30,60,5), margin = pick([30,40,50,60]);
+      const profit = Math.round(cost*margin/100), price = cost+profit;
+      return { story:`A meal costs ₹${cost} to make. Canteen adds ${margin}% profit.`, question:`Selling price?`, hint:`${margin}% of ${cost}=${profit}. ${cost}+${profit}`, answer: price, options: shuffle4([price,price-5,price+5,price+10]), explain:`${cost}+${profit}=₹${price} selling price!`, group:4 };
+    },
+    () => {
+      const base = rndStep(60,120,10), gst = pick([5,12,18]);
+      const tax = Math.round(base*gst/100);
+      return { story:`Canteen meal ₹${base} before ${gst}% GST.`, question:`Price with GST?`, hint:`${gst}% of ${base}=${tax}. ${base}+${tax}`, answer: base+tax, options: shuffle4([base+tax,base+tax-3,base+tax+3,base]), explain:`${base}+${tax}=₹${base+tax} with GST!`, group:4 };
+    },
+  ],
+
+  // ──────────────────────────────────────────────────────────────────
+  //  🚌 TRAVEL generators
+  // ──────────────────────────────────────────────────────────────────
+  travel: [
+    // G1
+    () => {
+      const a = rnd(2,5), b = rnd(2,5);
+      return { story:`You travel ${a} stops to school. Coming back is ${b} stops.`, question:`Total stops in a day?`, hint:`${a} + ${b}`, answer: a+b, options: shuffle4([a+b,a+b-1,a+b+1,a+b+2]), explain:`${a} + ${b} = ${a+b} stops!`, group:1 };
+    },
+    () => {
+      const fare=rndStep(3,10,1), paid=rndStep(fare+2,20,1);
+      return { story:`Bus ticket costs ₹${fare}. Papa gives you ₹${paid}.`, question:`How much change?`, hint:`${paid} - ${fare}`, answer: paid-fare, options: shuffle4([paid-fare,paid-fare-1,paid-fare+1,paid-fare+2]), explain:`${paid} - ${fare} = ₹${paid-fare}!`, group:1 };
+    },
+    // G2
+    () => {
+      const fare=rndStep(8,20,2), days=rnd(4,7);
+      return { story:`Bus ticket ₹${fare}. You travel ${days} days a week (one way).`, question:`Weekly fare?`, hint:`${fare} × ${days}`, answer: fare*days, options: shuffle4([fare*days,fare*days-fare,fare*days+fare,fare*(days+1)]), explain:`${fare} × ${days} = ₹${fare*days}!`, group:2 };
+    },
+    () => {
+      const fare=rndStep(30,80,10), people=rnd(2,6);
+      const dest = pick(["Nana ji's house","the market","the railway station","school"]);
+      return { story:`Train to ${dest}: ₹${fare} per person. ${people} people travelling.`, question:`Total train cost?`, hint:`${people} × ${fare}`, answer: fare*people, options: shuffle4([fare*people,fare*(people-1),fare*(people+1),fare*people+fare]), explain:`${people} × ${fare} = ₹${fare*people}!`, group:2 };
+    },
+    () => {
+      const total=rndStep(60,200,20), students=pick([10,15,20,25,30]);
+      return { story:`School trip bus costs ₹${total} total. ${students} students going.`, question:`Cost per student?`, hint:`${total} ÷ ${students}`, answer: Math.round(total/students), options: shuffle4([Math.round(total/students),Math.round(total/students)-2,Math.round(total/students)+2,Math.round(total/students)+5]), explain:`${total}÷${students}=₹${Math.round(total/students)}/student!`, group:2 };
+    },
+    // G3
+    () => {
+      const base=rndStep(10,20,5), baseKm=2, extra=rndStep(5,12,1), totalKm=rnd(4,8);
+      const total = base + (totalKm-baseKm)*extra;
+      return { story:`Auto fare: ₹${base} first ${baseKm} km, then ₹${extra}/km. You travel ${totalKm} km.`, question:`Total auto fare?`, hint:`${base} + ${totalKm-baseKm}×${extra}`, answer: total, options: shuffle4([total,total-extra,total+extra,total+2*extra]), explain:`${base}+${(totalKm-baseKm)*extra}=₹${total}!`, group:3 };
+    },
+    () => {
+      const daily=rndStep(20,60,4), days=pick([22,24,25,26]);
+      return { story:`Daily commute costs ₹${daily} (return). ${days} working days per month.`, question:`Monthly commute cost?`, hint:`${daily} × ${days}`, answer: daily*days, options: shuffle4([daily*days,daily*days-daily,daily*days+daily,daily*(days+2)]), explain:`${daily}×${days}=₹${daily*days}/month!`, group:3 };
+    },
+    () => {
+      const kmPerL=pick([12,14,15,16,18]), dist=rndStep(60,240,30), petrol=rndStep(90,110,5);
+      const litres = Math.round(dist/kmPerL);
+      return { story:`Car gives ${kmPerL} km/litre. Trip of ${dist} km. Petrol ₹${petrol}/litre.`, question:`Petrol cost?`, hint:`${dist}÷${kmPerL}=${litres} litres. ${litres}×${petrol}`, answer: litres*petrol, options: shuffle4([litres*petrol,litres*petrol-50,(litres+1)*petrol,(litres-1)*petrol]), explain:`${litres} litres × ₹${petrol}=₹${litres*petrol}!`, group:3 };
+    },
+    // G4
+    () => {
+      const fare=rndStep(300,800,50), gst=pick([5,12]);
+      const tax=Math.round(fare*gst/100), fee=rndStep(20,50,10);
+      return { story:`Train ticket ₹${fare} + ${gst}% GST + ₹${fee} booking fee.`, question:`Total amount paid?`, hint:`${gst}% of ${fare}=${tax}. ${fare}+${tax}+${fee}`, answer: fare+tax+fee, options: shuffle4([fare+tax+fee,fare+tax,fare+fee,fare+tax+fee+10]), explain:`${fare}+${tax}+${fee}=₹${fare+tax+fee}!`, group:4 };
+    },
+    () => {
+      const adults=rnd(2,4), pct=pick([60,65,70,75]), adultFare=rndStep(2000,6000,500);
+      const childFare=Math.round(adultFare*pct/100), children=rnd(1,3);
+      return { story:`Flight: adult ₹${adultFare}, child ${pct}% of adult. ${adults} adults + ${children} child(ren).`, question:`Total ticket cost?`, hint:`${adults}×${adultFare} + ${children}×${childFare}`, answer: adults*adultFare+children*childFare, options: shuffle4([adults*adultFare+children*childFare,adults*adultFare,adults*adultFare+children*adultFare,adults*adultFare+children*childFare+500]), explain:`${adults*adultFare}+${children*childFare}=₹${adults*adultFare+children*childFare}!`, group:4 };
+    },
+  ],
+
+  // ──────────────────────────────────────────────────────────────────
+  //  🎡 MELA generators
+  // ──────────────────────────────────────────────────────────────────
+  mela: [
+    // G1
+    () => {
+      const have=rnd(6,15), use=rnd(2,have-1);
+      return { story:`You have ${have} tokens 🎟️. You use ${use} for a ride.`, question:`Tokens left?`, hint:`${have} - ${use}`, answer: have-use, options: shuffle4([have-use,have-use-1,have-use+1,have-use+2]), explain:`${have} - ${use} = ${have-use} tokens!`, group:1 };
+    },
+    () => {
+      const cost=rndStep(5,15,5), n=rnd(2,4);
+      const item=pick(['cotton candy 🍭','bhel puri','juice','pani puri']);
+      return { story:`${item} costs ₹${cost}. You buy ${n}.`, question:`Total cost?`, hint:`${n} × ₹${cost}`, answer: n*cost, options: shuffle4([n*cost,(n-1)*cost,(n+1)*cost,n*cost+5]), explain:`${n} × ${cost} = ₹${n*cost}!`, group:1 };
+    },
+    // G2
+    () => {
+      const r1=rndStep(25,50,5), r2=rndStep(20,40,5), r3=rndStep(15,35,5), have=rndStep(150,300,50);
+      const spent=r1+r2+r3;
+      return { story:`Giant Wheel ₹${r1}, Merry-go-round ₹${r2}, Shooting game ₹${r3}. You have ₹${have}.`, question:`Money left after all 3?`, hint:`${r1}+${r2}+${r3}=${spent}. ${have}-${spent}`, answer: have-spent, options: shuffle4([have-spent,have-spent-5,have-spent+5,have-spent+10]), explain:`${have}-${spent}=₹${have-spent} left!`, group:2 };
+    },
+    () => {
+      const adult=rndStep(60,100,10), child=rndStep(30,60,10), adults=rnd(1,3), children=rnd(1,3);
+      return { story:`Entry: ₹${adult}/adult, ₹${child}/child. ${adults} adult(s) + ${children} child(ren).`, question:`Total entry cost?`, hint:`${adults}×${adult} + ${children}×${child}`, answer: adults*adult+children*child, options: shuffle4([adults*adult+children*child,adults*adult,children*child,adults*adult+children*child+child]), explain:`${adults*adult}+${children*child}=₹${adults*adult+children*child}!`, group:2 };
+    },
+    // G3
+    () => {
+      const total=rndStep(300,800,100), food=pick([30,35,40,45]), rides=pick([30,35,40]), games=100-food-rides;
+      const foodAmt=Math.round(total*food/100), ridesAmt=Math.round(total*rides/100);
+      return { story:`Mela budget ₹${total}. Food ${food}%, rides ${rides}%, games ${games}%.`, question:`Amount for rides?`, hint:`${rides}% of ${total}`, answer: ridesAmt, options: shuffle4([ridesAmt,foodAmt,Math.round(total*games/100),ridesAmt+25]), explain:`${rides}%×${total}=₹${ridesAmt} for rides!`, group:3 };
+    },
+    () => {
+      const orig=rndStep(40,100,10), disc=pick([20,25,30]);
+      const saving=Math.round(orig*disc/100), price=orig-saving;
+      return { story:`Special ${disc}% discount on all rides. Ride was ₹${orig}.`, question:`Discounted price?`, hint:`${disc}% of ${orig}=${saving}. ${orig}-${saving}`, answer: price, options: shuffle4([price,price-5,price+5,orig]), explain:`${orig}-${saving}=₹${price}!`, group:3 };
+    },
+    // G4
+    () => {
+      const rent=rndStep(15000,30000,5000), income=rndStep(40000,70000,5000), exp=rndStep(10000,20000,5000);
+      const profit=income-rent-exp;
+      return { story:`Ground rent ₹${rent.toLocaleString('en-IN')}. Income ₹${income.toLocaleString('en-IN')}. Expenses ₹${exp.toLocaleString('en-IN')}.`, question:`Net profit?`, hint:`${income}-${rent}-${exp}`, answer: profit, options: shuffle4([profit,profit-5000,profit+5000,profit+10000]), explain:`${income}-${rent}-${exp}=₹${profit.toLocaleString('en-IN')}!`, group:4, displayAnswer:`₹${profit.toLocaleString('en-IN')}`, optionLabels:[`₹${(profit-5000).toLocaleString('en-IN')}`,`₹${profit.toLocaleString('en-IN')}`,`₹${(profit+5000).toLocaleString('en-IN')}`,`₹${(profit+10000).toLocaleString('en-IN')}`] };
+    },
+    () => {
+      const orig=rndStep(60,150,10), disc=pick([10,12.5,15,20]);
+      const saving=Math.round(orig*disc/100), price=orig-saving;
+      return { story:`Ride costs ₹${orig}. Student discount ${disc}%.`, question:`Student price?`, hint:`${disc}% of ${orig}=${saving}. ${orig}-${saving}`, answer: price, options: shuffle4([price,price-5,price+5,orig]), explain:`${orig}-${saving}=₹${price} for students!`, group:4 };
+    },
+  ],
+
+  // ──────────────────────────────────────────────────────────────────
+  //  🏏 CRICKET generators
+  // ──────────────────────────────────────────────────────────────────
+  cricket: [
+    // G1
+    () => {
+      const a=rnd(2,6), b=rnd(2,6);
+      return { story:`You score ${a} runs 🏏 and your friend scores ${b} runs.`, question:`Total runs?`, hint:`${a} + ${b}`, answer: a+b, options: shuffle4([a+b,a+b-1,a+b+1,a+b+2]), explain:`${a} + ${b} = ${a+b} runs!`, group:1 };
+    },
+    () => {
+      const players=pick([5,6,8,10,11]), biscuits=pick([2,3,4]);
+      return { story:`Each player gets ${biscuits} biscuits 🍪. There are ${players} players.`, question:`Total biscuits needed?`, hint:`${players} × ${biscuits}`, answer: players*biscuits, options: shuffle4([players*biscuits,players*biscuits-biscuits,players*biscuits+biscuits,players*(biscuits+1)]), explain:`${players} × ${biscuits} = ${players*biscuits} biscuits!`, group:1 };
+    },
+    // G2
+    () => {
+      const players=pick([9,10,11,12]), contrib=rndStep(15,50,5);
+      return { story:`${players} players each contribute ₹${contrib} for snacks.`, question:`Total collected?`, hint:`${players} × ${contrib}`, answer: players*contrib, options: shuffle4([players*contrib,(players-1)*contrib,(players+1)*contrib,players*contrib+contrib]), explain:`${players} × ${contrib} = ₹${players*contrib}!`, group:2 };
+    },
+    () => {
+      const target=rndStep(60,150,5), scored=rndStep(30,target-5,5);
+      return { story:`Match target: ${target} runs. Team has scored ${scored} runs.`, question:`Runs still needed?`, hint:`${target} - ${scored}`, answer: target-scored, options: shuffle4([target-scored,target-scored-5,target-scored+5,target-scored+10]), explain:`${target}-${scored}=${target-scored} more runs!`, group:2 };
+    },
+    () => {
+      const overs=rnd(3,6), scores=Array.from({length:overs},()=>rnd(4,18));
+      const total=scores.reduce((a,b)=>a+b,0);
+      return { story:`${overs} overs scored: ${scores.join(', ')} runs.`, question:`Total score?`, hint:`Add all: ${scores.join('+')}`, answer: total, options: shuffle4([total,total-2,total+2,total+5]), explain:`${scores.join('+')}=${total} runs!`, group:2 };
+    },
+    // G3
+    () => {
+      const balls=rnd(2,5), batRate=rndStep(80,180,20), bats=rnd(1,3), batRate2=rndStep(250,500,50);
+      const total=balls*batRate+bats*batRate2;
+      return { story:`${balls} balls ₹${batRate} each, ${bats} bat(s) ₹${batRate2} each.`, question:`Total equipment cost?`, hint:`${balls}×${batRate} + ${bats}×${batRate2}`, answer: total, options: shuffle4([total,total-100,total+100,total+200]), explain:`${balls*batRate}+${bats*batRate2}=₹${total}!`, group:3 };
+    },
+    () => {
+      const players=pick([9,10,11,12]), prize=rndStep(500,2500,250);
+      return { story:`${players} players equally share ₹${prize} prize money.`, question:`Each player gets?`, hint:`${prize} ÷ ${players}`, answer: Math.round(prize/players), options: shuffle4([Math.round(prize/players),Math.round(prize/players)-10,Math.round(prize/players)+10,Math.round(prize/players)+25]), explain:`${prize}÷${players}=₹${Math.round(prize/players)} each!`, group:3 };
+    },
+    // G4
+    () => {
+      const sponsorship=rndStep(30000,80000,5000), ground=rndStep(8000,20000,2000), equip=rndStep(5000,15000,1000), food=rndStep(3000,10000,1000);
+      const surplus=sponsorship-ground-equip-food;
+      return { story:`Sponsorship ₹${sponsorship.toLocaleString('en-IN')}. Ground ₹${ground.toLocaleString('en-IN')}, equipment ₹${equip.toLocaleString('en-IN')}, food ₹${food.toLocaleString('en-IN')}.`, question:`Net surplus for prizes?`, hint:`${sponsorship}-(${ground}+${equip}+${food})`, answer: surplus, options: shuffle4([surplus,surplus-2000,surplus+2000,surplus+5000]), explain:`${sponsorship}-(${ground+equip+food})=₹${surplus}!`, group:4, displayAnswer:`₹${surplus.toLocaleString('en-IN')}`, optionLabels:[`₹${(surplus-2000).toLocaleString('en-IN')}`,`₹${surplus.toLocaleString('en-IN')}`,`₹${(surplus+2000).toLocaleString('en-IN')}`,`₹${(surplus+5000).toLocaleString('en-IN')}`] };
+    },
+    () => {
+      const players=pick([11,12,13,14,15]), avg=rndStep(30,70,5), innings=rnd(8,20);
+      return { story:`Batsman scores average ${avg} runs in ${innings} innings.`, question:`Total runs scored?`, hint:`${avg} × ${innings}`, answer: avg*innings, options: shuffle4([avg*innings,avg*(innings-1),avg*(innings+1),avg*innings+avg]), explain:`${avg}×${innings}=${avg*innings} runs!`, group:4 };
+    },
+  ],
+
+  // ──────────────────────────────────────────────────────────────────
+  //  📱 RECHARGE generators
+  // ──────────────────────────────────────────────────────────────────
+  recharge: [
+    // G1
+    () => {
+      const a=rnd(3,8), b=rnd(2,5);
+      return { story:`Bhaiya has ${a} contacts 📱. He adds ${b} more.`, question:`How many contacts now?`, hint:`${a} + ${b}`, answer: a+b, options: shuffle4([a+b,a+b-1,a+b+1,a+b+2]), explain:`${a} + ${b} = ${a+b}!`, group:1 };
+    },
+    () => {
+      const have=rndStep(10,25,5), cost=rnd(4,have-2);
+      return { story:`Recharge coupon costs ₹${cost}. You have ₹${have}.`, question:`Money left after buying?`, hint:`${have} - ${cost}`, answer: have-cost, options: shuffle4([have-cost,have-cost-1,have-cost+1,have-cost+2]), explain:`${have} - ${cost} = ₹${have-cost}!`, group:1 };
+    },
+    // G2
+    () => {
+      const days=pick([7,14,28]), price=rndStep(29,99,10);
+      const ppd=Math.round(price/days);
+      return { story:`Plan: ₹${price} for ${days} days.`, question:`Daily cost (approx)?`, hint:`${price} ÷ ${days}`, answer: ppd, options: shuffle4([ppd,ppd-1,ppd+1,ppd+2]), explain:`${price}÷${days}≈₹${ppd}/day!`, group:2 };
+    },
+    () => {
+      const bal=rndStep(80,200,20), mins=rndStep(20,60,10);
+      return { story:`Balance ₹${bal}. Call costs ₹1/minute. Bhaiya talks ${mins} minutes.`, question:`Balance after call?`, hint:`${bal} - ${mins}`, answer: bal-mins, options: shuffle4([bal-mins,bal-mins-5,bal-mins+5,bal-mins+10]), explain:`${bal}-${mins}=₹${bal-mins} left!`, group:2 };
+    },
+    () => {
+      const price=rndStep(99,299,50), months=rnd(2,6);
+      return { story:`Monthly recharge ₹${price}. Cost for ${months} months?`, question:`Total for ${months} months?`, hint:`${price} × ${months}`, answer: price*months, options: shuffle4([price*months,(price-10)*months,(price+10)*months,price*(months+1)]), explain:`${price}×${months}=₹${price*months}!`, group:2 };
+    },
+    // G3
+    () => {
+      const gb1=pick([1,1.5,2]), price1=rndStep(149,249,50), days=28, gb2=gb1+pick([0.5,1,1.5]), price2=price1+rndStep(50,100,50);
+      const ppg1=Math.round(price1/gb1), ppg2=Math.round(price2/gb2);
+      const better=ppg1<ppg2?`Plan A (₹${ppg1}/GB)`:`Plan B (₹${ppg2}/GB)`;
+      return { story:`Plan A: ₹${price1} for ${gb1}GB/day. Plan B: ₹${price2} for ${gb2}GB/day. Both ${days} days.`, question:`Extra data per day in Plan B?`, hint:`${gb2} - ${gb1}`, answer: gb2-gb1, options: shuffle4([gb2-gb1,gb1,gb2,0.5]), explain:`Plan B gives ${gb2-gb1}GB more/day. ${better} is better value!`, group:3, displayAnswer:`${gb2-gb1} GB`, optionLabels:[`${gb2-gb1-0.5} GB`,`${gb2-gb1} GB`,`${gb2-gb1+0.5} GB`,`${gb2} GB`] };
+    },
+    () => {
+      const monthly=rndStep(199,399,50);
+      const annual=Math.round(monthly*12*pick([0.80,0.82,0.85,0.88])/10)*10;
+      const saving=monthly*12-annual;
+      return { story:`Monthly plan ₹${monthly}. Annual plan ₹${annual.toLocaleString('en-IN')}.`, question:`Annual saving with yearly plan?`, hint:`${monthly}×12=${monthly*12}. ${monthly*12}-${annual}`, answer: saving, options: shuffle4([saving,saving-50,saving+50,saving+100]), explain:`${monthly*12}-${annual}=₹${saving} saved!`, group:3 };
+    },
+    () => {
+      const connections=pick([3,4,5]), individual=rndStep(149,299,50);
+      const familyPct=pick([70,75,80,82]);
+      const family=Math.round(connections*individual*familyPct/100/10)*10;
+      const saving=connections*individual-family;
+      return { story:`Family plan ₹${family}/month for ${connections} connections vs ₹${individual} individual.`, question:`Monthly saving with family plan?`, hint:`${connections}×${individual}=${connections*individual}. ${connections*individual}-${family}`, answer: saving, options: shuffle4([saving,saving-20,saving+20,saving+50]), explain:`${connections*individual}-${family}=₹${saving} saved!`, group:3 };
+    },
+    // G4
+    () => {
+      const price=rndStep(199,499,50), days=pick([28,30,56,84]);
+      const ppd=(price/days).toFixed(2);
+      return { story:`Plan costs ₹${price} for ${days} days.`, question:`Exact daily cost?`, hint:`${price} ÷ ${days}`, answer: parseFloat(ppd), options: shuffle4([parseFloat(ppd),(price/(days+2)).toFixed(2),(price/(days-2)).toFixed(2),(price/30).toFixed(2)].map(Number)), explain:`${price}÷${days}=₹${ppd}/day!`, group:4, displayAnswer:`₹${ppd}`, optionLabels:[`₹${(price/(days+4)).toFixed(2)}`,`₹${ppd}`,`₹${(price/(days-4)).toFixed(2)}`,`₹${(price/30).toFixed(2)}`] };
+    },
+    () => {
+      const calls=rndStep(200,500,50), data=rndStep(149,399,50), sms=rndStep(10,30,5), gst=18;
+      const total=calls+data+sms, tax=Math.round(total*gst/100);
+      return { story:`Bill: calls ₹${calls}, data ₹${data}, SMS ₹${sms}. ${gst}% GST on total.`, question:`Final bill with GST?`, hint:`Total=${total}. ${gst}% of ${total}=${tax}. ${total}+${tax}`, answer: total+tax, options: shuffle4([total+tax,total,total+tax-10,total+tax+10]), explain:`${total}+${tax}=₹${total+tax} with GST!`, group:4 };
+    },
+  ],
+
+  // ──────────────────────────────────────────────────────────────────
+  //  🎂 BIRTHDAY generators
+  // ──────────────────────────────────────────────────────────────────
+  birthday: [
+    // G1
+    () => {
+      const yours=rnd(2,5), friends=rnd(2,5);
+      return { story:`You want ${yours} balloons 🎈. Your friend wants ${friends} balloons.`, question:`Balloons altogether?`, hint:`${yours} + ${friends}`, answer: yours+friends, options: shuffle4([yours+friends,yours+friends-1,yours+friends+1,yours+friends+2]), explain:`${yours} + ${friends} = ${yours+friends} balloons!`, group:1 };
+    },
+    () => {
+      const total=rnd(5,12), friends=rnd(2,total-1);
+      return { story:`There are ${total} pieces of cake. ${friends} friends each eat 1 piece.`, question:`Pieces left?`, hint:`${total} - ${friends}`, answer: total-friends, options: shuffle4([total-friends,total-friends-1,total-friends+1,total-friends+2]), explain:`${total} - ${friends} = ${total-friends} pieces left!`, group:1 };
+    },
+    // G2
+    () => {
+      const cakePrice=rndStep(80,200,20), balloonPrice=rndStep(20,60,10), budget=rndStep(250,400,50);
+      return { story:`Cake costs ₹${cakePrice}. Balloons cost ₹${balloonPrice}. Budget is ₹${budget}.`, question:`Total spent on cake and balloons?`, hint:`${cakePrice} + ${balloonPrice}`, answer: cakePrice+balloonPrice, options: shuffle4([cakePrice+balloonPrice,cakePrice+balloonPrice-10,cakePrice+balloonPrice+10,cakePrice+balloonPrice+20]), explain:`${cakePrice}+${balloonPrice}=₹${cakePrice+balloonPrice}. ₹${budget-(cakePrice+balloonPrice)} left!`, group:2 };
+    },
+    () => {
+      const gifts=rnd(5,15), each=rndStep(10,30,5);
+      return { story:`You need ${gifts} return gifts at ₹${each} each.`, question:`Total gift cost?`, hint:`${gifts} × ${each}`, answer: gifts*each, options: shuffle4([gifts*each,(gifts-1)*each,(gifts+1)*each,gifts*each+each]), explain:`${gifts} × ${each} = ₹${gifts*each}!`, group:2 };
+    },
+    // G3
+    () => {
+      const friends=rnd(6,14), slicesEach=pick([2,3]), slicesPerPizza=pick([6,8,10]);
+      const totalSlices=friends*slicesEach;
+      const pizzas=Math.ceil(totalSlices/slicesPerPizza);
+      return { story:`Pizza ₹250. ${friends} friends (${slicesEach} slices each, ${slicesPerPizza} slices/pizza).`, question:`How many pizzas needed?`, hint:`${friends}×${slicesEach}=${totalSlices} slices. ${totalSlices}÷${slicesPerPizza}=? → round up`, answer: pizzas, options: shuffle4([pizzas,pizzas-1,pizzas+1,pizzas+2]), explain:`${totalSlices} slices ÷ ${slicesPerPizza} per pizza = ${totalSlices/slicesPerPizza} → need ${pizzas} pizzas!`, group:3 };
+    },
+    () => {
+      const perBag=rnd(2,4), chocPrice=rndStep(4,8,1), pencilPrice=rndStep(6,12,2), bags=rnd(8,15);
+      const perBagCost=perBag*chocPrice+pencilPrice;
+      return { story:`${bags} goody bags: ${perBag} chocolates ₹${chocPrice} each + 1 pencil ₹${pencilPrice} each.`, question:`Total for all goody bags?`, hint:`Per bag: ${perBag}×${chocPrice}+${pencilPrice}=${perBagCost}. Total: ${bags}×${perBagCost}`, answer: bags*perBagCost, options: shuffle4([bags*perBagCost,bags*(perBagCost-2),bags*(perBagCost+2),(bags+1)*perBagCost]), explain:`${perBagCost}×${bags}=₹${bags*perBagCost}!`, group:3 };
+    },
+    // G4
+    () => {
+      const headCount=rnd(15,35), perHead=rndStep(100,250,25), discPct=pick([10,12,15,20]);
+      const base=headCount*perHead, disc=Math.round(base*discPct/100);
+      return { story:`Party for ${headCount} people at ₹${perHead}/head. ${discPct}% bulk discount.`, question:`Final food bill?`, hint:`${headCount}×${perHead}=${base}. ${discPct}% off=${disc}. ${base}-${disc}`, answer: base-disc, options: shuffle4([base-disc,base,base-disc-100,base-disc+100]), explain:`${base}-${disc}=₹${base-disc}!`, group:4 };
+    },
+    () => {
+      const last=rndStep(1500,3000,500), increase=pick([10,15,20,25]);
+      const inc=Math.round(last*increase/100);
+      return { story:`Last year party cost ₹${last.toLocaleString('en-IN')}. This year it increased by ${increase}%.`, question:`This year's party cost?`, hint:`${increase}% of ${last}=${inc}. ${last}+${inc}`, answer: last+inc, options: shuffle4([last+inc,last,last+inc-100,last+inc+200]), explain:`${last}+${inc}=₹${(last+inc).toLocaleString('en-IN')}!`, group:4, displayAnswer:`₹${(last+inc).toLocaleString('en-IN')}`, optionLabels:[`₹${(last+inc-200).toLocaleString('en-IN')}`,`₹${(last+inc-100).toLocaleString('en-IN')}`,`₹${(last+inc).toLocaleString('en-IN')}`,`₹${(last+inc+200).toLocaleString('en-IN')}`] };
+    },
+  ],
+};
+
+// ── shuffle4: shuffle answer options array ─────────────────────────
+function shuffle4(arr) {
+  return [...arr].sort(() => Math.random() - 0.5).map(String);
+}
+
+// ─── Seen-questions tracker per child ─────────────────────────────────
+// Tracks which static question indices have been shown per adventure+group
+// Resets automatically once all seen → no repeats until full cycle done
+
+function getSeenKey(childId, adventureId, group) {
+  return `bz_seen_${childId}_${adventureId}_${group}`;
+}
+
+function getSeenIndices(childId, adventureId, group) {
+  try { return JSON.parse(localStorage.getItem(getSeenKey(childId, adventureId, group)) || '[]'); }
+  catch { return []; }
+}
+
+function markSeen(childId, adventureId, group, indices) {
+  localStorage.setItem(getSeenKey(childId, adventureId, group), JSON.stringify(indices));
+}
+
+function resetSeen(childId, adventureId, group) {
+  localStorage.removeItem(getSeenKey(childId, adventureId, group));
+}
+
+// ─── ENHANCED question getter — anti-repeat + parametric mix ──────────
+export function getAdventureQuestions(adventureId, classNum, count = 8) {
+  const group = getClassGroup(classNum);
+  const staticPool = ((ADVENTURE_QUESTIONS[adventureId] || {})[group] || []);
+  const generators = (QUESTION_GENERATORS[adventureId] || []).filter(g => {
+    // test which group by calling it and checking .group
+    try { const q = g(); return q.group === group; } catch { return false; }
+  });
+
+  // ── Step 1: Pick static questions we haven't seen yet ──
+  let seen = getSeenIndices(null, adventureId, group); // no child tracking at module level
+  const unseen = staticPool.map((q, i) => i).filter(i => !seen.includes(i));
+
+  // Reset if all seen
+  if (unseen.length < count) {
+    seen = [];
+    resetSeen(null, adventureId, group);
+  }
+
+  const shuffledUnseen = [...unseen].sort(() => Math.random() - 0.5);
+  const staticCount = Math.min(Math.ceil(count * 0.5), shuffledUnseen.length); // 50% static
+  const chosenIndices = shuffledUnseen.slice(0, staticCount);
+  const chosenStatic = chosenIndices.map(i => staticPool[i]);
+
+  // ── Step 2: Fill rest with parametric (generated) questions ──
+  const generatedCount = count - chosenStatic.length;
+  const generated = [];
+  if (generators.length > 0) {
+    for (let i = 0; i < generatedCount * 3 && generated.length < generatedCount; i++) {
+      try {
+        const q = pick(generators)();
+        if (q && q.question) generated.push(q);
+      } catch(e) { /* skip bad gen */ }
+    }
+  }
+
+  // ── Step 3: Mix and format ──
+  const mixed = [...chosenStatic, ...generated].sort(() => Math.random() - 0.5);
+
+  return mixed.slice(0, count).map(q => ({
+    ...q,
+    options: q.optionLabels || (Array.isArray(q.options) ? q.options.map(String) : shuffle4([q.answer, q.answer+1, q.answer+2, q.answer-1])),
+    correct_answer: q.displayAnswer || String(q.answer),
+    scenario: q.story,
+    question: q.question,
+    hint: q.hint,
+    explain: q.explain || q.hint,
+  }));
+}
+
+// ─── Child-aware version (tracks seen per child) ───────────────────────
+export function getAdventureQuestionsForChild(adventureId, classNum, childId, count = 8) {
+  const group = getClassGroup(classNum);
+  const staticPool = ((ADVENTURE_QUESTIONS[adventureId] || {})[group] || []);
+  const generators = (QUESTION_GENERATORS[adventureId] || []).filter(g => {
+    try { const q = g(); return q.group === group; } catch { return false; }
+  });
+
+  // Track seen indices per child
+  let seen = getSeenIndices(childId, adventureId, group);
+  const allIndices = staticPool.map((_, i) => i);
+  const unseen = allIndices.filter(i => !seen.includes(i));
+
+  // Auto-reset when all seen
+  if (unseen.length < Math.ceil(count * 0.5)) {
+    seen = [];
+    resetSeen(childId, adventureId, group);
+  }
+
+  const shuffledUnseen = [...(unseen.length ? unseen : allIndices)].sort(() => Math.random() - 0.5);
+  const staticCount = Math.min(Math.ceil(count * 0.5), shuffledUnseen.length);
+  const chosenIndices = shuffledUnseen.slice(0, staticCount);
+
+  // Mark as seen
+  markSeen(childId, adventureId, group, [...seen, ...chosenIndices]);
+
+  const chosenStatic = chosenIndices.map(i => staticPool[i]);
+
+  // Generated questions fill the other 50%
+  const generatedCount = count - chosenStatic.length;
+  const generated = [];
+  if (generators.length > 0) {
+    for (let i = 0; i < generatedCount * 4 && generated.length < generatedCount; i++) {
+      try { const q = pick(generators)(); if (q?.question) generated.push(q); } catch {}
+    }
+  }
+
+  return [...chosenStatic, ...generated].sort(() => Math.random() - 0.5).slice(0, count).map(q => ({
+    ...q,
+    options: q.optionLabels || (Array.isArray(q.options) ? q.options.map(String) : []),
+    correct_answer: q.displayAnswer || String(q.answer),
+    scenario: q.story,
+    question: q.question,
+    hint: q.hint,
+    explain: q.explain || q.hint,
+  }));
+}
+
+// ─── Speed Blitz — class-group parametric mix ─────────────────────────
+export function getSpeedBlitzQuestions(classNum, count = 15) {
+  const group = getClassGroup(classNum);
+  const allGenerated = [];
+
+  // Pull from all adventure generators
+  Object.entries(QUESTION_GENERATORS).forEach(([adventureId, gens]) => {
+    const groupGens = gens.filter(g => { try { return g().group === group; } catch { return false; } });
+    groupGens.forEach(g => {
+      try { const q = g(); if (q?.question) allGenerated.push({ ...q, adventureId }); } catch {}
+    });
+  });
+
+  // Top up with static questions if generators not enough
+  if (allGenerated.length < count * 2) {
+    Object.entries(ADVENTURE_QUESTIONS).forEach(([adventureId, groups]) => {
+      (groups[group] || []).forEach(q => allGenerated.push({ ...q, adventureId }));
+    });
+  }
+
+  return allGenerated.sort(() => Math.random() - 0.5).slice(0, count).map(q => ({
+    ...q,
+    options: q.optionLabels || (Array.isArray(q.options) ? q.options.map(String) : []),
+    correct_answer: q.displayAnswer || String(q.answer),
+    scenario: q.story,
+    question: q.question,
+    hint: q.hint,
+  }));
+}
