@@ -521,7 +521,7 @@ export default async function handler(req, res) {
     // ── Update child fields (streak, XP, coins, level, last_active) ──────
     if (action === "update_children") {
       const { id: child_id, xp, coins, gems, level, streak_days, last_active,
-              shop_items, badge_ids, selected_avatar, avatar, is_premium } = req.body;
+              shop_items, badge_ids, selected_avatar, avatar, is_premium, consent_at } = req.body;
       if (!isValidUUID(child_id)) return res.status(400).json({ error: "Invalid child_id" });
       if (!(await childBelongsToUser(child_id, user.id))) return res.status(403).json({ error: "Forbidden" });
       const patch = {};
@@ -532,6 +532,8 @@ export default async function handler(req, res) {
       if (streak_days     !== undefined) patch.streak_days      = sanitizeInt(streak_days, 0, 9999);
       if (last_active     !== undefined) patch.last_active      = last_active;
       if (is_premium      !== undefined) patch.is_premium       = !!is_premium;
+      // Parental consent timestamp — stored once at registration (DPDP 2023 + COPPA)
+      if (consent_at      !== undefined) patch.consent_at       = sanitizeStr(consent_at, 40);
       if (selected_avatar !== undefined) patch.selected_avatar  = sanitizeStr(selected_avatar, 20);
       if (avatar          !== undefined) patch.avatar           = sanitizeStr(avatar, 20);
       // Arrays — validate and sanitize each element

@@ -54,6 +54,7 @@ export function Register({ onBack, onDone }) {
   const [avatar,   setAvatar]  = useState(null);
   const [cls,      setCls]     = useState(null);
   const [pin,      setPin]     = useState("");
+  const [consent,  setConsent] = useState(false);
   const [errors,   setErrors]  = useState({});
   const [loading,  setLoading] = useState(false);
   const [shake,    setShake]   = useState(false);
@@ -69,7 +70,7 @@ export function Register({ onBack, onDone }) {
       try {
         const r = await fetch('/api/admin', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer angadadmin@2026' },
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer angadadmin2026' },
           body: JSON.stringify({ action: 'admin_check_username', username: cleaned })
         });
         const d = await r.json();
@@ -88,6 +89,7 @@ export function Register({ onBack, onDone }) {
       if (!re.test(email.trim())) e.email = "Enter a valid email";
       if (pass.length < 6) e.pass = "At least 6 characters";
       if (pass !== pass2)  e.pass2 = "Passwords don't match";
+      if (!consent)        e.consent = "You must agree to continue";
       if (Object.keys(e).length) { setErrors(e); return; }
       setErrors({}); setStep(2);
     };
@@ -98,6 +100,31 @@ export function Register({ onBack, onDone }) {
         <Inp label="EMAIL" value={email} onChange={setEmail} placeholder="parent@email.com" type="email" error={errors.email} onEnter={doNext} autoComp="email"/>
         <Inp label="PASSWORD" value={pass} onChange={v => { setPass(v); if(pass2 && v!==pass2) setErrors(e=>({...e,pass2:"Passwords don't match"})); else setErrors(e=>({...e,pass2:undefined})); }} placeholder="Min 6 characters" type="password" error={errors.pass} onEnter={doNext} autoComp="new-password"/>
         <Inp label="CONFIRM PASSWORD" value={pass2} onChange={setPass2} placeholder="Repeat password" type="password" error={errors.pass2} onEnter={doNext} autoComp="new-password"/>
+        {/* Parental consent — required by DPDP 2023 + COPPA */}
+        <div style={{ margin:"14px 0 4px", padding:"14px", background:"#F0ECFF", borderRadius:16, border:`1.5px solid ${errors.consent ? "#FF6B6B" : "rgba(91,79,232,0.15)"}` }}>
+          <label style={{ display:"flex", alignItems:"flex-start", gap:12, cursor:"pointer" }}>
+            <input
+              type="checkbox"
+              checked={consent}
+              onChange={e => { setConsent(e.target.checked); setErrors(er => ({...er, consent: undefined})); }}
+              style={{ width:20, height:20, marginTop:1, accentColor:"#5B4FE8", cursor:"pointer", flexShrink:0 }}
+            />
+            <span style={{ fontSize:12, color:"#1A1040", lineHeight:1.7 }}>
+              I am the <strong>parent or guardian</strong> of this child. I agree to the{" "}
+              <span
+                onClick={e => { e.preventDefault(); e.stopPropagation(); if(window._setScreen) window._setScreen("privacy"); }}
+                style={{ color:"#5B4FE8", fontWeight:800, textDecoration:"underline", cursor:"pointer" }}
+              >Privacy Policy</span>
+              {" "}and{" "}
+              <span
+                onClick={e => { e.preventDefault(); e.stopPropagation(); if(window._setScreen) window._setScreen("terms"); }}
+                style={{ color:"#5B4FE8", fontWeight:800, textDecoration:"underline", cursor:"pointer" }}
+              >Terms of Service</span>.
+              I consent to my child's learning data being collected as described.
+            </span>
+          </label>
+        </div>
+        {errors.consent && <div style={{ color:"#FF6B6B", fontSize:11, fontWeight:700, marginBottom:8, marginTop:4 }}>⚠ {errors.consent}</div>}
         <div style={{ height:6 }}/>
         <Btn color={C.cyan} onClick={doNext}>NEXT → CHILD PROFILE</Btn>
       </RegPage>
@@ -234,6 +261,8 @@ export function Register({ onBack, onDone }) {
         // Add child profile — works whether uid is a real Supabase UUID or an in-memory id
         const { data: child } = await db.addChild(uid, { name, username, avatar, class_num: cls, pin });
         if (!child) { setErrors({ pin: "Could not create profile. Please try again." }); setLoading(false); return; }
+        // Record parental consent timestamp (DPDP 2023 + COPPA requirement)
+        await db.updateChildFields(child.id, { consent_at: new Date().toISOString() });
         setLoading(false);
         // Save session so login screen skips email/pass next time
         try {
@@ -449,7 +478,7 @@ export function HomeStudentLogin({ onBack, onDone }) {
     try {
       const r = await fetch("/api/admin", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": "Bearer angadadmin@2026" },
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer angadadmin2026" },
         body: JSON.stringify({ action: "admin_list_home_students" })
       });
       const d = await r.json();
@@ -467,7 +496,7 @@ export function HomeStudentLogin({ onBack, onDone }) {
     try {
       const r = await fetch("/api/admin", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": "Bearer angadadmin@2026" },
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer angadadmin2026" },
         body: JSON.stringify({ action: "admin_home_student_login", username: child.username, pin: fullPin })
       });
       const d = await r.json();
