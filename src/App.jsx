@@ -322,9 +322,16 @@ export default function App() {
   if (screen === 'student_login')
     return <><GlobalStyles />{SwUpdatePortal}<StudentLogin
       onBack={() => setScreen('student_entry')}
-      onDone={s => {
+      onDone={async s => {
         setSchoolStudent(s);
-        setChild({ ...s, id: s.id, name: s.name, avatar: '🧒', class_num: s.class_num, xp: s.xp || 0, coins: s.coins || 0, level: s.level || 1, streak_days: s.streak_days || 0, is_school_student: true });
+        let schoolName = '';
+        try {
+          const sr = await fetch('/api/admin', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer angadadmin@2026'}, body:JSON.stringify({action:'admin_list_schools'}) });
+          const sd = await sr.json();
+          const found = (sd.data||[]).find(sc => sc.id === s.school_id);
+          if (found) schoolName = found.name;
+        } catch(e) {}
+        setChild({ ...s, id: s.id, name: s.name, avatar: '🧒', class_num: s.class_num, xp: s.xp || 0, coins: s.coins || 0, level: s.level || 1, streak_days: s.streak_days || 0, is_school_student: true, school_name: schoolName, section: s.section || '' });
         setScreen('home');
       }}
     /></>;

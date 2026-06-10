@@ -324,7 +324,12 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
           </div>
           <div style={{ flex:1 }}>
             <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:22, color:"#1A1040", lineHeight:1.1 }}>Hey, {child.name?.split(" ")[0]?.toUpperCase()}! {levelEmoji}</div>
-            <div style={{ fontSize:12, color:"#5A4E8A", fontWeight:600, marginTop:2 }}>{w.world} · Space Cadet</div>
+            <div style={{ fontSize:12, color:"#5A4E8A", fontWeight:600, marginTop:2 }}>
+              {child.is_school_student
+                ? <span>Class {child.class_num}{child.section ? <span style={{color:"#4BBDF5"}}> · {child.section}</span> : ''}</span>
+                : <span>Class {child.class_num || 1}</span>
+              }
+            </div>
           </div>
           <div style={{ display:"flex", alignItems:"center", gap:8 }}>
             {child.streak_days>0 && (
@@ -335,6 +340,15 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
           </div>
         </div>
         <XPBar xp={child.xp||0} level={child.level||1}/>
+        {child.is_school_student && child.school_name && (
+          <div style={{ marginTop:12, background:"linear-gradient(135deg,#4BBDF518,#5B4FE812)", border:"1.5px solid #4BBDF530", borderRadius:16, padding:"10px 14px", display:"flex", alignItems:"center", gap:10 }}>
+            <div style={{ fontSize:22, flexShrink:0 }}>🏫</div>
+            <div>
+              <div style={{ fontSize:10, color:"#4BBDF5", fontWeight:800, letterSpacing:1 }}>YOUR SCHOOL</div>
+              <div style={{ fontSize:14, color:"#1A1040", fontWeight:800, lineHeight:1.2 }}>{child.school_name}</div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 4 — Content Wrapper */}
