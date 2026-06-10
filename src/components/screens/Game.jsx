@@ -65,6 +65,7 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
           setQi(0); setChosen(null); setScore(0); setHint(false); setDone(false); setSaving(false); setBurst(false);
           setLives(mode === "boss" ? 5 : 3); setBossHp(100); setBossCD(mode === "boss" ? 3 : 0); setTimeLeft(mode === "boss" ? 30 : null);
           scoreRef.current = 0; livesRef.current = mode === "boss" ? 5 : 3; bossHpRef.current = 100; processing.current = false;
+          historyRef.current = [];
           setResumed(false);
           // Persist the order so if interrupted we can restore same question sequence
           try { localStorage.setItem(resumeKey, JSON.stringify({ qi:0, score:0, lives: mode==="boss"?5:3, bossHp:100, questionCount:qs.length, order })); } catch(e) {}
@@ -76,6 +77,7 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
     return () => { cancelled = true; };
   }, [lesson.id, setIndex]);
   const scoreRef   = useRef(0);
+  const historyRef = useRef([]); // [{q, opts, chosen, ans, ok}]
   const livesRef   = useRef(mode === "boss" ? 5 : 3);
   const bossHpRef  = useRef(100);
   const processing = useRef(false);
@@ -200,6 +202,8 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
     const ok = ansIdx === q.ans;
     if (ok) SFX.correct(); else SFX.wrong();
     setChosen(ansIdx);
+    // Record for post-set review
+    historyRef.current = [...historyRef.current, { q: q.question || q.q || "", opts: q.options || q.opts || [], chosen: ansIdx, ans: q.ans, ok }];
     let newLives = livesRef.current;
     let newBossHp = bossHpRef.current;
     if (ok) {
@@ -289,6 +293,55 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
           <div style={{ color:"#FFC847", fontWeight:900, fontSize:15, marginTop:6 }}>+{fs*20+(mode==="boss"?50:0)} XP 🌟 +{fst*10} Coins 🪙</div>
           <div style={{ color:C.green, fontSize:13, marginTop:6, fontWeight:700 }}>✅ Progress saved!</div>
         </Card>
+
+        {/* ── Answer Review ── */}
+        {historyRef.current.length > 0 && (
+          <div style={{ width:"100%", marginBottom:16, textAlign:"left" }}>
+            <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:16, color:"#5B4FE8", marginBottom:10, textAlign:"center", letterSpacing:0.5 }}>
+              📋 Answer Review
+            </div>
+            <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+              {historyRef.current.map((h, i) => (
+                <div key={i} style={{
+                  background: h.ok ? "#E8FFF4" : "#FFF0F0",
+                  border: "1.5px solid " + (h.ok ? "#2ECC9A44" : "#FF6B6B44"),
+                  borderRadius: 16,
+                  padding: "10px 14px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 4,
+                }}>
+                  {/* Question */}
+                  <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                    <span style={{ fontSize:16, flexShrink:0 }}>{h.ok ? "✅" : "❌"}</span>
+                    <span style={{ fontFamily:"'Nunito',sans-serif", fontSize:13, fontWeight:800, color:"#1A1040", flex:1 }}>{h.q}</span>
+                    <span style={{ fontFamily:"'Fredoka One',cursive", fontSize:11, color: h.ok ? "#2ECC9A" : "#FF6B6B", fontWeight:900, background: h.ok ? "#2ECC9A18" : "#FF6B6B18", borderRadius:8, padding:"2px 8px", flexShrink:0 }}>
+                      Q{i+1}
+                    </span>
+                  </div>
+                  {/* Answer detail */}
+                  <div style={{ paddingLeft:24, display:"flex", flexWrap:"wrap", gap:6, alignItems:"center" }}>
+                    {h.ok ? (
+                      <span style={{ fontFamily:"'Fredoka One',cursive", fontSize:14, color:"#2ECC9A" }}>
+                        {h.opts[h.chosen]} ✓
+                      </span>
+                    ) : (
+                      <>
+                        <span style={{ fontFamily:"'Fredoka One',cursive", fontSize:14, color:"#FF6B6B", textDecoration:"line-through", opacity:0.8 }}>
+                          {h.opts[h.chosen] ?? "—"}
+                        </span>
+                        <span style={{ fontSize:12, color:"#9890C4" }}>→</span>
+                        <span style={{ fontFamily:"'Fredoka One',cursive", fontSize:14, color:"#2ECC9A", fontWeight:900 }}>
+                          {h.opts[h.ans]} ✓
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         {setIndex < 9 && fst >= 1 && (
           <div style={{ background:"#2ECC9A14", border:"1.5px solid #2ECC9A40", borderRadius:14, padding:"10px 18px", marginBottom:14, width:"100%", animation:"popIn 0.4s 0.3s both" }}>
             <div style={{ color:"#2ECC9A", fontSize:16, fontWeight:800, textAlign:"center" }}>🔓 Set {setIndex+2} Unlocked!</div>
@@ -301,6 +354,7 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
         <div style={{ display:"flex", gap:10, width:"100%" }}>
           <button style={{ flex:1, background:"white", border:"1.5px solid #5B4FE820", borderRadius:20, padding:"14px", cursor:"pointer", fontFamily:"'Nunito',sans-serif", fontWeight:800, fontSize:14, color:"#5A4E8A" }} onClick={() => {
             scoreRef.current = 0; livesRef.current = mode==="boss"?5:3; bossHpRef.current = 100; processing.current = false;
+            historyRef.current = [];
             setQi(0); setChosen(null); setScore(0); setLives(mode==="boss"?5:3); setBossHp(100); setDone(false); setBossCD(mode==="boss"?3:0); setTimeLeft(mode==="boss"?30:null);
           }}>↺ Retry</button>
           <button style={{ flex:1, background:"white", border:"1.5px solid #5B4FE820", borderRadius:20, padding:"14px", cursor:"pointer", fontFamily:"'Nunito',sans-serif", fontWeight:800, fontSize:14, color:"#5A4E8A" }} onClick={onBack}>🏠 Home</button>
