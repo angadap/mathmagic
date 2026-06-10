@@ -67,7 +67,7 @@ export function EntryScreen({ onSelect }) {
   const [adminPass,     setAdminPass]     = useState("");
   const [adminErr,      setAdminErr]      = useState("");
   // Hardcoded admin passphrase — change this to something only you know
-  const ADMIN_GATE_PASS = "angadadmin2026";
+  const ADMIN_GATE_PASS = "angadadmin@2026";
 
   const handleLogoTap = () => {
     tapCount.current += 1;

@@ -10,7 +10,7 @@ import { schoolApi } from '../screens/Entry.jsx';
 
 // Module-level admin API for question management (used by both TeacherDashboard and TeacherQManager)
 const adminApiQ = async (action, body={}) => {
-  const r = await fetch("/api/admin", {method:"POST", headers:{"Content-Type":"application/json","Authorization":"Bearer angadadmin2026"}, body:JSON.stringify({action,...body})});
+  const r = await fetch("/api/admin", {method:"POST", headers:{"Content-Type":"application/json","Authorization":"Bearer angadadmin@2026"}, body:JSON.stringify({action,...body})});
   return r.json();
 };
 

@@ -8,7 +8,7 @@ import { Starfield } from '../layout/layout.jsx';
 const adminApi = async (action, body={}) => {
   const r = await fetch("/api/admin", {
     method:"POST",
-    headers:{"Content-Type":"application/json","Authorization":"Bearer angadadmin2026"},
+    headers:{"Content-Type":"application/json","Authorization":"Bearer angadadmin@2026"},
     body: JSON.stringify({action,...body})
   });
   return r.json();
@@ -78,7 +78,7 @@ function HomeStudentFormCard({ isEdit, form, setForm, msg, loading, iS, CLASS_OP
       try {
         const r = await fetch('/api/admin', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer angadadmin2026' },
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer angadadmin@2026' },
           body: JSON.stringify({ action: 'admin_check_username', username: cleaned, exclude_id: form.child_id || undefined })
         });
         const d = await r.json();
