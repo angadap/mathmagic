@@ -70,7 +70,7 @@ export function Register({ onBack, onDone }) {
       try {
         const r = await fetch('/api/admin', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer angadadmin2026' },
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer angadadmin@2026' },
           body: JSON.stringify({ action: 'admin_check_username', username: cleaned })
         });
         const d = await r.json();
@@ -478,7 +478,7 @@ export function HomeStudentLogin({ onBack, onDone }) {
     try {
       const r = await fetch("/api/admin", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": "Bearer angadadmin2026" },
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer angadadmin@2026" },
         body: JSON.stringify({ action: "admin_list_home_students" })
       });
       const d = await r.json();
@@ -496,7 +496,7 @@ export function HomeStudentLogin({ onBack, onDone }) {
     try {
       const r = await fetch("/api/admin", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": "Bearer angadadmin2026" },
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer angadadmin@2026" },
         body: JSON.stringify({ action: "admin_home_student_login", username: child.username, pin: fullPin })
       });
       const d = await r.json();
