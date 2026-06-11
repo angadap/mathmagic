@@ -144,6 +144,29 @@ export default async function handler(req, res) {
       return res.status(200).json({ data: r.data });
     }
 
+    // ── ABACUS: Get questions for a class + level ──────────────────────
+    if (action === "get_abacus_questions") {
+      const class_num = sanitizeInt(req.body.class_num, 1, 12);
+      const level_num = sanitizeInt(req.body.level_num, 1, 30);
+      const r = await sbQuery("abacus_questions", "GET", null,
+        `?class_num=eq.${class_num}&level_num=eq.${level_num}&order=question_index&limit=20`);
+      return res.status(200).json({ data: Array.isArray(r.data) ? r.data : [] });
+    }
+
+    // ── ABACUS: Get all level titles for a class (for level map UI) ────
+    if (action === "get_abacus_levels") {
+      const class_num = sanitizeInt(req.body.class_num, 1, 12);
+      const r = await sbQuery("abacus_questions", "GET", null,
+        `?class_num=eq.${class_num}&select=level_num,level_title&order=level_num`);
+      const seen = new Set();
+      const levels = (Array.isArray(r.data) ? r.data : []).filter(row => {
+        if (seen.has(row.level_num)) return false;
+        seen.add(row.level_num);
+        return true;
+      });
+      return res.status(200).json({ data: levels });
+    }
+
     // ── BAZAAR: Get questions by adventure_id + class_group ─────────────
     if (action === "get_bazaar_questions") {
       const adventure_id = sanitizeStr(req.body.adventure_id, 40);

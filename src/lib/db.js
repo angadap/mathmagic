@@ -73,7 +73,7 @@ export function stripPin(child) {
 // ── Main db / API layer ────────────────────────────────────────────────────
 export function dbLog(level, msg, detail="") {
   if (level === "error") console.error("[DB]", msg, detail);
-  else if (import.meta.env.DEV) console.log("[DB]", msg, detail);
+  else console.log("[DB]", msg, detail);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -372,7 +372,7 @@ export async function fetchSetQuestions(lessonId, setIndex) {
         return { q: r.q, opts, ans, h: r.h };
       }));
     }
-  } catch(e) { if (import.meta.env.DEV) console.warn("fetchSetQuestions failed:", e.message); }
+  } catch(e) { console.warn("fetchSetQuestions failed:", e.message); }
   // Questions are stored in the Supabase 'questions' table.
   // This minimal fallback only triggers if DB fetch fails AND no cache exists.
   const FALLBACK_Q = [
@@ -403,7 +403,36 @@ export async function fetchSetQuestions(lessonId, setIndex) {
   return shuffle(FALLBACK_Q.map(q => { const r = shuffleOpts(q.opts, q.ans); return {...q, ...r}; }));
 }
 
-
+// ── fetchAbacusQuestions ──────────────────────────────────────────────────────
+// Fetches abacus questions for a specific class + level from DB.
+// Falls back to local ABACUS_LEVELS_BY_CLASS data if DB returns nothing.
+// Returns array of { q, t, o, h? } — same shape as abacusData probs.
+export async function fetchAbacusQuestions(classNum, levelNum) {
+  const cn = parseInt(classNum);
+  const ln = parseInt(levelNum);
+  try {
+    const res = await fetch("/api/db", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "get_abacus_questions", class_num: cn, level_num: ln }),
+    });
+    const json = await res.json();
+    if (Array.isArray(json.data) && json.data.length > 0) {
+      return json.data.map(r => ({
+        q: r.question_text,
+        t: r.tens,
+        o: r.ones,
+        ...(r.hundreds != null ? { h: r.hundreds } : {}),
+      }));
+    }
+  } catch(e) { console.warn("fetchAbacusQuestions DB failed:", e.message); }
+  // Local fallback
+  const { ABACUS_LEVELS_BY_CLASS } = await import("../constants/abacusData.js");
+  const levels = ABACUS_LEVELS_BY_CLASS[cn];
+  if (!levels) return [];
+  const level = levels.find(l => l.level === ln);
+  return level ? level.probs : [];
+}
 
 // ── MEM — restored from localStorage on startup (1-hour TTL) ────────────────
 const MEM = (() => {
