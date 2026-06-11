@@ -325,7 +325,33 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true });
     }
 
-    // ── AUTHENTICATED ──────────────────────────────────────────
+    // ── BRAINSPARK: get daily fun fact (no JWT — public, works for all child types) ──
+    if (action === "get_fun_fact") {
+      const { child_id, child_type, today } = req.body;
+      if (!child_id || !today) return res.status(400).json({ error: "Missing fields" });
+      const todayStr = sanitizeStr(today, 10); // YYYY-MM-DD
+      const FUN_FACT_TOTAL = 400;
+      const table = child_type === "school" ? "students" : "children";
+      // Fetch current index and last_fact_date
+      const cr = await sbQuery(table, "GET", null, `?id=eq.${encodeURIComponent(child_id)}&select=id,fun_fact_index,last_fact_date`);
+      const row = Array.isArray(cr.data) ? cr.data[0] : null;
+      if (!row) return res.status(404).json({ error: "Child not found" });
+      let idx = parseInt(row.fun_fact_index || 0);
+      const lastDate = row.last_fact_date || null;
+      // Only advance on a new calendar day
+      if (lastDate !== todayStr) {
+        idx = idx + 1;
+        await sbQuery(table, "PATCH", { fun_fact_index: idx, last_fact_date: todayStr }, `?id=eq.${encodeURIComponent(child_id)}`);
+      }
+      // Wrap at 400, 1-based
+      const factId = ((idx - 1) % FUN_FACT_TOTAL) + 1;
+      const fr = await sbQuery("fun_facts", "GET", null, `?id=eq.${factId}&select=id,fact,category`);
+      const fact = Array.isArray(fr.data) ? fr.data[0] : null;
+      if (!fact) return res.status(404).json({ error: "Fact not found" });
+      return res.status(200).json({ fact: fact.fact, category: fact.category, fact_id: factId });
+    }
+
+        // ── AUTHENTICATED ──────────────────────────────────────────
     const user = await verifyToken(token);
     if (!user?.id) return res.status(401).json({ error: "Unauthorized — please log in" });
 
@@ -570,32 +596,6 @@ export default async function handler(req, res) {
       if (Object.keys(patch).length === 0) return res.status(400).json({ error: "Nothing to update" });
       await sbQuery("children", "PATCH", patch, `?id=eq.${encodeURIComponent(child_id)}`);
       return res.status(200).json({ ok: true });
-    }
-
-    // ── BRAINSPARK: get daily fun fact (no JWT needed — read-only public table) ──
-    if (action === "get_fun_fact") {
-      const { child_id, child_type, today } = req.body;
-      if (!child_id || !today) return res.status(400).json({ error: "Missing fields" });
-      const todayStr = sanitizeStr(today, 10); // YYYY-MM-DD
-      const FUN_FACT_TOTAL = 400;
-      const table = child_type === "school" ? "students" : "children";
-      // Fetch current index and last_fact_date
-      const cr = await sbQuery(table, "GET", null, `?id=eq.${encodeURIComponent(child_id)}&select=id,fun_fact_index,last_fact_date`);
-      const row = Array.isArray(cr.data) ? cr.data[0] : null;
-      if (!row) return res.status(404).json({ error: "Child not found" });
-      let idx = parseInt(row.fun_fact_index || 0);
-      const lastDate = row.last_fact_date || null;
-      // Only advance on a new calendar day
-      if (lastDate !== todayStr) {
-        idx = idx + 1;
-        await sbQuery(table, "PATCH", { fun_fact_index: idx, last_fact_date: todayStr }, `?id=eq.${encodeURIComponent(child_id)}`);
-      }
-      // Wrap at 400, 1-based
-      const factId = ((idx - 1) % FUN_FACT_TOTAL) + 1;
-      const fr = await sbQuery("fun_facts", "GET", null, `?id=eq.${factId}&select=id,fact,category`);
-      const fact = Array.isArray(fr.data) ? fr.data[0] : null;
-      if (!fact) return res.status(404).json({ error: "Fact not found" });
-      return res.status(200).json({ fact: fact.fact, category: fact.category, fact_id: factId });
     }
 
     return res.status(400).json({ error: "Unknown action" });
