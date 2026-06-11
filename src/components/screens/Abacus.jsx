@@ -1,18 +1,47 @@
 // src/components/screens/Abacus.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { C, textColor, text2Color, isDark } from '../../constants/themes.js';
-import { db } from '../../lib/db.js';
-import { fetchAbacusQuestions } from '../../lib/db.js';
+import { C, textColor, isDark } from '../../constants/themes.js';
+import { db, fetchAbacusQuestions } from '../../lib/db.js';
 import { SFX } from '../../lib/sfx.js';
 import { Btn, BackBtn, AbacusRod } from '../ui/primitives.jsx';
 import { Starfield } from '../layout/layout.jsx';
 import { ABACUS_LEVELS_BY_CLASS, ABACUS_CLASS_META } from '../../constants/abacusData.js';
 
-// ── helpers ──────────────────────────────────────────────────────────────────
+// ── Constants ─────────────────────────────────────────────────────────────────
+const TIERS = [
+  { name:"Starter",   icon:"🌱", color:"#22c55e" },
+  { name:"Explorer",  icon:"🔭", color:"#3b82f6" },
+  { name:"Champion",  icon:"🏆", color:"#f97316" },
+  { name:"Master",    icon:"👑", color:"#a855f7" },
+];
+
+// Divide levels array into 4 roughly equal tier groups
+function buildTiers(levels) {
+  const n = levels.length;
+  // Split as evenly as possible into 4 groups
+  const base = Math.floor(n / 4);
+  const rem  = n % 4;
+  const sizes = [
+    base + (rem > 0 ? 1 : 0),
+    base + (rem > 1 ? 1 : 0),
+    base + (rem > 2 ? 1 : 0),
+    base,
+  ];
+  const tiers = [];
+  let cursor = 0;
+  sizes.forEach((size, ti) => {
+    tiers.push(levels.slice(cursor, cursor + size));
+    cursor += size;
+  });
+  return tiers;
+}
+
+// Progress key per class+level
 function progressKey(classNum, levelNum) {
   return `abacus_c${classNum}_lvl_${levelNum}`;
 }
 
+// Stars from score
 function starsFor(correct, total) {
   const pct = correct / total;
   if (pct >= 0.9) return 3;
@@ -21,127 +50,167 @@ function starsFor(correct, total) {
   return 0;
 }
 
-function StarRow({ stars, size = 16 }) {
+// ── StarRow ───────────────────────────────────────────────────────────────────
+function StarRow({ stars, size = 14 }) {
   return (
-    <span style={{ display:'inline-flex', gap:2 }}>
+    <span style={{ display:"inline-flex", gap:1 }}>
       {[1,2,3].map(i => (
-        <span key={i} style={{ fontSize:size, opacity: i <= stars ? 1 : 0.25 }}>★</span>
+        <span key={i} style={{ fontSize:size, opacity: i <= stars ? 1 : 0.2 }}>★</span>
       ))}
     </span>
   );
 }
 
-// ── LevelMap ─────────────────────────────────────────────────────────────────
-function LevelMap({ classNum, levels, unlockedLvl, progress, onSelectLevel, onBack }) {
-  const meta   = ABACUS_CLASS_META[parseInt(classNum)] || {};
-  const earned = progress.reduce((acc, p) => acc + (p.stars_earned || 0), 0);
-  const maxStar = levels.length * 3;
+// ── LevelMap ──────────────────────────────────────────────────────────────────
+function LevelMap({ classNum, levels, progress, onSelectLevel, onBack }) {
+  const meta      = ABACUS_CLASS_META[parseInt(classNum)] || {};
+  const tierGroups = buildTiers(levels);
+  const earned    = progress.reduce((a, p) => a + (p.stars_earned || 0), 0);
+  const maxStars  = levels.length * 3;
+
+  // A level is unlocked only if the previous level has 3 stars (or it's level 1)
+  const getStars = (lvNum) => {
+    const p = progress.find(p => p.lesson_id === progressKey(classNum, lvNum));
+    return p?.stars_earned || 0;
+  };
+  const isUnlocked = (lvNum) => {
+    if (lvNum === 1) return true;
+    return getStars(lvNum - 1) >= 3;
+  };
+  const isCompleted = (lvNum) => getStars(lvNum) > 0;
 
   return (
-    <div style={{ minHeight:'100vh', background:C.bg, fontFamily:"'Baloo 2','Nunito',sans-serif", position:'relative' }}>
+    <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Baloo 2','Nunito',sans-serif", position:"relative", paddingBottom:32 }}>
       <Starfield n={isDark() ? 20 : 6}/>
 
       {/* Header */}
-      <div style={{ position:'relative', zIndex:2, background:'linear-gradient(135deg,#FFC84720,#FF6B6B10)', borderBottom:`1.5px solid #FFC84730`, padding:'14px 18px' }}>
-        <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:10 }}>
+      <div style={{ position:"sticky", top:0, zIndex:10, background:`linear-gradient(135deg,#FFC84720,#FF6B6B10)`, borderBottom:`1.5px solid #FFC84730`, padding:"14px 18px" }}>
+        <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:10 }}>
           <BackBtn onClick={onBack} color="#FFC847"/>
-          <div style={{ width:44, height:44, borderRadius:14, background:'linear-gradient(135deg,#FFC847,#FF6B6B)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:24, flexShrink:0 }}>🧮</div>
+          <div style={{ width:44, height:44, borderRadius:14, background:"linear-gradient(135deg,#FFC847,#FF6B6B)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:24, flexShrink:0 }}>🧮</div>
           <div style={{ flex:1 }}>
-            <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:11, color:'#FFC847', letterSpacing:2 }}>SPACE ABACUS</div>
-            <div style={{ fontSize:16, fontWeight:900, color:textColor() }}>
-              {meta.icon} {meta.name} — Abacus
-            </div>
-            <div style={{ fontSize:11, color:C.dim }}>{meta.focus}</div>
+            <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:10, color:"#FFC847", letterSpacing:2 }}>SPACE ABACUS</div>
+            <div style={{ fontSize:15, fontWeight:900, color:textColor() }}>{meta.icon} {meta.name}</div>
+            <div style={{ fontSize:10, color:C.dim }}>{meta.focus}</div>
           </div>
-          {/* Stars summary */}
-          <div style={{ textAlign:'center', background:`${C.yellow}18`, border:`1px solid ${C.yellow}44`, borderRadius:12, padding:'6px 12px' }}>
-            <div style={{ fontSize:18, lineHeight:1 }}>⭐</div>
-            <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:10, color:C.yellow, fontWeight:900 }}>{earned}/{maxStar}</div>
+          <div style={{ textAlign:"center", background:`#FFC84718`, border:`1px solid #FFC84744`, borderRadius:12, padding:"6px 12px" }}>
+            <div style={{ fontSize:16 }}>⭐</div>
+            <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:10, color:"#FFC847", fontWeight:900 }}>{earned}/{maxStars}</div>
           </div>
         </div>
-
-        {/* Progress bar */}
-        <div style={{ background:'rgba(255,200,71,0.12)', borderRadius:6, height:6, overflow:'hidden' }}>
-          <div style={{ width:`${maxStar > 0 ? (earned/maxStar)*100 : 0}%`, height:'100%', background:'linear-gradient(90deg,#FFC847,#FF6B6B)', borderRadius:6, transition:'width 0.5s ease' }}/>
+        {/* Overall progress bar */}
+        <div style={{ background:"rgba(255,200,71,0.12)", borderRadius:6, height:7, overflow:"hidden" }}>
+          <div style={{ width:`${maxStars > 0 ? (earned / maxStars) * 100 : 0}%`, height:"100%", background:"linear-gradient(90deg,#FFC847,#FF6B6B)", borderRadius:6, transition:"width 0.6s ease" }}/>
         </div>
         <div style={{ marginTop:4, fontSize:10, color:C.dim, fontFamily:"'Orbitron',sans-serif" }}>
-          {unlockedLvl - 1}/{levels.length} LEVELS COMPLETED
+          {progress.filter(p => p.lesson_id?.startsWith(`abacus_c${classNum}_lvl_`)).length}/{levels.length} LEVELS DONE · 3 ★ to unlock next
         </div>
       </div>
 
-      {/* Level grid */}
-      <div style={{ position:'relative', zIndex:2, padding:'18px 14px' }}>
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10 }}>
-          {levels.map((lv) => {
-            const isUnlocked = lv.level < unlockedLvl;
-            const isCurrent  = lv.level === unlockedLvl;
-            const prog       = progress.find(p => p.lesson_id === progressKey(classNum, lv.level));
-            const stars      = prog?.stars_earned || 0;
-            const completed  = !!prog;
+      {/* Tier sections */}
+      <div style={{ position:"relative", zIndex:2, padding:"16px 18px", display:"flex", flexDirection:"column", gap:16 }}>
+        {tierGroups.map((tierLevels, ti) => {
+          if (!tierLevels.length) return null;
+          const tier         = TIERS[ti];
+          const tierDone     = tierLevels.filter(lv => isCompleted(lv.level)).length;
+          const tierTotal    = tierLevels.length;
+          const tierComplete = tierDone === tierTotal && tierLevels.every(lv => getStars(lv.level) === 3);
+          const tierUnlocked = isUnlocked(tierLevels[0].level);
+          const firstLevel   = tierLevels[0].level;
+          const lastLevel    = tierLevels[tierLevels.length - 1].level;
 
-            const bgColor = completed
-              ? `linear-gradient(135deg,${C.green}22,${C.cyan}11)`
-              : isCurrent
-                ? `linear-gradient(135deg,#FFC84722,#FF6B6B11)`
-                : isUnlocked
-                  ? `${C.card || '#F0ECFF'}cc`
-                  : isDark() ? '#ffffff08' : '#f5f3ff';
-
-            const borderColor = completed
-              ? `${C.green}55`
-              : isCurrent
-                ? '#FFC84766'
-                : isUnlocked
-                  ? '#FFC84733'
-                  : 'rgba(91,79,232,0.1)';
-
-            return (
-              <button key={lv.level}
-                onClick={() => (isUnlocked || isCurrent) && onSelectLevel(lv.level)}
-                style={{
-                  background: bgColor,
-                  border: `2px solid ${borderColor}`,
-                  borderRadius: 16,
-                  padding: '12px 8px',
-                  cursor: (isUnlocked || isCurrent) ? 'pointer' : 'not-allowed',
-                  textAlign: 'center',
-                  transition: 'transform 0.15s ease, box-shadow 0.15s ease',
-                  boxShadow: isCurrent ? `0 4px 16px ${C.yellow}33` : completed ? `0 2px 8px ${C.green}22` : 'none',
-                  position: 'relative',
-                  opacity: (!isUnlocked && !isCurrent) ? 0.55 : 1,
-                }}>
-                {/* Lock icon */}
-                {!isUnlocked && !isCurrent && (
-                  <div style={{ fontSize:18, marginBottom:4 }}>🔒</div>
-                )}
-                {/* Level number badge */}
-                {(isUnlocked || isCurrent) && (
-                  <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:9, color: completed ? C.green : isCurrent ? '#FFC847' : C.dim, fontWeight:900, marginBottom:2 }}>
-                    LVL {lv.level}
+          return (
+            <div key={ti} style={{
+              background: C.card || (isDark() ? "#ffffff08" : "#fff"),
+              border: `1.5px solid ${tierComplete ? tier.color + "66" : tierUnlocked ? tier.color + "33" : isDark() ? "rgba(255,255,255,0.06)" : "#e5e7eb"}`,
+              borderRadius:22,
+              overflow:"hidden",
+              boxShadow: tierComplete ? `0 4px 18px ${tier.color}22` : "none",
+            }}>
+              {/* Tier header */}
+              <div style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 16px", background: tierComplete ? `linear-gradient(135deg,${tier.color}22,${tier.color}08)` : tierUnlocked ? `${tier.color}0a` : "transparent" }}>
+                <div style={{ fontSize:26 }}>{tier.icon}</div>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:13, fontWeight:900, color: tierUnlocked ? tier.color : C.dim }}>
+                    {tier.name} — Levels {firstLevel}–{lastLevel}
                   </div>
-                )}
-                {/* Title */}
-                <div style={{ fontSize:10, fontWeight:700, color: textColor(), lineHeight:1.3, marginBottom:6, minHeight:28 }}>
-                  {(!isUnlocked && !isCurrent) ? `Level ${lv.level}` : lv.title}
+                  <div style={{ fontSize:11, color:C.dim, marginTop:2 }}>
+                    {tierDone}/{tierTotal} complete · needs 3★ to progress
+                  </div>
                 </div>
-                {/* Stars */}
-                {(isUnlocked || isCurrent) && (
-                  <div style={{ marginBottom:4 }}>
-                    <StarRow stars={stars} size={12}/>
-                  </div>
-                )}
-                {/* Question count */}
-                {(isUnlocked || isCurrent) && (
-                  <div style={{ fontSize:9, color:C.dim }}>{lv.probs.length} Qs</div>
-                )}
-                {/* Current level pulse */}
-                {isCurrent && !completed && (
-                  <div style={{ position:'absolute', top:6, right:6, width:8, height:8, borderRadius:'50%', background:'#FFC847', animation:'mmFloat 1.5s ease-in-out infinite' }}/>
-                )}
-              </button>
-            );
-          })}
-        </div>
+                {tierComplete && <div style={{ fontSize:20 }}>✅</div>}
+                {!tierUnlocked && <div style={{ fontSize:18 }}>🔒</div>}
+              </div>
+
+              {/* Level cards grid */}
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:8, padding:"8px 12px 14px" }}>
+                {tierLevels.map((lv) => {
+                  const lvStars    = getStars(lv.level);
+                  const lvDone     = lvStars > 0;
+                  const lvUnlocked = isUnlocked(lv.level);
+                  const isCurrent  = lvUnlocked && !lvDone;
+                  const is3Star    = lvStars === 3;
+
+                  return (
+                    <button key={lv.level}
+                      onClick={() => {
+                        if (lvUnlocked) { SFX.tap(); onSelectLevel(lv.level); }
+                        else SFX.wrong();
+                      }}
+                      style={{
+                        background: is3Star
+                          ? `linear-gradient(135deg,${tier.color}22,${tier.color}0a)`
+                          : lvDone
+                            ? `${C.green || "#2ECC9A"}12`
+                            : isCurrent
+                              ? isDark() ? "#ffffff12" : "#fff"
+                              : isDark() ? "#ffffff05" : "#f5f3ff",
+                        border: `2px solid ${is3Star ? tier.color + "55" : lvDone ? "#2ECC9A44" : isCurrent ? tier.color + "55" : "rgba(91,79,232,0.10)"}`,
+                        borderRadius:14,
+                        padding:"10px 6px",
+                        cursor: lvUnlocked ? "pointer" : "not-allowed",
+                        textAlign:"center",
+                        opacity: lvUnlocked ? 1 : 0.5,
+                        boxShadow: isCurrent ? `0 4px 16px ${tier.color}44` : is3Star ? `0 2px 10px ${tier.color}33` : "none",
+                        transform: isCurrent ? "scale(1.04)" : "none",
+                        transition:"all 0.2s",
+                        position:"relative",
+                      }}>
+                      {/* Status icon */}
+                      <div style={{ fontSize: isCurrent ? 20 : 16, marginBottom:3 }}>
+                        {!lvUnlocked ? "🔒" : is3Star ? "✅" : lvDone ? "▶" : "▶"}
+                      </div>
+                      {/* Level number */}
+                      <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:9, color: is3Star ? tier.color : isCurrent ? tier.color : C.dim, fontWeight:900 }}>
+                        LVL {lv.level}
+                      </div>
+                      {/* Title */}
+                      <div style={{ fontSize:9, fontWeight:700, color:textColor(), lineHeight:1.3, margin:"3px 0", minHeight:24 }}>
+                        {lvUnlocked ? lv.title : `Level ${lv.level}`}
+                      </div>
+                      {/* Stars */}
+                      {lvUnlocked && (
+                        <div style={{ marginTop:2 }}>
+                          <StarRow stars={lvStars} size={11}/>
+                        </div>
+                      )}
+                      {/* NEXT badge */}
+                      {isCurrent && (
+                        <div style={{ position:"absolute", top:-6, right:-4, background:tier.color, borderRadius:6, padding:"2px 5px", fontSize:7, color:"#fff", fontWeight:900 }}>
+                          NEXT
+                        </div>
+                      )}
+                      {/* 3★ unlocks next indicator */}
+                      {lvDone && !is3Star && lvUnlocked && (
+                        <div style={{ fontSize:8, color:C.dim, marginTop:2 }}>need 3★</div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -157,7 +226,6 @@ function QuizScreen({ classNum, levelData, onBack, onComplete, child }) {
   const [hundreds, setHundreds] = useState(0);
   const [checked,  setChecked]  = useState(false);
   const [qCorrect, setQCorrect] = useState(0);
-  const [done,     setDone]     = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -167,8 +235,8 @@ function QuizScreen({ classNum, levelData, onBack, onComplete, child }) {
     });
   }, [classNum, levelData.level]);
 
-  const prob  = probs[pi] || { q:'', t:0, o:0 };
-  const hasH  = typeof prob.h === 'number' && prob.h > 0;
+  const prob  = probs[pi] || { q:"", t:0, o:0 };
+  const hasH  = typeof prob.h === "number" && prob.h > 0;
   const isOk  = checked && tens === prob.t && ones === prob.o && (!hasH || hundreds === prob.h);
   const total = probs.length;
 
@@ -185,7 +253,7 @@ function QuizScreen({ classNum, levelData, onBack, onComplete, child }) {
           isSchoolStudent: !!(child.is_school_student),
         });
       }
-      SFX.correct();
+      isOk ? SFX.correct() : SFX.wrong();
       onComplete({ correct: newCorrect, total, stars, level: levelData.level });
     } else {
       setQCorrect(newCorrect);
@@ -196,71 +264,72 @@ function QuizScreen({ classNum, levelData, onBack, onComplete, child }) {
 
   if (loading) {
     return (
-      <div style={{ minHeight:'100vh', background:C.bg, display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:12 }}>
-        <div style={{ fontSize:40, animation:'mmFloat 1.5s ease-in-out infinite' }}>🧮</div>
-        <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:12, color:C.dim }}>LOADING QUESTIONS…</div>
+      <div style={{ minHeight:"100vh", background:C.bg, display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", gap:12 }}>
+        <div style={{ fontSize:40, animation:"mmFloat 1.5s ease-in-out infinite" }}>🧮</div>
+        <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:12, color:C.dim }}>LOADING…</div>
       </div>
     );
   }
 
+  const meta = ABACUS_CLASS_META[parseInt(classNum)] || {};
+
   return (
-    <div style={{ minHeight:'100vh', background:C.bg, fontFamily:"'Baloo 2','Nunito',sans-serif", position:'relative' }}>
+    <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Baloo 2','Nunito',sans-serif", position:"relative" }}>
       <Starfield n={isDark() ? 20 : 6}/>
 
       {/* Header */}
-      <div style={{ position:'relative', zIndex:2, background:'linear-gradient(135deg,#FFC84720,#FF6B6B10)', borderBottom:`1.5px solid #FFC84730`, padding:'12px 18px' }}>
-        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+      <div style={{ position:"relative", zIndex:2, background:"linear-gradient(135deg,#FFC84720,#FF6B6B10)", borderBottom:`1.5px solid #FFC84730`, padding:"12px 18px" }}>
+        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
           <BackBtn onClick={onBack} color="#FFC847"/>
           <div style={{ flex:1 }}>
-            <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:9, color:'#FFC847', letterSpacing:2 }}>
-              {ABACUS_CLASS_META[parseInt(classNum)]?.name} · LEVEL {levelData.level}
+            <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:9, color:"#FFC847", letterSpacing:2 }}>
+              {meta.name} · LEVEL {levelData.level}
             </div>
             <div style={{ fontSize:14, fontWeight:900, color:textColor() }}>{levelData.title}</div>
           </div>
           <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:11, color:C.dim }}>Q{pi+1}/{total}</div>
         </div>
-        {/* Progress bar */}
-        <div style={{ marginTop:8, background:'rgba(255,200,71,0.12)', borderRadius:5, height:5, overflow:'hidden' }}>
-          <div style={{ width:`${(pi/total)*100}%`, height:'100%', background:'linear-gradient(90deg,#FFC847,#FF6B6B)', borderRadius:5, transition:'width 0.3s ease' }}/>
+        <div style={{ marginTop:8, background:"rgba(255,200,71,0.12)", borderRadius:5, height:5, overflow:"hidden" }}>
+          <div style={{ width:`${(pi/total)*100}%`, height:"100%", background:"linear-gradient(90deg,#FFC847,#FF6B6B)", borderRadius:5, transition:"width 0.3s ease" }}/>
         </div>
       </div>
 
-      <div style={{ position:'relative', zIndex:2, padding:18 }}>
+      <div style={{ position:"relative", zIndex:2, padding:18 }}>
         {/* Question card */}
-        <div style={{ background: isDark() ? 'rgba(255,200,71,0.06)' : 'rgba(255,200,71,0.1)', border:`1.5px solid #FFC84733`, borderRadius:18, padding:'16px 14px', textAlign:'center', marginBottom:14 }}>
-          <div style={{ fontSize:28, marginBottom:6, animation:'mmFloat 2.5s ease-in-out infinite' }}>🧮</div>
+        <div style={{ background: isDark() ? "rgba(255,200,71,0.06)" : "rgba(255,200,71,0.10)", border:`1.5px solid #FFC84733`, borderRadius:18, padding:"16px 14px", textAlign:"center", marginBottom:14 }}>
+          <div style={{ fontSize:28, marginBottom:6, animation:"mmFloat 2.5s ease-in-out infinite" }}>🧮</div>
           <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:22, color:textColor(), lineHeight:1.3 }}>{prob.q}</div>
         </div>
 
         {/* Rods */}
-        <div style={{ display:'flex', gap:16, justifyContent:'center', marginBottom:14 }}>
-          {hasH && <AbacusRod count={hundreds} setCount={setHundreds} color={C.pink}   label="HUNDREDS"/>}
-          <AbacusRod count={tens}     setCount={setTens}     color={C.orange} label="TENS"/>
-          <AbacusRod count={ones}     setCount={setOnes}     color={C.cyan}   label="ONES"/>
+        <div style={{ display:"flex", gap:16, justifyContent:"center", marginBottom:14 }}>
+          {hasH && <AbacusRod count={hundreds} setCount={setHundreds} color={C.pink || "#ec4899"} label="HUNDREDS"/>}
+          <AbacusRod count={tens}     setCount={setTens}     color={C.orange || "#f97316"} label="TENS"/>
+          <AbacusRod count={ones}     setCount={setOnes}     color={C.cyan  || "#22d3ee"} label="ONES"/>
         </div>
 
-        {/* Display total */}
-        <div style={{ textAlign:'center', marginBottom:12, fontFamily:"'Orbitron',sans-serif", fontSize:44, fontWeight:900, color:C.purple, textShadow:`0 0 16px ${C.purple}66` }}>
+        {/* Total display */}
+        <div style={{ textAlign:"center", marginBottom:12, fontFamily:"'Orbitron',sans-serif", fontSize:44, fontWeight:900, color:C.purple || "#a855f7", textShadow:`0 0 16px ${C.purple || "#a855f7"}66` }}>
           {(hasH ? hundreds * 100 : 0) + tens * 10 + ones}
         </div>
 
         {/* Feedback */}
         {checked && (
-          <div style={{ background: isOk ? `${C.green}18` : `${C.red}18`, border:`1px solid ${isOk ? C.green : C.red}44`, borderRadius:14, padding:'10px 14px', textAlign:'center', marginBottom:12 }}>
-            <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:12, color: isOk ? C.green : C.red }}>
+          <div style={{ background: isOk ? `${C.green || "#2ECC9A"}18` : `${C.red || "#ef4444"}18`, border:`1px solid ${isOk ? (C.green || "#2ECC9A") : (C.red || "#ef4444")}44`, borderRadius:14, padding:"10px 14px", textAlign:"center", marginBottom:12 }}>
+            <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:12, color: isOk ? (C.green || "#2ECC9A") : (C.red || "#ef4444") }}>
               {isOk
-                ? '🚀 PERFECT!'
-                : `💡 Answer: ${hasH ? prob.h + 'h + ' : ''}${prob.t} tens + ${prob.o} ones = ${(hasH ? prob.h * 100 : 0) + prob.t * 10 + prob.o}`}
+                ? "🚀 PERFECT!"
+                : `💡 Answer: ${hasH ? prob.h + "h + " : ""}${prob.t} tens + ${prob.o} ones = ${(hasH ? prob.h * 100 : 0) + prob.t * 10 + prob.o}`}
             </div>
           </div>
         )}
 
         {!checked
-          ? <Btn color={C.purple} onClick={() => { isOk ? SFX.correct() : SFX.wrong(); setChecked(true); }}>
+          ? <Btn color={C.purple || "#a855f7"} onClick={() => { isOk ? SFX.correct() : SFX.wrong(); setChecked(true); }}>
               CHECK ANSWER ✓
             </Btn>
-          : <Btn color={isOk ? C.yellow : C.orange} onClick={handleNext}>
-              {pi + 1 >= total ? 'FINISH LEVEL 🎉' : 'NEXT →'}
+          : <Btn color={isOk ? (C.yellow || "#FFC847") : (C.orange || "#f97316")} onClick={handleNext}>
+              {pi + 1 >= total ? "FINISH LEVEL 🎉" : "NEXT →"}
             </Btn>
         }
       </div>
@@ -271,34 +340,54 @@ function QuizScreen({ classNum, levelData, onBack, onComplete, child }) {
 // ── LevelComplete ─────────────────────────────────────────────────────────────
 function LevelComplete({ classNum, result, totalLevels, onNext, onMap }) {
   const { correct, total, stars, level } = result;
-  const hasNext = level < totalLevels;
+  const hasNext      = level < totalLevels;
+  const nextUnlocked = stars === 3 && hasNext;
+
   return (
-    <div style={{ minHeight:'100vh', background:C.bg, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', fontFamily:"'Baloo 2','Nunito',sans-serif", padding:22, position:'relative' }}>
+    <div style={{ minHeight:"100vh", background:C.bg, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", fontFamily:"'Baloo 2','Nunito',sans-serif", padding:22, position:"relative" }}>
       <Starfield n={isDark() ? 50 : 15}/>
-      <div style={{ position:'relative', zIndex:1, textAlign:'center', animation:'popIn 0.5s ease', maxWidth:300, width:'100%' }}>
+      <div style={{ position:"relative", zIndex:1, textAlign:"center", maxWidth:300, width:"100%" }}>
         <div style={{ fontSize:64, marginBottom:8 }}>🧮✨</div>
-        <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:20, fontWeight:900, color:textColor(), marginBottom:4 }}>
+        <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:18, fontWeight:900, color:textColor(), marginBottom:4 }}>
           Level {level} Complete!
         </div>
         <div style={{ marginBottom:8 }}>
           <StarRow stars={stars} size={28}/>
         </div>
-        <div style={{ color:C.yellow, fontSize:16, fontWeight:900, marginBottom:6 }}>
+        <div style={{ color: C.yellow || "#FFC847", fontSize:16, fontWeight:900, marginBottom:4 }}>
           {correct}/{total} correct
         </div>
-        <div style={{ color:C.dim, fontSize:13, marginBottom:20 }}>
-          +{correct * 5} XP earned
-        </div>
-        {hasNext && (
-          <div style={{ background:`${C.green}18`, border:`1px solid ${C.green}44`, borderRadius:12, padding:'8px 14px', marginBottom:16 }}>
-            <div style={{ color:C.green, fontSize:11, fontFamily:"'Orbitron',sans-serif" }}>🔓 LEVEL {level + 1} UNLOCKED!</div>
+        <div style={{ color:C.dim, fontSize:13, marginBottom:16 }}>+{correct * 5} XP earned</div>
+
+        {/* 3-star unlock message */}
+        {nextUnlocked ? (
+          <div style={{ background:`${C.green || "#2ECC9A"}18`, border:`1px solid ${C.green || "#2ECC9A"}44`, borderRadius:12, padding:"10px 14px", marginBottom:16 }}>
+            <div style={{ color: C.green || "#2ECC9A", fontSize:12, fontFamily:"'Orbitron',sans-serif", fontWeight:900 }}>
+              🔓 LEVEL {level + 1} UNLOCKED!
+            </div>
           </div>
-        )}
-        <div style={{ display:'flex', gap:10, width:'100%' }}>
-          <Btn color={C.dim}  style={{ flex:1, padding:11 }} onClick={onMap}>LEVEL MAP</Btn>
-          {hasNext && (
-            <Btn color={C.cyan} style={{ flex:1, padding:11 }} onClick={onNext}>
-              LEVEL {level + 1} →
+        ) : hasNext && stars < 3 ? (
+          <div style={{ background:`${C.orange || "#f97316"}18`, border:`1px solid ${C.orange || "#f97316"}44`, borderRadius:12, padding:"10px 14px", marginBottom:16 }}>
+            <div style={{ color: C.orange || "#f97316", fontSize:12, fontFamily:"'Orbitron',sans-serif", fontWeight:900 }}>
+              ⭐ GET 3 STARS TO UNLOCK LEVEL {level + 1}
+            </div>
+            <div style={{ fontSize:11, color:C.dim, marginTop:4 }}>
+              Score {Math.ceil(total * 0.9)}/{total} or better to get 3★
+            </div>
+          </div>
+        ) : null}
+
+        <div style={{ display:"flex", gap:10, width:"100%" }}>
+          <Btn color={C.dim} style={{ flex:1, padding:11 }} onClick={onMap}>
+            LEVEL MAP
+          </Btn>
+          {/* Retry always available */}
+          <Btn color={C.purple || "#a855f7"} style={{ flex:1, padding:11 }} onClick={() => onMap("retry", level)}>
+            RETRY 🔄
+          </Btn>
+          {nextUnlocked && (
+            <Btn color={C.cyan || "#22d3ee"} style={{ flex:1, padding:11 }} onClick={onNext}>
+              LVL {level + 1} →
             </Btn>
           )}
         </div>
@@ -309,44 +398,32 @@ function LevelComplete({ classNum, result, totalLevels, onNext, onMap }) {
 
 // ── Abacus (main export) ──────────────────────────────────────────────────────
 export function Abacus({ onBack, child }) {
-  const classNum   = parseInt(child?.class_num) || 1;
-  const levels     = ABACUS_LEVELS_BY_CLASS[classNum] || ABACUS_LEVELS_BY_CLASS[1];
+  const classNum    = parseInt(child?.class_num) || 1;
+  const levels      = ABACUS_LEVELS_BY_CLASS[classNum] || ABACUS_LEVELS_BY_CLASS[1];
   const totalLevels = levels.length;
 
-  const [screen,      setScreen]      = useState('map');   // 'map' | 'quiz' | 'complete'
+  const [screen,      setScreen]      = useState("map");
   const [activeLevel, setActiveLevel] = useState(1);
-  const [unlockedLvl, setUnlockedLvl] = useState(1);
   const [progress,    setProgress]    = useState([]);
   const [lastResult,  setLastResult]  = useState(null);
 
-  // Load progress from DB on mount
+  // Load progress
   useEffect(() => {
     if (!child?.id) return;
     db.getProgress(child.id).then(({ data }) => {
       if (!data) return;
-      // Filter to this class's abacus entries
       const prefix = `abacus_c${classNum}_lvl_`;
-      const abacusProg = data.filter(p => p.lesson_id?.startsWith(prefix));
-      setProgress(abacusProg);
-      let maxUnlocked = 1;
-      abacusProg.forEach(p => {
-        const m = p.lesson_id?.match(new RegExp(`^abacus_c${classNum}_lvl_(\\d+)$`));
-        if (m) maxUnlocked = Math.max(maxUnlocked, parseInt(m[1]) + 1);
-      });
-      setUnlockedLvl(Math.min(maxUnlocked, totalLevels + 1));
+      setProgress(data.filter(p => p.lesson_id?.startsWith(prefix)));
     });
-  }, [child?.id, classNum, totalLevels]);
+  }, [child?.id, classNum]);
 
   const handleSelectLevel = (lvNum) => {
     setActiveLevel(lvNum);
-    setScreen('quiz');
+    setScreen("quiz");
   };
 
   const handleComplete = (result) => {
-    // Unlock next level
-    const nextUnlock = result.level + 1;
-    setUnlockedLvl(u => Math.max(u, Math.min(nextUnlock + 1, totalLevels + 1)));
-    // Update local progress state
+    // Update local progress
     const key = progressKey(classNum, result.level);
     setProgress(prev => {
       const existing = prev.find(p => p.lesson_id === key);
@@ -358,34 +435,44 @@ export function Abacus({ onBack, child }) {
       return [...prev, { lesson_id: key, stars_earned: result.stars, child_id: child?.id }];
     });
     setLastResult(result);
-    setScreen('complete');
+    setScreen("complete");
+  };
+
+  // onMap callback — handles retry or just going back to map
+  const handleMap = (action, lvNum) => {
+    if (action === "retry" && lvNum) {
+      setActiveLevel(lvNum);
+      setScreen("quiz");
+    } else {
+      setScreen("map");
+    }
   };
 
   const handleNextLevel = () => {
     setActiveLevel(l => l + 1);
-    setScreen('quiz');
+    setScreen("quiz");
   };
 
-  if (screen === 'complete' && lastResult) {
+  if (screen === "complete" && lastResult) {
     return (
       <LevelComplete
         classNum={classNum}
         result={lastResult}
         totalLevels={totalLevels}
         onNext={handleNextLevel}
-        onMap={() => setScreen('map')}
+        onMap={handleMap}
       />
     );
   }
 
-  if (screen === 'quiz') {
+  if (screen === "quiz") {
     const levelData = levels.find(l => l.level === activeLevel) || levels[0];
     return (
       <QuizScreen
         classNum={classNum}
         levelData={levelData}
         child={child}
-        onBack={() => setScreen('map')}
+        onBack={() => setScreen("map")}
         onComplete={handleComplete}
       />
     );
@@ -395,7 +482,6 @@ export function Abacus({ onBack, child }) {
     <LevelMap
       classNum={classNum}
       levels={levels}
-      unlockedLvl={unlockedLvl}
       progress={progress}
       onSelectLevel={handleSelectLevel}
       onBack={onBack}
