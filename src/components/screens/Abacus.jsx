@@ -185,7 +185,7 @@ function QuizScreen({ classNum, levelData, onBack, onComplete, child }) {
           isSchoolStudent: !!(child.is_school_student),
         });
       }
-      SFX.play('correct');
+      SFX.correct();
       onComplete({ correct: newCorrect, total, stars, level: levelData.level });
     } else {
       setQCorrect(newCorrect);
@@ -256,7 +256,7 @@ function QuizScreen({ classNum, levelData, onBack, onComplete, child }) {
         )}
 
         {!checked
-          ? <Btn color={C.purple} onClick={() => { SFX.play(isOk ? 'correct' : 'wrong'); setChecked(true); }}>
+          ? <Btn color={C.purple} onClick={() => { isOk ? SFX.correct() : SFX.wrong(); setChecked(true); }}>
               CHECK ANSWER ✓
             </Btn>
           : <Btn color={isOk ? C.yellow : C.orange} onClick={handleNext}>
