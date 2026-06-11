@@ -28,7 +28,7 @@ if ('serviceWorker' in navigator) {
           });
         });
       })
-      .catch(err => console.warn('[SW] Registration failed:', err));
+      .catch(err => { if (import.meta.env.DEV) console.warn('[SW] Registration failed:', err); });
 
     // When the SW takes control (after update), reload once
     let refreshing = false;

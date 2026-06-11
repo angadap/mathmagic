@@ -352,12 +352,12 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
           : <Btn color="#5B4FE8" style={{ width:"100%", marginBottom:10 }} onClick={onDone}>Done ✓</Btn>
         }
         <div style={{ display:"flex", gap:10, width:"100%" }}>
-          <button style={{ flex:1, background:"white", border:"1.5px solid #5B4FE820", borderRadius:20, padding:"14px", cursor:"pointer", fontFamily:"'Nunito',sans-serif", fontWeight:800, fontSize:14, color:"#5A4E8A" }} onClick={() => {
+          <button style={{ flex:1, background:"#F5F3FF", border:"1.5px solid #5B4FE820", borderRadius:20, padding:"14px", cursor:"pointer", fontFamily:"'Nunito',sans-serif", fontWeight:800, fontSize:14, color:"#5A4E8A" }} onClick={() => {
             scoreRef.current = 0; livesRef.current = mode==="boss"?5:3; bossHpRef.current = 100; processing.current = false;
             historyRef.current = [];
             setQi(0); setChosen(null); setScore(0); setLives(mode==="boss"?5:3); setBossHp(100); setDone(false); setBossCD(mode==="boss"?3:0); setTimeLeft(mode==="boss"?30:null);
           }}>↺ Retry</button>
-          <button style={{ flex:1, background:"white", border:"1.5px solid #5B4FE820", borderRadius:20, padding:"14px", cursor:"pointer", fontFamily:"'Nunito',sans-serif", fontWeight:800, fontSize:14, color:"#5A4E8A" }} onClick={onBack}>🏠 Home</button>
+          <button style={{ flex:1, background:"#F5F3FF", border:"1.5px solid #5B4FE820", borderRadius:20, padding:"14px", cursor:"pointer", fontFamily:"'Nunito',sans-serif", fontWeight:800, fontSize:14, color:"#5A4E8A" }} onClick={onBack}>🏠 Home</button>
         </div>
       </div>
     </div>

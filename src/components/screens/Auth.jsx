@@ -271,7 +271,7 @@ export function Register({ onBack, onDone }) {
         } catch(e) {}
         onDone({ user: { id: uid, email }, child, requirePayment: true });
       } catch (err) {
-        console.warn("[doRegister error]", err.message);
+        if (import.meta.env.DEV) console.warn("[doRegister error]", err.message);
         setErrors({ pin: "Connection error. Please check your internet and try again." });
         setLoading(false);
       }

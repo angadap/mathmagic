@@ -29,12 +29,12 @@ export class ErrorBoundary extends React.Component {
     if (!this.state.hasError) return this.props.children;
     return (
       <div style={{minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"'Nunito',sans-serif"}}>
-        <div style={{background:"#0d0d2b",border:"1px solid #ef444433",borderRadius:20,padding:28,maxWidth:360,width:"100%",textAlign:"center"}}>
+        <div style={{background:"#F5F3FF",border:"2px solid #FF6B6B44",borderRadius:20,padding:28,maxWidth:360,width:"100%",textAlign:"center",boxShadow:"0 8px 32px rgba(91,79,232,0.12)"}}>
           <div style={{fontSize:52,marginBottom:12}}>🚀💥</div>
-          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:14,color:"#00f5ff",marginBottom:8}}>Oops! Something went wrong 🚀</div>
-          <div style={{color:"#6b7db3",fontSize:13,lineHeight:1.7,marginBottom:20}}>The app encountered an unexpected error. Your progress is saved. Please refresh to continue your mission!</div>
-          <button onClick={()=>window.location.reload()} style={{background:"linear-gradient(135deg,#00f5ff,#a855f7)",border:"none",borderRadius:12,padding:"12px 24px",color:"white",fontFamily:"'Orbitron',sans-serif",fontSize:12,cursor:"pointer",fontWeight:700}}>🔄 RELAUNCH APP</button>
-          {process.env.NODE_ENV==="development" && <pre style={{marginTop:14,color:"#f87171",fontSize:9,textAlign:"left",overflow:"auto",maxHeight:100}}>{this.state.error?.message}</pre>}
+          <div style={{fontFamily:"'Fredoka One','Nunito',sans-serif",fontSize:18,color:"#5B4FE8",marginBottom:8}}>Oops! Something went wrong 🚀</div>
+          <div style={{color:"#9890C4",fontSize:13,lineHeight:1.7,marginBottom:20}}>The app encountered an unexpected error. Your progress is saved. Please refresh to continue your mission!</div>
+          <button onClick={()=>window.location.reload()} style={{background:"linear-gradient(135deg,#5B4FE8,#9B59F5)",border:"none",borderRadius:12,padding:"12px 24px",color:"white",fontFamily:"'Fredoka One','Nunito',sans-serif",fontSize:15,cursor:"pointer",fontWeight:700,boxShadow:"0 4px 14px rgba(91,79,232,0.35)"}}>🔄 RELAUNCH APP</button>
+          {process.env.NODE_ENV==="development" && <pre style={{marginTop:14,color:"#FF6B6B",fontSize:9,textAlign:"left",overflow:"auto",maxHeight:100}}>{this.state.error?.message}</pre>}
         </div>
       </div>
     );
@@ -331,13 +331,13 @@ export function UpdatePrompt({ onUpdate, onDismiss }) {
       minWidth:260, maxWidth:340, whiteSpace:"nowrap"
     }}>
       <span style={{fontSize:18}}>🚀</span>
-      <span style={{flex:1, fontSize:12, color:"#07101F", fontWeight:700}}>New update ready!</span>
+      <span style={{flex:1, fontSize:12, color:"#1A1040", fontWeight:700}}>New update ready!</span>
       <button onClick={onUpdate}
-        style={{background:"#07101F", border:"none", borderRadius:8, padding:"6px 12px",
-          color:"#00C5B5", fontSize:11, fontWeight:900, cursor:"pointer",
+        style={{background:"#5B4FE8", border:"none", borderRadius:8, padding:"6px 12px",
+          color:"white", fontSize:11, fontWeight:900, cursor:"pointer",
           fontFamily:"'Orbitron',sans-serif"}}>UPDATE</button>
       <button onClick={onDismiss}
-        style={{background:"none", border:"none", color:"#07101F", fontSize:16,
+        style={{background:"none", border:"none", color:"#1A1040", fontSize:16,
           cursor:"pointer", padding:"0 2px"}}>✕</button>
     </div>
   );

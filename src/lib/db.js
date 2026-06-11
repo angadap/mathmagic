@@ -73,7 +73,7 @@ export function stripPin(child) {
 // ── Main db / API layer ────────────────────────────────────────────────────
 export function dbLog(level, msg, detail="") {
   if (level === "error") console.error("[DB]", msg, detail);
-  else console.log("[DB]", msg, detail);
+  else if (import.meta.env.DEV) console.log("[DB]", msg, detail);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -372,7 +372,7 @@ export async function fetchSetQuestions(lessonId, setIndex) {
         return { q: r.q, opts, ans, h: r.h };
       }));
     }
-  } catch(e) { console.warn("fetchSetQuestions failed:", e.message); }
+  } catch(e) { if (import.meta.env.DEV) console.warn("fetchSetQuestions failed:", e.message); }
   // Questions are stored in the Supabase 'questions' table.
   // This minimal fallback only triggers if DB fetch fails AND no cache exists.
   const FALLBACK_Q = [
