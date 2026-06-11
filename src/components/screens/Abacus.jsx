@@ -9,16 +9,14 @@ import { ABACUS_LEVELS_BY_CLASS, ABACUS_CLASS_META } from '../../constants/abacu
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const TIERS = [
-  { name:"Starter",   icon:"🌱", color:"#22c55e" },
-  { name:"Explorer",  icon:"🔭", color:"#3b82f6" },
-  { name:"Champion",  icon:"🏆", color:"#f97316" },
-  { name:"Master",    icon:"👑", color:"#a855f7" },
+  { name:"Starter",  icon:"🌱", color:"#22c55e" },
+  { name:"Explorer", icon:"🔭", color:"#3b82f6" },
+  { name:"Champion", icon:"🏆", color:"#f97316" },
+  { name:"Master",   icon:"👑", color:"#a855f7" },
 ];
 
-// Divide levels array into 4 roughly equal tier groups
 function buildTiers(levels) {
-  const n = levels.length;
-  // Split as evenly as possible into 4 groups
+  const n    = levels.length;
   const base = Math.floor(n / 4);
   const rem  = n % 4;
   const sizes = [
@@ -29,19 +27,14 @@ function buildTiers(levels) {
   ];
   const tiers = [];
   let cursor = 0;
-  sizes.forEach((size, ti) => {
-    tiers.push(levels.slice(cursor, cursor + size));
-    cursor += size;
-  });
+  sizes.forEach(size => { tiers.push(levels.slice(cursor, cursor + size)); cursor += size; });
   return tiers;
 }
 
-// Progress key per class+level
 function progressKey(classNum, levelNum) {
   return `abacus_c${classNum}_lvl_${levelNum}`;
 }
 
-// Stars from score
 function starsFor(correct, total) {
   const pct = correct / total;
   if (pct >= 0.9) return 3;
@@ -50,7 +43,6 @@ function starsFor(correct, total) {
   return 0;
 }
 
-// ── StarRow ───────────────────────────────────────────────────────────────────
 function StarRow({ stars, size = 14 }) {
   return (
     <span style={{ display:"inline-flex", gap:1 }}>
@@ -61,22 +53,19 @@ function StarRow({ stars, size = 14 }) {
   );
 }
 
+function getRodValue(prob) {
+  return (typeof prob.h === "number" && prob.h > 0 ? prob.h * 100 : 0) + prob.t * 10 + prob.o;
+}
+
 // ── LevelMap ──────────────────────────────────────────────────────────────────
 function LevelMap({ classNum, levels, progress, onSelectLevel, onBack }) {
-  const meta      = ABACUS_CLASS_META[parseInt(classNum)] || {};
+  const meta       = ABACUS_CLASS_META[parseInt(classNum)] || {};
   const tierGroups = buildTiers(levels);
-  const earned    = progress.reduce((a, p) => a + (p.stars_earned || 0), 0);
-  const maxStars  = levels.length * 3;
+  const earned     = progress.reduce((a, p) => a + (p.stars_earned || 0), 0);
+  const maxStars   = levels.length * 3;
 
-  // A level is unlocked only if the previous level has 3 stars (or it's level 1)
-  const getStars = (lvNum) => {
-    const p = progress.find(p => p.lesson_id === progressKey(classNum, lvNum));
-    return p?.stars_earned || 0;
-  };
-  const isUnlocked = (lvNum) => {
-    if (lvNum === 1) return true;
-    return getStars(lvNum - 1) >= 3;
-  };
+  const getStars   = (lvNum) => progress.find(p => p.lesson_id === progressKey(classNum, lvNum))?.stars_earned || 0;
+  const isUnlocked = (lvNum) => lvNum === 1 || getStars(lvNum - 1) >= 3;
   const isCompleted = (lvNum) => getStars(lvNum) > 0;
 
   return (
@@ -84,7 +73,7 @@ function LevelMap({ classNum, levels, progress, onSelectLevel, onBack }) {
       <Starfield n={isDark() ? 20 : 6}/>
 
       {/* Header */}
-      <div style={{ position:"sticky", top:0, zIndex:10, background:`linear-gradient(135deg,#FFC84720,#FF6B6B10)`, borderBottom:`1.5px solid #FFC84730`, padding:"14px 18px" }}>
+      <div style={{ position:"sticky", top:0, zIndex:10, background:"linear-gradient(135deg,#FFC84720,#FF6B6B10)", borderBottom:"1.5px solid #FFC84730", padding:"14px 18px" }}>
         <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:10 }}>
           <BackBtn onClick={onBack} color="#FFC847"/>
           <div style={{ width:44, height:44, borderRadius:14, background:"linear-gradient(135deg,#FFC847,#FF6B6B)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:24, flexShrink:0 }}>🧮</div>
@@ -93,17 +82,16 @@ function LevelMap({ classNum, levels, progress, onSelectLevel, onBack }) {
             <div style={{ fontSize:15, fontWeight:900, color:textColor() }}>{meta.icon} {meta.name}</div>
             <div style={{ fontSize:10, color:C.dim }}>{meta.focus}</div>
           </div>
-          <div style={{ textAlign:"center", background:`#FFC84718`, border:`1px solid #FFC84744`, borderRadius:12, padding:"6px 12px" }}>
+          <div style={{ textAlign:"center", background:"#FFC84718", border:"1px solid #FFC84744", borderRadius:12, padding:"6px 12px" }}>
             <div style={{ fontSize:16 }}>⭐</div>
             <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:10, color:"#FFC847", fontWeight:900 }}>{earned}/{maxStars}</div>
           </div>
         </div>
-        {/* Overall progress bar */}
         <div style={{ background:"rgba(255,200,71,0.12)", borderRadius:6, height:7, overflow:"hidden" }}>
-          <div style={{ width:`${maxStars > 0 ? (earned / maxStars) * 100 : 0}%`, height:"100%", background:"linear-gradient(90deg,#FFC847,#FF6B6B)", borderRadius:6, transition:"width 0.6s ease" }}/>
+          <div style={{ width:`${maxStars > 0 ? (earned/maxStars)*100 : 0}%`, height:"100%", background:"linear-gradient(90deg,#FFC847,#FF6B6B)", borderRadius:6, transition:"width 0.6s ease" }}/>
         </div>
         <div style={{ marginTop:4, fontSize:10, color:C.dim, fontFamily:"'Orbitron',sans-serif" }}>
-          {progress.filter(p => p.lesson_id?.startsWith(`abacus_c${classNum}_lvl_`)).length}/{levels.length} LEVELS DONE · 3 ★ to unlock next
+          {progress.filter(p => p.lesson_id?.startsWith(`abacus_c${classNum}_lvl_`)).length}/{levels.length} LEVELS DONE · 3★ to unlock next
         </div>
       </div>
 
@@ -114,7 +102,7 @@ function LevelMap({ classNum, levels, progress, onSelectLevel, onBack }) {
           const tier         = TIERS[ti];
           const tierDone     = tierLevels.filter(lv => isCompleted(lv.level)).length;
           const tierTotal    = tierLevels.length;
-          const tierComplete = tierDone === tierTotal && tierLevels.every(lv => getStars(lv.level) === 3);
+          const tierComplete = tierLevels.every(lv => getStars(lv.level) === 3);
           const tierUnlocked = isUnlocked(tierLevels[0].level);
           const firstLevel   = tierLevels[0].level;
           const lastLevel    = tierLevels[tierLevels.length - 1].level;
@@ -122,9 +110,8 @@ function LevelMap({ classNum, levels, progress, onSelectLevel, onBack }) {
           return (
             <div key={ti} style={{
               background: C.card || (isDark() ? "#ffffff08" : "#fff"),
-              border: `1.5px solid ${tierComplete ? tier.color + "66" : tierUnlocked ? tier.color + "33" : isDark() ? "rgba(255,255,255,0.06)" : "#e5e7eb"}`,
-              borderRadius:22,
-              overflow:"hidden",
+              border:`1.5px solid ${tierComplete ? tier.color+"66" : tierUnlocked ? tier.color+"33" : isDark() ? "rgba(255,255,255,0.06)" : "#e5e7eb"}`,
+              borderRadius:22, overflow:"hidden",
               boxShadow: tierComplete ? `0 4px 18px ${tier.color}22` : "none",
             }}>
               {/* Tier header */}
@@ -134,15 +121,13 @@ function LevelMap({ classNum, levels, progress, onSelectLevel, onBack }) {
                   <div style={{ fontSize:13, fontWeight:900, color: tierUnlocked ? tier.color : C.dim }}>
                     {tier.name} — Levels {firstLevel}–{lastLevel}
                   </div>
-                  <div style={{ fontSize:11, color:C.dim, marginTop:2 }}>
-                    {tierDone}/{tierTotal} complete · needs 3★ to progress
-                  </div>
+                  <div style={{ fontSize:11, color:C.dim, marginTop:2 }}>{tierDone}/{tierTotal} complete · 3★ needed to progress</div>
                 </div>
                 {tierComplete && <div style={{ fontSize:20 }}>✅</div>}
                 {!tierUnlocked && <div style={{ fontSize:18 }}>🔒</div>}
               </div>
 
-              {/* Level cards grid */}
+              {/* Level cards */}
               <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:8, padding:"8px 12px 14px" }}>
                 {tierLevels.map((lv) => {
                   const lvStars    = getStars(lv.level);
@@ -153,56 +138,31 @@ function LevelMap({ classNum, levels, progress, onSelectLevel, onBack }) {
 
                   return (
                     <button key={lv.level}
-                      onClick={() => {
-                        if (lvUnlocked) { SFX.tap(); onSelectLevel(lv.level); }
-                        else SFX.wrong();
-                      }}
+                      onClick={() => { if (lvUnlocked) { SFX.tap(); onSelectLevel(lv.level); } else SFX.wrong(); }}
                       style={{
-                        background: is3Star
-                          ? `linear-gradient(135deg,${tier.color}22,${tier.color}0a)`
-                          : lvDone
-                            ? `${C.green || "#2ECC9A"}12`
-                            : isCurrent
-                              ? isDark() ? "#ffffff12" : "#fff"
-                              : isDark() ? "#ffffff05" : "#f5f3ff",
-                        border: `2px solid ${is3Star ? tier.color + "55" : lvDone ? "#2ECC9A44" : isCurrent ? tier.color + "55" : "rgba(91,79,232,0.10)"}`,
-                        borderRadius:14,
-                        padding:"10px 6px",
-                        cursor: lvUnlocked ? "pointer" : "not-allowed",
-                        textAlign:"center",
-                        opacity: lvUnlocked ? 1 : 0.5,
+                        background: is3Star ? `linear-gradient(135deg,${tier.color}22,${tier.color}0a)` : lvDone ? "#2ECC9A12" : isCurrent ? (isDark()?"#ffffff12":"#fff") : (isDark()?"#ffffff05":"#f5f3ff"),
+                        border:`2px solid ${is3Star ? tier.color+"55" : lvDone ? "#2ECC9A44" : isCurrent ? tier.color+"55" : "rgba(91,79,232,0.10)"}`,
+                        borderRadius:14, padding:"10px 6px", cursor: lvUnlocked ? "pointer" : "not-allowed",
+                        textAlign:"center", opacity: lvUnlocked ? 1 : 0.5,
                         boxShadow: isCurrent ? `0 4px 16px ${tier.color}44` : is3Star ? `0 2px 10px ${tier.color}33` : "none",
                         transform: isCurrent ? "scale(1.04)" : "none",
-                        transition:"all 0.2s",
-                        position:"relative",
+                        transition:"all 0.2s", position:"relative",
                       }}>
-                      {/* Status icon */}
                       <div style={{ fontSize: isCurrent ? 20 : 16, marginBottom:3 }}>
-                        {!lvUnlocked ? "🔒" : is3Star ? "✅" : lvDone ? "▶" : "▶"}
+                        {!lvUnlocked ? "🔒" : is3Star ? "✅" : "▶"}
                       </div>
-                      {/* Level number */}
                       <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:9, color: is3Star ? tier.color : isCurrent ? tier.color : C.dim, fontWeight:900 }}>
                         LVL {lv.level}
                       </div>
-                      {/* Title */}
                       <div style={{ fontSize:9, fontWeight:700, color:textColor(), lineHeight:1.3, margin:"3px 0", minHeight:24 }}>
                         {lvUnlocked ? lv.title : `Level ${lv.level}`}
                       </div>
-                      {/* Stars */}
-                      {lvUnlocked && (
-                        <div style={{ marginTop:2 }}>
-                          <StarRow stars={lvStars} size={11}/>
-                        </div>
-                      )}
-                      {/* NEXT badge */}
+                      {lvUnlocked && <div style={{ marginTop:2 }}><StarRow stars={lvStars} size={11}/></div>}
                       {isCurrent && (
-                        <div style={{ position:"absolute", top:-6, right:-4, background:tier.color, borderRadius:6, padding:"2px 5px", fontSize:7, color:"#fff", fontWeight:900 }}>
-                          NEXT
-                        </div>
+                        <div style={{ position:"absolute", top:-6, right:-4, background:tier.color, borderRadius:6, padding:"2px 5px", fontSize:7, color:"#fff", fontWeight:900 }}>NEXT</div>
                       )}
-                      {/* 3★ unlocks next indicator */}
-                      {lvDone && !is3Star && lvUnlocked && (
-                        <div style={{ fontSize:8, color:C.dim, marginTop:2 }}>need 3★</div>
+                      {lvDone && !is3Star && (
+                        <div style={{ fontSize:8, color:C.orange||"#f97316", marginTop:2, fontWeight:700 }}>need 3★</div>
                       )}
                     </button>
                   );
@@ -216,7 +176,7 @@ function LevelMap({ classNum, levels, progress, onSelectLevel, onBack }) {
   );
 }
 
-// ── QuizScreen ────────────────────────────────────────────────────────────────
+// ── QuizScreen — silent submission, no per-question feedback ─────────────────
 function QuizScreen({ classNum, levelData, onBack, onComplete, child }) {
   const [probs,    setProbs]    = useState([]);
   const [loading,  setLoading]  = useState(true);
@@ -224,8 +184,8 @@ function QuizScreen({ classNum, levelData, onBack, onComplete, child }) {
   const [tens,     setTens]     = useState(0);
   const [ones,     setOnes]     = useState(0);
   const [hundreds, setHundreds] = useState(0);
-  const [checked,  setChecked]  = useState(false);
-  const [qCorrect, setQCorrect] = useState(0);
+  // answers[i] = { given: number, correct: number, isOk: bool }
+  const [answers,  setAnswers]  = useState([]);
 
   useEffect(() => {
     setLoading(true);
@@ -237,30 +197,35 @@ function QuizScreen({ classNum, levelData, onBack, onComplete, child }) {
 
   const prob  = probs[pi] || { q:"", t:0, o:0 };
   const hasH  = typeof prob.h === "number" && prob.h > 0;
-  const isOk  = checked && tens === prob.t && ones === prob.o && (!hasH || hundreds === prob.h);
   const total = probs.length;
 
-  const reset = () => { setTens(0); setOnes(0); setHundreds(0); setChecked(false); };
+  const currentValue = (hasH ? hundreds * 100 : 0) + tens * 10 + ones;
 
-  const handleNext = useCallback(() => {
-    const newCorrect = qCorrect + (isOk ? 1 : 0);
+  const handleSubmit = useCallback(() => {
+    SFX.tap();
+    const correctVal = getRodValue(prob);
+    const isOk       = currentValue === correctVal;
+    const newAnswers = [...answers, { given: currentValue, correct: correctVal, isOk, q: prob.q }];
+
     if (pi + 1 >= total) {
-      const stars = starsFor(newCorrect, total);
-      const xp    = newCorrect * 5;
+      // All done — compute result
+      const correctCount = newAnswers.filter(a => a.isOk).length;
+      const stars        = starsFor(correctCount, total);
+      const xp           = correctCount * 5;
+      stars >= 3 ? SFX.correct() : SFX.wrong();
       if (child?.id) {
         db.saveProgress(child.id, progressKey(classNum, levelData.level), {
-          correct: newCorrect, total, stars, xpEarned: xp,
+          correct: correctCount, total, stars, xpEarned: xp,
           isSchoolStudent: !!(child.is_school_student),
         });
       }
-      isOk ? SFX.correct() : SFX.wrong();
-      onComplete({ correct: newCorrect, total, stars, level: levelData.level });
+      onComplete({ correct: correctCount, total, stars, level: levelData.level, answers: newAnswers });
     } else {
-      setQCorrect(newCorrect);
+      setAnswers(newAnswers);
       setPi(p => p + 1);
-      reset();
+      setTens(0); setOnes(0); setHundreds(0);
     }
-  }, [pi, total, isOk, qCorrect, classNum, levelData.level, child]);
+  }, [pi, total, currentValue, prob, answers, classNum, levelData.level, child]);
 
   if (loading) {
     return (
@@ -278,7 +243,7 @@ function QuizScreen({ classNum, levelData, onBack, onComplete, child }) {
       <Starfield n={isDark() ? 20 : 6}/>
 
       {/* Header */}
-      <div style={{ position:"relative", zIndex:2, background:"linear-gradient(135deg,#FFC84720,#FF6B6B10)", borderBottom:`1.5px solid #FFC84730`, padding:"12px 18px" }}>
+      <div style={{ position:"relative", zIndex:2, background:"linear-gradient(135deg,#FFC84720,#FF6B6B10)", borderBottom:"1.5px solid #FFC84730", padding:"12px 18px" }}>
         <div style={{ display:"flex", alignItems:"center", gap:10 }}>
           <BackBtn onClick={onBack} color="#FFC847"/>
           <div style={{ flex:1 }}>
@@ -287,108 +252,167 @@ function QuizScreen({ classNum, levelData, onBack, onComplete, child }) {
             </div>
             <div style={{ fontSize:14, fontWeight:900, color:textColor() }}>{levelData.title}</div>
           </div>
-          <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:11, color:C.dim }}>Q{pi+1}/{total}</div>
+          <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:13, color:textColor(), fontWeight:900 }}>
+            {pi + 1}<span style={{ color:C.dim, fontSize:10 }}>/{total}</span>
+          </div>
         </div>
-        <div style={{ marginTop:8, background:"rgba(255,200,71,0.12)", borderRadius:5, height:5, overflow:"hidden" }}>
-          <div style={{ width:`${(pi/total)*100}%`, height:"100%", background:"linear-gradient(90deg,#FFC847,#FF6B6B)", borderRadius:5, transition:"width 0.3s ease" }}/>
+        {/* Question progress dots */}
+        <div style={{ marginTop:10, display:"flex", gap:4, flexWrap:"wrap" }}>
+          {probs.map((_, i) => (
+            <div key={i} style={{
+              height:5, flex:1, borderRadius:3,
+              background: i < pi
+                ? (answers[i]?.isOk ? "#2ECC9A" : "#ef4444")
+                : i === pi
+                  ? "#FFC847"
+                  : isDark() ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.08)",
+              transition:"background 0.3s",
+            }}/>
+          ))}
         </div>
       </div>
 
       <div style={{ position:"relative", zIndex:2, padding:18 }}>
         {/* Question card */}
-        <div style={{ background: isDark() ? "rgba(255,200,71,0.06)" : "rgba(255,200,71,0.10)", border:`1.5px solid #FFC84733`, borderRadius:18, padding:"16px 14px", textAlign:"center", marginBottom:14 }}>
-          <div style={{ fontSize:28, marginBottom:6, animation:"mmFloat 2.5s ease-in-out infinite" }}>🧮</div>
+        <div style={{ background: isDark() ? "rgba(255,200,71,0.06)" : "rgba(255,200,71,0.10)", border:"1.5px solid #FFC84733", borderRadius:18, padding:"16px 14px", textAlign:"center", marginBottom:14 }}>
+          <div style={{ fontSize:26, marginBottom:6, animation:"mmFloat 2.5s ease-in-out infinite" }}>🧮</div>
           <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:22, color:textColor(), lineHeight:1.3 }}>{prob.q}</div>
         </div>
 
         {/* Rods */}
         <div style={{ display:"flex", gap:16, justifyContent:"center", marginBottom:14 }}>
-          {hasH && <AbacusRod count={hundreds} setCount={setHundreds} color={C.pink || "#ec4899"} label="HUNDREDS"/>}
-          <AbacusRod count={tens}     setCount={setTens}     color={C.orange || "#f97316"} label="TENS"/>
-          <AbacusRod count={ones}     setCount={setOnes}     color={C.cyan  || "#22d3ee"} label="ONES"/>
+          {hasH && <AbacusRod count={hundreds} setCount={setHundreds} color={C.pink||"#ec4899"} label="HUNDREDS"/>}
+          <AbacusRod count={tens} setCount={setTens} color={C.orange||"#f97316"} label="TENS"/>
+          <AbacusRod count={ones} setCount={setOnes} color={C.cyan||"#22d3ee"}  label="ONES"/>
         </div>
 
-        {/* Total display */}
-        <div style={{ textAlign:"center", marginBottom:12, fontFamily:"'Orbitron',sans-serif", fontSize:44, fontWeight:900, color:C.purple || "#a855f7", textShadow:`0 0 16px ${C.purple || "#a855f7"}66` }}>
-          {(hasH ? hundreds * 100 : 0) + tens * 10 + ones}
+        {/* Live value display */}
+        <div style={{ textAlign:"center", marginBottom:16, fontFamily:"'Orbitron',sans-serif", fontSize:48, fontWeight:900, color:C.purple||"#a855f7", textShadow:`0 0 16px ${C.purple||"#a855f7"}66` }}>
+          {currentValue}
         </div>
 
-        {/* Feedback */}
-        {checked && (
-          <div style={{ background: isOk ? `${C.green || "#2ECC9A"}18` : `${C.red || "#ef4444"}18`, border:`1px solid ${isOk ? (C.green || "#2ECC9A") : (C.red || "#ef4444")}44`, borderRadius:14, padding:"10px 14px", textAlign:"center", marginBottom:12 }}>
-            <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:12, color: isOk ? (C.green || "#2ECC9A") : (C.red || "#ef4444") }}>
-              {isOk
-                ? "🚀 PERFECT!"
-                : `💡 Answer: ${hasH ? prob.h + "h + " : ""}${prob.t} tens + ${prob.o} ones = ${(hasH ? prob.h * 100 : 0) + prob.t * 10 + prob.o}`}
-            </div>
-          </div>
-        )}
+        {/* Submit button — no feedback, just moves to next */}
+        <Btn color={C.purple||"#a855f7"} onClick={handleSubmit}>
+          {pi + 1 >= total ? "SUBMIT & SEE RESULTS 🎯" : "SUBMIT →"}
+        </Btn>
 
-        {!checked
-          ? <Btn color={C.purple || "#a855f7"} onClick={() => { isOk ? SFX.correct() : SFX.wrong(); setChecked(true); }}>
-              CHECK ANSWER ✓
-            </Btn>
-          : <Btn color={isOk ? (C.yellow || "#FFC847") : (C.orange || "#f97316")} onClick={handleNext}>
-              {pi + 1 >= total ? "FINISH LEVEL 🎉" : "NEXT →"}
-            </Btn>
-        }
+        {/* Subtle hint — no right/wrong reveal */}
+        <div style={{ textAlign:"center", marginTop:10, fontSize:11, color:C.dim }}>
+          Set the rods and submit — results shown at the end
+        </div>
       </div>
     </div>
   );
 }
 
-// ── LevelComplete ─────────────────────────────────────────────────────────────
-function LevelComplete({ classNum, result, totalLevels, onNext, onMap }) {
-  const { correct, total, stars, level } = result;
-  const hasNext      = level < totalLevels;
-  const nextUnlocked = stars === 3 && hasNext;
+// ── ResultsScreen — score + full question history ─────────────────────────────
+function ResultsScreen({ classNum, result, totalLevels, onRetry, onNext, onMap }) {
+  const { correct, total, stars, level, answers } = result;
+  const pct          = Math.round((correct / total) * 100);
+  const nextUnlocked = stars === 3 && level < totalLevels;
+  const [showHistory, setShowHistory] = useState(false);
+
+  const starColor = stars === 3 ? "#FFC847" : stars === 2 ? "#fb923c" : stars === 1 ? "#3b82f6" : "#9890C4";
+  const resultEmoji = stars === 3 ? "🏆" : stars === 2 ? "🎯" : stars === 1 ? "👍" : "💪";
 
   return (
-    <div style={{ minHeight:"100vh", background:C.bg, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", fontFamily:"'Baloo 2','Nunito',sans-serif", padding:22, position:"relative" }}>
-      <Starfield n={isDark() ? 50 : 15}/>
-      <div style={{ position:"relative", zIndex:1, textAlign:"center", maxWidth:300, width:"100%" }}>
-        <div style={{ fontSize:64, marginBottom:8 }}>🧮✨</div>
-        <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:18, fontWeight:900, color:textColor(), marginBottom:4 }}>
-          Level {level} Complete!
-        </div>
-        <div style={{ marginBottom:8 }}>
-          <StarRow stars={stars} size={28}/>
-        </div>
-        <div style={{ color: C.yellow || "#FFC847", fontSize:16, fontWeight:900, marginBottom:4 }}>
-          {correct}/{total} correct
-        </div>
-        <div style={{ color:C.dim, fontSize:13, marginBottom:16 }}>+{correct * 5} XP earned</div>
+    <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Baloo 2','Nunito',sans-serif", position:"relative", paddingBottom:32 }}>
+      <Starfield n={isDark() ? 40 : 12}/>
 
-        {/* 3-star unlock message */}
-        {nextUnlocked ? (
-          <div style={{ background:`${C.green || "#2ECC9A"}18`, border:`1px solid ${C.green || "#2ECC9A"}44`, borderRadius:12, padding:"10px 14px", marginBottom:16 }}>
-            <div style={{ color: C.green || "#2ECC9A", fontSize:12, fontFamily:"'Orbitron',sans-serif", fontWeight:900 }}>
-              🔓 LEVEL {level + 1} UNLOCKED!
-            </div>
-          </div>
-        ) : hasNext && stars < 3 ? (
-          <div style={{ background:`${C.orange || "#f97316"}18`, border:`1px solid ${C.orange || "#f97316"}44`, borderRadius:12, padding:"10px 14px", marginBottom:16 }}>
-            <div style={{ color: C.orange || "#f97316", fontSize:12, fontFamily:"'Orbitron',sans-serif", fontWeight:900 }}>
-              ⭐ GET 3 STARS TO UNLOCK LEVEL {level + 1}
-            </div>
-            <div style={{ fontSize:11, color:C.dim, marginTop:4 }}>
-              Score {Math.ceil(total * 0.9)}/{total} or better to get 3★
-            </div>
-          </div>
-        ) : null}
+      <div style={{ position:"relative", zIndex:1, padding:"28px 20px 0" }}>
 
-        <div style={{ display:"flex", gap:10, width:"100%" }}>
-          <Btn color={C.dim} style={{ flex:1, padding:11 }} onClick={onMap}>
-            LEVEL MAP
-          </Btn>
-          {/* Retry always available */}
-          <Btn color={C.purple || "#a855f7"} style={{ flex:1, padding:11 }} onClick={() => onMap("retry", level)}>
-            RETRY 🔄
-          </Btn>
+        {/* Score card */}
+        <div style={{ background: isDark() ? "rgba(255,255,255,0.05)" : "#fff", border:`2px solid ${starColor}44`, borderRadius:24, padding:"24px 20px", textAlign:"center", marginBottom:16, boxShadow:`0 8px 32px ${starColor}22` }}>
+          <div style={{ fontSize:64, marginBottom:8 }}>{resultEmoji}</div>
+          <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:11, color:starColor, letterSpacing:2, marginBottom:4 }}>LEVEL {level} COMPLETE</div>
+          <div style={{ fontSize:44, fontWeight:900, color:textColor(), fontFamily:"'Fredoka One',cursive", lineHeight:1 }}>{pct}%</div>
+          <div style={{ fontSize:14, color:C.dim, marginTop:4, marginBottom:12 }}>{correct} correct out of {total}</div>
+
+          {/* Stars */}
+          <div style={{ display:"flex", justifyContent:"center", gap:8, marginBottom:14 }}>
+            {[1,2,3].map(i => (
+              <div key={i} style={{
+                fontSize:36,
+                opacity: i <= stars ? 1 : 0.15,
+                filter: i <= stars ? `drop-shadow(0 0 8px ${starColor})` : "none",
+                transition:"all 0.4s",
+                transitionDelay:`${i * 0.15}s`,
+              }}>★</div>
+            ))}
+          </div>
+
+          <div style={{ fontSize:13, fontWeight:800, color:starColor }}>+{correct * 5} XP earned</div>
+
+          {/* Unlock status */}
+          {nextUnlocked ? (
+            <div style={{ marginTop:12, background:"#2ECC9A18", border:"1px solid #2ECC9A44", borderRadius:12, padding:"8px 14px" }}>
+              <div style={{ color:"#2ECC9A", fontSize:12, fontFamily:"'Orbitron',sans-serif", fontWeight:900 }}>
+                🔓 LEVEL {level + 1} UNLOCKED!
+              </div>
+            </div>
+          ) : level < totalLevels && stars < 3 ? (
+            <div style={{ marginTop:12, background:`${C.orange||"#f97316"}18`, border:`1px solid ${C.orange||"#f97316"}44`, borderRadius:12, padding:"8px 14px" }}>
+              <div style={{ color:C.orange||"#f97316", fontSize:12, fontFamily:"'Orbitron',sans-serif", fontWeight:900 }}>
+                ⭐ NEED 3 STARS TO UNLOCK LEVEL {level + 1}
+              </div>
+              <div style={{ fontSize:11, color:C.dim, marginTop:3 }}>
+                Score {Math.ceil(total * 0.9)}/{total} or better · retry to improve!
+              </div>
+            </div>
+          ) : null}
+        </div>
+
+        {/* Question history toggle */}
+        <button
+          onClick={() => setShowHistory(h => !h)}
+          style={{ width:"100%", background: isDark() ? "rgba(255,255,255,0.05)" : "#f5f3ff", border:`1.5px solid ${isDark()?"rgba(255,255,255,0.10)":"rgba(91,79,232,0.15)"}`, borderRadius:16, padding:"12px 16px", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom: showHistory ? 0 : 12 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+            <span style={{ fontSize:18 }}>📋</span>
+            <span style={{ fontSize:13, fontWeight:800, color:textColor() }}>Question Review</span>
+            <span style={{ background:"#9B59F518", border:"1px solid #9B59F530", borderRadius:999, padding:"2px 8px", fontSize:11, color:"#9B59F5", fontWeight:800 }}>
+              {correct}/{total}
+            </span>
+          </div>
+          <span style={{ fontSize:16, color:C.dim }}>{showHistory ? "▲" : "▼"}</span>
+        </button>
+
+        {/* History list */}
+        {showHistory && (
+          <div style={{ background: isDark() ? "rgba(255,255,255,0.03)" : "#f9f7ff", border:`1.5px solid ${isDark()?"rgba(255,255,255,0.08)":"rgba(91,79,232,0.10)"}`, borderRadius:"0 0 16px 16px", marginBottom:12, overflow:"hidden" }}>
+            {answers.map((a, i) => (
+              <div key={i} style={{
+                display:"flex", alignItems:"center", gap:10,
+                padding:"10px 14px",
+                borderBottom: i < answers.length - 1 ? `1px solid ${isDark()?"rgba(255,255,255,0.05)":"rgba(91,79,232,0.06)"}` : "none",
+                background: a.isOk
+                  ? (isDark() ? "rgba(46,204,154,0.06)" : "rgba(46,204,154,0.04)")
+                  : (isDark() ? "rgba(239,68,68,0.06)"  : "rgba(239,68,68,0.04)"),
+              }}>
+                {/* Q number */}
+                <div style={{ width:24, height:24, borderRadius:8, background: a.isOk ? "#2ECC9A22" : "#ef444422", display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:900, color: a.isOk ? "#2ECC9A" : "#ef4444", flexShrink:0 }}>
+                  {i + 1}
+                </div>
+                {/* Question */}
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontSize:12, fontWeight:700, color:textColor(), overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{a.q}</div>
+                  <div style={{ fontSize:11, color:C.dim, marginTop:2, display:"flex", gap:10 }}>
+                    <span>Your answer: <strong style={{ color: a.isOk ? "#2ECC9A" : "#ef4444" }}>{a.given}</strong></span>
+                    {!a.isOk && <span>Correct: <strong style={{ color:"#2ECC9A" }}>{a.correct}</strong></span>}
+                  </div>
+                </div>
+                {/* Status icon */}
+                <div style={{ fontSize:18, flexShrink:0 }}>{a.isOk ? "✅" : "❌"}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Action buttons */}
+        <div style={{ display:"flex", gap:10 }}>
+          <Btn color={C.dim}          style={{ flex:1, padding:12 }} onClick={onMap}>LEVEL MAP</Btn>
+          <Btn color={C.purple||"#a855f7"} style={{ flex:1, padding:12 }} onClick={onRetry}>RETRY 🔄</Btn>
           {nextUnlocked && (
-            <Btn color={C.cyan || "#22d3ee"} style={{ flex:1, padding:11 }} onClick={onNext}>
-              LVL {level + 1} →
-            </Btn>
+            <Btn color="#2ECC9A" style={{ flex:1, padding:12 }} onClick={onNext}>LVL {level+1} →</Btn>
           )}
         </div>
       </div>
@@ -407,7 +431,6 @@ export function Abacus({ onBack, child }) {
   const [progress,    setProgress]    = useState([]);
   const [lastResult,  setLastResult]  = useState(null);
 
-  // Load progress
   useEffect(() => {
     if (!child?.id) return;
     db.getProgress(child.id).then(({ data }) => {
@@ -417,50 +440,28 @@ export function Abacus({ onBack, child }) {
     });
   }, [child?.id, classNum]);
 
-  const handleSelectLevel = (lvNum) => {
-    setActiveLevel(lvNum);
-    setScreen("quiz");
-  };
+  const handleSelectLevel = (lvNum) => { setActiveLevel(lvNum); setScreen("quiz"); };
 
   const handleComplete = (result) => {
-    // Update local progress
     const key = progressKey(classNum, result.level);
     setProgress(prev => {
       const existing = prev.find(p => p.lesson_id === key);
-      if (existing) {
-        return prev.map(p => p.lesson_id === key
-          ? { ...p, stars_earned: Math.max(p.stars_earned || 0, result.stars) }
-          : p);
-      }
+      if (existing) return prev.map(p => p.lesson_id === key ? { ...p, stars_earned: Math.max(p.stars_earned||0, result.stars) } : p);
       return [...prev, { lesson_id: key, stars_earned: result.stars, child_id: child?.id }];
     });
     setLastResult(result);
-    setScreen("complete");
+    setScreen("results");
   };
 
-  // onMap callback — handles retry or just going back to map
-  const handleMap = (action, lvNum) => {
-    if (action === "retry" && lvNum) {
-      setActiveLevel(lvNum);
-      setScreen("quiz");
-    } else {
-      setScreen("map");
-    }
-  };
-
-  const handleNextLevel = () => {
-    setActiveLevel(l => l + 1);
-    setScreen("quiz");
-  };
-
-  if (screen === "complete" && lastResult) {
+  if (screen === "results" && lastResult) {
     return (
-      <LevelComplete
+      <ResultsScreen
         classNum={classNum}
         result={lastResult}
         totalLevels={totalLevels}
-        onNext={handleNextLevel}
-        onMap={handleMap}
+        onRetry={() => { setActiveLevel(lastResult.level); setScreen("quiz"); }}
+        onNext={() => { setActiveLevel(lastResult.level + 1); setScreen("quiz"); }}
+        onMap={() => setScreen("map")}
       />
     );
   }
