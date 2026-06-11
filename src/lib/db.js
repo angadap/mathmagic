@@ -403,6 +403,9 @@ export async function fetchSetQuestions(lessonId, setIndex) {
   return shuffle(FALLBACK_Q.map(q => { const r = shuffleOpts(q.opts, q.ans); return {...q, ...r}; }));
 }
 
+
+
+
 // ── fetchAbacusQuestions ──────────────────────────────────────────────────────
 // Fetches abacus questions for a specific class + level from DB.
 // Falls back to local ABACUS_LEVELS_BY_CLASS data if DB returns nothing.
@@ -433,7 +436,6 @@ export async function fetchAbacusQuestions(classNum, levelNum) {
   const level = levels.find(l => l.level === ln);
   return level ? level.probs : [];
 }
-
 // ── MEM — restored from localStorage on startup (1-hour TTL) ────────────────
 const MEM = (() => {
   const cachedChildren = lsRestore(CHILDREN_LS_KEY, 60 * 60 * 1000) || [];
@@ -870,6 +872,23 @@ export const db = {
     } catch(e) {
       dbLog("error","feedback network error", e.message);
       return { ok:false, error:e.message };
+    }
+  },
+
+  async getFunFact(childId, childType) {
+    // BrainSpark: fetch today's fun fact for this child, advancing index once per day
+    try {
+      const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+      const res = await fetch("/api/db", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${this._token || ""}` },
+        body: JSON.stringify({ action: "get_fun_fact", child_id: childId, child_type: childType, today }),
+      });
+      const j = await res.json();
+      if (j.fact) return { fact: j.fact, category: j.category, fact_id: j.fact_id };
+      return { fact: null, error: j.error };
+    } catch(e) {
+      return { fact: null, error: e.message };
     }
   },
 };
