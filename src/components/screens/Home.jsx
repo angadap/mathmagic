@@ -155,14 +155,16 @@ export function MyClassSection({ world: w, child, onWorld, pctDone }) {
   );
 }
 
-export function QuickLaunch({ onAbacus, onGames, onOlympiad, onBazaar }) {
+export function QuickLaunch({ onAbacus, onGames, onOlympiad, onBazaar, child }) {
   const [open, setOpen] = React.useState(true);
+  const classNum = parseInt(child?.class_num || 1);
+  const showOlympiad = classNum >= 1 && classNum <= 5;
   const items = [
     {i:"🧮",l:"Abacus",    sub:"Train your brain",  c:"#FFC847",  a:onAbacus},
     {i:"🎮",l:"Games Hub", sub:"Fun challenges",     c:"#4BBDF5",  a:onGames},
-    {i:"🎓",l:"Olympiad",  sub:"Compete & win",      c:"#9B59F5",  a:onOlympiad},
+    showOlympiad && {i:"🎓",l:"Olympiad",  sub:"Compete & win",      c:"#9B59F5",  a:onOlympiad},
     {i:"🛒",l:"Bazaar",    sub:"Real-life maths 🆕", c:"#f97316", a:onBazaar},
-  ];
+  ].filter(Boolean);
   return (
     <div style={{ position:"relative", zIndex:2, margin:"14px 18px 0" }}>
       <button onClick={()=>setOpen(o=>!o)}
@@ -449,31 +451,64 @@ const CATEGORY_COLORS = {
 };
 const DEFAULT_SPARK = { bg:"#FF5FA018", border:"#FF5FA040", label:"#FF5FA0", emoji:"✨" };
 
+const COSMO_DURATION = 5000;   // 5s
+const SPARK_DURATION  = 15000;  // 15s
+
 function BrainSparkCard({ brainSpark, onOpen, mascotMsg }) {
   const clr = brainSpark ? (CATEGORY_COLORS[brainSpark.category] || DEFAULT_SPARK) : DEFAULT_SPARK;
+  // phase: 'cosmo' or 'spark' — only alternates if brainSpark is loaded
+  const [phase, setPhase] = useState('cosmo');
+  const [visible, setVisible] = useState(true); // controls fade in/out
+
+  useEffect(() => {
+    if (!brainSpark) return; // no fact loaded — stay on Cosmo permanently
+    let timer;
+    const cycle = () => {
+      // fade out, then swap content, then fade in
+      setVisible(false);
+      timer = setTimeout(() => {
+        setPhase(p => {
+          const next = p === 'cosmo' ? 'spark' : 'cosmo';
+          const dur = next === 'spark' ? SPARK_DURATION : COSMO_DURATION;
+          timer = setTimeout(cycle, dur);
+          return next;
+        });
+        setVisible(true);
+      }, 350); // fade duration
+    };
+    timer = setTimeout(cycle, phase === 'cosmo' ? COSMO_DURATION : SPARK_DURATION);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [brainSpark]);
+
+  const showSpark = brainSpark && phase === 'spark';
+  const fadeStyle = { opacity: visible ? 1 : 0, transition: "opacity 0.35s ease" };
+
   return (
-    <div
-      onClick={brainSpark ? onOpen : undefined}
-      style={{ background:`linear-gradient(135deg,${clr.bg},#FFFFFF08)`, border:`1.5px solid ${clr.border}`, borderRadius:20, padding:"12px 16px", display:"flex", alignItems:"center", gap:12, cursor:brainSpark?"pointer":"default", transition:"transform 0.15s", position:"relative", overflow:"hidden" }}
-      onMouseEnter={e=>{ if(brainSpark) e.currentTarget.style.transform="scale(1.01)"; }}
-      onMouseLeave={e=>{ e.currentTarget.style.transform="scale(1)"; }}
-    >
-      <div style={{ fontSize:34, animation:"mmFloat 2.5s ease-in-out infinite", flexShrink:0 }}>
-        {brainSpark ? clr.emoji : "🤖"}
-      </div>
-      <div style={{ flex:1, minWidth:0 }}>
-        <div style={{ fontSize:11, color:brainSpark?clr.label:"#5B4FE8", fontWeight:800, letterSpacing:1, marginBottom:2 }}>
-          {brainSpark ? "⚡ BRAINSPARK" : "COSMO SAYS"}
+    <div style={{ position:"relative", borderRadius:20, overflow:"hidden", border: showSpark ? "1.5px solid #9B59F535" : "1.5px solid #5B4FE820", boxShadow: showSpark ? "0 0 0 1px #FF5FA020, 0 0 22px #9B59F524" : "none", transition:"border-color 0.4s ease, box-shadow 0.4s ease" }}>
+      {/* Shimmer beam — only during BrainSpark phase */}
+      {showSpark && (
+        <div style={{ position:"absolute", top:0, bottom:0, width:"38%", background:"linear-gradient(105deg, transparent 15%, rgba(255,255,255,0.6) 50%, transparent 85%)", animation:"mmBsShimmer 3.4s ease-in-out infinite", animationDelay:"0.5s", pointerEvents:"none", zIndex:2 }}/>
+      )}
+      {!showSpark ? (
+        // ── COSMO SAYS phase ──
+        <div onClick={undefined} style={{ ...fadeStyle, background:"linear-gradient(135deg,#5B4FE812,#9B59F50a)", padding:"12px 16px", display:"flex", alignItems:"center", gap:12 }}>
+          <div style={{ fontSize:34, animation:"mmFloat 2.5s ease-in-out infinite", flexShrink:0 }}>🤖</div>
+          <div style={{ flex:1 }}>
+            <div style={{ fontSize:11, color:"#5B4FE8", fontWeight:800, letterSpacing:1, marginBottom:2 }}>COSMO SAYS</div>
+            <div key={mascotMsg} style={{ fontSize:14, color:"#1A1040", fontWeight:700 }}>{mascotMsg}</div>
+          </div>
         </div>
-        <div style={{ fontSize:13, color:"#1A1040", fontWeight:700, lineHeight:1.35, overflow:"hidden", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical" }}>
-          {brainSpark ? brainSpark.fact : mascotMsg}
+      ) : (
+        // ── BRAINSPARK phase (Option C shimmer) ──
+        <div onClick={onOpen} style={{ ...fadeStyle, background:`linear-gradient(135deg,${clr.bg},#FF5FA008,#FAFAFF)`, padding:"12px 16px", display:"flex", alignItems:"center", gap:12, cursor:"pointer", position:"relative", zIndex:1 }}>
+          <div style={{ fontSize:34, animation:"mmFloat 2.5s ease-in-out infinite", flexShrink:0 }}>{clr.emoji}</div>
+          <div style={{ flex:1, minWidth:0 }}>
+            <div style={{ fontSize:11, color:clr.label, fontWeight:800, letterSpacing:1, marginBottom:2 }}>⚡ BRAINSPARK</div>
+            <div style={{ fontSize:13, color:"#1A1040", fontWeight:700, lineHeight:1.35, overflow:"hidden", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical" }}>{brainSpark.fact}</div>
+            <div style={{ marginTop:5, fontSize:10, color:clr.label, fontWeight:800 }}>Tap to explore ✦</div>
+          </div>
         </div>
-        {brainSpark && (
-          <div style={{ marginTop:5, fontSize:10, color:clr.label, fontWeight:800 }}>Tap to explore ✦</div>
-        )}
-      </div>
-      {brainSpark && (
-        <div style={{ position:"absolute", top:-10, right:-10, width:60, height:60, borderRadius:"50%", background:`radial-gradient(${clr.border},transparent)`, pointerEvents:"none" }}/>
       )}
     </div>
   );
@@ -546,6 +581,7 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
   const [brainSpark,   setBrainSpark]   = useState(null);   // { fact, category }
   const [sparkOpen,    setSparkOpen]    = useState(false);
   const w = WORLDS.find(x=>x.id===parseInt(child.class_num||1)) || WORLDS[0];
+  const showOlympiad = (() => { const cn = parseInt(child.class_num || 1); return cn >= 1 && cn <= 5; })();
   const MASCOT_MSGS = [
     `Hi ${child.name?.split(" ")[0]?.toUpperCase()}! Ready to blast off? 🚀`,
     "You're a Math Superstar! ⭐ Keep going!",
@@ -718,9 +754,9 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
             {[
               {i:"🧮",l:"Abacus",   s:"Train your brain", c:"#FFC847",a:onAbacus},
               {i:"🎮",l:"Games Hub", s:"8 mini-games",     c:"#4BBDF5",a:onGames},
-              {i:"🎓",l:"Olympiad",  s:"Compete & win",    c:"#9B59F5",a:onOlympiad},
+              showOlympiad && {i:"🎓",l:"Olympiad",  s:"Compete & win",    c:"#9B59F5",a:onOlympiad},
               {i:"🛒",l:"Bazaar 🆕", s:"Real-life maths",  c:"#FF6B6B",a:onBazaar},
-            ].map((n,i)=>(
+            ].filter(Boolean).map((n,i)=>(
               <button key={i} onClick={n.a} style={{ background:`${n.c}10`, border:`1.5px solid ${n.c}25`, borderRadius:20, padding:"14px 12px", cursor:"pointer", textAlign:"left", display:"flex", alignItems:"center", gap:10, boxShadow:`0 4px 12px ${n.c}30, 0 2px 6px ${n.c}20` }}>
                 <div style={{ fontSize:26, flexShrink:0 }}>{n.i}</div>
                 <div>

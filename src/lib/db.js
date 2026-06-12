@@ -578,6 +578,24 @@ export const db = {
     } catch(e) { dbLog("error","getDailyChallenge",e.message); return null; }
   },
 
+  async getOlympiadQuestions(classKey, tier, testIndex) {
+    const cacheKey = `mm_olympiad_${classKey}_${tier}_${testIndex}`;
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        const { data, ts } = JSON.parse(cached);
+        if (Date.now() - ts < 24 * 60 * 60 * 1000) return { data };
+      }
+    } catch(e) {}
+    const r = await this._call("get_olympiad_questions", { class_key: classKey, tier, test_index: testIndex });
+    if (r.data && r.data.length > 0) {
+      try {
+        localStorage.setItem(cacheKey, JSON.stringify({ data: r.data, ts: Date.now() }));
+      } catch(e) {}
+    }
+    return r;
+  },
+
   async getDailyCompletion(childId) {
     const today = new Date().toISOString().slice(0,10);
     if (localStorage.getItem(`dq_done_${childId}_${today}`)) return { completed_at: today };

@@ -1,5 +1,168 @@
 // src/constants/olympiadData.js — Olympiad test definitions
 
+const C1_FALLBACK = {
+  starter: [
+    [
+      {q:"3 + 4 = ?",opts:["6","7","8","9"],ans:1,h:"Count on from 3",time:45},
+      {q:"8 - 5 = ?",opts:["2","3","4","5"],ans:1,h:"Count back from 8",time:45},
+      {q:"2 + 6 = ?",opts:["7","8","9","10"],ans:1,h:"Add 2 and 6",time:45},
+      {q:"10 - 3 = ?",opts:["6","7","8","9"],ans:1,h:"Count back from 10",time:45},
+      {q:"4 + 5 = ?",opts:["7","8","9","10"],ans:2,h:"Count on from 5",time:45},
+      {q:"9 - 4 = ?",opts:["3","4","5","6"],ans:2,h:"Count back from 9",time:45},
+      {q:"1 + 7 = ?",opts:["7","8","9","10"],ans:1,h:"Add 1 to 7",time:45},
+      {q:"6 - 2 = ?",opts:["2","3","4","5"],ans:2,h:"Count back from 6",time:45},
+      {q:"5 + 5 = ?",opts:["9","10","11","12"],ans:1,h:"Double 5",time:45},
+      {q:"7 - 3 = ?",opts:["3","4","5","6"],ans:1,h:"Count back from 7",time:45},
+      {q:"What comes after 9?",opts:["8","9","10","11"],ans:2,h:"Count up by 1",time:45},
+      {q:"What comes before 5?",opts:["3","4","5","6"],ans:1,h:"Count down by 1",time:45},
+      {q:"How many sides does a triangle have?",opts:["2","3","4","5"],ans:1,h:"Count the corners",time:45},
+      {q:"3 + 3 + 3 = ?",opts:["6","7","8","9"],ans:2,h:"Add three groups of 3",time:45},
+      {q:"10 - 7 = ?",opts:["2","3","4","5"],ans:1,h:"Count back from 10",time:45},
+    ],
+    [
+      {q:"Which is bigger: 7 or 9?",opts:["7","9","Both equal","Can't tell"],ans:1,h:"Count to compare",time:45},
+      {q:"4 + 4 = ?",opts:["6","7","8","9"],ans:2,h:"Double 4",time:45},
+      {q:"9 - 6 = ?",opts:["2","3","4","5"],ans:1,h:"Count back",time:45},
+      {q:"What is 1 more than 8?",opts:["7","8","9","10"],ans:2,h:"Count one forward",time:45},
+      {q:"What is 1 less than 6?",opts:["4","5","6","7"],ans:1,h:"Count one back",time:45},
+      {q:"5 + 4 = ?",opts:["7","8","9","10"],ans:2,h:"Count on from 5",time:45},
+      {q:"8 - 2 = ?",opts:["5","6","7","8"],ans:1,h:"Count back from 8",time:45},
+      {q:"How many fingers on 2 hands?",opts:["8","9","10","11"],ans:2,h:"Count fingers on each hand",time:45},
+      {q:"2 + 2 + 2 = ?",opts:["4","5","6","7"],ans:2,h:"Add three 2s",time:45},
+      {q:"Which is smallest: 3, 7 or 5?",opts:["3","7","5","All equal"],ans:0,h:"Find the least",time:45},
+      {q:"7 + 2 = ?",opts:["7","8","9","10"],ans:2,h:"Count on from 7",time:45},
+      {q:"10 - 4 = ?",opts:["5","6","7","8"],ans:1,h:"Count back from 10",time:45},
+      {q:"How many sides does a square have?",opts:["3","4","5","6"],ans:1,h:"Count all sides of a square",time:45},
+      {q:"6 + 3 = ?",opts:["7","8","9","10"],ans:2,h:"Count on from 6",time:45},
+      {q:"5 - 3 = ?",opts:["1","2","3","4"],ans:1,h:"Count back from 5",time:45},
+    ],
+    [
+      {q:"How many tens are in 20?",opts:["1","2","3","4"],ans:1,h:"20 = 2 tens",time:45},
+      {q:"3 + 7 = ?",opts:["9","10","11","12"],ans:1,h:"Add to make 10",time:45},
+      {q:"9 - 2 = ?",opts:["6","7","8","9"],ans:1,h:"Count back from 9",time:45},
+      {q:"What shape has no corners?",opts:["Square","Triangle","Circle","Rectangle"],ans:2,h:"Round shapes have no corners",time:45},
+      {q:"4 + 6 = ?",opts:["9","10","11","12"],ans:1,h:"Add to make 10",time:45},
+      {q:"What is 2 more than 5?",opts:["5","6","7","8"],ans:2,h:"Count two forward from 5",time:45},
+      {q:"8 - 6 = ?",opts:["1","2","3","4"],ans:1,h:"Count back from 8",time:45},
+      {q:"Which number is even: 3, 5, 7 or 8?",opts:["3","5","7","8"],ans:3,h:"Even numbers end in 0,2,4,6,8",time:45},
+      {q:"5 + 3 = ?",opts:["6","7","8","9"],ans:2,h:"Count on from 5",time:45},
+      {q:"10 - 6 = ?",opts:["3","4","5","6"],ans:1,h:"Count back from 10",time:45},
+      {q:"What comes after 19?",opts:["18","19","20","21"],ans:2,h:"Count up from 19",time:45},
+      {q:"How many days in a week?",opts:["5","6","7","8"],ans:2,h:"Monday to Sunday",time:45},
+      {q:"6 + 4 = ?",opts:["9","10","11","12"],ans:1,h:"Pair that makes 10",time:45},
+      {q:"7 - 7 = ?",opts:["0","1","2","7"],ans:0,h:"Same number minus itself is 0",time:45},
+      {q:"2 + 9 = ?",opts:["10","11","12","13"],ans:1,h:"Count on from 9",time:45},
+    ],
+  ],
+};
+
+const C2_FALLBACK = {
+  starter: [
+    [
+      {q:"23 + 14 = ?",opts:["36","37","38","39"],ans:1,h:"Add ones: 3+4=7, tens: 2+1=3",time:45},
+      {q:"45 - 12 = ?",opts:["32","33","34","35"],ans:1,h:"Subtract ones: 5-2=3, tens: 4-1=3",time:45},
+      {q:"2 × 5 = ?",opts:["8","10","12","14"],ans:1,h:"2 times table: 2,4,6,8,10",time:45},
+      {q:"3 × 4 = ?",opts:["10","11","12","13"],ans:2,h:"3 times table: 3,6,9,12",time:45},
+      {q:"Half of 16 = ?",opts:["6","7","8","9"],ans:2,h:"Divide 16 by 2",time:45},
+      {q:"30 + 25 = ?",opts:["54","55","56","57"],ans:1,h:"Add tens then ones",time:45},
+      {q:"5 × 6 = ?",opts:["28","30","32","35"],ans:1,h:"5 times table: 5,10,15,20,25,30",time:45},
+      {q:"50 - 20 = ?",opts:["20","25","30","35"],ans:2,h:"Subtract tens: 5-2=3, so 30",time:45},
+      {q:"Double 9 = ?",opts:["16","17","18","19"],ans:2,h:"9 + 9 = 18",time:45},
+      {q:"How many sides does a pentagon have?",opts:["4","5","6","7"],ans:1,h:"Penta means 5",time:45},
+      {q:"2 × 9 = ?",opts:["16","17","18","19"],ans:2,h:"2 times table",time:45},
+      {q:"70 - 40 = ?",opts:["20","30","40","50"],ans:1,h:"Subtract tens: 7-4=3, so 30",time:45},
+      {q:"What is 10 more than 43?",opts:["33","44","53","54"],ans:2,h:"Add 10 to the tens place",time:45},
+      {q:"3 × 3 = ?",opts:["6","7","8","9"],ans:3,h:"3 times table",time:45},
+      {q:"48 + 11 = ?",opts:["58","59","60","61"],ans:1,h:"Add ones: 8+1=9, tens: 4+1=5",time:45},
+    ],
+    [
+      {q:"36 + 24 = ?",opts:["58","59","60","61"],ans:2,h:"Add ones: 6+4=10, carry 1",time:45},
+      {q:"52 - 27 = ?",opts:["23","24","25","26"],ans:2,h:"Borrow from tens: 12-7=5, 4-2=2",time:45},
+      {q:"5 × 4 = ?",opts:["18","19","20","21"],ans:2,h:"5 times table: 5,10,15,20",time:45},
+      {q:"How many months in a year?",opts:["10","11","12","13"],ans:2,h:"Jan to Dec",time:45},
+      {q:"2 × 7 = ?",opts:["12","13","14","15"],ans:2,h:"2 times table: 2,4,...14",time:45},
+      {q:"60 + 35 = ?",opts:["93","94","95","96"],ans:2,h:"6+3=9 tens, 0+5=5 ones",time:45},
+      {q:"3 × 7 = ?",opts:["19","20","21","22"],ans:2,h:"3 times table: 3,6,9,...21",time:45},
+      {q:"What is 10 less than 80?",opts:["60","70","75","90"],ans:1,h:"Subtract 1 ten",time:45},
+      {q:"Half of 20 = ?",opts:["8","9","10","11"],ans:2,h:"20 ÷ 2 = 10",time:45},
+      {q:"5 × 5 = ?",opts:["20","22","25","30"],ans:2,h:"5 times table: 5,10,15,20,25",time:45},
+      {q:"Is 14 odd or even?",opts:["Odd","Even","Both","Neither"],ans:1,h:"14 ends in 4, an even digit",time:45},
+      {q:"43 + 38 = ?",opts:["79","80","81","82"],ans:2,h:"3+8=11, carry 1 to tens",time:45},
+      {q:"5 × 8 = ?",opts:["35","38","40","42"],ans:2,h:"5 times table: 5,10,...40",time:45},
+      {q:"75 - 25 = ?",opts:["40","45","50","55"],ans:2,h:"Subtract 25 from 75",time:45},
+      {q:"2 × 8 = ?",opts:["14","15","16","17"],ans:2,h:"2 times table: 2,4,...16",time:45},
+    ],
+    [
+      {q:"99 + 1 = ?",opts:["99","100","101","102"],ans:1,h:"Add 1 to 99",time:45},
+      {q:"100 - 50 = ?",opts:["40","45","50","55"],ans:2,h:"Half of 100",time:45},
+      {q:"3 × 9 = ?",opts:["24","25","26","27"],ans:3,h:"3 times table: 3,6,...27",time:45},
+      {q:"Place value of 5 in 57?",opts:["5","7","50","70"],ans:2,h:"5 is in the tens place",time:45},
+      {q:"5 × 9 = ?",opts:["40","42","45","48"],ans:2,h:"5 times table: 5,10,...45",time:45},
+      {q:"65 + 15 = ?",opts:["78","79","80","81"],ans:2,h:"5+5=10, carry 1; 6+1+1=8",time:45},
+      {q:"2 × 6 = ?",opts:["10","11","12","13"],ans:2,h:"2 times table: 2,4,...12",time:45},
+      {q:"80 - 35 = ?",opts:["43","44","45","46"],ans:2,h:"Borrow 1 ten from 80",time:45},
+      {q:"Double 15 = ?",opts:["25","28","30","32"],ans:2,h:"15 + 15 = 30",time:45},
+      {q:"3 × 6 = ?",opts:["15","16","17","18"],ans:3,h:"3 times table: 3,6,9,12,15,18",time:45},
+      {q:"How many hours in half a day?",opts:["10","11","12","13"],ans:2,h:"Half of 24 hours",time:45},
+      {q:"5 × 7 = ?",opts:["30","33","35","38"],ans:2,h:"5 times table: 5,10,...35",time:45},
+      {q:"47 + 33 = ?",opts:["78","79","80","81"],ans:2,h:"7+3=10, carry 1; 4+3+1=8",time:45},
+      {q:"2 × 10 = ?",opts:["15","18","20","22"],ans:2,h:"2 times table",time:45},
+      {q:"What is 10 more than 90?",opts:["80","100","101","110"],ans:1,h:"90 + 10 = 100",time:45},
+    ],
+  ],
+};
+
+const C3_FALLBACK = {
+  starter: [
+    [
+      {q:"125 + 234 = ?",opts:["358","359","360","361"],ans:1,h:"Add ones, tens, hundreds",time:45},
+      {q:"500 - 250 = ?",opts:["200","250","300","350"],ans:1,h:"Half of 500",time:45},
+      {q:"4 × 7 = ?",opts:["26","27","28","29"],ans:2,h:"4 times table: 4,8,12,...28",time:45},
+      {q:"What is ½ of 40?",opts:["15","20","25","30"],ans:1,h:"Divide 40 by 2",time:45},
+      {q:"346 + 215 = ?",opts:["559","560","561","562"],ans:2,h:"Add column by column",time:45},
+      {q:"6 × 8 = ?",opts:["46","48","50","52"],ans:1,h:"6 times table: 6,12,...48",time:45},
+      {q:"700 - 150 = ?",opts:["500","550","600","650"],ans:1,h:"Subtract 150 from 700",time:45},
+      {q:"What is ¼ of 20?",opts:["4","5","6","7"],ans:1,h:"Divide 20 by 4",time:45},
+      {q:"3 × 9 = ?",opts:["24","25","26","27"],ans:3,h:"3 times table: 3,6,...27",time:45},
+      {q:"423 - 111 = ?",opts:["310","311","312","313"],ans:2,h:"Subtract column by column",time:45},
+      {q:"How many centimetres in 1 metre?",opts:["10","100","1000","10000"],ans:1,h:"1 m = 100 cm",time:45},
+      {q:"7 × 6 = ?",opts:["40","42","44","46"],ans:1,h:"7 times table: 7,14,...42",time:45},
+      {q:"250 + 350 = ?",opts:["550","600","650","700"],ans:1,h:"250 + 350 = 600",time:45},
+      {q:"2 of 4 equal parts are shaded. What fraction?",opts:["1/4","1/2","3/4","2/4"],ans:1,h:"2 out of 4 = 1/2",time:45},
+      {q:"8 × 5 = ?",opts:["35","38","40","45"],ans:2,h:"8 times table: 8,16,...40",time:45},
+      {q:"600 - 200 = ?",opts:["200","300","400","500"],ans:2,h:"Subtract hundreds",time:45},
+      {q:"4 × 9 = ?",opts:["32","34","36","38"],ans:2,h:"4 times table: 4,8,...36",time:45},
+      {q:"Which is larger: ½ or ¼?",opts:["1/4","1/2","Equal","Can't tell"],ans:1,h:"More pieces = smaller each piece",time:45},
+      {q:"How many grams in 1 kg?",opts:["100","500","1000","2000"],ans:2,h:"1 kg = 1000 g",time:45},
+      {q:"5 × 8 = ?",opts:["35","38","40","45"],ans:2,h:"5 times table: 5,10,...40",time:45},
+      {q:"312 + 488 = ?",opts:["798","799","800","801"],ans:2,h:"Add ones, tens, hundreds",time:45},
+      {q:"9 × 7 = ?",opts:["61","63","65","67"],ans:1,h:"9 times table: 9,18,...63",time:45},
+      {q:"Perimeter of a square with side 5 cm?",opts:["15 cm","20 cm","25 cm","30 cm"],ans:1,h:"Perimeter = 4 × side",time:45},
+      {q:"450 - 230 = ?",opts:["218","219","220","221"],ans:2,h:"Subtract ones, tens, hundreds",time:45},
+      {q:"6 × 7 = ?",opts:["40","42","44","46"],ans:1,h:"6 times table: 6,12,...42",time:45},
+    ],
+    [],
+    [],
+  ],
+};
+
+export function getOlympiadFallback(classKey, tierKey, testIndex) {
+  if (classKey === "c4") {
+    if (tierKey === "starter")  return OLYMPIAD_TESTS[testIndex]      || OLYMPIAD_TESTS[0];
+    if (tierKey === "explorer") return OLYMPIAD_TESTS[testIndex + 10] || OLYMPIAD_TESTS[10];
+    return OLYMPIAD_TESTS[0];
+  }
+  if (classKey === "c5") {
+    if (tierKey === "champion") return OLYMPIAD_TESTS[testIndex + 20] || OLYMPIAD_TESTS[20];
+    if (tierKey === "master")   return OLYMPIAD_TESTS[testIndex + 25] || OLYMPIAD_TESTS[25];
+    return OLYMPIAD_TESTS[0];
+  }
+  const map = { "c1": C1_FALLBACK, "c2": C2_FALLBACK, "c3": C3_FALLBACK };
+  const tierTests = (map[classKey] || {})[tierKey];
+  if (!tierTests) return OLYMPIAD_TESTS[0];
+  return tierTests[testIndex] || tierTests[0];
+}
+
 export const OLYMPIAD_TESTS = [
   /* Test 1 */ [
     {q:"A train has 5 coaches. Each coach has 8 seats. Total seats?",opts:["30", "35", "40", "45"],ans:2,h:"5x8=40!",time:45},

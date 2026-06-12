@@ -302,6 +302,24 @@ export default async function handler(req, res) {
       return res.status(200).json({ data: seq_num ? (data[0] || null) : data });
     }
 
+    if (action === "get_olympiad_questions") {
+      const { class_key, tier, test_index } = req.body;
+      const validKeys  = ["c1","c2","c3","c4","c5"];
+      const validTiers = ["starter","explorer","champion","master"];
+      if (!validKeys.includes(class_key))  return res.status(400).json({ error:"Invalid class_key" });
+      if (!validTiers.includes(tier))      return res.status(400).json({ error:"Invalid tier" });
+      const ti = parseInt(test_index);
+      if (isNaN(ti) || ti < 0 || ti > 9)  return res.status(400).json({ error:"Invalid test_index" });
+      const r = await sbQuery(
+        "olympiad_questions", "GET", null,
+        `?class_key=eq.${encodeURIComponent(class_key)}&tier=eq.${encodeURIComponent(tier)}&test_index=eq.${ti}&order=question_index.asc&select=question_index,question,options,correct_answer,hint,time_limit`
+      );
+      if (!r.data || r.data.length === 0) {
+        return res.status(404).json({ error:"No questions found", class_key, tier, test_index: ti });
+      }
+      return res.status(200).json({ data: r.data });
+    }
+
     if (action === "get_daily_puzzle") {
       const today = new Date().toISOString().slice(0, 10);
       const r = await sbQuery("daily_puzzles", "GET", null, `?date=eq.${today}&limit=1`);

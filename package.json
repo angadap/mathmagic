@@ -7,9 +7,12 @@
     "build": "vite build",
     "preview": "vite preview",
     "vercel-build": "npx vite build",
-    "postinstall": "chmod +x node_modules/.bin/vite || true"
+    "postinstall": "chmod +x node_modules/.bin/vite || true",
+    "seed:olympiad": "node scripts/seed_olympiad_existing.js",
+    "seed:classes": "node scripts/seed_new_classes.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.108.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
