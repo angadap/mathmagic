@@ -931,7 +931,9 @@ export const db = {
       });
       if (!res.ok) return null;
       const data = await res.json();
-      try { sessionStorage.setItem(cacheKey, JSON.stringify(data)); } catch (_) {}
+      if (data?.puzzle) {
+        try { sessionStorage.setItem(cacheKey, JSON.stringify(data)); } catch (_) {}
+      }
       return data;
     } catch (e) {
       console.error("getBrainPuzzle error", e);

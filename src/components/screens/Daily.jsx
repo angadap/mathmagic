@@ -299,7 +299,7 @@ export function DailyPuzzle({ child, onClose }) {
       db.getBrainPuzzle(child.id, child.is_school_student ? "school" : "parent", child.class_num),
       db.getPuzzleCompletion(child.id)
     ]).then(([p, comp]) => {
-      setPuzzle(p ? { ...p.puzzle, seq_num: p.seq_num } : null);
+      setPuzzle(p?.puzzle ? { ...p.puzzle, seq_num: p.seq_num } : null);
       if (comp) setDone(true);
       setLoading(false);
     });

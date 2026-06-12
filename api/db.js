@@ -393,8 +393,9 @@ export default async function handler(req, res) {
       const effectiveIdx = idx < 1 ? 1 : idx;
       const seqNum = ((effectiveIdx - 1) % 100) + 1;
 
+      const safeClassNum = parseInt(class_num) || 1;
       const pr = await sbQuery("brain_puzzles", "GET", null,
-        `?class_num=eq.${class_num}&seq_num=eq.${seqNum}&limit=1`);
+        `?class_num=eq.${safeClassNum}&seq_num=eq.${seqNum}&limit=1`);
       if (!pr.ok) return res.status(500).json({ error: "fetch puzzle failed" });
       const puzzle = Array.isArray(pr.data) ? pr.data[0] || null : null;
 
