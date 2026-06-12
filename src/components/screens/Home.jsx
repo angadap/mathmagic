@@ -875,7 +875,7 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
             {e:"⭐",v:totalStars,     l:"Stars",  c:"#FFC847"},
             {e:"🪙",v:child.coins||0, l:"Coins",  c:"#4BBDF5"},
             {e:"💎",v:child.gems||0,  l:"Gems",   c:"#9B59F5"},
-            {e:"🗓️",v:todaySets,      l:"Today",  c:"#2ECC9A"},
+            {e:"🔥",v:child.streak_days||0, l:"Streak", c:"#FF6B6B"},
           ].map((s,i)=>(
             <div key={i} style={{ background:"white", border:`1.5px solid ${s.c}22`, borderRadius:28, padding:"10px 6px", textAlign:"center", boxShadow:`0 8px 30px ${s.c}28, inset 0 1px 0 rgba(255,255,255,0.8)` }}>
               <div style={{ fontSize:20 }}>{s.e}</div>
@@ -923,8 +923,6 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
           <div style={{ fontSize:24, color:"#9B59F5" }}>›</div>
         </button>
 
-        {/* 4f — Explore Other Worlds */}
-        <WorldsSection WORLDS={WORLDS} child={child} onWorld={onWorld} forceOpen={exploreOpen} onToggle={()=>setExploreOpen(false)} />
 
       </div>
 
