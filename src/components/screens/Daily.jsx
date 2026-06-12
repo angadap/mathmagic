@@ -138,12 +138,12 @@ export function DailyQuestHub({ child, dqDone, dpDone, setDone, onWorld, worldW,
 
   // ── Step 2: Word Problem (DailyQuiz inline) ───────────────────────
   if (step === 2) return (
-    <DailyQuiz child={child} onClose={()=>{ setLocalDQ(!!localStorage.getItem(`dq_done_${child.id}_${new Date().toISOString().slice(0,10)}`)); setStep(0); }}/>
+    <DailyQuiz child={child} onClose={()=>{ setLocalDQ(!!localStorage.getItem(`dq_done_${child.id}_${new Date().toISOString().slice(0,10)}`)); initialStep===2 ? onClose() : setStep(0); }}/>
   );
 
   // ── Step 3: Brain Puzzle (DailyPuzzle inline) ─────────────────────
   if (step === 3) return (
-    <DailyPuzzle child={child} onClose={()=>{ setLocalDP(!!localStorage.getItem(`dp_done_${child.id}_${new Date().toISOString().slice(0,10)}`)); setStep(0); }}/>
+    <DailyPuzzle child={child} onClose={()=>{ setLocalDP(!!localStorage.getItem(`dp_done_${child.id}_${new Date().toISOString().slice(0,10)}`)); initialStep===3 ? onClose() : setStep(0); }}/>
   );
 
   return null;

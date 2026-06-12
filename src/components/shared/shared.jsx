@@ -332,7 +332,7 @@ export function FABButton({ onHelp, onRankings, showRankings, onWordProblem, sho
         }}
         style={{
           position:"relative",
-          width:56, height:56, borderRadius:"50%",
+          width:60, height:60, borderRadius:"50%",
           background:"transparent",
           border:"none",
           padding:0,
@@ -341,25 +341,31 @@ export function FABButton({ onHelp, onRankings, showRankings, onWordProblem, sho
         }}
         title={open ? "Close" : hasMenu ? "Menu" : "Help"}
       >
-        {/* Ripple ring 1 */}
-        {!open && (
-          <svg width="56" height="56" viewBox="0 0 56 56" style={{position:"absolute",top:0,left:0,pointerEvents:"none"}} aria-hidden="true">
-            <circle cx="28" cy="28" r="22" fill="none" stroke="#5B4FE8" strokeWidth="2"
-              style={{animation:"fabRing1 2s ease-out infinite",transformOrigin:"28px 28px"}}/>
-            <circle cx="28" cy="28" r="22" fill="none" stroke="#FF5FA0" strokeWidth="1.5"
-              style={{animation:"fabRing1 2s 1s ease-out infinite",transformOrigin:"28px 28px"}}/>
-          </svg>
-        )}
+        {/* Ripple rings — div-based for cross-browser reliability */}
+        {!open && <>
+          <div style={{
+            position:"absolute", width:60, height:60, borderRadius:"50%",
+            border:"2.5px solid #5B4FE8",
+            animation:"fabRing1 2s ease-out infinite",
+            transformOrigin:"center center",
+          }}/>
+          <div style={{
+            position:"absolute", width:60, height:60, borderRadius:"50%",
+            border:"2px solid #FF5FA0",
+            animation:"fabRing1 2s 1s ease-out infinite",
+            transformOrigin:"center center",
+          }}/>
+        </>}
         {/* Solid disc */}
         <div style={{
-          width:50, height:50, borderRadius:"50%",
-          background: open ? C.purple : `#5B4FE8`,
-          border:`2px solid ${open ? C.purple+"88" : "#5B4FE888"}`,
+          width:52, height:52, borderRadius:"50%",
+          background: open ? "#9B59F5" : "#5B4FE8",
           display:"flex", alignItems:"center", justifyContent:"center",
-          fontSize:22,
+          fontSize:24,
           animation: open ? "none" : "fabBounce 1.6s ease-in-out infinite",
           transition:"background 0.2s",
           position:"relative", zIndex:1,
+          boxShadow:"0 4px 14px #5B4FE855",
         }}>
           {open ? "✕" : "🚀"}
         </div>
