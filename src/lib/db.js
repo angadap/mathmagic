@@ -909,4 +909,33 @@ export const db = {
       return { fact: null, error: e.message };
     }
   },
+
+  async getBrainPuzzle(childId, childType, classNum) {
+    const today = new Date().toISOString().slice(0, 10);
+    const cacheKey = `mm_bp_${childId}_${today}`;
+    try {
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) return JSON.parse(cached);
+    } catch (_) {}
+    try {
+      const res = await fetch("/api/db", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "get_brain_puzzle",
+          child_id: childId,
+          child_type: childType,
+          class_num: classNum,
+          today,
+        }),
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      try { sessionStorage.setItem(cacheKey, JSON.stringify(data)); } catch (_) {}
+      return data;
+    } catch (e) {
+      console.error("getBrainPuzzle error", e);
+      return null;
+    }
+  },
 };

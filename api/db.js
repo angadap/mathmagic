@@ -369,6 +369,38 @@ export default async function handler(req, res) {
       return res.status(200).json({ fact: fact.fact, category: fact.category, fact_id: factId });
     }
 
+    if (action === "get_brain_puzzle") {
+      const { child_id, child_type, class_num } = req.body;
+      const today = new Date().toISOString().slice(0, 10);
+      const table = child_type === "school" ? "students" : "children";
+
+      const cr = await sbQuery(table, "GET", null,
+        `?id=eq.${encodeURIComponent(child_id)}&select=id,puzzle_index,last_puzzle_date`);
+      if (!cr.ok) return res.status(500).json({ error: "fetch child failed" });
+      const row = Array.isArray(cr.data) ? cr.data[0] : null;
+      if (!row) return res.status(404).json({ error: "child not found" });
+
+      let idx = parseInt(row.puzzle_index || 0);
+      const lastDate = row.last_puzzle_date || null;
+
+      if (lastDate !== today) {
+        idx = idx + 1;
+        await sbQuery(table, "PATCH",
+          { puzzle_index: idx, last_puzzle_date: today },
+          `?id=eq.${encodeURIComponent(child_id)}`);
+      }
+
+      const effectiveIdx = idx < 1 ? 1 : idx;
+      const seqNum = ((effectiveIdx - 1) % 100) + 1;
+
+      const pr = await sbQuery("brain_puzzles", "GET", null,
+        `?class_num=eq.${class_num}&seq_num=eq.${seqNum}&limit=1`);
+      if (!pr.ok) return res.status(500).json({ error: "fetch puzzle failed" });
+      const puzzle = Array.isArray(pr.data) ? pr.data[0] || null : null;
+
+      return res.status(200).json({ puzzle, seq_num: seqNum });
+    }
+
         // ── AUTHENTICATED ──────────────────────────────────────────
     const user = await verifyToken(token);
     if (!user?.id) return res.status(401).json({ error: "Unauthorized — please log in" });

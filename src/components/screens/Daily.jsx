@@ -296,7 +296,7 @@ export function DailyPuzzle({ child, onClose }) {
 
   useEffect(() => {
     Promise.all([
-      db.getDailyPuzzle(),
+      db.getBrainPuzzle(child.id, child.is_school_student ? "school" : "parent", child.class_num),
       db.getPuzzleCompletion(child.id)
     ]).then(([p, comp]) => {
       setPuzzle(p);
@@ -372,6 +372,7 @@ export function DailyPuzzle({ child, onClose }) {
               <div style={{fontSize:11,color:"#9890C4"}}>+{puzzle.xp_reward||75} XP on solve</div>
             </div>
 
+            {puzzle?.seq_num && <p style={{fontSize:'0.75rem',opacity:0.6,marginBottom:4}}>Puzzle #{puzzle.seq_num}</p>}
             <div style={{fontFamily:"'Nunito',sans-serif",fontSize:14,color:"#1A1040",marginBottom:10,fontWeight:800}}>{puzzle.title}</div>
             <div style={{background:"#9B59F510",border:"2px solid #9B59F530",borderRadius:20,padding:"16px 18px",marginBottom:18,lineHeight:1.8,fontSize:16,color:"#1A1040",fontWeight:700}}>
               🧩 {puzzle.description}
