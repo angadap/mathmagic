@@ -6,6 +6,7 @@ import { SFX } from '../../lib/sfx.js';
 import { Btn, BackBtn, AbacusRod } from '../ui/primitives.jsx';
 import { Starfield } from '../layout/layout.jsx';
 import { ABACUS_LEVELS_BY_CLASS, ABACUS_CLASS_META } from '../../constants/abacusData.js';
+import { getHintsRemaining, useHint } from '../../lib/hints.js';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const TIERS = [
@@ -296,10 +297,27 @@ function QuizScreen({ classNum, levelData, onBack, onComplete, child }) {
           {pi + 1 >= total ? "SUBMIT & SEE RESULTS 🎯" : "SUBMIT →"}
         </Btn>
 
-        {/* Subtle hint — no right/wrong reveal */}
-        <div style={{ textAlign:"center", marginTop:10, fontSize:11, color:C.dim }}>
-          Set the rods and submit — results shown at the end
-        </div>
+        {/* Hint — limited by daily quota */}
+        {(() => {
+          const { totalLeft } = getHintsRemaining(child?.id||"guest");
+          const [abHintShown, setAbHintShown] = React.useState(false);
+          const [abNoHints,   setAbNoHints]   = React.useState(false);
+          const prob = problems[pi];
+          const hintText = prob ? `Answer: ${getRodValue(prob)}` : "Set the rods carefully!";
+          return (
+            <div style={{ marginTop:10 }}>
+              <button onClick={()=>{
+                if (abHintShown) { setAbHintShown(false); return; }
+                const ok = useHint(child?.id||"guest");
+                if (ok) setAbHintShown(true); else setAbNoHints(true);
+              }} style={{ width:"100%", background:totalLeft>0?"#FFC84710":"#FF6B6B08", border:`1.5px solid ${totalLeft>0?"#FFC84730":"#FF6B6B25"}`, borderRadius:14, padding:"10px 14px", cursor:"pointer", color:totalLeft>0?"#FFC847":"#FF6B6B", fontSize:13, fontWeight:700, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+                <span>💡 {abHintShown ? hintText : "Show hint"}</span>
+                <span style={{ fontSize:10, fontWeight:900, background:totalLeft>0?"#FFC84720":"#FF6B6B18", borderRadius:999, padding:"3px 9px" }}>{totalLeft} left</span>
+              </button>
+              {abNoHints && <div style={{ marginTop:5, fontSize:11, color:"#FF6B6B", textAlign:"center", fontWeight:700 }}>No hints left today · Buy Hint Packs in Shop 🛒</div>}
+            </div>
+          );
+        })()}
       </div>
     </div>
   );

@@ -115,25 +115,64 @@ export const BADGES = [
 
 // ── Shop Items ────────────────────────────────────────────────────
 export const SHOP_ITEMS = [
-  // Avatars
-  {id:"avatar_wizard",  name:"Math Wizard",  icon:"🧙‍♂️", desc:"Legendary wizard",     cat:"avatar",  stars:null, gems:50,   coins:null, lvl:5},
-  {id:"avatar_unicorn", name:"Unicorn",      icon:"🦄",   desc:"Magical unicorn",      cat:"avatar",  stars:null, gems:null, coins:300,  lvl:3},
-  {id:"avatar_robot",   name:"Robot",        icon:"🤖",   desc:"Futuristic robot",     cat:"avatar",  stars:null, gems:30,   coins:null, lvl:4},
-  {id:"avatar_dragon",  name:"Dragon",       icon:"🐉",   desc:"Mighty dragon",        cat:"avatar",  stars:null, gems:80,   coins:null, lvl:8},
-  {id:"avatar_hero",    name:"Superhero",    icon:"🦸",   desc:"Hero avatar",          cat:"avatar",  stars:50,   gems:null, coins:null, lvl:6},
-  {id:"avatar_knight",  name:"Knight",       icon:"⚔️",   desc:"Brave knight",         cat:"avatar",  stars:null, gems:40,   coins:null, lvl:5},
-  // Themes
-  {id:"theme_dark",     name:"Space Dark",   icon:"🌙",   desc:"Original dark theme",  cat:"theme",   stars:null, gems:30,   coins:null, lvl:1},
-  {id:"theme_candy",    name:"Candy Pop",    icon:"🍭",   desc:"Sweet candy theme",    cat:"theme",   stars:null, gems:25,   coins:null, lvl:2},
-  {id:"theme_sunset",   name:"Sunset Blaze", icon:"🌅",   desc:"Warm sunset theme",    cat:"theme",   stars:null, gems:20,   coins:null, lvl:2},
-  // Power-ups
-  {id:"powerup_hint",   name:"Hint Pack",    icon:"💡",   desc:"3 extra hints",        cat:"powerup", stars:20,   gems:null, coins:null, lvl:1},
-  {id:"powerup_shield", name:"Shield Pack",  icon:"🛡️",   desc:"Extra 2 lives",        cat:"powerup", stars:null, gems:null, coins:150,  lvl:2},
-  {id:"powerup_time",   name:"Time Freeze",  icon:"⏰",   desc:"+10s per question",    cat:"powerup", stars:15,   gems:null, coins:null, lvl:1},
-  {id:"powerup_double", name:"Double XP",    icon:"⚡",   desc:"2× XP for 3 sets",     cat:"powerup", stars:null, gems:20,   coins:null, lvl:3},
+  // ── Avatars ───────────────────────────────────────────────────────
+  {id:"avatar_wizard",   name:"Math Wizard",    icon:"🧙‍♂️", desc:"Legendary wizard avatar",       cat:"avatar",   stars:null, gems:50,   coins:null, lvl:5},
+  {id:"avatar_unicorn",  name:"Unicorn",         icon:"🦄",   desc:"Magical unicorn avatar",        cat:"avatar",   stars:null, gems:null, coins:300,  lvl:3},
+  {id:"avatar_robot",    name:"Robot",           icon:"🤖",   desc:"Futuristic robot avatar",       cat:"avatar",   stars:null, gems:30,   coins:null, lvl:4},
+  {id:"avatar_dragon",   name:"Dragon",          icon:"🐉",   desc:"Mighty dragon avatar",          cat:"avatar",   stars:null, gems:80,   coins:null, lvl:8},
+  {id:"avatar_hero",     name:"Superhero",       icon:"🦸",   desc:"Superhero avatar",              cat:"avatar",   stars:50,   gems:null, coins:null, lvl:6},
+  {id:"avatar_knight",   name:"Knight",          icon:"⚔️",   desc:"Brave knight avatar",           cat:"avatar",   stars:null, gems:40,   coins:null, lvl:5},
+  {id:"avatar_elf",      name:"Elf",             icon:"🧝",   desc:"Magical elf avatar",            cat:"avatar",   stars:60,   gems:null, coins:null, lvl:4},
+  {id:"avatar_king",     name:"King",            icon:"👑",   desc:"Royal king avatar",             cat:"avatar",   stars:null, gems:100,  coins:null, lvl:10},
+  // ── Hints ─────────────────────────────────────────────────────────
+  {id:"hints_3",         name:"Hint Pack S",     icon:"💡",   desc:"+3 hints today only",           cat:"hints",    stars:null, gems:null, coins:30,   lvl:1, hintCount:3},
+  {id:"hints_5",         name:"Hint Pack M",     icon:"💡",   desc:"+5 hints today only",           cat:"hints",    stars:null, gems:null, coins:45,   lvl:1, hintCount:5},
+  {id:"hints_10",        name:"Hint Pack L",     icon:"💡",   desc:"+10 hints today only",          cat:"hints",    stars:15,   gems:null, coins:null, lvl:2, hintCount:10},
+  // ── Power-ups ─────────────────────────────────────────────────────
+  {id:"powerup_shield",  name:"Shield Pack",     icon:"🛡️",   desc:"Extra 2 lives per set",        cat:"powerup",  stars:null, gems:null, coins:150,  lvl:2},
+  {id:"powerup_time",    name:"Time Freeze",     icon:"⏰",   desc:"+10s per question",             cat:"powerup",  stars:15,   gems:null, coins:null, lvl:1},
+  {id:"powerup_double",  name:"Double XP",       icon:"⚡",   desc:"2x XP for 3 sets",              cat:"powerup",  stars:null, gems:20,   coins:null, lvl:3},
+  {id:"powerup_skip",    name:"Skip Question",   icon:"⏭️",   desc:"Skip 3 tough questions",       cat:"powerup",  stars:null, gems:null, coins:100,  lvl:2},
+  {id:"powerup_magnet",  name:"Star Magnet",     icon:"🧲",   desc:"Double stars for 1 lesson",    cat:"powerup",  stars:null, gems:15,   coins:null, lvl:3},
+  // ── Themes ────────────────────────────────────────────────────────
+  {id:"theme_dark",      name:"Space Dark",      icon:"🌙",   desc:"Original dark theme",          cat:"theme",    stars:null, gems:30,   coins:null, lvl:1},
+  {id:"theme_candy",     name:"Candy Pop",       icon:"🍭",   desc:"Sweet candy theme",            cat:"theme",    stars:null, gems:25,   coins:null, lvl:2},
+  {id:"theme_sunset",    name:"Sunset Blaze",    icon:"🌅",   desc:"Warm sunset theme",            cat:"theme",    stars:null, gems:20,   coins:null, lvl:2},
+  {id:"theme_teal",      name:"Cosmic Teal",     icon:"🚀",   desc:"Deep space teal theme",        cat:"theme",    stars:null, gems:35,   coins:null, lvl:3},
+  {id:"theme_midnight",  name:"Royal Midnight",  icon:"👑",   desc:"Navy and gold theme",          cat:"theme",    stars:null, gems:45,   coins:null, lvl:4},
+  // ── Name Tags ─────────────────────────────────────────────────────
+  {id:"tag_goldstar",    name:"Gold Star",       icon:"🌟",   desc:"Gold Star title on profile",   cat:"nametag",  stars:100,  gems:null, coins:null, lvl:3},
+  {id:"tag_champion",    name:"Champion",        icon:"🏆",   desc:"Champion title on profile",    cat:"nametag",  stars:null, gems:50,   coins:null, lvl:5},
+  {id:"tag_genius",      name:"Genius",          icon:"🧠",   desc:"Genius title on profile",      cat:"nametag",  stars:200,  gems:null, coins:null, lvl:7},
+  {id:"tag_rocket",      name:"Rocket Kid",      icon:"🚀",   desc:"Rocket Kid title on profile",  cat:"nametag",  stars:null, gems:null, coins:500,  lvl:4},
+  // ── Sticker Packs ────────────────────────────────────────────────
+  {id:"sticker_space",   name:"Space Pack",      icon:"🪐",   desc:"8 space stickers",             cat:"sticker",  stars:null, gems:null, coins:80,   lvl:1},
+  {id:"sticker_animals", name:"Animals Pack",    icon:"🐾",   desc:"8 animal stickers",            cat:"sticker",  stars:null, gems:null, coins:80,   lvl:1},
+  {id:"sticker_food",    name:"Food Pack",       icon:"🍕",   desc:"8 food stickers",              cat:"sticker",  stars:25,   gems:null, coins:null, lvl:2},
+  {id:"sticker_premium", name:"Galaxy Pack",     icon:"✨",   desc:"10 premium galaxy stickers",  cat:"sticker",  stars:null, gems:20,   coins:null, lvl:3},
 ];
 
-// ── Avatar options (free built-in) ────────────────────────────────
+// ── Conversion rates ──────────────────────────────────────────────
+// 10 Coins → 1 Star | 1 Gem → 5 Stars (one-way only, no reverse)
+export const CONVERSION = { coinsPerStar: 10, gemsToStars: 5 };
+
+// ── How to earn Coins & Gems ──────────────────────────────────────
+export const EARN_GUIDE = {
+  coins: [
+    { action:"Complete a lesson set",      reward:"+5 coins" },
+    { action:"Perfect score (3 stars)",    reward:"+5 bonus coins" },
+    { action:"Complete Daily Quiz",        reward:"+10 coins" },
+    { action:"3-day streak bonus",         reward:"+15 coins" },
+    { action:"Daily Puzzle solved",        reward:"+8 coins" },
+  ],
+  gems: [
+    { action:"7-day streak maintained",    reward:"+5 gems" },
+    { action:"Complete full lesson (20 sets)", reward:"+10 gems" },
+    { action:"Win a Boss Battle",          reward:"+3 gems" },
+    { action:"Olympiad 3-star any test",   reward:"+2 gems" },
+    { action:"Monthly class leaderboard top", reward:"+20 gems" },
+  ],
+};
+
 export const FREE_AVATARS = ["🧒","👧","👦","🧑","🧒‍♀️"];
 export const ALL_AVATARS  = ["🧒","👧","👦","🧑","🧒‍♀️","🧙‍♂️","🦄","🤖","🐉","🦸","⚔️"];
-

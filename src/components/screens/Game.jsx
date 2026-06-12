@@ -10,6 +10,7 @@ import { ProgressGrid, Certificate } from '../shared/shared.jsx';
 import { fetchSetQuestions, shuffle } from '../../lib/db.js';
 import { getDifficulty } from '../../lib/utils.js';
 import { BadgeUnlockToast } from '../shared/shared.jsx';
+import { getHintsRemaining, useHint } from '../../lib/hints.js';
 
 
 // ── Game ──────────────────────────────────────────────────────────────
@@ -87,6 +88,7 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
   const [lives,    setLives]    = useState(mode === "boss" ? 5 : 3);
   const [score,    setScore]    = useState(0);
   const [hint,     setHint]     = useState(false);
+  const [noHints,  setNoHints]  = useState(false); // show "buy hints" popup
   const [done,     setDone]     = useState(false);
   const [burst,    setBurst]    = useState(false);
   const [saving,   setSaving]   = useState(false);
@@ -527,11 +529,24 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
             );
           })}
         </div>
-        {chosen === null && (
-          <button onClick={() => setHint(h => !h)} style={{ width:"100%", background:"#FFC84710", border:"1.5px solid #FFC84730", borderRadius:20, padding:"13px 16px", cursor:"pointer", color:"#FFC847", fontSize:15, fontWeight:700, textAlign:"left" }}>
-            💡 {hint ? q.h : "Tap for a cosmic hint!"}
-          </button>
-        )}
+        {chosen === null && (() => {
+          const { totalLeft, freeLeft, extraLeft } = getHintsRemaining(child.id);
+          const handleHintTap = () => {
+            if (hint) { setHint(false); return; }
+            const ok = useHint(child.id);
+            if (ok) { setHint(true); }
+            else { setNoHints(true); }
+          };
+          return (
+            <div>
+              <button onClick={handleHintTap} style={{ width:"100%", background: totalLeft>0 ? "#FFC84710" : "#FF6B6B08", border: `1.5px solid ${totalLeft>0?"#FFC84730":"#FF6B6B25"}`, borderRadius:20, padding:"13px 16px", cursor:"pointer", color: totalLeft>0 ? "#FFC847" : "#FF6B6B", fontSize:15, fontWeight:700, textAlign:"left", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+                <span>💡 {hint ? q.h : "Tap for a cosmic hint!"}</span>
+                <span style={{ fontSize:11, fontWeight:900, background: totalLeft>0 ? "#FFC84720" : "#FF6B6B18", borderRadius:999, padding:"3px 10px", color: totalLeft>0 ? "#FFC847" : "#FF6B6B", flexShrink:0, marginLeft:8 }}>{totalLeft} left</span>
+              </button>
+              {totalLeft===0 && !hint && <div style={{ textAlign:"center", fontSize:11, color:"#FF6B6B", marginTop:5, fontWeight:700 }}>No hints left today · Buy more in Shop 🛒</div>}
+            </div>
+          );
+        })()}
         {chosen!==null && chosen===q.ans && (
           <div style={{marginTop:12,textAlign:"center",background:"linear-gradient(135deg,#2ECC9A15,#2ECC9A08)",borderRadius:16,padding:"12px 16px",border:"2px solid #2ECC9A40"}}>
             <div style={{fontSize:28,marginBottom:4,animation:"mmBounce 1s ease infinite"}}>⭐</div>
@@ -545,6 +560,18 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
         )}
       </div>
       {BackConfirmModal}
+      {noHints && (
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.72)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
+          <div style={{background:"white",borderRadius:24,padding:"28px 22px",width:"100%",maxWidth:320,textAlign:"center"}}>
+            <div style={{fontSize:48,marginBottom:10}}>💡</div>
+            <div style={{fontFamily:"'Fredoka One',cursive",fontSize:18,color:"#FF6B6B",marginBottom:6}}>No hints left today!</div>
+            <div style={{fontSize:13,color:"#9890C4",marginBottom:18,lineHeight:1.6}}>You have used all 5 free hints for today.<br/>Extra hint packs reset at midnight 🌙<br/><strong style={{color:"#5B4FE8"}}>Buy more in the Shop!</strong></div>
+            <div style={{display:"flex",gap:10}}>
+              <button onClick={()=>setNoHints(false)} style={{flex:1,background:"#F5F3FF",border:"1.5px solid #5B4FE820",borderRadius:12,padding:"12px",color:"#5A4E8A",fontFamily:"'Nunito',sans-serif",fontSize:14,cursor:"pointer",fontWeight:700}}>OK</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

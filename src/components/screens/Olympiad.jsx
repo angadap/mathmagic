@@ -4,6 +4,7 @@ import { db } from '../../lib/db.js';
 import { SFX } from '../../lib/sfx.js';
 import { Btn, Card, BackBtn } from '../ui/primitives.jsx';
 import { Starfield } from '../layout/layout.jsx';
+import { getHintsRemaining, useHint } from '../../lib/hints.js';
 
 // ── Top-level constants & helpers ─────────────────────────────────────────────
 
@@ -93,6 +94,8 @@ export function Olympiad({ child, setChild, onBack }) {
   const [results,     setResults]     = useState([]);
   const [doneMap,     setDoneMap]     = useState({});
   const [confirmBack, setConfirmBack] = useState(false);
+  const [showHint,    setShowHint]    = useState(false);
+  const [noHints,     setNoHints]     = useState(false);
   const scoreRef = useRef(0);
   const savedRef = useRef(false);
 
@@ -189,6 +192,7 @@ export function Olympiad({ child, setChild, onBack }) {
       } else {
         setQi(prev => prev + 1);
         setChosen(null);
+        setShowHint(false);
       }
     }, 1100);
   };
@@ -414,6 +418,28 @@ export function Olympiad({ child, setChild, onBack }) {
               <div style={{ color:"#4BBDF5", fontSize:12, fontWeight:700 }}>{"💡 " + question.h}</div>
             </div>
           )}
+          {chosen === null && question && (() => {
+            const { totalLeft } = getHintsRemaining(child.id);
+            const handleHintTap = () => {
+              if (showHint) { setShowHint(false); return; }
+              const ok = useHint(child.id);
+              if (ok) setShowHint(true); else setNoHints(true);
+            };
+            return (
+              <div style={{ marginTop:8 }}>
+                <button onClick={handleHintTap} style={{ width:"100%", background:totalLeft>0?"#FFC84710":"#FF6B6B08", border:`1.5px solid ${totalLeft>0?"#FFC84730":"#FF6B6B25"}`, borderRadius:14, padding:"10px 14px", cursor:"pointer", color:totalLeft>0?"#FFC847":"#FF6B6B", fontSize:13, fontWeight:700, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+                  <span>💡 {showHint ? question.h : "Show hint"}</span>
+                  <span style={{ fontSize:10, fontWeight:900, background:totalLeft>0?"#FFC84720":"#FF6B6B18", borderRadius:999, padding:"3px 9px", color:totalLeft>0?"#FFC847":"#FF6B6B" }}>{totalLeft} left</span>
+                </button>
+                {noHints && (
+                  <div style={{ marginTop:6, background:"#FF6B6B12", border:"1px solid #FF6B6B30", borderRadius:10, padding:"8px 12px", fontSize:11, color:"#FF6B6B", fontWeight:700, textAlign:"center" }}>
+                    No hints left today · Buy Hint Packs in Shop 🛒
+                    <button onClick={()=>setNoHints(false)} style={{ marginLeft:8, background:"none", border:"none", color:"#FF6B6B", cursor:"pointer", fontWeight:900, fontSize:13 }}>✕</button>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
       </div>
     );
