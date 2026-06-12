@@ -11,9 +11,9 @@ import { Starfield } from '../layout/layout.jsx';
 // ── Daily Quest Hub — unified wrapper for all 3 daily tasks ─────────────────
 // Shows a step-through flow: Do a Set → Word Problem → Brain Puzzle
 // Each tab can be done in any order; hub tracks completion and shows summary
-export function DailyQuestHub({ child, dqDone, dpDone, setDone, onWorld, worldW, onClose }) {
+export function DailyQuestHub({ child, dqDone, dpDone, setDone, onWorld, worldW, onClose, initialStep }) {
   // 0=overview  1=set  2=challenge  3=puzzle  4=allDone
-  const [step,       setStep]       = useState(0);
+  const [step,       setStep]       = useState(initialStep || 0);
   const [localDQ,    setLocalDQ]    = useState(dqDone);
   const [localDP,    setLocalDP]    = useState(dpDone);
   const [localSet,   setLocalSet]   = useState(setDone);

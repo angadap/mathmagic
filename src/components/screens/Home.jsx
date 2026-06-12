@@ -777,6 +777,7 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
   const [showDQ,         setShowDQ]         = useState(false);
   const [showPuzzle,     setShowPuzzle]     = useState(false);
   const [showDailyQuest, setShowDailyQuest] = useState(false);
+  const [dailyQuestInitialStep, setDailyQuestInitialStep] = useState(0);
   const [showRating,        setShowRating]        = useState(false);
   const [exploreOpen,       setExploreOpen]       = useState(false);
   const [mascotMsg,         setMascotMsg]         = useState(0);
@@ -847,7 +848,7 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
           onHelp={() => onFeedback()}
           onRankings={() => setShowLeaderboard(true)}
           showRankings={!!(child.is_school_student && child.school_id)}
-          onWordProblem={() => setShowDailyQuest(true)}
+          onWordProblem={() => { setDailyQuestInitialStep(2); setShowDailyQuest(true); }}
           showWordProblem={true}
           wordProblemSolved={dqDone}
         />
@@ -879,7 +880,8 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
           child={child}
           dqDone={dqDone} dpDone={dpDone} setDone={todaySets>=1}
           onWorld={onWorld} worldW={w}
-          onClose={() => setShowDailyQuest(false)}
+          initialStep={dailyQuestInitialStep}
+          onClose={() => { setShowDailyQuest(false); setDailyQuestInitialStep(0); }}
         />
       )}
       {showRating && <RatingPrompt child={child} onClose={() => setShowRating(false)}/>}
