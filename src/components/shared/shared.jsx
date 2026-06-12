@@ -197,10 +197,10 @@ export function ProgressMap({ child, lessons, progress, world, onSelectSet }) {
 //   onWordProblem     — called when Word Problem 🧩 is tapped (optional)
 //   showWordProblem   — boolean: show the word problem sub-button
 //   wordProblemSolved — boolean: true = ✅ badge; false = pulse animation
-export function FABButton({ onHelp, onRankings, showRankings, onWordProblem, showWordProblem, wordProblemSolved }) {
+export function FABButton({ onHelp, onRankings, showRankings, onWordProblem, showWordProblem, wordProblemSolved, onPuzzle, showPuzzle, puzzleSolved }) {
   const [open,  setOpen]  = useState(false);
   const [pulse, setPulse] = useState(false);
-  const hasMenu = !!(showRankings || showWordProblem);
+  const hasMenu = !!(showRankings || showWordProblem || showPuzzle);
 
   useEffect(() => {
     const t = setInterval(() => {
@@ -276,8 +276,39 @@ export function FABButton({ onHelp, onRankings, showRankings, onWordProblem, sho
               }}
               title="Daily Word Problem"
             >
-              🧩
+              🌟
               {wordProblemSolved && (
+                <div style={{
+                  position:"absolute", top:-2, right:-2,
+                  width:16, height:16, borderRadius:"50%",
+                  background:"#2ECC9A",
+                  border:"2px solid white",
+                  display:"flex", alignItems:"center", justifyContent:"center",
+                  fontSize:8, lineHeight:1,
+                }}>✓</div>
+              )}
+            </button>
+          )}
+          {/* Brain Puzzle 🧩 */}
+          {showPuzzle && (
+            <button
+              onClick={e => { e.stopPropagation(); setOpen(false); onPuzzle && onPuzzle(); }}
+              style={{
+                position:"relative",
+                width:44, height:44, borderRadius:"50%",
+                background:`#9B59F5ee`,
+                border:`2px solid #9B59F5`,
+                boxShadow: puzzleSolved ? `0 0 12px #9B59F588` : `0 0 16px #9B59F5cc`,
+                display:"flex", alignItems:"center", justifyContent:"center",
+                fontSize:19, cursor:"pointer",
+                animation: puzzleSolved
+                  ? "fabSubIn 0.2s ease both"
+                  : "fabSubIn 0.2s ease both, mmPulse 1.5s 0.4s ease-in-out infinite",
+              }}
+              title="Brain Puzzle"
+            >
+              🧩
+              {puzzleSolved && (
                 <div style={{
                   position:"absolute", top:-2, right:-2,
                   width:16, height:16, borderRadius:"50%",
@@ -292,7 +323,7 @@ export function FABButton({ onHelp, onRankings, showRankings, onWordProblem, sho
         </>
       )}
 
-      {/* Main FAB */}
+      {/* Main FAB — Option B: bouncing rocket + ripple rings */}
       <button
         onClick={e => {
           e.stopPropagation();
@@ -300,20 +331,38 @@ export function FABButton({ onHelp, onRankings, showRankings, onWordProblem, sho
           setOpen(o => !o);
         }}
         style={{
-          width:46, height:46, borderRadius:"50%",
-          background: open ? C.purple : pulse ? C.red : `${C.red}cc`,
-          border:`2px solid ${open ? C.purple : C.red}`,
-          boxShadow: open
-            ? `0 0 18px ${C.purple}99`
-            : pulse ? `0 0 20px ${C.red}` : `0 0 10px ${C.red}66`,
+          position:"relative",
+          width:56, height:56, borderRadius:"50%",
+          background:"transparent",
+          border:"none",
+          padding:0,
+          cursor:"pointer",
           display:"flex", alignItems:"center", justifyContent:"center",
-          fontSize:20, cursor:"pointer",
-          transition:"all 0.25s",
-          transform: open ? "rotate(45deg)" : "none",
         }}
         title={open ? "Close" : hasMenu ? "Menu" : "Help"}
       >
-        {open ? "✕" : "🚀"}
+        {/* Ripple ring 1 */}
+        {!open && (
+          <svg width="56" height="56" viewBox="0 0 56 56" style={{position:"absolute",top:0,left:0,pointerEvents:"none"}} aria-hidden="true">
+            <circle cx="28" cy="28" r="22" fill="none" stroke="#5B4FE8" strokeWidth="2"
+              style={{animation:"fabRing1 2s ease-out infinite",transformOrigin:"28px 28px"}}/>
+            <circle cx="28" cy="28" r="22" fill="none" stroke="#FF5FA0" strokeWidth="1.5"
+              style={{animation:"fabRing1 2s 1s ease-out infinite",transformOrigin:"28px 28px"}}/>
+          </svg>
+        )}
+        {/* Solid disc */}
+        <div style={{
+          width:50, height:50, borderRadius:"50%",
+          background: open ? C.purple : `#5B4FE8`,
+          border:`2px solid ${open ? C.purple+"88" : "#5B4FE888"}`,
+          display:"flex", alignItems:"center", justifyContent:"center",
+          fontSize:22,
+          animation: open ? "none" : "fabBounce 1.6s ease-in-out infinite",
+          transition:"background 0.2s",
+          position:"relative", zIndex:1,
+        }}>
+          {open ? "✕" : "🚀"}
+        </div>
       </button>
     </div>
   );

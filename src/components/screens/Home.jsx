@@ -48,79 +48,6 @@ export function ThemeSelector({ onClose }) {
   );
 }
 
-export function DailyQuestSection({ dqDone, dpDone, todaySets, onOpen }) {
-  const [open, setOpen] = React.useState(true);
-  const doneCnt = [dqDone, dpDone, todaySets>=1].filter(Boolean).length;
-  const allDone = doneCnt === 3;
-  return (
-    <div style={{ position:"relative", zIndex:2, margin:"14px 18px 0" }}>
-      <button onClick={()=>setOpen(o=>!o)}
-        style={{ width:"100%", background:"white", border:"1.5px solid #9B59F522", borderRadius:28, padding:16, cursor:"pointer", display:"flex", alignItems:"center", gap:12, textAlign:"left", boxShadow:"0 8px 30px #9B59F528, inset 0 1px 0 rgba(255,255,255,0.8)" }}>
-        <div style={{ fontSize:26 }}>🎯</div>
-        <div style={{ flex:1 }}>
-          <div style={{ fontSize:15, fontWeight:900, color:"#1A1040" }}>Daily Quest</div>
-          <div style={{ fontSize:11, color:"#9890C4", marginTop:2 }}>{doneCnt}/3 tasks done today</div>
-        </div>
-        {allDone
-          ? <div style={{ background:"#2ECC9A22", border:"1px solid #2ECC9A44", borderRadius:10, padding:"5px 12px", fontSize:11, color:"#2ECC9A", fontWeight:800 }}>✅ DONE</div>
-          : <div style={{ background:open?"#9B59F5":"transparent", border:"1.5px solid #9B59F544", borderRadius:10, padding:"5px 12px", fontSize:13, fontWeight:800, color:open?"white":"#9B59F5", transition:"all 0.2s" }}>{open?"▲":"▼"}</div>
-        }
-      </button>
-      {open && (
-        <div style={{ marginTop:10 }}>
-          <div style={{ background:"#F0ECFF", borderRadius:8, height:7, overflow:"hidden", marginBottom:12 }}>
-            <div style={{ width:`${(doneCnt/3)*100}%`, height:"100%",
-              background:"linear-gradient(90deg,#5B4FE8,#9B59F5,#FF6B6B)", borderRadius:8, transition:"width 0.6s ease",
-              boxShadow:doneCnt===3?"0 0 10px #9B59F588":"none" }}/>
-          </div>
-          {allDone ? (
-            <div style={{ background:"linear-gradient(135deg,#2ECC9A18,#4BBDF512)", border:"2px solid #2ECC9A44",
-              borderRadius:20, padding:"18px 20px", textAlign:"center" }}>
-              <div style={{ fontSize:44, marginBottom:6 }}>🏆</div>
-              <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:13, color:"#2ECC9A", fontWeight:900, marginBottom:4 }}>QUEST COMPLETE!</div>
-              <div style={{ fontSize:12, color:"#9890C4" }}>You earned all daily rewards. Come back tomorrow!</div>
-            </div>
-          ) : (
-            <button onClick={onOpen}
-              style={{ width:"100%", background:"linear-gradient(135deg,#9B59F522,#4BBDF514)",
-                border:"2px solid #9B59F555", borderRadius:20, padding:"18px 20px",
-                cursor:"pointer", textAlign:"left", position:"relative", overflow:"hidden" }}>
-              <div style={{ position:"absolute", right:-20, top:-20, width:100, height:100, borderRadius:"50%",
-                background:"radial-gradient(circle,#9B59F544,transparent 70%)", pointerEvents:"none" }}/>
-              <div style={{ display:"flex", alignItems:"center", gap:16, position:"relative", zIndex:1 }}>
-                <div style={{ fontSize:48 }}>{doneCnt===0?"🚀":doneCnt===1?"⚡":"🔥"}</div>
-                <div style={{ flex:1 }}>
-                  <div style={{ fontFamily:"'Nunito',sans-serif", fontSize:11, color:"#9B59F5", fontWeight:800, marginBottom:4 }}>
-                    {doneCnt===0?"START TODAY'S QUEST":"CONTINUE QUEST"}
-                  </div>
-                  <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
-                    {[
-                      { label:"Do a Set",     done:todaySets>=1, color:"#4BBDF5", icon:"🧮" },
-                      { label:"Word Problem", done:dqDone,       color:"#FFC847", icon:"🌟" },
-                      { label:"Brain Puzzle", done:dpDone,       color:"#9B59F5", icon:"🧩" },
-                    ].map((t,i)=>(
-                      <div key={i} style={{ background:t.done?`${t.color}14`:"#F0ECFF",
-                        border:`1px solid ${t.done?t.color+"40":"rgba(91,79,232,0.10)"}`,
-                        borderRadius:10, padding:"3px 9px", display:"flex", alignItems:"center", gap:4 }}>
-                        <span style={{ fontSize:11 }}>{t.done?"✅":t.icon}</span>
-                        <span style={{ fontSize:10, fontWeight:700, color:t.color }}>{t.label}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div style={{ fontSize:11, color:"#9890C4", marginTop:6 }}>
-                    Total reward: <span style={{ color:"#FFC847", fontWeight:800 }}>+275 XP</span> · <span style={{ color:"#FF6B6B", fontWeight:800 }}>+35 Coins</span>
-                  </div>
-                </div>
-                <div style={{ fontSize:24, color:"#9B59F5" }}>›</div>
-              </div>
-            </button>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
 export function MyClassSection({ world: w, child, onWorld, pctDone }) {
   const [open, setOpen] = React.useState(true);
   return (
@@ -851,6 +778,9 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
           onWordProblem={() => { setDailyQuestInitialStep(2); setShowDailyQuest(true); }}
           showWordProblem={true}
           wordProblemSolved={dqDone}
+          onPuzzle={() => { setDailyQuestInitialStep(3); setShowDailyQuest(true); }}
+          showPuzzle={true}
+          puzzleSolved={dpDone}
         />
       )}
       {showLeaderboard && (
@@ -958,29 +888,6 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
         {/* 4b — BrainSpark (replaces Cosmo Says) */}
         <BrainSparkCard brainSpark={brainSpark} onOpen={() => setSparkOpen(true)} mascotMsg={MASCOT_MSGS[mascotMsg]} />
         {sparkOpen && <BrainSparkPopup brainSpark={brainSpark} onClose={() => setSparkOpen(false)} />}
-
-        {/* 4c — Daily Quest (always expanded) */}
-        <div style={{ background:"white", border:"1.5px solid #9B59F522", borderRadius:28, padding:16, boxShadow:"0 8px 30px #9B59F528, inset 0 1px 0 rgba(255,255,255,0.8)" }}>
-          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
-            <div style={{ fontSize:15, fontWeight:900, color:"#1A1040" }}>🎯 Daily Quest</div>
-            <div style={{ background:"#9B59F518", border:"1.5px solid #9B59F530", borderRadius:999, padding:"3px 10px", fontSize:11, fontWeight:800, color:"#9B59F5" }}>{doneCnt}/3 done</div>
-          </div>
-          <div style={{ background:"#F0ECFF", borderRadius:999, height:7, overflow:"hidden", marginBottom:10 }}>
-            <div style={{ width:`${(doneCnt/3)*100}%`, height:"100%", background:"linear-gradient(90deg,#5B4FE8,#9B59F5,#FF5FA0)", borderRadius:999, transition:"width 0.6s ease" }}/>
-          </div>
-          <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
-            {[
-              {icon:"🧮",label:"Do a Set",    done:todaySets>=1, onClick:()=>onWorld(w)},
-              {icon:"🌟",label:"Word Problem", done:dqDone,       onClick:()=>setShowDailyQuest(true)},
-              {icon:"🧩",label:"Puzzle",       done:dpDone,       onClick:()=>setShowDailyQuest(true)},
-            ].map((t,i)=>(
-              <button key={i} onClick={t.onClick} style={{ flex:1, background:t.done?"#2ECC9A14":"#F0ECFF", border:`1.5px solid ${t.done?"#2ECC9A40":"rgba(91,79,232,0.10)"}`, borderRadius:999, padding:"5px 12px", fontSize:12, fontWeight:700, color:t.done?"#2ECC9A":"#9890C4", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
-                <span>{t.done?"✅":t.icon}</span><span>{t.label}</span>
-              </button>
-            ))}
-          </div>
-          <div style={{ marginTop:10, fontSize:12, fontWeight:800, color:"#FFC847", textAlign:"center" }}>+275 XP · +35 Coins</div>
-        </div>
 
         {/* 4d — Quick Launch (always expanded) */}
         <div style={{ background:"white", border:"1.5px solid #FFC84722", borderRadius:28, padding:16, boxShadow:"0 8px 30px #FFC84728, inset 0 1px 0 rgba(255,255,255,0.8)" }}>
