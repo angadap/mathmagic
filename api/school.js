@@ -431,6 +431,115 @@ export default async function handler(req, res) {
       return res.status(200).json({ data: ranked });
     }
 
+    // ══════════════════════════════════════════════════════
+    // WORD PROBLEMS
+    // Works for both school students (students table) and
+    // home students (children table, is_home_student=true).
+    // ══════════════════════════════════════════════════════
+    if (action === "get_daily_word_problem") {
+      const { student_id, school_code, is_home_student } = req.body;
+      if (!isUUID(student_id)) return res.status(400).json({ error: "Invalid student_id" });
+
+      const table = is_home_student === true ? "children" : "students";
+      let studentRow;
+
+      if (is_home_student === true) {
+        const cr = await sb("children", "GET", null,
+          `?id=eq.${student_id}&select=id,class_num,word_problem_index&limit=1`);
+        if (!Array.isArray(cr.data) || !cr.data[0])
+          return res.status(404).json({ error: "Student not found" });
+        studentRow = cr.data[0];
+      } else {
+        if (!school_code) return res.status(400).json({ error: "school_code required" });
+        const sc = await sb("schools", "GET", null,
+          `?school_code=eq.${encodeURIComponent(clean(school_code, 20).toUpperCase())}&is_active=eq.true&select=id&limit=1`);
+        if (!Array.isArray(sc.data) || !sc.data[0])
+          return res.status(401).json({ error: "Invalid school code" });
+        const school_id = sc.data[0].id;
+        const sr = await sb("students", "GET", null,
+          `?id=eq.${student_id}&school_id=eq.${school_id}&select=id,class_num,word_problem_index&limit=1`);
+        if (!Array.isArray(sr.data) || !sr.data[0])
+          return res.status(404).json({ error: "Student not found" });
+        studentRow = sr.data[0];
+      }
+
+      const idx        = parseInt(studentRow.word_problem_index || 0);
+      const problem_num = (idx % 100) + 1;
+
+      const pr = await sb("word_problems", "GET", null,
+        `?class_num=eq.${cleanInt(studentRow.class_num, 0, 12)}&problem_num=eq.${problem_num}&limit=1`);
+      if (!Array.isArray(pr.data) || !pr.data[0])
+        return res.status(404).json({ error: "No word problem found for this class" });
+
+      // Advance index before returning so a page-reload doesn't re-serve the same problem
+      await sb(table, "PATCH",
+        { word_problem_index: idx + 1 },
+        `?id=eq.${student_id}`).catch(() => {});
+
+      return res.status(200).json({ data: { ...pr.data[0], xp_first: 20, xp_second: 10 } });
+    }
+
+    if (action === "submit_word_problem_answer") {
+      const { student_id, school_code, is_home_student, problem_id, answer_index, attempt_number } = req.body;
+      if (!isUUID(student_id)) return res.status(400).json({ error: "Invalid student_id" });
+      if (!isUUID(problem_id)) return res.status(400).json({ error: "Invalid problem_id" });
+
+      const attempt = cleanInt(attempt_number, 1, 10);
+      const table   = is_home_student === true ? "children" : "students";
+
+      if (is_home_student === true) {
+        const cv = await sb("children", "GET", null,
+          `?id=eq.${student_id}&select=id&limit=1`);
+        if (!Array.isArray(cv.data) || !cv.data[0])
+          return res.status(403).json({ error: "Forbidden" });
+      } else {
+        if (!school_code) return res.status(400).json({ error: "school_code required" });
+        const sc = await sb("schools", "GET", null,
+          `?school_code=eq.${encodeURIComponent(clean(school_code, 20).toUpperCase())}&is_active=eq.true&select=id&limit=1`);
+        if (!Array.isArray(sc.data) || !sc.data[0])
+          return res.status(401).json({ error: "Invalid school code" });
+        const school_id = sc.data[0].id;
+        const sv = await sb("students", "GET", null,
+          `?id=eq.${student_id}&school_id=eq.${school_id}&select=id&limit=1`);
+        if (!Array.isArray(sv.data) || !sv.data[0])
+          return res.status(403).json({ error: "Forbidden" });
+      }
+
+      const pr = await sb("word_problems", "GET", null,
+        `?id=eq.${problem_id}&select=correct_index,explanation&limit=1`);
+      if (!Array.isArray(pr.data) || !pr.data[0])
+        return res.status(404).json({ error: "Problem not found" });
+
+      const { correct_index, explanation } = pr.data[0];
+      const correct = parseInt(answer_index) === correct_index;
+
+      let xp_awarded = 0, coins_awarded = 0;
+      if (correct) {
+        if (attempt === 1)      { xp_awarded = 20; coins_awarded = 2; }
+        else if (attempt === 2) { xp_awarded = 10; coins_awarded = 1; }
+      }
+
+      if (xp_awarded > 0) {
+        const cur = await sb(table, "GET", null,
+          `?id=eq.${student_id}&select=xp,coins&limit=1`);
+        const c = Array.isArray(cur.data) ? cur.data[0] : {};
+        const nx = Math.min((c.xp || 0) + xp_awarded, 999999);
+        const nc = Math.min((c.coins || 0) + coins_awarded, 999999);
+        await sb(table, "PATCH",
+          { xp: nx, coins: nc, level: Math.floor(nx / 200) + 1 },
+          `?id=eq.${student_id}`).catch(() => {});
+      }
+
+      // Reveal explanation only when correct or on the 3rd+ attempt
+      const revealExplanation = correct || attempt >= 3;
+      return res.status(200).json({
+        correct,
+        xp_awarded,
+        correct_index,
+        explanation: revealExplanation ? explanation : null,
+      });
+    }
+
     return res.status(400).json({error:"Unknown action"});
 
   } catch(err) {

@@ -84,6 +84,7 @@ export function GlobalStyles() {
         @keyframes mmWave{0%{border-radius:60% 40% 30% 70%/60% 30% 70% 40%}50%{border-radius:30% 60% 70% 40%/50% 60% 30% 60%}100%{border-radius:60% 40% 30% 70%/60% 30% 70% 40%}}
         @keyframes mmBsShimmer{0%{transform:translateX(-130%) skewX(-18deg);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateX(320%) skewX(-18deg);opacity:0}}
         @keyframes mmPulse{0%,100%{opacity:1}50%{opacity:0.6}}
+        @keyframes fabSubIn{0%{opacity:0;transform:scale(0.5) translateY(12px)}100%{opacity:1;transform:scale(1) translateY(0)}}
         .mm-press:active{transform:translateY(3px)!important;}
         .mm-btn:active{transform:translateY(4px)!important;box-shadow:none!important;}
       `;

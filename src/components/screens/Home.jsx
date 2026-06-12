@@ -565,6 +565,208 @@ function BrainSparkPopup({ brainSpark, onClose }) {
   );
 }
 
+function WordProblemToast({ onOpen, onDismiss }) {
+  useEffect(() => {
+    const t = setTimeout(onDismiss, 5000);
+    return () => clearTimeout(t);
+  }, []);
+  return (
+    <>
+      <div onClick={onDismiss} style={{ position:'fixed', inset:0, zIndex:497, background:'transparent' }}/>
+      <div style={{ position:'fixed', top:16, left:'50%', transform:'translateX(-50%)', zIndex:500, width:'90%', maxWidth:400, background:'white', borderRadius:18, boxShadow:'0 8px 32px rgba(91,79,232,0.18)', border:'1.5px solid #5B4FE820', display:'flex', alignItems:'center', gap:12, padding:'12px 14px', animation:'slideUp 0.3s ease' }}>
+        <div style={{ fontSize:28, flexShrink:0 }}>🧩</div>
+        <div style={{ flex:1 }}>
+          <div style={{ fontSize:14, fontWeight:800, color:'#1A1040' }}>Daily Word Problem!</div>
+          <div style={{ fontSize:11, color:'#9890C4', marginTop:2 }}>Solve today's challenge</div>
+        </div>
+        <button onClick={onOpen} style={{ background:'linear-gradient(135deg,#5B4FE8,#9B59F5)', border:'none', borderRadius:10, padding:'8px 14px', color:'white', fontSize:12, fontWeight:800, cursor:'pointer', flexShrink:0 }}>Open</button>
+      </div>
+    </>
+  );
+}
+
+function WordProblemModal({ child, onClose, onSolved }) {
+  const [problem,       setProblem]       = useState(null);
+  const [attemptNumber, setAttemptNumber] = useState(1);
+  const [selectedIndex, setSelectedIndex] = useState(null);
+  const [result,        setResult]        = useState(null);
+  const [xpAwarded,     setXpAwarded]     = useState(0);
+  const [error,         setError]         = useState('');
+  const [showHint,      setShowHint]      = useState(false);
+  const [loading,       setLoading]       = useState(false);
+
+  useEffect(() => {
+    const payload = child.is_school_student
+      ? { action:'get_daily_word_problem', student_id:child.id, school_code:child.school_code }
+      : { action:'get_daily_word_problem', student_id:child.id, is_home_student:true };
+    fetch('/api/school', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) })
+      .then(r => r.json())
+      .then(d => { if (d.data) setProblem(d.data); else setError(d.error || 'Could not load word problem.'); })
+      .catch(() => setError('Network error. Try again.'));
+  }, []);
+
+  const handleAnswer = () => {
+    if (selectedIndex === null || loading) return;
+    setLoading(true);
+    const payload = child.is_school_student
+      ? { action:'submit_word_problem_answer', student_id:child.id, school_code:child.school_code, problem_id:problem.id, answer_index:selectedIndex, attempt_number:attemptNumber }
+      : { action:'submit_word_problem_answer', student_id:child.id, is_home_student:true, problem_id:problem.id, answer_index:selectedIndex, attempt_number:attemptNumber };
+    fetch('/api/school', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) })
+      .then(r => r.json())
+      .then(d => {
+        setLoading(false);
+        if (d.correct) {
+          const today = new Date().toISOString().slice(0,10);
+          localStorage.setItem(`mm_wp_solved_${child.id}_${today}`, '1');
+          setResult('correct');
+          setXpAwarded(d.xp_awarded || 0);
+          onSolved(d.xp_awarded || 0);
+        } else if (attemptNumber < 3) {
+          setResult('wrong');
+          setTimeout(() => { setResult(null); setSelectedIndex(null); setAttemptNumber(a => a+1); }, 800);
+        } else {
+          const today = new Date().toISOString().slice(0,10);
+          localStorage.setItem(`mm_wp_solved_${child.id}_${today}`, '1');
+          setProblem(p => ({ ...p, correct_index:d.correct_index, explanation:d.explanation }));
+          setResult('revealed');
+        }
+      })
+      .catch(() => { setLoading(false); setError('Network error. Try again.'); });
+  };
+
+  const optionLabel = ['A','B','C','D'];
+
+  const getOptionStyle = (idx) => {
+    const base = { width:'100%', borderRadius:14, padding:'12px 16px', cursor:result==='correct'||result==='revealed'?'default':'pointer', display:'flex', alignItems:'center', gap:10, fontSize:15, fontWeight:700, transition:'all 0.2s', marginBottom:8, textAlign:'left', border:'2px solid' };
+    if (result==='correct' && idx===selectedIndex) return { ...base, background:'#2ECC9A18', borderColor:'#2ECC9A', color:'#2ECC9A' };
+    if (result==='wrong'   && idx===selectedIndex) return { ...base, background:'#FF6B6B18', borderColor:'#FF6B6B', color:'#FF6B6B', animation:'shakeX 0.4s ease' };
+    if (result==='revealed') {
+      if (idx===problem.correct_index) return { ...base, background:'#2ECC9A18', borderColor:'#2ECC9A', color:'#2ECC9A' };
+      return { ...base, background:'white', borderColor:'#E8E4FF', color:'#C0BAE0', opacity:0.5 };
+    }
+    if (idx===selectedIndex) return { ...base, background:'#5B4FE818', borderColor:'#5B4FE8', color:'#5B4FE8' };
+    return { ...base, background:'white', borderColor:'#E8E4FF', color:'#1A1040' };
+  };
+
+  return (
+    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', zIndex:400, display:'flex', alignItems:'flex-end', justifyContent:'center' }} onClick={onClose}>
+      <div style={{ background:'#FAFBFF', borderRadius:'24px 24px 0 0', width:'100%', maxWidth:480, maxHeight:'85vh', display:'flex', flexDirection:'column', animation:'slideUp 0.28s ease', boxShadow:'0 -4px 40px rgba(91,79,232,0.18)' }} onClick={e => e.stopPropagation()}>
+        {/* Header */}
+        <div style={{ padding:'18px 18px 12px', borderBottom:'1.5px solid rgba(91,79,232,0.08)', flexShrink:0 }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+            <div>
+              <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                <span style={{ fontSize:22 }}>🧩</span>
+                <span style={{ fontFamily:"'Orbitron',sans-serif", fontSize:13, fontWeight:900, color:'#1A1040' }}>DAILY WORD PROBLEM</span>
+              </div>
+              {problem && <div style={{ fontSize:12, color:'#9890C4', fontWeight:600, marginTop:2 }}>Day {problem.problem_num} of 100</div>}
+            </div>
+            <button onClick={onClose} style={{ background:'rgba(91,79,232,0.08)', border:'none', borderRadius:10, width:32, height:32, fontSize:16, cursor:'pointer', color:'#9890C4', display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
+          </div>
+        </div>
+        {/* Body */}
+        <div style={{ flex:1, overflowY:'auto', padding:'16px 18px 28px', position:'relative' }}>
+          {!problem && !error && (
+            <div style={{ textAlign:'center', padding:'40px 0' }}>
+              <div style={{ fontSize:36, animation:'mmFloat 1.5s ease-in-out infinite', marginBottom:10 }}>🧩</div>
+              <div style={{ color:'#9890C4', fontSize:13, fontWeight:700 }}>Loading your problem…</div>
+            </div>
+          )}
+          {error && (
+            <div style={{ background:'#FF6B6B14', border:'1.5px solid #FF6B6B30', borderRadius:14, padding:'14px 16px', textAlign:'center', color:'#FF6B6B', fontSize:13, fontWeight:700 }}>⚠ {error}</div>
+          )}
+          {problem && !error && (
+            <>
+              {/* Emoji scene */}
+              {problem.question_type === 'emoji' && problem.image_data && (
+                problem.image_data.includes('|') ? (
+                  <div style={{ background:'#FFF8E7', border:'1.5px solid #FFC84740', borderRadius:16, padding:'14px 16px', marginBottom:14, display:'flex', gap:16 }}>
+                    {(() => { const [l1,l2,lb1,lb2] = problem.image_data.split('|'); return (
+                      <>
+                        <div style={{ flex:1, textAlign:'center' }}>
+                          <div style={{ fontSize:'1.8rem', lineHeight:1.4 }}>{l1}</div>
+                          <div style={{ fontSize:11, color:'#9890C4', fontWeight:700, marginTop:4 }}>{lb1}</div>
+                        </div>
+                        <div style={{ width:1, background:'#FFC84740' }}/>
+                        <div style={{ flex:1, textAlign:'center' }}>
+                          <div style={{ fontSize:'1.8rem', lineHeight:1.4 }}>{l2}</div>
+                          <div style={{ fontSize:11, color:'#9890C4', fontWeight:700, marginTop:4 }}>{lb2}</div>
+                        </div>
+                      </>
+                    ); })()}
+                  </div>
+                ) : (
+                  <div style={{ background:'#F0ECFF', border:'1.5px solid #5B4FE840', borderRadius:16, padding:'16px', marginBottom:14, textAlign:'center' }}>
+                    <div style={{ fontSize:'2rem', lineHeight:1.5 }}>{problem.image_data}</div>
+                  </div>
+                )
+              )}
+              {/* Question */}
+              <div style={{ fontSize:16, fontWeight:800, color:'#1A1040', lineHeight:1.55, marginBottom:16, fontFamily:"'Baloo 2',sans-serif" }}>{problem.question}</div>
+              {/* Attempt counter */}
+              {result !== 'correct' && result !== 'revealed' && (
+                <div style={{ fontSize:11, color:'#9890C4', fontWeight:700, marginBottom:10 }}>Attempt {attemptNumber} of 3</div>
+              )}
+              {/* MCQ options */}
+              <div>
+                {(problem.options || []).map((opt, idx) => (
+                  <button key={idx} onClick={() => { if (result==='correct'||result==='revealed'||result==='wrong') return; setSelectedIndex(idx); }} style={getOptionStyle(idx)}>
+                    <div style={{ width:28, height:28, borderRadius:8, flexShrink:0, background:selectedIndex===idx?'#5B4FE8':'#F0ECFF', color:selectedIndex===idx?'white':'#5B4FE8', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, fontWeight:900 }}>{optionLabel[idx]}</div>
+                    <span>{opt}</span>
+                  </button>
+                ))}
+              </div>
+              {/* Hint */}
+              {attemptNumber >= 2 && result !== 'correct' && result !== 'revealed' && problem.hint && (
+                <div style={{ marginTop:8 }}>
+                  <button onClick={() => setShowHint(h => !h)} style={{ background:'#FFC84718', border:'1.5px solid #FFC84740', borderRadius:10, padding:'6px 14px', fontSize:12, fontWeight:700, color:'#B8860B', cursor:'pointer' }}>
+                    {showHint ? '▲ Hide Hint' : '💡 Show Hint'}
+                  </button>
+                  {showHint && (
+                    <div style={{ background:'#FFF8E7', border:'1.5px solid #FFC84740', borderRadius:12, padding:'10px 14px', marginTop:8, fontSize:13, color:'#7A5C00', fontWeight:600, lineHeight:1.5 }}>💡 {problem.hint}</div>
+                  )}
+                </div>
+              )}
+              {/* Submit */}
+              {result !== 'correct' && result !== 'revealed' && (
+                <button onClick={handleAnswer} disabled={selectedIndex===null||loading}
+                  style={{ width:'100%', marginTop:16, background:selectedIndex===null?'#F0ECFF':'linear-gradient(135deg,#5B4FE8,#9B59F5)', border:'none', borderRadius:16, padding:'14px', fontSize:15, fontWeight:900, color:selectedIndex===null?'#C0BAE0':'white', cursor:selectedIndex===null?'default':'pointer', transition:'all 0.2s', boxShadow:selectedIndex===null?'none':'0 4px 0 #5B4FE8CC' }}>
+                  {loading ? '…' : 'Check Answer ✓'}
+                </button>
+              )}
+              {/* Correct */}
+              {result === 'correct' && (
+                <>
+                  {xpAwarded > 0 && (
+                    <div style={{ position:'fixed', top:'40%', left:'50%', transform:'translateX(-50%)', fontSize:24, fontWeight:900, color:'#FFC847', pointerEvents:'none', animation:'xpRise 1.5s ease forwards', zIndex:1000, textShadow:'0 2px 8px rgba(0,0,0,0.3)' }}>✨ +{xpAwarded} XP</div>
+                  )}
+                  <div style={{ marginTop:16, background:'#2ECC9A14', border:'2px solid #2ECC9A44', borderRadius:20, padding:'18px 20px', textAlign:'center', animation:'popIn 0.4s ease' }}>
+                    <div style={{ fontSize:44, marginBottom:8 }}>🎉</div>
+                    <div style={{ fontSize:18, fontWeight:900, color:'#2ECC9A', marginBottom:4 }}>Correct!</div>
+                    {xpAwarded > 0 && <div style={{ fontSize:14, color:'#FFC847', fontWeight:800, marginBottom:8 }}>+{xpAwarded} XP earned!</div>}
+                    {problem.explanation && <div style={{ fontSize:13, color:'#5A4E8A', lineHeight:1.55, marginBottom:12 }}>{problem.explanation}</div>}
+                    <button onClick={onClose} style={{ background:'#2ECC9A', border:'none', borderRadius:14, padding:'12px 28px', color:'white', fontSize:14, fontWeight:900, cursor:'pointer' }}>Done ✓</button>
+                  </div>
+                </>
+              )}
+              {/* Revealed */}
+              {result === 'revealed' && (
+                <div style={{ marginTop:16, background:'#F0ECFF', border:'2px solid #9B59F540', borderRadius:20, padding:'18px 20px', textAlign:'center', animation:'popIn 0.4s ease' }}>
+                  <div style={{ fontSize:36, marginBottom:8 }}>💡</div>
+                  <div style={{ fontSize:15, fontWeight:800, color:'#5B4FE8', marginBottom:4 }}>The correct answer was:</div>
+                  <div style={{ fontSize:18, fontWeight:900, color:'#1A1040', marginBottom:12 }}>{optionLabel[problem.correct_index]}. {(problem.options||[])[problem.correct_index]}</div>
+                  {problem.explanation && <div style={{ fontSize:13, color:'#5A4E8A', lineHeight:1.55, marginBottom:14 }}>{problem.explanation}</div>}
+                  <button onClick={onClose} style={{ background:'#5B4FE8', border:'none', borderRadius:14, padding:'12px 28px', color:'white', fontSize:14, fontWeight:900, cursor:'pointer' }}>Close</button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onBazaar, onLogout, onFeedback, onRate, onSettings, isLessonPurchased, onShop, onBadges, onCharacter, onThemeChange }) {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showTutorial, setShowTutorial] = useState(()=>!localStorage.getItem('mm_tutorial_done'));
@@ -575,9 +777,15 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
   const [showDQ,         setShowDQ]         = useState(false);
   const [showPuzzle,     setShowPuzzle]     = useState(false);
   const [showDailyQuest, setShowDailyQuest] = useState(false);
-  const [showRating,   setShowRating]   = useState(false);
-  const [exploreOpen,  setExploreOpen]  = useState(false);
-  const [mascotMsg,    setMascotMsg]    = useState(0);
+  const [showRating,        setShowRating]        = useState(false);
+  const [exploreOpen,       setExploreOpen]       = useState(false);
+  const [mascotMsg,         setMascotMsg]         = useState(0);
+  const [showWordProblem,   setShowWordProblem]   = useState(false);
+  const [wordProblemSolved, setWordProblemSolved] = useState(() => {
+    const today = new Date().toISOString().slice(0,10);
+    return localStorage.getItem(`mm_wp_solved_${child.id}_${today}`) === '1';
+  });
+  const [showWPToast, setShowWPToast] = useState(false);
   const [brainSpark,   setBrainSpark]   = useState(null);   // { fact, category }
   const [sparkOpen,    setSparkOpen]    = useState(false);
   const w = WORLDS.find(x=>x.id===parseInt(child.class_num||1)) || WORLDS[0];
@@ -597,6 +805,15 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
       if (sessions === 3) setTimeout(() => setShowRating(true), 5000);
     }
     db.track("app_open", child.id, null, { session: 1, class_num: child.class_num });
+  }, [child.id]);
+  useEffect(() => {
+    const today = new Date().toISOString().slice(0,10);
+    const solvedKey = `mm_wp_solved_${child.id}_${today}`;
+    const toastKey  = `mm_wp_toast_${child.id}`;
+    if (localStorage.getItem(solvedKey) !== '1' && sessionStorage.getItem(toastKey) !== '1') {
+      const t = setTimeout(() => { setShowWPToast(true); sessionStorage.setItem(toastKey, '1'); }, 2000);
+      return () => clearTimeout(t);
+    }
   }, [child.id]);
   useEffect(() => {
     db.getProgress(child.id).then(({ data }) => setProgress(data || []));
@@ -630,12 +847,28 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
           onHelp={() => onFeedback()}
           onRankings={() => setShowLeaderboard(true)}
           showRankings={!!(child.is_school_student && child.school_id)}
+          onWordProblem={() => setShowWordProblem(true)}
+          showWordProblem={true}
+          wordProblemSolved={wordProblemSolved}
         />
       )}
       {showLeaderboard && (
         <ClassLeaderboard
           child={child}
           onClose={() => setShowLeaderboard(false)}
+        />
+      )}
+      {showWPToast && !wordProblemSolved && (
+        <WordProblemToast
+          onOpen={() => { setShowWordProblem(true); setShowWPToast(false); }}
+          onDismiss={() => setShowWPToast(false)}
+        />
+      )}
+      {showWordProblem && (
+        <WordProblemModal
+          child={child}
+          onClose={() => setShowWordProblem(false)}
+          onSolved={(xp) => { setWordProblemSolved(true); setShowWordProblem(false); }}
         />
       )}
       {showTutorial && <Tutorial onDone={doneTutorial}/>}

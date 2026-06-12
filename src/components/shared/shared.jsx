@@ -189,14 +189,18 @@ export function ProgressMap({ child, lessons, progress, world, onSelectSet }) {
     </div>
   );
 }
-// ── FABButton — floating action button (Help + optional Rankings) ──────────
+// ── FABButton — floating action button (Help + optional Rankings + optional Word Problem) ──
 // Props:
-//   onHelp       — called when Help 🆘 is tapped
-//   onRankings   — called when Rankings 🏆 is tapped (optional)
-//   showRankings — boolean: show the rankings sub-button (school students only)
-export function FABButton({ onHelp, onRankings, showRankings }) {
+//   onHelp            — called when Help 🆘 is tapped
+//   onRankings        — called when Rankings 🏆 is tapped (optional)
+//   showRankings      — boolean: show the rankings sub-button (school students only)
+//   onWordProblem     — called when Word Problem 🧩 is tapped (optional)
+//   showWordProblem   — boolean: show the word problem sub-button
+//   wordProblemSolved — boolean: true = ✅ badge; false = pulse animation
+export function FABButton({ onHelp, onRankings, showRankings, onWordProblem, showWordProblem, wordProblemSolved }) {
   const [open,  setOpen]  = useState(false);
   const [pulse, setPulse] = useState(false);
+  const hasMenu = !!(showRankings || showWordProblem);
 
   useEffect(() => {
     const t = setInterval(() => {
@@ -231,7 +235,8 @@ export function FABButton({ onHelp, onRankings, showRankings }) {
               display:"flex", alignItems:"center", justifyContent:"center",
               fontSize:19, cursor:"pointer",
               animation:"fabSubIn 0.2s ease both",
-              animationDelay: showRankings ? "0.05s" : "0s",
+              animationDelay: (showRankings && showWordProblem) ? "0.10s"
+                            : (showRankings || showWordProblem) ? "0.05s" : "0s",
             }}
             title="Help"
           >🆘</button>
@@ -248,10 +253,41 @@ export function FABButton({ onHelp, onRankings, showRankings }) {
                 display:"flex", alignItems:"center", justifyContent:"center",
                 fontSize:19, cursor:"pointer",
                 animation:"fabSubIn 0.2s ease both",
-                animationDelay:"0s",
+                animationDelay: showWordProblem ? "0.05s" : "0s",
               }}
               title="Class Rankings"
             >🏆</button>
+          )}
+          {/* Word Problem 🧩 */}
+          {showWordProblem && (
+            <button
+              onClick={e => { e.stopPropagation(); setOpen(false); onWordProblem && onWordProblem(); }}
+              style={{
+                position:"relative",
+                width:44, height:44, borderRadius:"50%",
+                background:`#5B4FE8ee`,
+                border:`2px solid #5B4FE8`,
+                boxShadow: wordProblemSolved ? `0 0 12px #5B4FE888` : `0 0 16px #5B4FE8cc`,
+                display:"flex", alignItems:"center", justifyContent:"center",
+                fontSize:19, cursor:"pointer",
+                animation: wordProblemSolved
+                  ? "fabSubIn 0.2s ease both"
+                  : "fabSubIn 0.2s ease both, mmPulse 1.5s 0.25s ease-in-out infinite",
+              }}
+              title="Daily Word Problem"
+            >
+              🧩
+              {wordProblemSolved && (
+                <div style={{
+                  position:"absolute", top:-2, right:-2,
+                  width:16, height:16, borderRadius:"50%",
+                  background:"#2ECC9A",
+                  border:"2px solid white",
+                  display:"flex", alignItems:"center", justifyContent:"center",
+                  fontSize:8, lineHeight:1,
+                }}>✓</div>
+              )}
+            </button>
           )}
         </>
       )}
@@ -260,8 +296,7 @@ export function FABButton({ onHelp, onRankings, showRankings }) {
       <button
         onClick={e => {
           e.stopPropagation();
-          // If rankings not available — single-tap fires help directly
-          if (!showRankings) { onHelp(); return; }
+          if (!hasMenu) { onHelp(); return; }
           setOpen(o => !o);
         }}
         style={{
@@ -276,7 +311,7 @@ export function FABButton({ onHelp, onRankings, showRankings }) {
           transition:"all 0.25s",
           transform: open ? "rotate(45deg)" : "none",
         }}
-        title={open ? "Close" : showRankings ? "Menu" : "Help"}
+        title={open ? "Close" : hasMenu ? "Menu" : "Help"}
       >
         {open ? "✕" : "🚀"}
       </button>
@@ -286,7 +321,7 @@ export function FABButton({ onHelp, onRankings, showRankings }) {
 
 // Keep SOSButton as a thin alias so any file that still imports it doesn't break
 export function SOSButton({ onClick }) {
-  return <FABButton onHelp={onClick} showRankings={false} />;
+  return <FABButton onHelp={onClick} showRankings={false} showWordProblem={false} />;
 }
 
 export function BadgeUnlockToast({ badges, onDone }) {

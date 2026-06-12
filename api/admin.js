@@ -586,6 +586,45 @@ export default async function handler(req, res) {
         return res.status(200).json({ok:r.ok});
       }
 
+      // ── Word problems: bulk seed (one-time utility) ───────────────
+      if (action === "admin_seed_word_problems") {
+        const { problems } = req.body;
+        if (!Array.isArray(problems) || problems.length === 0)
+          return res.status(400).json({ error: "problems array required" });
+        if (problems.length > 500)
+          return res.status(400).json({ error: "Max 500 problems per batch" });
+
+        const rows = problems.map(p => ({
+          class_num:     cleanInt(p.class_num, 0, 12),
+          problem_num:   cleanInt(p.problem_num, 1, 100),
+          question:      clean(p.question, 500),
+          options:       Array.isArray(p.options) ? p.options.map(o => clean(String(o), 200)) : [],
+          correct_index: cleanInt(p.correct_index, 0, 3),
+          hint:          clean(p.hint || "", 300),
+          explanation:   clean(p.explanation || "", 500),
+          question_type: ["text","emoji","image"].includes(p.question_type) ? p.question_type : "text",
+          image_data:    p.image_data ? clean(String(p.image_data), 500) : null,
+        })).filter(r => r.question && r.options.length === 4);
+
+        if (rows.length === 0)
+          return res.status(400).json({ error: "No valid problems after validation" });
+
+        const resp = await fetch(`${SB_URL}/rest/v1/word_problems`, {
+          method: "POST",
+          headers: {
+            apikey: SB_SERVICE,
+            Authorization: `Bearer ${SB_SERVICE}`,
+            "Content-Type": "application/json",
+            Prefer: "return=representation,resolution=ignore-duplicates",
+          },
+          body: JSON.stringify(rows),
+        });
+        const txt = await resp.text();
+        let inserted = 0;
+        try { const d = JSON.parse(txt); inserted = Array.isArray(d) ? d.length : 0; } catch {}
+        return res.status(200).json({ ok: true, inserted, submitted: rows.length });
+      }
+
       return res.status(400).json({error:"Unknown admin action"});
 
   } catch(err) {
