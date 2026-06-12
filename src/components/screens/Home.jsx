@@ -847,9 +847,9 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
           onHelp={() => onFeedback()}
           onRankings={() => setShowLeaderboard(true)}
           showRankings={!!(child.is_school_student && child.school_id)}
-          onWordProblem={() => setShowWordProblem(true)}
+          onWordProblem={() => setShowDailyQuest(true)}
           showWordProblem={true}
-          wordProblemSolved={wordProblemSolved}
+          wordProblemSolved={dqDone}
         />
       )}
       {showLeaderboard && (
