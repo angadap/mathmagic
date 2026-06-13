@@ -92,6 +92,7 @@ export default function App() {
   const [showRating,      setShowRating]      = useState(false);
   const [feedbackPrefill, setFeedbackPrefill] = useState(null);
   const [swUpdateReady,   setSwUpdateReady]   = useState(false);
+  const [bossKey,         setBossKey]         = useState(0);
   const swRegRef = useRef(null);
 
   // ── Razorpay key fetch on mount ──────────────────────────────────────────────
@@ -243,7 +244,7 @@ export default function App() {
 
   if (screen === 'home')
     return <><GlobalStyles />{SwUpdatePortal}
-      <Home
+      <Home key={bossKey}
         child={child} isLessonPurchased={isLessonPurchased}
         onWorld={goWorld} onAbacus={() => setScreen('abacus')}
         onGames={() => setScreen('games')} onOlympiad={() => setScreen('olympiad')}
@@ -390,7 +391,7 @@ export default function App() {
     return <><GlobalStyles />{SwUpdatePortal}<CharacterScreen child={child} setChild={setChild} onBack={() => setScreen('home')} /></>;
 
   if (screen === 'boss_battle')
-    return <><GlobalStyles />{SwUpdatePortal}<BossBattle child={child} setChild={setChild} onBack={() => setScreen('home')} /></>;
+    return <><GlobalStyles />{SwUpdatePortal}<BossBattle child={child} setChild={setChild} onBack={() => { setBossKey(k => k+1); setScreen('home'); }} /></>;
 
   return <><GlobalStyles />{SwUpdatePortal}<OfflineBanner /></>;
 }

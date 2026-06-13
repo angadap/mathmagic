@@ -954,7 +954,8 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
                   const totalLevels  = boss.levels.length;
                   const allKilled    = killedLevels.length === totalLevels;
                   const someKilled   = killedLevels.length > 0 && !allKilled;
-                  const isUnlocked   = idx === 0 || !!bossPreview[bossList[idx - 1]?.id + "_minion"];
+                  const prevBoss   = idx > 0 ? bossList[idx - 1] : null;
+                  const isUnlocked = idx === 0 || !!(prevBoss && (prevBoss.levels || []).every(lk => bossPreview[prevBoss.id + "_" + lk] === true));
 
                   return (
                     <button key={boss.id} onClick={onBossArena}

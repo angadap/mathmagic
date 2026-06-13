@@ -54,6 +54,8 @@ export function BossBattle({ child, setChild, onBack }) {
   const [showBackConfirm, setShowBackConfirm] = useState(false);
   const [hint,            setHint]            = useState(false);
   const [noHints,         setNoHints]         = useState(false);
+  const [bossShake,       setBossShake]       = useState(false);
+  const [showDamage,      setShowDamage]      = useState(false);
 
   const scoreRef      = useRef(0);
   const livesRef      = useRef(3);
@@ -164,6 +166,8 @@ export function BossBattle({ child, setChild, onBack }) {
       setScore(scoreRef.current);
       newHp = Math.max(0, bossHp - dmg);
       setBossHp(newHp);
+      setBossShake(true); setTimeout(() => setBossShake(false), 500);
+      setShowDamage(true); setTimeout(() => setShowDamage(false), 500);
     } else {
       newLives = Math.max(0, livesRef.current - 1);
       livesRef.current = newLives;
@@ -494,6 +498,22 @@ export function BossBattle({ child, setChild, onBack }) {
         {/* Question area */}
         {q && (
           <div style={{ position:"relative", zIndex:1, padding:"16px 18px" }}>
+
+            {/* Boss — large animated emoji + inline HP bar */}
+            {boss && (
+              <div style={{ textAlign:"center", marginBottom:14, position:"relative" }}>
+                <div style={{ fontSize:80, display:"inline-block", transition:"transform 0.12s, filter 0.12s", transform:bossShake ? "translateX(8px) rotate(5deg)" : "translateX(0) rotate(0deg)", filter:bossShake ? "drop-shadow(0 0 16px #FF6B6B)" : "none" }}>
+                  {boss.emoji}
+                </div>
+                {showDamage && (
+                  <div style={{ position:"absolute", top:0, right:"22%", fontSize:18, color:"#FF6B6B", fontWeight:900, fontFamily:"'Orbitron',sans-serif", animation:"floatEmoji 0.5s ease-out forwards", pointerEvents:"none" }}>{"💥"}</div>
+                )}
+                <div style={{ width:"100%", background:"rgba(255,255,255,0.10)", borderRadius:8, height:12, margin:"8px 0 0" }}>
+                  <div style={{ width:bossHp + "%", height:"100%", background:bossHp > 60 ? "#2ECC9A" : bossHp > 30 ? "#FFC847" : "#FF6B6B", borderRadius:8, transition:"width 0.4s ease" }}/>
+                </div>
+              </div>
+            )}
+
             <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:10, color:"#FFC847", marginBottom:10, letterSpacing:1 }}>
               {"Q " + (qi + 1) + " / " + questions.length}
             </div>
