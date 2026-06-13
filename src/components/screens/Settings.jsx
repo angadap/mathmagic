@@ -58,6 +58,25 @@ export function Settings({ child, user, onBack, onThemeChange, onLogout }) {
   const [pwSent,  setPwSent]  = useState(false);
   const [loading, setLoading] = useState(false);
   const [msg,     setMsg]     = useState("");
+  const [sfxOn,   setSfxOn]   = useState(SFX.enabled);
+  const [sfxVol,  setSfxVol]  = useState(Math.round((SFX.volume ?? 0.7) * 100));
+
+  const handleSfxToggle = () => {
+    if (sfxOn) {
+      SFX.mute();
+      setSfxOn(false);
+    } else {
+      SFX.unmute();
+      setSfxOn(true);
+      SFX.tap();
+    }
+  };
+
+  const handleVolChange = (v) => {
+    const pct = parseInt(v, 10);
+    setSfxVol(pct);
+    SFX.setVolume(pct / 100);
+  };
 
   const handleReset = async () => {
     if (!pwEmail.trim()) { setMsg("Enter email"); return; }
@@ -83,7 +102,7 @@ export function Settings({ child, user, onBack, onThemeChange, onLogout }) {
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,maxWidth:480,margin:"0 auto"}}>
         {Object.entries(THEMES).map(([key,t])=>{
           const cur=localStorage.getItem("mm_theme")||"light";
-          return(<button key={key} onClick={()=>{localStorage.setItem("mm_theme",key);updateC(key);if(onThemeChange)onThemeChange(key);SFX.tap();setSec(null);}} style={{background:cur===key?`${t.cyan}22`:t.card,border:`2px solid ${cur===key?t.cyan:t.dim+"44"}`,borderRadius:16,padding:"14px 10px",cursor:"pointer",textAlign:"center",boxShadow:cur===key?`0 0 14px ${t.cyan}44`:"none"}}>
+          return(<button key={key} onClick={()=>{localStorage.setItem("mm_theme",key);updateC(key);if(onThemeChange)onThemeChange(key);SFX.themeUnlocked();setSec(null);}} style={{background:cur===key?`${t.cyan}22`:t.card,border:`2px solid ${cur===key?t.cyan:t.dim+"44"}`,borderRadius:16,padding:"14px 10px",cursor:"pointer",textAlign:"center",boxShadow:cur===key?`0 0 14px ${t.cyan}44`:"none"}}>
             <div style={{fontSize:24,marginBottom:4}}>{t.icon}</div>
             <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:9,color:cur===key?t.cyan:t.dim}}>{t.name}</div>
             <div style={{display:"flex",gap:3,justifyContent:"center",marginTop:6}}>{[t.purple,t.cyan,t.green,t.orange].map((cl,i)=><div key={i} style={{width:10,height:10,borderRadius:"50%",background:cl}}/>)}</div>
@@ -143,8 +162,62 @@ export function Settings({ child, user, onBack, onThemeChange, onLogout }) {
       </div>
       <div style={{maxWidth:480,margin:"0 auto",display:"flex",flexDirection:"column",gap:8}}>
         {[
-          {icon:"👤",label:"My Profile",      sub:"Name, class, XP, coins",      act:()=>setSec("profile")},
-          {icon:"🎨",label:"Change Theme",    sub:"6 themes incl. light modes",   act:()=>setSec("theme")},
+          {icon:"👤",label:"My Profile",   sub:"Name, class, XP, coins",    act:()=>setSec("profile")},
+          {icon:"🎨",label:"Change Theme", sub:"6 themes incl. light modes", act:()=>setSec("theme")},
+        ].map((item,i)=>(
+          <button key={i} onClick={item.act} style={{background:C.card,border:`1.5px solid #9B59F533`,borderRadius:14,padding:"14px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:14,textAlign:"left"}}>
+            <span style={{fontSize:20,width:28,textAlign:"center"}}>{item.icon}</span>
+            <div style={{flex:1}}><div style={{fontWeight:800,fontSize:14,color:textColor()}}>{item.label}</div><div style={{fontSize:11,color:C.dim,marginTop:2}}>{item.sub}</div></div>
+            <span style={{color:C.dim,fontSize:18}}>›</span>
+          </button>
+        ))}
+
+        {/* ── Sound Settings Card ── */}
+        <div style={{background:"#F5F3FF",border:"1.5px solid #5B4FE822",borderRadius:14,padding:"16px"}}>
+          <div style={{fontFamily:"'Orbitron',sans-serif",fontSize:9,color:"#5B4FE8",letterSpacing:1.5,marginBottom:14}}>🔊 SOUND</div>
+
+          {/* Master mute toggle row */}
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:sfxOn?16:0}}>
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              <span style={{fontSize:22}}>{sfxOn?"🔊":"🔇"}</span>
+              <div>
+                <div style={{fontWeight:800,fontSize:14,color:"#1A1040"}}>Sound effects</div>
+                <div style={{fontSize:11,color:"#9890C4",marginTop:1}}>{sfxOn?"Tap, chimes & fanfares":"All sounds muted"}</div>
+              </div>
+            </div>
+            <button
+              onClick={handleSfxToggle}
+              aria-label={sfxOn?"Mute sounds":"Unmute sounds"}
+              style={{width:52,height:28,borderRadius:999,background:sfxOn?"#5B4FE8":"#D0CDE8",border:"none",cursor:"pointer",position:"relative",transition:"background 0.25s",padding:0,boxShadow:sfxOn?"0 2px 8px #5B4FE844":"none",flexShrink:0}}
+            >
+              <div style={{position:"absolute",top:4,left:sfxOn?28:4,width:20,height:20,borderRadius:"50%",background:"white",transition:"left 0.2s",boxShadow:"0 1px 4px rgba(0,0,0,0.25)"}}/>
+            </button>
+          </div>
+
+          {/* Volume + test — only when unmuted */}
+          {sfxOn && (
+            <>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                <span style={{fontSize:12,color:"#9890C4",fontWeight:600,fontFamily:"'Nunito',sans-serif"}}>Volume</span>
+                <span style={{fontSize:12,color:"#5B4FE8",fontWeight:800,fontFamily:"'Nunito',sans-serif"}}>{sfxVol}%</span>
+              </div>
+              <input
+                type="range" min={0} max={100} step={5} value={sfxVol}
+                onChange={e=>handleVolChange(e.target.value)}
+                onMouseUp={()=>SFX.tap()} onTouchEnd={()=>SFX.tap()}
+                style={{width:"100%",accentColor:"#5B4FE8",cursor:"pointer",marginBottom:12,display:"block"}}
+              />
+              <button
+                onClick={()=>SFX.correct()}
+                style={{width:"100%",background:"#5B4FE812",border:"1.5px solid #5B4FE830",borderRadius:12,padding:"10px",fontSize:13,fontWeight:800,color:"#5B4FE8",cursor:"pointer",fontFamily:"'Nunito',sans-serif",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}
+              >
+                ▶ Test sound
+              </button>
+            </>
+          )}
+        </div>
+
+        {[
           {icon:"🔑",label:"Reset Password",  sub:"Send reset link to email",     act:()=>setSec("password")},
           {icon:"⭐",label:"Rate the App",    sub:"Share your experience",        act:()=>onBack("rate")},
           {icon:"🔒",label:"Privacy Policy",  sub:"How we protect your data",     act:()=>onBack("privacy")},

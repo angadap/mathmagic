@@ -96,8 +96,9 @@ export function Olympiad({ child, setChild, onBack }) {
   const [confirmBack, setConfirmBack] = useState(false);
   const [showHint,    setShowHint]    = useState(false);
   const [noHints,     setNoHints]     = useState(false);
-  const scoreRef = useRef(0);
-  const savedRef = useRef(false);
+  const scoreRef  = useRef(0);
+  const savedRef  = useRef(false);
+  const streakRef = useRef(0);
 
   // Load progress on mount
   useEffect(() => {
@@ -160,7 +161,9 @@ export function Olympiad({ child, setChild, onBack }) {
     setResults([]);
     scoreRef.current = 0;
     savedRef.current = false;
+    streakRef.current = 0;
     await loadTest(tier, ti);
+    SFX.olympiadStart();
     setView("test");
   };
 
@@ -173,7 +176,9 @@ export function Olympiad({ child, setChild, onBack }) {
 
   useEffect(() => {
     if (view !== "test" || chosen !== null) return;
-    if (timeLeft <= 0) { handlePick(-1); return; }
+    if (timeLeft <= 0) { SFX.timeOut(); handlePick(-1); return; }
+    if (timeLeft <= 5) SFX.timerUrgent();
+    else SFX.timerTick();
     const t = setTimeout(() => setTimeLeft(tl => tl - 1), 1000);
     return () => clearTimeout(t);
   }, [view, timeLeft, chosen]);
@@ -185,7 +190,16 @@ export function Olympiad({ child, setChild, onBack }) {
     if (ok) SFX.correct(); else SFX.wrong();
     setChosen(idx);
     setResults(r => [...r, ok]);
-    if (ok) { scoreRef.current += 1; setScore(scoreRef.current); }
+    if (ok) {
+      scoreRef.current += 1; setScore(scoreRef.current);
+      streakRef.current += 1;
+      const s = streakRef.current;
+      if (s === 10) SFX.streakChime(10);
+      else if (s === 5) SFX.streakChime(5);
+      else if (s === 3) SFX.streakChime(3);
+    } else {
+      streakRef.current = 0;
+    }
     setTimeout(() => {
       if (qi + 1 >= questions.length) {
         finishTest();
@@ -214,6 +228,7 @@ export function Olympiad({ child, setChild, onBack }) {
     );
     db.addXP(child.id, xp, coins, !!(child.is_school_student))
       .then(({ data: nc }) => { if (nc) setChild(nc); });
+    SFX.olympiadEnd();
     setView("result");
   };
 

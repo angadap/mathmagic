@@ -119,6 +119,7 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
     if (mode !== "bubble" || !questions || questions.length === 0) return;
     const q = questions[qi % questions.length];
     if (!q) return;
+    SFX.bubblesAppear();
     setBubbles([...q.opts.map((text, id) => ({ id, text }))].sort(() => Math.random() - 0.5));
     processing.current = false;
   }, [qi, mode, questions]);
@@ -127,7 +128,17 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
   const finalize = useCallback(() => {
     const fs      = scoreRef.current;
     const fst     = fs >= 16 ? 3 : fs >= 12 ? 2 : fs >= 6 ? 1 : 0;
-    setTimeout(()=>{ if(fst>=3) SFX.starEarn(); else if(fst>0) SFX.xpGain(); }, 500);
+    setTimeout(()=>{
+      SFX.starAppear();
+      const pct = (questions && questions.length > 0) ? fs / questions.length : 0;
+      setTimeout(()=>{
+        if (pct >= 0.95 || fst >= 3) SFX.perfectScore();
+        else if (pct >= 0.6) SFX.goodScore();
+        else if (fst === 0) SFX.wrong();
+      }, 600);
+      setTimeout(()=>SFX.xpShimmer(), 900);
+      setTimeout(()=>SFX.coinsRain(), 1100);
+    }, 500);
     const xpEarned = fs * 20;
     const totalQ  = questions ? questions.length : 20;
 
@@ -139,7 +150,12 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
 
     const gemGain = fst >= 3 ? 5 : fst >= 2 ? 2 : 0;
     // Optimistic XP + gems update in UI
-    setChild(c => c ? { ...c, xp:(c.xp||0)+xpEarned, coins:(c.coins||0)+fst*10, gems:(c.gems||0)+gemGain, level:Math.floor(((c.xp||0)+xpEarned)/200)+1, total_correct:(c.total_correct||0)+fs } : c);
+    const oldXp = child?.xp || 0;
+    const newXp = oldXp + xpEarned;
+    setChild(c => c ? { ...c, xp:newXp, coins:(c.coins||0)+fst*10, gems:(c.gems||0)+gemGain, level:Math.floor(newXp/200)+1, total_correct:(c.total_correct||0)+fs } : c);
+    if (xpEarned > 0 && Math.floor(newXp/100) > Math.floor(oldXp/100)) {
+      setTimeout(() => SFX.xpLevelUp(), 950);
+    }
 
     // Save to DB in background (non-blocking)
     db.saveProgress(child.id, lesson.id + "_s" + setIndex, { correct:fs, total:totalQ, stars:fst, xpEarned, isSchoolStudent:!!(child.is_school_student) });
@@ -161,12 +177,12 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
         if (newBadgeIds.length > 0 && fst >= 1) setNewBadges(newBadgeIds);
       })();
     }
-    if(xpEarned>0) setTimeout(()=>SFX.xpGain(), 300);
   }, [child.id, lesson.id, questions, mode, setChild, setIndex, clearGameState]);
   useEffect(() => { finalizeRef.current = finalize; }, [finalize]);
 
   const advance = useCallback((shouldEnd) => {
     if (shouldEnd) { finalize(); return; }
+    SFX.questionAppear();
     setQi(x => x+1); setChosen(null); setHint(false); processing.current = false;
   }, [finalize]);
 
@@ -177,7 +193,8 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
     const q = questions[qi % questions.length];
     if (!q) return;
     const ok = ansIdx === q.ans;
-    if (ok) SFX.correct(); else SFX.wrong();
+    if (mode === "bubble") { if (ok) SFX.bubbleCorrect(); else SFX.bubbleWrong(); }
+    else { if (ok) SFX.correct(); else SFX.wrong(); }
     setChosen(ansIdx);
     // Record for post-set review
     historyRef.current = [...historyRef.current, { q: q.question || q.q || "", opts: q.options || q.opts || [], chosen: ansIdx, ans: q.ans, ok }];
@@ -366,7 +383,7 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
             let bg    = `radial-gradient(circle at 30% 30%, ${world.color}88, ${world.color}33)`;
             let brd   = `3px solid ${world.color}88`;
             if (chosen !== null) {
-              if (b.id === q.ans)     { SFX.bubblePop(); bg = `radial-gradient(circle at 30% 30%, ${C.green}88, ${C.green}33)`; brd = `3px solid ${C.green}`; }
+              if (b.id === q.ans)     { bg = `radial-gradient(circle at 30% 30%, ${C.green}88, ${C.green}33)`; brd = `3px solid ${C.green}`; }
               else if (b.id === chosen){ bg = `radial-gradient(circle at 30% 30%, ${C.red}88, ${C.red}33)`;   brd = `3px solid ${C.red}`;   }
             }
             return (
@@ -453,8 +470,8 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
           const handleHintTap = () => {
             if (hint) { setHint(false); return; }
             const ok = useHint(child.id);
-            if (ok) { setHint(true); }
-            else { setNoHints(true); }
+            if (ok) { SFX.hintReveal(); setHint(true); }
+            else { SFX.hintEmpty(); setNoHints(true); }
           };
           return (
             <div>

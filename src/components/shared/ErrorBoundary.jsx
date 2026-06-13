@@ -74,7 +74,7 @@ function MathCardFlip({ onBack, child }) {
         const mc = nc.map((c,i)=>nf.includes(i)?{...c,matched:true}:c);
         setCards(mc); setFlipped([]); setScore(s=>s+10);
         if(mc.every(c=>c.matched)){
-          SFX.levelUp(); setWon(true);
+          SFX.xpLevelUp(); setWon(true);
         }
       } else {
         SFX.wrong();

@@ -187,7 +187,7 @@ export function DailyQuiz({ child, onClose }) {
     else {
       await db.completeDailyChallenge(child.id, challenge.id, true);
       await db.addXP(child.id, challenge.xp_reward||50, challenge.coin_reward||10);
-      SFX.dailyDone();
+      SFX.badgeUnlock();
       db.track("daily_challenge_complete", child.id, null, { correct:true });
       const todayKey2 = new Date().toISOString().slice(0,10);
       localStorage.setItem(`dq_done_${child.id}_${todayKey2}`, "1");
@@ -310,7 +310,7 @@ export function DailyPuzzle({ child, onClose }) {
     if (!answer.trim() || !puzzle) return;
     const correct = answer.trim().toLowerCase() === puzzle.answer.toLowerCase();
     setResult(correct ? "correct" : "wrong");
-    if (correct) SFX.puzzleSolve();
+    if (correct) SFX.badgeUnlock();
     await db.completePuzzle(child.id, puzzle.id, answer.trim(), correct);
     if (correct) {
       await db.addXP(child.id, puzzle.xp_reward||75, puzzle.coin_reward||15);

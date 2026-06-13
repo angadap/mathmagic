@@ -462,10 +462,10 @@ if (reduceMotion) {
 if ("getBattery" in navigator) {
   navigator.getBattery().then(bat => {
     if (bat.level < 0.15 && !bat.charging) {
-      if (!SFX.muted) SFX.toggleMute();
+      if (SFX.enabled) SFX.mute();
     }
     bat.addEventListener("levelchange", () => {
-      if (bat.level < 0.10 && !bat.charging && !SFX.muted) SFX.toggleMute();
+      if (bat.level < 0.10 && !bat.charging && SFX.enabled) SFX.mute();
     });
   }).catch(()=>{});
 }

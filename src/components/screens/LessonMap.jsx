@@ -69,7 +69,7 @@ export function SetPathMap({ lesson, world, progress, onLesson, onBack, isSetDon
                   const isChest=CHEST_SETS.includes(si);
                   return (
                     <button key={si}
-                      onClick={()=>{if(sUnlock){SFX.unlock();onLesson({...lesson,setIndex:si,_progress:progress});}else SFX.wrong();}}
+                      onClick={()=>{if(sUnlock){SFX.bubblePop();onLesson({...lesson,setIndex:si,_progress:progress});}else SFX.lockedNode();}}
                       style={{
                         background:sDone?"#2ECC9A12":isCurrent?"#FFFFFF":"#F5F3FF",
                         border:`2px solid ${sDone?"#2ECC9A44":isCurrent?"#9B59F555":"rgba(91,79,232,0.12)"}`,
@@ -170,7 +170,8 @@ export function LessonMap({ world, child, onBack, onLesson, isLessonPurchased, o
               )}
               <button
                 onClick={() => {
-                  if (!purchased) { onPurchaseLesson && onPurchaseLesson(lesson.id, world.id, 300); return; }
+                  if (!purchased) { SFX.lockedNode(); onPurchaseLesson && onPurchaseLesson(lesson.id, world.id, 300); return; }
+                  SFX.lessonNode();
                   setActiveLesson({...lesson, _li:li});
                 }}
                 style={{

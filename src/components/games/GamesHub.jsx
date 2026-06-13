@@ -39,7 +39,7 @@ export function MathCardFlip({ onBack, child }) {
         SFX.correct();
         const mc = nc.map((c,i)=>nf.includes(i)?{...c,matched:true}:c);
         setCards(mc); setFlipped([]); setScore(s=>s+10);
-        if(mc.every(c=>c.matched)){ SFX.levelUp(); setWon(true); }
+        if(mc.every(c=>c.matched)){ SFX.xpLevelUp(); setWon(true); }
       } else {
         SFX.wrong();
         setTimeout(()=>{ setCards(c=>c.map((cd,i)=>nf.includes(i)?{...cd,flipped:false}:cd)); setFlipped([]); },900);

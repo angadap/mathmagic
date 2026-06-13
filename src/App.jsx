@@ -14,6 +14,7 @@ import { WORLDS }                               from './constants/gameData.js';
 
 // ── API client ────────────────────────────────────────────────────────────────
 import { db }                                   from './lib/db.js';
+import { SFX }                                  from './lib/sfx.js';
 
 // ── Layout / global chrome ────────────────────────────────────────────────────
 import { GlobalStyles, OfflineBanner }          from './components/layout/layout.jsx';
@@ -129,7 +130,7 @@ export default function App() {
   }, [setScreen]);
 
   // ── Scroll to top on every navigation ───────────────────────────────────────
-  useEffect(() => { window.scrollTo(0, 0); }, [screen]);
+  useEffect(() => { window.scrollTo(0, 0); if (screen !== 'splash') SFX.transition(); }, [screen]);
 
   // ── Android hardware-back support ────────────────────────────────────────────
   useEffect(() => {

@@ -77,7 +77,9 @@ export function BossBattle({ child, setChild, onBack }) {
 
   useEffect(() => {
     if (view !== "battle" || chosen !== null || questions.length === 0) return;
-    if (timeLeft <= 0) { handlePick(-1); return; }
+    if (timeLeft <= 0) { SFX.timeOut(); handlePick(-1); return; }
+    if (timeLeft <= 5) SFX.timerUrgent();
+    else if (timeLeft <= 10) SFX.bossTimerWarn();
     const t = setTimeout(() => setTimeLeft(tl => tl - 1), 1000);
     return () => clearTimeout(t);
   }, [view, timeLeft, chosen, questions.length]);
@@ -145,6 +147,7 @@ export function BossBattle({ child, setChild, onBack }) {
     setQuestions(qs);
     setLoading(false);
     setView("battle");
+    setTimeout(() => SFX.bossAwakens(), 300);
   };
 
   // ── Handle Pick ──────────────────────────────────────────────────────
@@ -154,7 +157,7 @@ export function BossBattle({ child, setChild, onBack }) {
     const q = questions[qi];
     if (!q) return;
     const ok = ansIdx === q.ans;
-    if (ok) SFX.correct(); else SFX.wrong();
+    if (ok) SFX.bossHit(); else SFX.wrong();
     setChosen(ansIdx);
 
     const dmg      = Math.ceil(100 / questions.length);
@@ -172,6 +175,7 @@ export function BossBattle({ child, setChild, onBack }) {
       newLives = Math.max(0, livesRef.current - 1);
       livesRef.current = newLives;
       setLives(newLives);
+      if (newLives === 0) SFX.heartLost();
     }
 
     const won  = newHp <= 0;
@@ -222,7 +226,8 @@ export function BossBattle({ child, setChild, onBack }) {
 
     if (won) {
       setChild(c => c ? { ...c, xp:(c.xp||0)+xpEarned, coins:(c.coins||0)+coinsEarned, gems:(c.gems||0)+gemsEarned } : c);
-      SFX.unlock();
+      SFX.bossDefeated();
+      setTimeout(() => SFX.levelUnlocked(), 1200);
       try {
         const previewKey = "mm_boss_preview_" + (child?.id || "");
         const existing = JSON.parse(localStorage.getItem(previewKey) || "{}");
@@ -422,7 +427,7 @@ export function BossBattle({ child, setChild, onBack }) {
           </div>
 
           {/* Fight button */}
-          <button onClick={() => startBattle(boss, levelCfg)}
+          <button onClick={() => { SFX.bossTension(); startBattle(boss, levelCfg); }}
             style={{ width:"100%", background:"linear-gradient(135deg,#FF6B6B,#FF4444)", border:"none", borderRadius:20, padding:"18px", fontFamily:"'Fredoka One',cursive", fontSize:18, color:"white", cursor:"pointer", boxShadow:"0 6px 20px rgba(255,107,107,0.45)", marginBottom:12 }}>
             {"⚔️ FIGHT!"}
           </button>
@@ -675,7 +680,7 @@ export function BossBattle({ child, setChild, onBack }) {
                 style={{ width:"100%", background:"rgba(255,255,255,0.09)", border:"1.5px solid rgba(255,255,255,0.18)", borderRadius:20, padding:"16px", fontFamily:"'Fredoka One',cursive", fontSize:16, color:"white", cursor:"pointer" }}>
                 {"🏠 Back to Arena"}
               </button>
-              <button onClick={() => { try { navigator.clipboard.writeText("I defeated " + (boss ? boss.name : "the boss") + " in MathMagic Space Academy! 🏆⚔️"); } catch(e) {} }}
+              <button onClick={() => { SFX.shareResult(); try { navigator.clipboard.writeText("I defeated " + (boss ? boss.name : "the boss") + " in MathMagic Space Academy! 🏆⚔️"); } catch(e) {} }}
                 style={{ background:"transparent", border:"none", fontSize:13, color:"rgba(255,255,255,0.42)", cursor:"pointer", fontFamily:"'Nunito',sans-serif", fontWeight:700, padding:"8px" }}>
                 {"📋 Share Victory"}
               </button>

@@ -213,7 +213,7 @@ function QuizScreen({ classNum, levelData, onBack, onComplete, child }) {
       const correctCount = newAnswers.filter(a => a.isOk).length;
       const stars        = starsFor(correctCount, total);
       const xp           = correctCount * 5;
-      stars >= 3 ? SFX.correct() : SFX.wrong();
+      if (stars >= 3) { SFX.correct(); setTimeout(() => SFX.xpLevelUp(), 500); } else { SFX.wrong(); }
       if (child?.id) {
         db.saveProgress(child.id, progressKey(classNum, levelData.level), {
           correct: correctCount, total, stars, xpEarned: xp,
@@ -282,9 +282,9 @@ function QuizScreen({ classNum, levelData, onBack, onComplete, child }) {
 
         {/* Rods */}
         <div style={{ display:"flex", gap:16, justifyContent:"center", marginBottom:14 }}>
-          {hasH && <AbacusRod count={hundreds} setCount={setHundreds} color={C.pink||"#ec4899"} label="HUNDREDS"/>}
-          <AbacusRod count={tens} setCount={setTens} color={C.orange||"#f97316"} label="TENS"/>
-          <AbacusRod count={ones} setCount={setOnes} color={C.cyan||"#22d3ee"}  label="ONES"/>
+          {hasH && <AbacusRod count={hundreds} setCount={v=>{SFX.beadSlide();setHundreds(v);}} color={C.pink||"#ec4899"} label="HUNDREDS"/>}
+          <AbacusRod count={tens} setCount={v=>{SFX.beadSlide();setTens(v);}} color={C.orange||"#f97316"} label="TENS"/>
+          <AbacusRod count={ones} setCount={v=>{SFX.beadSlide();setOnes(v);}} color={C.cyan||"#22d3ee"}  label="ONES"/>
         </div>
 
         {/* Live value display */}

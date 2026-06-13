@@ -28,7 +28,7 @@ export function StudentLogin({ onBack, onDone }) {
     setLoading(true); setError("");
     try {
       const d = await schoolApi("student_login", {school_code:schoolCode.trim().toUpperCase(), roll_no:rollNo.trim(), name:rollNo.trim(), pin, class_num:classNum?parseInt(classNum):undefined, section:section||undefined});
-      if (d.student) { SFX.select(); onDone(d.student); }
+      if (d.student) { SFX.pinSuccess(); onDone(d.student); }
       else setError(d.error||"Invalid credentials");
     } catch(e) { setError("Network error"); }
     setLoading(false);

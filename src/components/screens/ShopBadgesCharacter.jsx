@@ -128,6 +128,8 @@ export function ShopScreen({ child, setChild, onBack }) {
 
   const { totalLeft: hintsLeft } = getHintsRemaining(child.id);
 
+  useEffect(() => { SFX.shopOpen(); }, []);
+
   const handleBuy = async (item) => {
     // Hint packs are consumable — never "owned", re-purchasable
     const isHintPack = item.cat === "hints";
@@ -135,7 +137,7 @@ export function ShopScreen({ child, setChild, onBack }) {
     const costType = item.gems?"gems":item.coins?"coins":"stars";
     const amount   = item.gems||item.coins||item.stars;
     const bal      = costType==="gems"?(child.gems||0):costType==="coins"?(child.coins||0):totalStars;
-    if (bal < amount) { setMsg(`Not enough ${costType}! Tap 💰 to see how to earn more.`); return; }
+    if (bal < amount) { SFX.notEnoughCoins(); setMsg(`Not enough ${costType}! Tap 💰 to see how to earn more.`); return; }
     setLoading(true); setMsg("");
     if (isHintPack) {
       // Deduct currency and add hints locally — no "owned" tracking
@@ -150,7 +152,7 @@ export function ShopScreen({ child, setChild, onBack }) {
       setChild(c=>({...c,...updates}));
       addExtraHints(child.id, item.hintCount);
       setMsg(`✅ +${item.hintCount} hints added for today! 💡`);
-      SFX.correct();
+      SFX.shopBuy();
     } else {
       const result = await db.purchaseShopItem(child.id, item.id, costType, amount);
       if (result.ok) {
@@ -163,7 +165,7 @@ export function ShopScreen({ child, setChild, onBack }) {
         }
         setChild(c=>({...c,...updates}));
         setMsg("✅ Purchased! "+item.icon);
-        SFX.correct();
+        if (item.cat === "theme") SFX.themeUnlocked(); else SFX.shopBuy();
       } else {
         setMsg(result.error||"Failed");
       }

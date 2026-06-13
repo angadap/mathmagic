@@ -25,7 +25,7 @@ export function TeacherLogin({ onBack, onDone }) {
     setLoading(true); setError("");
     try {
       const d = await schoolApi("teacher_login", {email:email.trim().toLowerCase(), pin});
-      if (d.teacher) { SFX.select(); localStorage.setItem('mm_teacher_session', JSON.stringify({...d.teacher, session_token:d.session_token})); onDone({...d.teacher, session_token:d.session_token}); }
+      if (d.teacher) { SFX.pinSuccess(); localStorage.setItem('mm_teacher_session', JSON.stringify({...d.teacher, session_token:d.session_token})); onDone({...d.teacher, session_token:d.session_token}); }
       else setError(d.error||"Invalid credentials");
     } catch(e) { setError("Network error"); }
     setLoading(false);

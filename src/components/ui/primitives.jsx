@@ -193,7 +193,7 @@ export function PinPad({ pin, setPin, error, shake, onComplete }) {
 // Back button (reusable)
 export function BackBtn({ onClick, color = C.purple }) {
   return (
-    <button onClick={()=>{SFX.back();if(onClick)onClick();}} style={{
+    <button onClick={()=>{SFX.tap();if(onClick)onClick();}} style={{
       background:`${color}15`, border:`1.5px solid ${color}30`,
       borderRadius:14, width:40, height:40, color,
       fontSize:22, cursor:"pointer",

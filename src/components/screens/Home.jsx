@@ -144,7 +144,7 @@ export function WorldsSection({ WORLDS, child, onWorld, forceOpen, onToggle }) {
       {open && (
         <div style={{ marginTop:10, display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
           {others.map(cw=>(
-            <button key={cw.id} onClick={()=>onWorld(cw)}
+            <button key={cw.id} onClick={()=>{ SFX.worldSelect(); onWorld(cw); }}
               style={{ background:"white", border:`2px solid ${cw.color}30`, borderRadius:20, padding:"16px 12px", cursor:"pointer", textAlign:"center", display:"flex", flexDirection:"column", alignItems:"center", gap:4, boxShadow:`0 4px 14px ${cw.color}20, inset 0 1px 0 rgba(255,255,255,0.8)`, transition:"all 0.2s" }}>
               <div style={{ fontSize:34, marginBottom:2 }}>{cw.planet}</div>
               <div style={{ fontSize:13, fontWeight:900, color:cw.color }}>{cw.name}</div>
@@ -729,6 +729,8 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
     "Math is your superpower! 🦸 Show the galaxy!",
   ];
   useEffect(() => {
+    SFX.homeLoad();
+    setTimeout(() => SFX.xpShimmer(), 800);
     if (!localStorage.getItem("mm_rated")) {
       const sessions = parseInt(localStorage.getItem("mm_sessions")||"0") + 1;
       localStorage.setItem("mm_sessions", String(sessions));
@@ -775,9 +777,9 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
       {onFeedback && (
         <FABButton
           onHelp={() => onFeedback()}
-          onRankings={() => setShowLeaderboard(true)}
+          onRankings={() => { SFX.modalOpen(); setShowLeaderboard(true); }}
           showRankings={!!(child.is_school_student && child.school_id)}
-          onWordProblem={() => { setDailyQuestInitialStep(2); setShowDailyQuest(true); }}
+          onWordProblem={() => { SFX.modalOpen(); setDailyQuestInitialStep(2); setShowDailyQuest(true); }}
           showWordProblem={true}
           wordProblemSolved={dqDone}
           onPuzzle={() => { setDailyQuestInitialStep(3); setShowDailyQuest(true); }}
@@ -849,7 +851,7 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
           </div>
           <div style={{ display:"flex", alignItems:"center", gap:8 }}>
             {child.streak_days>0 && (
-              <div style={{ background:"#FF6B6B15", border:"1.5px solid #FF6B6B30", borderRadius:14, padding:"4px 10px", fontSize:12, fontWeight:800, color:"#FF6B6B", display:"flex", alignItems:"center", gap:4 }}>🔥 {child.streak_days}</div>
+              <div onClick={() => SFX.streakFire()} style={{ background:"#FF6B6B15", border:"1.5px solid #FF6B6B30", borderRadius:14, padding:"4px 10px", fontSize:12, fontWeight:800, color:"#FF6B6B", display:"flex", alignItems:"center", gap:4, cursor:"pointer" }}>🔥 {child.streak_days}</div>
             )}
             <MuteBtn/>
             <button onClick={onLogout} style={{ background:"#FF5FA014", border:"1px solid #FF5FA044", borderRadius:12, padding:"7px 11px", color:"#FF5FA0", fontSize:13, cursor:"pointer", fontWeight:700 }}>Exit</button>
@@ -901,7 +903,7 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
               showOlympiad && {i:"🎓",l:"Olympiad",  s:"Compete & win",    c:"#9B59F5",a:onOlympiad},
               {i:"🛒",l:"Bazaar 🆕", s:"Real-life maths",  c:"#FF6B6B",a:onBazaar},
             ].filter(Boolean).map((n,i)=>(
-              <button key={i} onClick={n.a} style={{ background:`${n.c}10`, border:`1.5px solid ${n.c}25`, borderRadius:20, padding:"14px 12px", cursor:"pointer", textAlign:"left", display:"flex", alignItems:"center", gap:10, boxShadow:`0 4px 12px ${n.c}30, 0 2px 6px ${n.c}20` }}>
+              <button key={i} onClick={() => { SFX.navTab(); n.a && n.a(); }} style={{ background:`${n.c}10`, border:`1.5px solid ${n.c}25`, borderRadius:20, padding:"14px 12px", cursor:"pointer", textAlign:"left", display:"flex", alignItems:"center", gap:10, boxShadow:`0 4px 12px ${n.c}30, 0 2px 6px ${n.c}20` }}>
                 <div style={{ fontSize:26, flexShrink:0 }}>{n.i}</div>
                 <div>
                   <div style={{ fontSize:13, fontWeight:800, color:"#1A1040" }}>{n.l}</div>
@@ -913,7 +915,7 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
         </div>
 
         {/* 4e — My Class (single tap to map) */}
-        <button onClick={()=>onWorld(w)} style={{ background:"white", border:"2px solid #9B59F530", borderRadius:28, padding:16, cursor:"pointer", display:"flex", alignItems:"center", gap:14, boxShadow:"0 8px 30px #9B59F528, inset 0 1px 0 rgba(255,255,255,0.8)", width:"100%", textAlign:"left" }}>
+        <button onClick={()=>{ SFX.worldSelect(); onWorld(w); }} style={{ background:"white", border:"2px solid #9B59F530", borderRadius:28, padding:16, cursor:"pointer", display:"flex", alignItems:"center", gap:14, boxShadow:"0 8px 30px #9B59F528, inset 0 1px 0 rgba(255,255,255,0.8)", width:"100%", textAlign:"left" }}>
           <div style={{ width:58, height:58, borderRadius:20, background:"#9B59F514", border:"2px solid #9B59F530", display:"flex", alignItems:"center", justifyContent:"center", fontSize:28, flexShrink:0 }}>{w.planet}</div>
           <div style={{ flex:1 }}>
             <div style={{ fontSize:18, fontWeight:900, color:"#1A1040" }}>{w.name}</div>
@@ -991,7 +993,7 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
           {icon:"⚙️",label:"Settings",act:()=>onSettings&&onSettings()},
           {icon:"🛍️",label:"Shop",    act:()=>onShop&&onShop()},
         ].map((n,i)=>(
-          <button key={i} onClick={n.act||undefined} style={{ background:n.active?"#5B4FE815":"none", border:"none", cursor:n.act?"pointer":"default", display:"flex", flexDirection:"column", alignItems:"center", gap:2, padding:"6px 10px", borderRadius:16, color:n.active?"#5B4FE8":"#9890C4", minWidth:44, transition:"all 0.2s" }}>
+          <button key={i} onClick={n.act ? () => { SFX.navTab(); n.act(); } : undefined} style={{ background:n.active?"#5B4FE815":"none", border:"none", cursor:n.act?"pointer":"default", display:"flex", flexDirection:"column", alignItems:"center", gap:2, padding:"6px 10px", borderRadius:16, color:n.active?"#5B4FE8":"#9890C4", minWidth:44, transition:"all 0.2s" }}>
             <div style={{ fontSize:22, lineHeight:1 }}>{n.icon}</div>
             <div style={{ fontSize:9, fontFamily:"'Nunito',sans-serif", fontWeight:800, marginTop:2 }}>{n.label}</div>
             {n.active&&<div style={{ width:16, height:3, borderRadius:999, background:"linear-gradient(90deg,#5B4FE8,#9B59F5)", marginTop:2 }}/>}

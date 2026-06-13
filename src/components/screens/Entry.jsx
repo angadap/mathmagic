@@ -9,7 +9,7 @@ import { Starfield } from '../layout/layout.jsx';
 export function Splash({ onDone }) {
   const [s, setS] = useState(0);
   useEffect(() => {
-    setTimeout(() => SFX.splash(), 400);
+    setTimeout(() => SFX.homeLoad(), 400);
     // Warm up Supabase connection during splash so first game open is instant
     db.getSb().catch(() => {});
     const t = [
@@ -21,7 +21,7 @@ export function Splash({ onDone }) {
     return () => t.forEach(clearTimeout);
   }, []);
   return (
-    <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#F0ECFF 0%,#E8F4FF 50%,#FFF0F5 100%)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", position:"relative", overflow:"hidden" }}>
+    <div onClick={() => SFX.init()} style={{ minHeight:"100vh", background:"linear-gradient(160deg,#F0ECFF 0%,#E8F4FF 50%,#FFF0F5 100%)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", position:"relative", overflow:"hidden" }}>
       <div style={{position:"absolute",width:180,height:180,borderRadius:"60% 40% 30% 70%/60% 30% 70% 40%",background:"radial-gradient(circle,#5B4FE855,#5B4FE815)",top:-40,right:-40,animation:"mmWave 8s ease-in-out infinite",pointerEvents:"none"}}/>
       <div style={{position:"absolute",width:120,height:120,borderRadius:"60% 40% 30% 70%/60% 30% 70% 40%",background:"radial-gradient(circle,#FF6B6B55,#FF6B6B15)",bottom:60,left:-30,animation:"mmWave 8s ease-in-out 1s infinite",pointerEvents:"none"}}/>
       <div style={{position:"absolute",width:100,height:100,borderRadius:"60% 40% 30% 70%/60% 30% 70% 40%",background:"radial-gradient(circle,#FFC84755,#FFC84715)",top:"40%",right:-20,animation:"mmWave 8s ease-in-out 2s infinite",pointerEvents:"none"}}/>
@@ -57,7 +57,7 @@ export function Splash({ onDone }) {
 }
 
 export function EntryScreen({ onSelect }) {
-  useEffect(()=>{ SFX.screenIn(); },[]);
+  useEffect(()=>{ SFX.transition(); },[]);
   const [hov, setHov] = useState(-1);
 
   // ── Secret admin gate: tap logo 7 times ──────────────────────────
@@ -74,7 +74,7 @@ export function EntryScreen({ onSelect }) {
     clearTimeout(tapTimer.current);
     if (tapCount.current >= 7) {
       tapCount.current = 0;
-      SFX.unlock();
+      SFX.levelUnlocked();
       setShowAdminGate(true);
       setAdminPass(""); setAdminErr("");
     } else {
@@ -85,7 +85,7 @@ export function EntryScreen({ onSelect }) {
   const handleAdminSubmit = () => {
     if (adminPass === ADMIN_GATE_PASS) {
       setShowAdminGate(false);
-      SFX.select();
+      SFX.tap();
       onSelect("admin_panel");
     } else {
       setAdminErr("Wrong passphrase ✗");

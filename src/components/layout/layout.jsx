@@ -98,10 +98,10 @@ export function GlobalStyles() {
 
 // ─────────────────────────────────────────────────────────────────────
 export function MuteBtn() {
-  const [muted, setMuted] = React.useState(SFX.muted);
+  const [muted, setMuted] = React.useState(!SFX.enabled);
   return (
     <button
-      onClick={() => { setMuted(SFX.toggleMute()); }}
+      onClick={() => { SFX.toggle(); setMuted(!SFX.enabled); }}
       title={muted ? "Unmute" : "Mute"}
       style={{ background:"none", border:"none", cursor:"pointer", fontSize:18,
                color: muted ? "#9890C4" : "#4BBDF5", padding:"4px 6px", lineHeight:1,
