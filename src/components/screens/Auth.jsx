@@ -4,7 +4,7 @@ import { C, textColor, text2Color, isDark } from '../../constants/themes.js';
 import { db } from '../../lib/db.js';
 import { SFX } from '../../lib/sfx.js';
 import { Btn, Inp, Card, BackBtn, PinPad, StepDots, RegPage } from '../ui/primitives.jsx';
-import { WORLDS } from '../../constants/gameData.js';
+import { WORLDS, ALL_AVATARS as AVATARS } from '../../constants/gameData.js';
 import { Starfield } from '../layout/layout.jsx';
 
 
@@ -271,7 +271,7 @@ export function Register({ onBack, onDone }) {
         } catch(e) {}
         onDone({ user: { id: uid, email }, child, requirePayment: true });
       } catch (err) {
-        if (import.meta.env.DEV) console.warn("[doRegister error]", err.message);
+        console.warn("[doRegister error]", err.message);
         setErrors({ pin: "Connection error. Please check your internet and try again." });
         setLoading(false);
       }
@@ -314,8 +314,6 @@ export function Login({ onBack, onDone }) {
   const [error,    setError]   = useState("");
   const [loading,  setLoading] = useState(false);
   const [shake,    setShake]   = useState(false);
-
-  useEffect(() => { if (pin.length > 0) SFX.pinDigit(); }, [pin.length]);
 
   // ── Clear session and go back to email step (for switching accounts) ──
   const switchAccount = () => {
@@ -430,7 +428,7 @@ export function Login({ onBack, onDone }) {
         <PinPad pin={pin} setPin={setPin} error={error} shake={shake} onComplete={async fullPin => {
           const attemptKey = `pin_attempts_${kid.id}`;
           const attempts = parseInt(localStorage.getItem(attemptKey)||"0");
-          if (attempts >= 5) { SFX.pinLocked(); setError("Too many attempts. Wait 5 minutes."); setShake(true); setTimeout(()=>setShake(false),600); setPin(""); return; }
+          if (attempts >= 5) { setError("Too many attempts. Wait 5 minutes."); setShake(true); setTimeout(()=>setShake(false),600); setPin(""); return; }
           const { ok, child: rawChild } = await db.checkPin(kid.id, fullPin);
           if (!ok) localStorage.setItem(attemptKey, String(attempts+1));
           else localStorage.removeItem(attemptKey);
@@ -441,7 +439,6 @@ export function Login({ onBack, onDone }) {
             let updatedChild = { ...rawChild };
             if (lastActive !== today) {
               const newStreak = lastActive === yesterday ? (rawChild.streak_days||0) + 1 : 1;
-              if (newStreak > 1) SFX.streakFire();
               fetch("/api/db", { method:"POST",
                 headers:{"Content-Type":"application/json","Authorization":`Bearer ${db._token||""}`},
                 body: JSON.stringify({ action:"update_children", id:rawChild.id,
@@ -449,10 +446,9 @@ export function Login({ onBack, onDone }) {
               updatedChild = { ...rawChild, streak_days: newStreak, last_active: new Date().toISOString() };
             }
             try { sessionStorage.setItem("mm_parent_session", JSON.stringify({ email, pass, pid, kids })); } catch(e){}
-            SFX.pinSuccess();
             onDone({ user:{ id:pid, email }, child: updatedChild });
           }
-          else { SFX.pinFail(); setShake(true); setError("Wrong PIN! Try again 🔒"); setTimeout(() => { setShake(false); setPin(""); setError(""); }, 700); }
+          else { setShake(true); setError("Wrong PIN! Try again 🔒"); setTimeout(() => { setShake(false); setPin(""); setError(""); }, 700); }
         }}/>
       </div>
     </div>
@@ -505,7 +501,7 @@ export function HomeStudentLogin({ onBack, onDone }) {
       });
       const d = await r.json();
       if (d.child) {
-        SFX.pinSuccess();
+        SFX.select();
         onDone({ user: { id: null, email: null }, child: d.child });
       } else {
         setShake(true);
