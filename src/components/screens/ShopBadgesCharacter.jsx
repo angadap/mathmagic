@@ -29,7 +29,7 @@ function ConvertModal({ child, setChild, totalStars, onClose }) {
       await db.updateChildFields(child.id, { coins: newCoins });
       setChild(c=>({...c, coins: newCoins, xp:(c.xp||0)+xpGained}));
       setMsg(`✅ Converted ${coinsSpent} coins → ${starsGained} stars!`);
-      SFX.correct();
+      SFX.shopBuy();
     } else {
       if (n < 1) { setMsg('Min 1 gem'); return; }
       if (n > gems) { setMsg('Not enough gems'); return; }
@@ -40,7 +40,7 @@ function ConvertModal({ child, setChild, totalStars, onClose }) {
       await db.updateChildFields(child.id, { gems: newGems });
       setChild(c=>({...c, gems: newGems, xp:(c.xp||0)+xpGained}));
       setMsg(`✅ Converted ${n} gems → ${starsGained} stars!`);
-      SFX.correct();
+      SFX.shopBuy();
     }
     setAmount('');
   };
@@ -341,7 +341,7 @@ export function CharacterScreen({ child, setChild, onBack }) {
     await db.updateChildFields(child.id, { selected_avatar:sel, avatar:sel });
     setChild(c=>({...c,selected_avatar:sel,avatar:sel}));
     setMsg("✅ Character saved!");
-    SFX.correct();
+    SFX.badgeUnlock();
   };
 
   return (

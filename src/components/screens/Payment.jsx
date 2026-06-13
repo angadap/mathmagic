@@ -45,6 +45,7 @@ async function openRazorpay({ keyId, orderId, amount, description, prefillName, 
     handler: onSuccess,
     modal: { ondismiss: () => onFail("Payment cancelled.") },
   });
+  SFX.transition();
   rzp.open();
 }
 
@@ -54,6 +55,7 @@ export function RegPayment({ onBack, onPaid }) {
   const [msg,     setMsg]     = useState("");
   const [utr,     setUtr]     = useState("");
   const [tab,     setTab]     = useState("razorpay");
+  useEffect(() => { SFX.modalOpen(); }, []);
 
   const handleRazorpay = async () => {
     setLoading(true); setMsg("");
@@ -79,12 +81,12 @@ export function RegPayment({ onBack, onPaid }) {
           });
           const vd = await v.json();
           setLoading(false);
-          if (vd.ok) { setMsg("\u2705 Payment successful! Setting up your account..."); setTimeout(onPaid, 1200); }
-          else setMsg(vd.error||"Verification failed. Contact support.");
+          if (vd.ok) { SFX.shopBuy(); setTimeout(() => SFX.xpLevelUp(), 600); setMsg("\u2705 Payment successful! Setting up your account..."); setTimeout(onPaid, 1200); }
+          else { setMsg(vd.error||"Verification failed. Contact support."); SFX.wrong(); }
         },
-        onFail: (e) => { setLoading(false); setMsg(e); },
+        onFail: (e) => { setLoading(false); setMsg(e); SFX.wrong(); },
       });
-    } catch(e) { setLoading(false); setMsg("Network error. Try again."); }
+    } catch(e) { setLoading(false); setMsg("Network error. Try again."); SFX.wrong(); }
   };
 
   const handleUPI = async () => {
@@ -96,8 +98,8 @@ export function RegPayment({ onBack, onPaid }) {
     });
     const d = await r.json();
     setLoading(false);
-    if (d.ok) { setMsg("\u2705 Payment verified! Setting up your account..."); setTimeout(onPaid, 1200); }
-    else setMsg(d.error||"Verification failed.");
+    if (d.ok) { SFX.shopBuy(); setTimeout(() => SFX.xpLevelUp(), 600); setMsg("\u2705 Payment verified! Setting up your account..."); setTimeout(onPaid, 1200); }
+    else { setMsg(d.error||"Verification failed."); SFX.wrong(); }
   };
 
   return (
@@ -153,6 +155,7 @@ export function LessonPayment({ lessonToBuy, child, user, onBack, onPaid }) {
   const [msg,     setMsg]     = useState("");
   const [utr,     setUtr]     = useState("");
   const [tab,     setTab]     = useState("razorpay");
+  useEffect(() => { SFX.modalOpen(); }, []);
   if (!lessonToBuy) return null;
   const { lessonId, price=300 } = lessonToBuy;
   const authH = () => ({ "Content-Type":"application/json", Authorization:`Bearer ${db._token||""}` });
@@ -181,12 +184,12 @@ export function LessonPayment({ lessonToBuy, child, user, onBack, onPaid }) {
           });
           const vd = await v.json();
           setLoading(false);
-          if (vd.ok) { setMsg("\u2705 Lesson unlocked!"); setTimeout(()=>onPaid(lessonId), 1000); }
-          else setMsg(vd.error||"Verification failed.");
+          if (vd.ok) { SFX.shopBuy(); setTimeout(() => SFX.xpLevelUp(), 600); setMsg("\u2705 Lesson unlocked!"); setTimeout(()=>onPaid(lessonId), 1000); }
+          else { setMsg(vd.error||"Verification failed."); SFX.wrong(); }
         },
-        onFail: (e) => { setLoading(false); setMsg(e); },
+        onFail: (e) => { setLoading(false); setMsg(e); SFX.wrong(); },
       });
-    } catch(e) { setLoading(false); setMsg("Network error."); }
+    } catch(e) { setLoading(false); setMsg("Network error."); SFX.wrong(); }
   };
 
   const handleUPI = async () => {
@@ -198,8 +201,8 @@ export function LessonPayment({ lessonToBuy, child, user, onBack, onPaid }) {
     });
     const d = await r.json();
     setLoading(false);
-    if (d.ok) { setMsg("\u2705 Lesson unlocked!"); setTimeout(()=>onPaid(lessonId), 1000); }
-    else setMsg(d.error||"Verification failed.");
+    if (d.ok) { SFX.shopBuy(); setTimeout(() => SFX.xpLevelUp(), 600); setMsg("\u2705 Lesson unlocked!"); setTimeout(()=>onPaid(lessonId), 1000); }
+    else { setMsg(d.error||"Verification failed."); SFX.wrong(); }
   };
 
   return (
@@ -251,6 +254,7 @@ export function LessonPayment({ lessonToBuy, child, user, onBack, onPaid }) {
 export function Paywall({ world, child, onBack, onUnlock }) {
   const [plan,    setPlan]    = useState("yearly");
   const [loading, setLoading] = useState(false);
+  useEffect(() => { SFX.modalOpen(); }, []);
   const plans = {
     monthly: { label:"Monthly", price:"₹199", sub:"per month" },
     yearly:  { label:"Yearly",  price:"₹999", sub:"per year · save 58%", badge:"BEST VALUE" },
@@ -300,6 +304,7 @@ export function Paywall({ world, child, onBack, onUnlock }) {
           await new Promise(r => setTimeout(r, 1500));
           await db.setPremium(child.id);
           setLoading(false);
+          SFX.shopBuy(); setTimeout(() => SFX.xpLevelUp(), 600);
           onUnlock();
         }}>🚀  UNLOCK — {plans[plan].price}</Btn>
         <div style={{ marginTop:10, textAlign:"center", color:C.dim, fontSize:11, fontWeight:600 }}>🔒 Secure · Cancel anytime</div>

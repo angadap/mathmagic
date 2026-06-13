@@ -230,10 +230,10 @@ export function StarCatcher({ onBack, child }) {
     itemsRef.current=itemsRef.current.filter(i=>i.id!==item.id);
     setItems([...itemsRef.current]);
     if(!item.correct){
-      SFX.correct&&SFX.correct();
+      SFX.correct();
       scoreRef.current+=1; setScore(scoreRef.current);
     } else {
-      SFX.wrong&&SFX.wrong();
+      SFX.wrong();
       livesRef.current=Math.max(0,livesRef.current-1);
       setLives(livesRef.current);
       if(livesRef.current<=0){cancelAnimationFrame(frameRef.current);setGameState("over");return;}
