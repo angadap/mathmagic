@@ -54,22 +54,18 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
           scoreRef.current = savedState.score;
           setLives(savedState.lives);
           livesRef.current = savedState.lives;
-          if (mode === "boss") {
-            setBossHp(savedState.bossHp ?? 100);
-            bossHpRef.current = savedState.bossHp ?? 100;
-          }
           setResumed(true);
         } else {
           // Fresh start — store a shuffled order so resume works
           const order = qs.map((_, i) => i); // questions already shuffled by fetchSetQuestions
           setQuestions(qs);
           setQi(0); setChosen(null); setScore(0); setHint(false); setDone(false); setSaving(false); setBurst(false);
-          setLives(mode === "boss" ? 5 : 3); setBossHp(100); setBossCD(mode === "boss" ? 3 : 0); setTimeLeft(mode === "boss" ? 30 : null);
-          scoreRef.current = 0; livesRef.current = mode === "boss" ? 5 : 3; bossHpRef.current = 100; processing.current = false;
+          setLives(3);
+          scoreRef.current = 0; livesRef.current = 3; processing.current = false;
           historyRef.current = [];
           setResumed(false);
           // Persist the order so if interrupted we can restore same question sequence
-          try { localStorage.setItem(resumeKey, JSON.stringify({ qi:0, score:0, lives: mode==="boss"?5:3, bossHp:100, questionCount:qs.length, order })); } catch(e) {}
+          try { localStorage.setItem(resumeKey, JSON.stringify({ qi:0, score:0, lives:3, questionCount:qs.length, order })); } catch(e) {}
         }
         // Prefetch next set in background
         if (setIndex < 9) fetchSetQuestions(lesson.id, setIndex + 1);
@@ -78,34 +74,30 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
     return () => { cancelled = true; };
   }, [lesson.id, setIndex]);
   const scoreRef   = useRef(0);
-  const historyRef = useRef([]); // [{q, opts, chosen, ans, ok}]
-  const livesRef   = useRef(mode === "boss" ? 5 : 3);
-  const bossHpRef  = useRef(100);
+  const historyRef = useRef([]);
+  const livesRef   = useRef(3);
   const processing = useRef(false);
 
   const [qi,       setQi]       = useState(0);
   const [chosen,   setChosen]   = useState(null);
-  const [lives,    setLives]    = useState(mode === "boss" ? 5 : 3);
+  const [lives,    setLives]    = useState(3);
   const [score,    setScore]    = useState(0);
   const [hint,     setHint]     = useState(false);
-  const [noHints,  setNoHints]  = useState(false); // show "buy hints" popup
+  const [noHints,  setNoHints]  = useState(false);
   const [done,     setDone]     = useState(false);
   const [burst,    setBurst]    = useState(false);
   const [saving,   setSaving]   = useState(false);
-  const [bossHp,   setBossHp]   = useState(100);
-  const [timeLeft, setTimeLeft] = useState(mode === "boss" ? 30 : null);
-  const [bossCD,   setBossCD]   = useState(mode === "boss" ? 3 : 0);
   const [bubbles,  setBubbles]  = useState([]);
-  const [resumed,  setResumed]  = useState(false); // true when restored from saved session
+  const [resumed,  setResumed]  = useState(false);
 
   // ── Persist game state after every answered question ───────────
-  const saveGameState = useCallback((newQi, newScore, newLives, newBossHp, qs) => {
+  const saveGameState = useCallback((newQi, newScore, newLives, qs) => {
     if (!qs) return;
     try {
       const order = qs.map((_, i) => i); // identity — questions already in play order
       localStorage.setItem(resumeKey, JSON.stringify({
         qi: newQi, score: newScore, lives: newLives,
-        bossHp: newBossHp, questionCount: qs.length, order
+        questionCount: qs.length, order
       }));
     } catch(e) {}
   }, [resumeKey]);
@@ -122,23 +114,6 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
     else { clearGameState(); onBack(); }
   }, [done, qi, clearGameState, onBack]);
 
-  // Boss countdown
-  useEffect(() => {
-    if (mode !== "boss" || bossCD <= 0) return;
-    const t = setTimeout(() => setBossCD(c => c-1), 1000);
-    return () => clearTimeout(t);
-  }, [bossCD, mode]);
-
-  // Boss timer
-  useEffect(() => {
-    if (mode !== "boss" || done || bossCD > 0) return;
-    const t = setInterval(() => setTimeLeft(tl => {
-      if (tl <= 1) { if (finalizeRef.current) finalizeRef.current(); return 0; }
-      return tl - 1;
-    }), 1000);
-    return () => clearInterval(t);
-  }, [mode, done, bossCD]);
-
   // Bubble regeneration — guard against null questions
   useEffect(() => {
     if (mode !== "bubble" || !questions || questions.length === 0) return;
@@ -153,7 +128,7 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
     const fs      = scoreRef.current;
     const fst     = fs >= 16 ? 3 : fs >= 12 ? 2 : fs >= 6 ? 1 : 0;
     setTimeout(()=>{ if(fst>=3) SFX.starEarn(); else if(fst>0) SFX.xpGain(); }, 500);
-    const xpEarned = fs * 20 + (mode === "boss" ? 50 : 0);
+    const xpEarned = fs * 20;
     const totalQ  = questions ? questions.length : 20;
 
     // Clear the saved session — set completed cleanly
@@ -164,7 +139,7 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
 
     const gemGain = fst >= 3 ? 5 : fst >= 2 ? 2 : 0;
     // Optimistic XP + gems update in UI
-    setChild(c => c ? { ...c, xp:(c.xp||0)+xpEarned, coins:(c.coins||0)+fst*10, gems:(c.gems||0)+gemGain, level:Math.floor(((c.xp||0)+xpEarned)/200)+1, total_correct:(c.total_correct||0)+fs, bosses_defeated: mode==="boss"?(c.bosses_defeated||0)+1:(c.bosses_defeated||0) } : c);
+    setChild(c => c ? { ...c, xp:(c.xp||0)+xpEarned, coins:(c.coins||0)+fst*10, gems:(c.gems||0)+gemGain, level:Math.floor(((c.xp||0)+xpEarned)/200)+1, total_correct:(c.total_correct||0)+fs } : c);
 
     // Save to DB in background (non-blocking)
     db.saveProgress(child.id, lesson.id + "_s" + setIndex, { correct:fs, total:totalQ, stars:fst, xpEarned, isSchoolStudent:!!(child.is_school_student) });
@@ -181,7 +156,7 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
     // Check & unlock other badges async
     if (typeof setNewBadges === "function") {
       (async () => {
-        const updChild = { ...child, xp:(child.xp||0)+xpEarned, streak_days:child.streak_days||0, total_correct:(child.total_correct||0)+fs, bosses_defeated:mode==="boss"?(child.bosses_defeated||0)+1:(child.bosses_defeated||0), badge_ids:child.badge_ids||[] };
+        const updChild = { ...child, xp:(child.xp||0)+xpEarned, streak_days:child.streak_days||0, total_correct:(child.total_correct||0)+fs, badge_ids:child.badge_ids||[] };
         const newBadgeIds = await db.checkAndUnlockBadges(child.id, updChild);
         if (newBadgeIds.length > 0 && fst >= 1) setNewBadges(newBadgeIds);
       })();
@@ -207,18 +182,16 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
     // Record for post-set review
     historyRef.current = [...historyRef.current, { q: q.question || q.q || "", opts: q.options || q.opts || [], chosen: ansIdx, ans: q.ans, ok }];
     let newLives = livesRef.current;
-    let newBossHp = bossHpRef.current;
     if (ok) {
       scoreRef.current += 1; setScore(scoreRef.current);
       setBurst(true); setTimeout(() => setBurst(false), 600);
-      if (mode === "boss") { SFX.bossHit(); newBossHp = Math.max(0, bossHpRef.current - 20); bossHpRef.current = newBossHp; setBossHp(newBossHp); }
     } else {
       newLives = Math.max(0, livesRef.current - 1); livesRef.current = newLives; setLives(newLives);
     }
-    const end = qi+1 >= questions.length || (livesRef.current <= 0 && !ok) || (mode === "boss" && bossHpRef.current <= 0);
+    const end = qi+1 >= questions.length || (livesRef.current <= 0 && !ok);
     // Persist progress — so if interrupted, student resumes from next question
     const nextQi = end ? qi : qi + 1;
-    saveGameState(nextQi, scoreRef.current, livesRef.current, bossHpRef.current, questions);
+    saveGameState(nextQi, scoreRef.current, livesRef.current, questions);
     setTimeout(() => advance(end), 900);
   }, [chosen, qi, questions, mode, advance, saveGameState]);
 
@@ -281,10 +254,10 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
       ))}
       <div style={{ position:"relative", zIndex:1, textAlign:"center", animation:"popIn 0.5s ease", width:"100%", maxWidth:360 }}>
         <div style={{ fontSize:90, marginBottom:8, animation:"mmBounce 1.2s ease", filter:"drop-shadow(0 12px 24px #FFC84788)" }}>
-          {mode==="boss" && bossHpRef.current<=0 ? "🏆" : fst===3 ? "🏆" : fst===2 ? "🥈" : fst>=1 ? "🥉" : "💫"}
+          {fst===3 ? "🏆" : fst===2 ? "🥈" : fst>=1 ? "🥉" : "💫"}
         </div>
         <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:28, color:"#5B4FE8", marginBottom:10 }}>
-          {mode==="boss" && bossHpRef.current<=0 ? "BOSS DEFEATED! 💥" : fst===3 ? "PERFECT! 🌟" : fst>=2 ? "MISSION COMPLETE! 🚀" : fst>=1 ? "GOOD EFFORT! 💪" : "KEEP TRAINING! 🔥"}
+          {fst===3 ? "PERFECT! 🌟" : fst>=2 ? "MISSION COMPLETE! 🚀" : fst>=1 ? "GOOD EFFORT! 💪" : "KEEP TRAINING! 🔥"}
         </div>
         <div style={{ display:"flex", gap:12, justifyContent:"center", marginBottom:20 }}>
           {[1,2,3].map(i => <span key={i} style={{ fontSize:42, filter: i<=fst ? "none" : "grayscale(1) opacity(0.2)", animation: i<=fst ? `mmStarPop 0.4s ease ${i*0.15}s both` : "none" }}>⭐</span>)}
@@ -292,7 +265,7 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
         <Card color={C.purple} style={{ marginBottom:16, textAlign:"center", padding:"18px 26px" }}>
           <div style={{ color:C.dim, fontSize:13, fontWeight:700, letterSpacing:1, marginBottom:4 }}>YOUR SCORE</div>
           <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:50, color:"#1A1040", fontWeight:900 }}>{fs}<span style={{ fontSize:20, color:"#5A4E8A", fontFamily:"'Nunito',sans-serif", fontWeight:700 }}>/{questions.length}</span></div>
-          <div style={{ color:"#FFC847", fontWeight:900, fontSize:15, marginTop:6 }}>+{fs*20+(mode==="boss"?50:0)} XP 🌟 +{fst*10} Coins 🪙</div>
+          <div style={{ color:"#FFC847", fontWeight:900, fontSize:15, marginTop:6 }}>+{fs*20} XP 🌟 +{fst*10} Coins 🪙</div>
           <div style={{ color:C.green, fontSize:13, marginTop:6, fontWeight:700 }}>✅ Progress saved!</div>
         </Card>
 
@@ -355,69 +328,15 @@ export function Game({ lesson, world, child, setChild, onBack, onDone, onNextSet
         }
         <div style={{ display:"flex", gap:10, width:"100%" }}>
           <button style={{ flex:1, background:"#F5F3FF", border:"1.5px solid #5B4FE820", borderRadius:20, padding:"14px", cursor:"pointer", fontFamily:"'Nunito',sans-serif", fontWeight:800, fontSize:14, color:"#5A4E8A" }} onClick={() => {
-            scoreRef.current = 0; livesRef.current = mode==="boss"?5:3; bossHpRef.current = 100; processing.current = false;
+            scoreRef.current = 0; livesRef.current = 3; processing.current = false;
             historyRef.current = [];
-            setQi(0); setChosen(null); setScore(0); setLives(mode==="boss"?5:3); setBossHp(100); setDone(false); setBossCD(mode==="boss"?3:0); setTimeLeft(mode==="boss"?30:null);
+            setQi(0); setChosen(null); setScore(0); setLives(3); setDone(false);
           }}>↺ Retry</button>
           <button style={{ flex:1, background:"#F5F3FF", border:"1.5px solid #5B4FE820", borderRadius:20, padding:"14px", cursor:"pointer", fontFamily:"'Nunito',sans-serif", fontWeight:800, fontSize:14, color:"#5A4E8A" }} onClick={onBack}>🏠 Home</button>
         </div>
       </div>
     </div>
     </>
-  );
-
-  if (mode === "boss" && bossCD > 0) return (
-    <div style={{ minHeight:"100vh", background:"#FAFBFF", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", fontFamily:"'Nunito',sans-serif", position:"relative" }}>
-      <Starfield n={30}/>
-      <div style={{ position:"relative", zIndex:1, textAlign:"center" }}>
-        <div style={{ fontSize:80, marginBottom:16, animation:"bossW 0.5s ease-in-out infinite" }}>{lesson.boss||"👾"}</div>
-        <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:16, color:C.red, marginBottom:12, letterSpacing:2 }}>BOSS INCOMING!</div>
-        <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:80, color:C.yellow, textShadow:`0 0 40px ${C.yellow}` }}>{bossCD}</div>
-      </div>
-    </div>
-  );
-
-  // Boss UI
-  if (mode === "boss") return (
-    <div style={{ minHeight:"100vh", background:"#FAFBFF", fontFamily:"'Nunito',sans-serif", position:"relative" }}>
-      <Starfield n={25}/>
-      <div style={{ position:"relative", zIndex:2, background:`${C.red}18`, borderBottom:`1px solid ${C.red}33`, padding:"12px 18px" }}>
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
-          <BackBtn onClick={handleBack} color={C.red}/>
-          <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:12, color:C.red }}>⚔️ BOSS BATTLE</div>
-          <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:16, color: timeLeft<=10 ? C.red : C.yellow }}>{timeLeft}s</div>
-        </div>
-        <div style={{ marginBottom:5 }}>
-          <div style={{ fontSize:9, color:C.dim, fontFamily:"'Orbitron',sans-serif", marginBottom:3 }}>BOSS HP</div>
-          <div style={{ background:isDark()?"rgba(255,255,255,0.06)":"rgba(124,111,224,0.06)", borderRadius:8, height:10, overflow:"hidden" }}>
-            <div style={{ width:`${bossHp}%`, height:"100%", background:`linear-gradient(90deg,${C.red},${C.orange})`, borderRadius:8, transition:"width 0.4s" }}/>
-          </div>
-        </div>
-        <div style={{ display:"flex", gap:3 }}>{[1,2,3,4,5].map(i => <span key={i} style={{ fontSize:12, opacity: i<=lives ? 1 : 0.15 }}>❤️</span>)}</div>
-        {resumed && qi > 0 && (
-          <div style={{ marginTop:5, background:`${C.orange}22`, border:`1px solid ${C.orange}44`, borderRadius:8, padding:"3px 10px", display:"flex", alignItems:"center", gap:6 }}>
-            <span style={{ fontSize:11 }}>⚡</span>
-            <span style={{ fontSize:9, color:C.orange, fontFamily:"'Orbitron',sans-serif", fontWeight:700 }}>RESUMING — Q{qi+1} · Score: {score}</span>
-          </div>
-        )}
-      </div>
-      <div style={{ position:"relative", zIndex:2, padding:"14px 18px", textAlign:"center" }}>
-        <div style={{ fontSize:58, animation:"bossW 1.5s ease-in-out infinite", marginBottom:10 }}>{lesson.boss||"👾"}</div>
-        {burst && <div style={{ fontSize:13, color:C.green, marginBottom:6, fontFamily:"'Orbitron',sans-serif", position:"fixed", top:"20%", left:"50%", transform:"translateX(-50%)", zIndex:998, background:`${C.green}22`, borderRadius:12, padding:"8px 20px" }}>⚡ HIT! Boss HP: {bossHp}%</div>}
-        <Card color={C.red} style={{ marginBottom:12, padding:"16px 14px", textAlign:"left" }}>
-          <div style={{ fontSize:20, color:textColor(), lineHeight:1.5, fontWeight:800 }}>{q.q}</div>
-        </Card>
-        <div style={{ fontSize:9, color:C.dim, fontFamily:"'Orbitron',sans-serif", marginBottom:8 }}>Q {qi+1}/{questions.length} · Score: {score}</div>
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
-          {q.opts.map((opt, i) => {
-            let bg="#F5F3FF", border="2px solid #FF6B6B25", col="#1A1040";
-            if (chosen!==null) { if(i===q.ans){bg="#E8FFF4";border="2.5px solid #2ECC9A";col="#2ECC9A";}else if(i===chosen){bg="#FFF0F0";border="2.5px solid #FF6B6B";col="#FF6B6B";} }
-            return <button key={i} onClick={() => pick(i)} style={{ background:bg, border, borderRadius:18, padding:"18px 12px", fontSize:18, fontWeight:800, color:col, cursor: chosen!==null?"default":"pointer", transition:"all 0.2s", boxShadow: i===q.ans&&chosen!==null?`0 0 20px ${C.green}66`:"none", animation:i===q.ans&&chosen!==null?"superCorrect 0.5s ease":"none" }}>{i===q.ans&&chosen!==null?"✓ ":""}{opt}</button>;
-          })}
-        </div>
-      </div>
-      {BackConfirmModal}
-    </div>
   );
 
   // Bubble pop

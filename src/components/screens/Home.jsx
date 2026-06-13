@@ -6,6 +6,8 @@ import { SFX } from '../../lib/sfx.js';
 import { Btn, Inp, Card, BackBtn, XPBar } from '../ui/primitives.jsx';
 import { Starfield, Confetti, Mascot, Tutorial, MuteBtn } from '../layout/layout.jsx';
 import { WORLDS, LESSONS, BADGES } from '../../constants/gameData.js';
+import { BOSSES as _BOSSES } from '../../constants/bossData.js';
+const BOSS_MAP = _BOSSES || {};
 import { DailyQuestHub, DailyQuiz, DailyPuzzle } from './Daily.jsx';
 import { ProgressGrid, SOSButton, FABButton } from '../shared/shared.jsx';
 import { RatingPrompt } from './Feedback.jsx';
@@ -694,7 +696,7 @@ function WordProblemModal({ child, onClose, onSolved }) {
   );
 }
 
-export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onBazaar, onLogout, onFeedback, onRate, onSettings, isLessonPurchased, onShop, onBadges, onCharacter, onThemeChange }) {
+export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onBazaar, onLogout, onFeedback, onRate, onSettings, isLessonPurchased, onShop, onBadges, onCharacter, onThemeChange, onBossArena }) {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showTutorial, setShowTutorial] = useState(()=>!localStorage.getItem('mm_tutorial_done'));
   const doneTutorial = () => { localStorage.setItem('mm_tutorial_done','1'); setShowTutorial(false); };
@@ -923,6 +925,58 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
           <div style={{ fontSize:24, color:"#9B59F5" }}>›</div>
         </button>
 
+        {/* 4f — Boss Arena */}
+        {(() => {
+          let bossList = [];
+          try {
+            const cn = parseInt(child.class_num || 1);
+            bossList = BOSS_MAP[cn] || [];
+          } catch(e) {}
+          if (!bossList.length) return null;
+
+          let bossPreview = {};
+          try {
+            const raw = localStorage.getItem("mm_boss_preview_" + child.id);
+            if (raw) bossPreview = JSON.parse(raw);
+          } catch(e) {}
+
+          return (
+            <div style={{ background:"white", border:"1.5px solid rgba(255,107,107,0.18)", borderRadius:28, padding:"16px 16px 14px", boxShadow:"0 8px 30px rgba(255,107,107,0.10), inset 0 1px 0 rgba(255,255,255,0.8)" }}>
+              {/* Header row */}
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
+                <div style={{ fontSize:15, fontWeight:900, color:"#1A1040" }}>{"⚔️ Boss Arena"}</div>
+                <button onClick={onBossArena} style={{ fontSize:12, color:"#FF6B6B", fontWeight:800, background:"none", border:"none", cursor:"pointer", padding:"4px 8px" }}>{"See All →"}</button>
+              </div>
+              {/* Horizontal scroll row */}
+              <div style={{ display:"flex", gap:10, overflowX:"auto", paddingBottom:6, scrollbarWidth:"none", msOverflowStyle:"none" }}>
+                {bossList.map((boss, idx) => {
+                  const killedLevels = boss.levels.filter(lk => bossPreview[boss.id + "_" + lk]);
+                  const totalLevels  = boss.levels.length;
+                  const allKilled    = killedLevels.length === totalLevels;
+                  const someKilled   = killedLevels.length > 0 && !allKilled;
+                  const isUnlocked   = idx === 0 || !!bossPreview[bossList[idx - 1]?.id + "_minion"];
+
+                  return (
+                    <button key={boss.id} onClick={onBossArena}
+                      style={{ background:"white", borderRadius:20, boxShadow:"0 4px 14px rgba(0,0,0,0.08)", padding:"12px 8px", width:112, minWidth:112, display:"flex", flexDirection:"column", alignItems:"center", gap:6, border:"1.5px solid rgba(0,0,0,0.06)", cursor:"pointer", flexShrink:0 }}>
+                      <div style={{ fontSize:34 }}>{boss.emoji}</div>
+                      <div style={{ fontSize:11, fontWeight:800, color:"#1A1040", textAlign:"center", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", width:"100%", padding:"0 4px" }}>{boss.name}</div>
+                      {allKilled ? (
+                        <div style={{ background:"rgba(255,200,71,0.15)", border:"1.5px solid #FFC847", borderRadius:20, padding:"3px 10px", fontSize:11, fontWeight:800, color:"#B8860B" }}>{"🏆 SLAIN"}</div>
+                      ) : someKilled ? (
+                        <div style={{ background:"rgba(155,89,245,0.12)", border:"1.5px solid #9B59F5", borderRadius:20, padding:"3px 10px", fontSize:11, fontWeight:800, color:"#9B59F5" }}>{"⚔️ " + killedLevels.length + "/" + totalLevels}</div>
+                      ) : isUnlocked ? (
+                        <div style={{ background:"linear-gradient(135deg,#FF6B6B,#FF4444)", borderRadius:20, padding:"4px 12px", fontSize:11, fontWeight:900, color:"white", animation:"mmFloat 1.5s ease-in-out infinite" }}>{"FIGHT!"}</div>
+                      ) : (
+                        <div style={{ background:"rgba(0,0,0,0.06)", borderRadius:20, padding:"3px 10px", fontSize:14 }}>{"🔒"}</div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
 
       </div>
 

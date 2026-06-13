@@ -37,6 +37,7 @@ import { RatingPrompt }                         from './components/screens/Feedb
 import { DailyQuestHub }                        from './components/screens/Daily.jsx';
 import { Settings, TermsOfService, DataPolicy, PrivacyPolicy } from './components/screens/Settings.jsx';
 import { ShopScreen, BadgesScreen, CharacterScreen } from './components/screens/ShopBadgesCharacter.jsx';
+import { BossBattle } from './components/screens/BossBattle.jsx';
 
 // ── Games hub ─────────────────────────────────────────────────────────────────
 import { GamesHub }                             from './components/games/GamesHub.jsx';
@@ -139,6 +140,7 @@ export default function App() {
           game: 'lessons', lessons: 'home', paywall: 'home',
           abacus: 'home', olympiad: 'home', parent: 'home',
           games: 'home', register: 'welcome', login: 'welcome',
+          boss_battle: 'home',
         };
         return backMap[s] || 'welcome';
       });
@@ -250,6 +252,7 @@ export default function App() {
         onFeedback={goFeedback} onSettings={() => setScreen('settings')}
         onThemeChange={handleThemeChange} onShop={() => setScreen('shop')}
         onBadges={() => setScreen('badges')} onCharacter={() => setScreen('character')}
+        onBossArena={() => setScreen('boss_battle')}
       />
       {showRating && <RatingPrompt child={child} onClose={() => setShowRating(false)} />}
       <FreezeDetector currentScreen={screen} child={child} onReport={goFeedback} />
@@ -385,6 +388,9 @@ export default function App() {
 
   if (screen === 'character')
     return <><GlobalStyles />{SwUpdatePortal}<CharacterScreen child={child} setChild={setChild} onBack={() => setScreen('home')} /></>;
+
+  if (screen === 'boss_battle')
+    return <><GlobalStyles />{SwUpdatePortal}<BossBattle child={child} setChild={setChild} onBack={() => setScreen('home')} /></>;
 
   return <><GlobalStyles />{SwUpdatePortal}<OfflineBanner /></>;
 }
