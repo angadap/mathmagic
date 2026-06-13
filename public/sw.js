@@ -82,6 +82,9 @@ self.addEventListener("fetch", e => {
   // ── 1. Non-GET → always network (mutations, auth, payment) ──────────────
   if (request.method !== "GET") return;
 
+  // ── Razorpay — bypass service worker completely ──────────────────────────
+  if (url.hostname.includes("razorpay.com")) return;
+
   // ── 2. API routes ────────────────────────────────────────────────────────
   if (url.pathname.startsWith("/api/")) {
     // Only cache question fetches — everything else is network-only
