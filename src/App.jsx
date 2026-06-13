@@ -26,7 +26,7 @@ import { Welcome, Register, Login, HomeStudentLogin }             from './compon
 import { RegPayment, LessonPayment, Paywall }   from './components/screens/Payment.jsx';
 
 // ── Main screens ──────────────────────────────────────────────────────────────
-import { Home }                                 from './components/screens/Home.jsx';
+import { Home, WorldExplorer }                  from './components/screens/Home.jsx';
 import { LessonMap }                            from './components/screens/LessonMap.jsx';
 import { Game }                                 from './components/screens/Game.jsx';
 import { Abacus }                               from './components/screens/Abacus.jsx';
@@ -255,10 +255,17 @@ export default function App() {
         onThemeChange={handleThemeChange} onShop={() => setScreen('shop')}
         onBadges={() => setScreen('badges')} onCharacter={() => setScreen('character')}
         onBossArena={() => setScreen('boss_battle')}
+        onExplore={() => setScreen('explore')}
       />
       {showRating && <RatingPrompt child={child} onClose={() => setShowRating(false)} />}
       <FreezeDetector currentScreen={screen} child={child} onReport={goFeedback} />
     </>;
+
+  if (screen === 'explore')
+    return <><GlobalStyles />{SwUpdatePortal}<WorldExplorer
+      child={child} onBack={() => setScreen('home')}
+      onWorld={w => { goWorld(w); }}
+    /></>;
 
   if (screen === 'paywall')
     return <><GlobalStyles />{SwUpdatePortal}<Paywall

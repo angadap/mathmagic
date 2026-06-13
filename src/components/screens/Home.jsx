@@ -160,6 +160,37 @@ export function WorldsSection({ WORLDS, child, onWorld, forceOpen, onToggle }) {
   );
 }
 
+// ── WorldExplorer — full-page all-worlds browser, opened from Explore nav tab ──
+export function WorldExplorer({ child, onWorld, onBack }) {
+  return (
+    <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'Baloo 2','Nunito',sans-serif", overflowY:"auto" }}>
+      <div style={{ background:"linear-gradient(135deg,#9B59F520,#5B4FE810)", borderBottom:"1.5px solid #9B59F520", padding:"16px 18px", display:"flex", alignItems:"center", gap:12, position:"sticky", top:0, zIndex:2 }}>
+        <BackBtn onClick={onBack} color={C.purple}/>
+        <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:13, color:C.purple }}>🌌 EXPLORE WORLDS</div>
+      </div>
+      <div style={{ padding:"16px 18px", display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+        {WORLDS.map(cw => {
+          const isOwn = cw.id === parseInt(child.class_num || 1);
+          return (
+            <button key={cw.id}
+              onClick={() => { SFX.worldSelect(); onWorld(cw); }}
+              style={{ background:"white", border:`2px solid ${isOwn ? cw.color+"66" : cw.color+"30"}`, borderRadius:20, padding:"16px 12px", cursor:"pointer", textAlign:"center", display:"flex", flexDirection:"column", alignItems:"center", gap:4, boxShadow: isOwn ? `0 4px 18px ${cw.color}33` : `0 4px 14px ${cw.color}18`, transition:"all 0.2s", position:"relative" }}>
+              {isOwn && <div style={{ position:"absolute", top:8, right:8, background:cw.color, borderRadius:999, padding:"1px 7px", fontSize:9, fontWeight:900, color:"white" }}>MY CLASS</div>}
+              <div style={{ fontSize:36, marginBottom:2 }}>{cw.planet}</div>
+              <div style={{ fontSize:13, fontWeight:900, color:cw.color }}>{cw.name}</div>
+              <div style={{ fontSize:11, color:"#9890C4" }}>{cw.world}</div>
+              {isOwn || child.is_premium
+                ? <div style={{ background:"#2ECC9A12", border:"1px solid #2ECC9A40", borderRadius:999, padding:"3px 10px", marginTop:4 }}><span style={{ fontSize:11, color:"#2ECC9A", fontWeight:800 }}>✓ Unlocked</span></div>
+                : <div style={{ background:"#FF6B6B12", border:"1px solid #FF6B6B30", borderRadius:999, padding:"3px 10px", marginTop:4 }}><span style={{ fontSize:11, color:"#FF6B6B", fontWeight:800 }}>🔒 ₹300/lesson</span></div>
+              }
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ── ClassLeaderboard — bottom drawer for school students ─────────────────────
 // Caches result in localStorage keyed by school+class+section.
 // Refreshes once per day (midnight reset).
@@ -696,7 +727,7 @@ function WordProblemModal({ child, onClose, onSolved }) {
   );
 }
 
-export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onBazaar, onLogout, onFeedback, onRate, onSettings, isLessonPurchased, onShop, onBadges, onCharacter, onThemeChange, onBossArena }) {
+export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, onBazaar, onLogout, onFeedback, onRate, onSettings, isLessonPurchased, onShop, onBadges, onCharacter, onThemeChange, onBossArena, onExplore }) {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showTutorial, setShowTutorial] = useState(()=>!localStorage.getItem('mm_tutorial_done'));
   const doneTutorial = () => { localStorage.setItem('mm_tutorial_done','1'); setShowTutorial(false); };
@@ -708,7 +739,6 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
   const [showDailyQuest, setShowDailyQuest] = useState(false);
   const [dailyQuestInitialStep, setDailyQuestInitialStep] = useState(0);
   const [showRating,        setShowRating]        = useState(false);
-  const [exploreOpen,       setExploreOpen]       = useState(false);
   const [mascotMsg,         setMascotMsg]         = useState(0);
   const [showWordProblem,   setShowWordProblem]   = useState(false);
   const [wordProblemSolved, setWordProblemSolved] = useState(() => {
@@ -850,9 +880,6 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
             </div>
           </div>
           <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-            {child.streak_days>0 && (
-              <div onClick={() => SFX.streakFire()} style={{ background:"#FF6B6B15", border:"1.5px solid #FF6B6B30", borderRadius:14, padding:"4px 10px", fontSize:12, fontWeight:800, color:"#FF6B6B", display:"flex", alignItems:"center", gap:4, cursor:"pointer" }}>🔥 {child.streak_days}</div>
-            )}
             <MuteBtn/>
             <button onClick={onLogout} style={{ background:"#FF5FA014", border:"1px solid #FF5FA044", borderRadius:12, padding:"7px 11px", color:"#FF5FA0", fontSize:13, cursor:"pointer", fontWeight:700 }}>Exit</button>
           </div>
@@ -989,7 +1016,7 @@ export function Home({ child, onWorld, onAbacus, onGames, onOlympiad, onParent, 
           {icon:"🏠",label:"Home",    act:null,                          active:true},
           {icon:"🎮",label:"Games",   act:onGames},
           {icon:"👨‍👩‍👧",label:"Parent",  act:onParent},
-          {icon:"🌌",label:"Explore", act:()=>setExploreOpen(true)},
+          {icon:"🌌",label:"Explore", act:()=>onExplore&&onExplore()},
           {icon:"⚙️",label:"Settings",act:()=>onSettings&&onSettings()},
           {icon:"🛍️",label:"Shop",    act:()=>onShop&&onShop()},
         ].map((n,i)=>(
